@@ -6,19 +6,19 @@ export const MODULES = [
     id: 'dm2', title: 'Diabetes tipo 2', domain: 'metabolico',
     short: 'Control glucémico y tratamiento', 
     quick: ['dm_prioridad','dm_control'],
-    detail: ['hba1c','dm_objetivo','tfge','imc','dm_sintomas','comorbilidades','situacion_aguda','cetoacidosis_sospecha','farmacos_clases','farmacos','medicacion_revisada','alergias','alergias_revisadas']
+    detail: ['hba1c','dm_objetivo','dm1','tfge','imc','dm_sintomas','comorbilidades','situacion_aguda','cetoacidosis_sospecha','farmacos_clases','farmacos','medicacion_revisada','alergias','alergias_revisadas']
   },
   {
     id: 'ic', title: 'Insuficiencia cardíaca', domain: 'cardiovascular',
     short: 'Función ventricular y congestión',
     quick: ['ic_fevigrupo','congestion'],
-    detail: ['fevi','tfge','potasio','pas','pad','congestion','situacion_aguda','farmacos_clases','farmacos','medicacion_revisada','alergias','alergias_revisadas']
+    detail: ['fevi','ic_sintomatica','tfge','potasio','pas','pad','congestion','situacion_aguda','farmacos_clases','farmacos','medicacion_revisada','alergias','alergias_revisadas']
   },
   {
     id: 'erc', title: 'Enfermedad renal crónica', domain: 'renal',
     short: 'Función renal, albuminuria y persistencia',
     quick: ['tfge','cac','persistencia'],
-    detail: ['tfge','cac','persistencia','potasio','potasio_normal','ras_optimizado','creatinina','situacion_aguda','cetoacidosis_sospecha','farmacos_clases','farmacos','medicacion_revisada','alergias','alergias_revisadas']
+    detail: ['tfge','cac','persistencia','potasio','potasio_normal','ras_optimizado','cyp3a4_fuerte','addison','creatinina','situacion_aguda','cetoacidosis_sospecha','farmacos_clases','farmacos','medicacion_revisada','alergias','alergias_revisadas']
   },
   {
     id: 'obesidad', title: 'Sobrepeso y obesidad', domain: 'metabolico',
@@ -30,7 +30,7 @@ export const MODULES = [
     id: 'hepatico', title: 'Enfermedad hepática metabólica', domain: 'hepatico',
     short: 'Esteatosis y valoración de fibrosis',
     quick: ['edad','fib4_informado','hepatico_valoracion','elastografia'],
-    detail: ['edad','esteatosis','hepatico_valoracion','fib4_contexto','fib4_agudo','ast','alt','plaquetas','fib4_informado','elastografia','farmacos_clases','farmacos']
+    detail: ['edad','hepatica_grave','esteatosis','hepatico_valoracion','fib4_contexto','fib4_agudo','ast','alt','plaquetas','fib4_informado','elastografia','farmacos_clases','farmacos']
   },
   {
     id: 'insulina', title: 'Insulinización', domain: 'metabolico',
@@ -41,6 +41,18 @@ export const MODULES = [
 ];
 export const MODULE_BY_ID = Object.fromEntries(MODULES.map(m => [m.id, m]));
 export const EXTRA_FIELDS = [
+  { id:'dm1',label:'Diabetes mellitus tipo 1 conocida',type:'select',
+    options:['Sí','No','No valorado'] },
+  { id:'ic_sintomatica',label:'Insuficiencia cardíaca crónica sintomática',type:'select',
+    options:['Sí','No','No valorado'] },
+  { id:'addison',label:'Enfermedad de Addison',type:'select',
+    options:['Sí','No','No valorado'] },
+  { id:'cyp3a4_fuerte',label:'Tratamiento con inhibidor potente CYP3A4',type:'select',
+    options:['Sí','No','No valorado'] },
+  { id:'hepatica_grave',label:'Insuficiencia hepática grave conocida',type:'select',
+    options:['Sí','No','No valorado'] },
+  { id:'embarazo',label:'Embarazo actual',type:'select',
+    options:['Sí','No','No procede','No valorado'] },
   { id:'situacion_aguda',label:'Situación clínica actual',type:'select',
     options:['Estable sin proceso agudo grave','Enfermedad aguda grave',
       'Cirugía mayor o ayuno prolongado','No valorada'] },
