@@ -1,0 +1,13 @@
+{
+  "name": "CaHReMe · Vista previa",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:1-22-bookworm",
+  "forwardPorts": [4173],
+  "portsAttributes": {
+    "4173": {
+      "label": "CaHReMe — abrir interfaz",
+      "onAutoForward": "openBrowser",
+      "visibility": "private"
+    }
+  },
+  "postStartCommand": "npm run dev > /tmp/cahreme-dev.log 2>&1 &"
+}
