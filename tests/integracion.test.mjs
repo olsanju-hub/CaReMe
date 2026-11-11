@@ -129,6 +129,13 @@ test('si falta RAS real, la lista de comprobación exige conciliación',()=>{
   const card=x.options.find(x=>x.id==='NSMRA-REVIEW');
   assert.ok(card.checks.some(s=>s.includes('No consta IECA/ARA-II')));
 });
+test('finerenona en IC FEVI ≥40 se distingue de ERC-DM2',()=>{
+  const x=integratePatient(draft({...baseline,fevi:'45',ic:'Sí',dm2:'No',erc:'No'}));
+  assert.ok(has(x.context,'FIN-HF-LABEL'));
+  assert.ok(!has(x.options,'NSMRA-REVIEW'));
+  const y=integratePatient(draft({...baseline,fevi:'39.9',dm2:'No',erc:'No'}));
+  assert.ok(!has(y.context,'FIN-HF-LABEL'));
+});
 test('todas las tarjetas conservan fuentes registradas y estructura',()=>{
   const x=integratePatient(draft(baseline));
   const ids=new Set(Object.values(INTEGRATION_SOURCES).map(s=>s.id));
