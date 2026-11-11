@@ -15,6 +15,10 @@ Una evaluación integral de un adulto en consulta de AP, sin identificarlo, que 
 
 El MVP se desarrollará progresivamente. **La interfaz podrá demostrarse con datos sintéticos antes de que existan algoritmos clínicos habilitados.**
 
+## Estado de implementación (iteración A.2)
+
+En la rama `feat/prototipo-interfaz` ya se muestran las seis consultas con **captura rápida y detallada**, más la entrada integral. La ficha compartida evita duplicar variables comunes y admite selección de comorbilidades y clases farmacológicas. El resumen por consulta **no interpreta ni prescribe**. Pendiente: revisión visual móvil, icono final e implementación de reglas verificadas.
+
 ## Iteración A — prototipo navegable (sin recomendaciones clínicas)
 
 | Código | Función | Condición de aceptación |
