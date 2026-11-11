@@ -311,3 +311,6 @@ h2 { letter-spacing:-.025em }
   .module-review h2 { font-size:1.15rem; }
   .review-row { font-size:.75rem; }
 }
+.hero-reset { display:block; margin-top:12px; border:0; background:transparent; color:#D5F5F0;
+  text-decoration:underline; text-underline-offset:3px; font-size:.81rem; font-weight:650; position:relative; z-index:2; padding:4px 0; }
+.hero-reset:hover { color:#fff; }
