@@ -40,6 +40,11 @@ export const INTEGRATION_SOURCES = Object.freeze({
     id:'CIMA-AEMPS-EMPAGLIFLOZINA',short:'CIMA-AEMPS · Empagliflozina',
     section:'Ficha técnica, apartado 4.4',
     url:'https://cima.aemps.es/cima/pdfs/es/ft/90784/FT_90784.html.pdf'
+  },
+  cimaFin: {
+    id:'CIMA-AEMPS-FINERENONA',short:'CIMA-AEMPS · Finerenona',
+    section:'Ficha técnica Kerendia, apartados 4.2–4.5',
+    url:'https://cima.aemps.es/cima/dochtml/ft/1211616002/FT_1211616002.html'
   }
 });
 
@@ -202,21 +207,41 @@ export function integratePatient(draft) {
       ['EASL-EASD-EASO-MASLD-2024'],['Hepático']));
   }
 
-  // ARM no esteroideo: lista de verificación, nunca prescripción automática.
+  // ARM no esteroideo: controles de seguridad específicos de finerenona
+  // (CIMA-AEMPS, ficha de Kerendia), sin extrapolar automáticamente a otros ARM.
   if(dm2 && ckdEvidence && acr!==null && acr>30 && egfr!==null && egfr>25) {
-    const checks=[...security];
-    if(potassium===null) checks.push('Obtener potasio actual y confirmar que está en rango normal del laboratorio.');
-    if(value(draft,'potasio_normal')!=='Sí') checks.push('Confirmar potasio normal sostenido antes de considerar un ARM no esteroideo.');
-    if(value(draft,'ras_optimizado')!=='Sí') checks.push('Comprobar IECA/ARA-II a dosis máxima tolerada o motivo de intolerancia.');
-    add(card('NSMRA-REVIEW','option','Revisar elegibilidad de ARM no esteroideo',
-      'KDIGO contempla esta opción en DM2 y ERC con albuminuria persistente, TFGe >25, potasio normal y bloqueo del sistema renina-angiotensina optimizado.',
-      checks.concat(['No iniciar ni calcular dosis sin confirmar todas las condiciones y ficha técnica.']),
-      ['KDIGO-2024-CKD','ADA-2026-11'],['Renal','Cardiovascular','DM2']));
+    const sources=['KDIGO-2024-CKD','ADA-2026-11','CIMA-AEMPS-FINERENONA'];
+    if (classes.has('ARM')) {
+      add(card('NSMRA-MRA-EXISTING','alert','ARM ya registrado: revisar duplicidades antes de finerenona',
+        'Consta tratamiento de la clase ARM sin especificar molécula; no se propone añadir otro antagonista mineralocorticoide.',
+        ['Identificar si ya utiliza espironolactona, eplerenona, finerenona u otro ARM.',
+         'Confirmar indicación, potasio, TFGe e interacciones.'],
+        sources,['Renal','Cardiovascular','DM2']));
+    } else if (potassium!==null && potassium>5.0) {
+      add(card('NSMRA-K-BLOCK','alert','Potasio >5,0: no proponer inicio de finerenona',
+        'La ficha técnica española de finerenona para ERC con DM2 no permite iniciar el tratamiento con potasio sérico >5,0 mmol/L.',
+        ['Revisar resultado analítico, contexto clínico y tratamiento hiperpotasemiante.',
+         'Considerar la urgencia de la hiperpotasemia según valor, síntomas y ECG.'],
+        sources,['Renal','Cardiovascular','DM2']));
+    } else {
+      const checks=[...security];
+      if(potassium===null) checks.push('Obtener potasio actual y confirmar que está en rango normal del laboratorio.');
+      if(value(draft,'potasio_normal')!=='Sí') checks.push('Confirmar potasio normal sostenido antes de considerar un ARM no esteroideo.');
+      if (potassium!==null && potassium>4.8)
+        checks.push('Potasio >4,8 a 5,0: ficha CIMA contempla inicio solo con evaluación y monitorización adicionales.');
+      if(value(draft,'ras_optimizado')!=='Sí') checks.push('Comprobar IECA/ARA-II a dosis máxima tolerada o motivo de intolerancia.');
+      if(!classes.has('IECA') && !classes.has('ARA-II'))
+        checks.push('No consta IECA/ARA-II en clases farmacológicas; reconciliar tratamiento y posibles intolerancias.');
+      add(card('NSMRA-REVIEW','option','Revisar elegibilidad de ARM no esteroideo',
+        'KDIGO contempla esta opción en DM2 y ERC con albuminuria persistente, TFGe >25, potasio normal y bloqueo del sistema renina-angiotensina optimizado.',
+        checks.concat(['Revisar contraindicaciones e interacciones de finerenona (incluido CYP3A4 fuerte), sin prescribir desde esta pantalla.']),
+        sources,['Renal','Cardiovascular','DM2']));
+    }
   } else if(dm2 && ckdEvidence && (acr===null || egfr===null)) {
     add(card('NSMRA-MISSING','context','ARM no esteroideo: falta información renal',
       'Para valorar esta rama se necesitan TFGe, albuminuria persistente y potasio.',
       ['Completar TFGe y CAC y verificar tratamiento previo con IECA/ARA-II.'],
-      ['KDIGO-2024-CKD'],['Renal']));
+      ['KDIGO-2024-CKD','CIMA-AEMPS-FINERENONA'],['Renal']));
   }
   if(hepatic.status==='calculated' &&
       hepatic.interpretation==='higher_probability') {
