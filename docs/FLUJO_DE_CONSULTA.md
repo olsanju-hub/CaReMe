@@ -35,3 +35,11 @@ Estos estados no equivalen a «normal», «patológico» o «descartado». Los e
 - La evaluación dirigida no elimina los datos contextuales ni oculta dominios.
 - No se usan datos clínicos reales en pruebas o capturas; los ejemplos son sintéticos.
 - No está publicado ni habilitado para uso asistencial.
+
+## Indicadores descriptivos por fuente (bloque B inicial)
+
+En la pantalla **Herramientas**, en el resumen integral y en las consultas renal/hepática se muestran:
+- **G/A KDIGO**: dos categorías independientes calculadas desde TFGe y CAC, con advertencia sobre cronicidad y causa no evaluadas.
+- **FIB-4**: fórmula aplicada a edad, AST, ALT y plaquetas cuando están presentes; la interpretación exige contexto adecuado y ausencia de enfermedad aguda y advierte rendimiento limitado <35 años. Ajuste de corte inferior >65 años.
+
+Los resultados no generan diagnósticos ni conductas terapéuticas. Están documentados en [Fuentes y reglas clínicas](FUENTES_CLINICAS.md), con pruebas automatizadas; la revisión profesional formal sigue pendiente.
