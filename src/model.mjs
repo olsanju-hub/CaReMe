@@ -8,6 +8,8 @@ export const SECTIONS = [
     { id: 'ecv', label: 'Enfermedad cardiovascular establecida', type: 'select', options: ['Sí', 'No'] },
     { id: 'ic', label: 'Insuficiencia cardíaca conocida', type: 'select', options: ['Sí', 'No'] },
     { id: 'erc', label: 'Enfermedad renal crónica conocida', type: 'select', options: ['Sí', 'No'] },
+    EXTRA_BY_ID.dm1,
+    EXTRA_BY_ID.ic_sintomatica,
     { id: 'hepatopatia', label: 'Enfermedad hepática conocida', type: 'select', options: ['Sí', 'No'] },
     EXTRA_BY_ID.situacion_aguda,
     EXTRA_BY_ID.cetoacidosis_sospecha
@@ -26,7 +28,9 @@ export const SECTIONS = [
     { id: 'persistencia', label: 'Alteración persistente documentada', type: 'select', options: ['Sí', 'No', 'No consta'] },
     EXTRA_BY_ID.potasio_normal,
     EXTRA_BY_ID.ras_optimizado,
-    EXTRA_BY_ID.potasio
+    EXTRA_BY_ID.potasio,
+    EXTRA_BY_ID.cyp3a4_fuerte,
+    EXTRA_BY_ID.addison
   ]},
   { id: 'hepatico', title: 'Hepático', short: 'Hepático', intro: 'Pruebas disponibles para una futura estratificación validada.', fields: [
     { id: 'ast', label: 'AST', unit: 'U/L', type: 'number' },
@@ -34,6 +38,7 @@ export const SECTIONS = [
     { id: 'plaquetas', label: 'Plaquetas', unit: '10⁹/L', type: 'number' },
     EXTRA_BY_ID.fib4_contexto,
     EXTRA_BY_ID.fib4_agudo,
+    EXTRA_BY_ID.hepatica_grave,
     { id: 'esteatosis', label: 'Esteatosis documentada', type: 'select', options: ['Sí', 'No'] }
   ]},
   { id: 'metabolico', title: 'Metabólico', short: 'Metabólico', intro: 'Diagnósticos y datos antropométricos/metabólicos.', fields: [
@@ -49,7 +54,8 @@ export const SECTIONS = [
     { id: 'farmacos', label: 'Tratamientos actuales (principios activos)', type: 'textarea' },
     EXTRA_BY_ID.medicacion_revisada,
     { id: 'alergias', label: 'Alergias o intolerancias relevantes', type: 'textarea' },
-    EXTRA_BY_ID.alergias_revisadas
+    EXTRA_BY_ID.alergias_revisadas,
+    EXTRA_BY_ID.embarazo
   ]}
 ];
 export const FIELDS = { ...Object.fromEntries(SECTIONS.flatMap(s => s.fields.map(f => [f.id, f]))), ...EXTRA_BY_ID };
