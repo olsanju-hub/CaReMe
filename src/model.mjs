@@ -1,3 +1,4 @@
+import { EXTRA_BY_ID, readMulti } from './consultas.mjs';
 // Modelo de captura no identificativa. Sin cálculos ni recomendaciones clínicas.
 // No utiliza localStorage, sessionStorage, cookies ni llamadas de red.
 export const SECTIONS = [
@@ -40,7 +41,7 @@ export const SECTIONS = [
     { id: 'alergias', label: 'Alergias o intolerancias relevantes', type: 'textarea' }
   ]}
 ];
-export const FIELDS = Object.fromEntries(SECTIONS.flatMap(s => s.fields.map(f => [f.id, f])));
+export const FIELDS = { ...Object.fromEntries(SECTIONS.flatMap(s => s.fields.map(f => [f.id, f]))), ...EXTRA_BY_ID };
 export function createDraft() { return { values: {}, unavailable: [] }; }
 export function setValue(draft, id, value) {
   if (!FIELDS[id]) throw new Error('Campo inexistente');
@@ -66,6 +67,13 @@ export function fieldState(draft, id) {
       (f.min !== undefined && n < f.min) || (f.max !== undefined && n > f.max)) return 'revisar';
   }
   if (f.type === 'select' && !f.options.includes(v)) return 'revisar';
+  if (f.type === 'multi') {
+    const selected = readMulti(v);
+    if (!selected.length) return 'sin_registrar';
+    if (new Set(selected).size !== selected.length ||
+      !selected.every(item => f.options.includes(item))) return 'revisar';
+    if (selected.some(item => /^(Sin |Ninguna )/.test(item)) && selected.length > 1) return 'revisar';
+  }
   return 'registrado';
 }
 export function sectionStats(draft, section) {
