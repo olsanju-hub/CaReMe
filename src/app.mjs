@@ -13,7 +13,7 @@ function banner() {
 function header() {
   return `<header class="topbar"><div class="topbar-inner">
     <button class="brand" type="button" data-action="home" aria-label="Volver al inicio de CaHReMe">
-      <span class="brand-mark" aria-hidden="true">C</span>
+      <span class="brand-mark" aria-hidden="true"><img src="./public/icon-concept.svg" alt="" /></span>
       <span><strong>Ca<span class="brand-accent">H</span>ReMe</strong><small>Salud cardiorrenal-hepatometabólica</small></span>
     </button>
     <div class="top-right"><span class="dev-label">PROTOTIPO · V0.1</span>
@@ -28,10 +28,10 @@ function nav() {
 }
 function home() {
   const domains = [
-    ['cardio','Ca','Cardiovascular','Presión arterial, lípidos y antecedentes.'],
-    ['renal','Re','Renal','Función renal, albuminuria y persistencia.'],
-    ['hepatico','H','Hepático','Bioquímica hepática y esteatosis.'],
-    ['metabolico','Me','Metabólico','Glucosa, diabetes y adiposidad.']
+    ['cardio','cardiovascular','Cardiovascular','Presión arterial, lípidos y antecedentes.'],
+    ['renal','renal','Renal','Función renal, albuminuria y persistencia.'],
+    ['hepatico','hepatico','Hepático','Bioquímica hepática y esteatosis.'],
+    ['metabolico','metabolico','Metabólico','Glucosa, diabetes y adiposidad.']
   ];
   return `<div class="page home">
     <section class="hero">
@@ -39,14 +39,14 @@ function home() {
       <h1>Una visión completa.<br><em>Un paciente.</em></h1>
       <p>Explora los cuatro dominios desde una sola evaluación. Introduce únicamente la información disponible.</p>
       <button class="primary hero-button" type="button" data-action="start" data-focus="integral">Comenzar evaluación integral <span aria-hidden="true">→</span></button></div>
-      <div class="hero-art" aria-hidden="true"><span class="orbit orbit-top">Ca</span><span class="orbit orbit-left">Re</span><span class="orbit orbit-right">H</span><span class="orbit orbit-bottom">Me</span></div>
+      <div class="hero-art" aria-hidden="true"><img class="hero-logo" src="./public/icon-concept.svg" alt="" /></div>
     </section>
     ${banner()}
     <div class="section-heading"><div><div class="eyebrow">ACCESOS DIRECTOS</div><h2>Consulta por dominio</h2></div>
       <p>Una entrada rápida no oculta los demás dominios.</p></div>
     <div class="domain-grid">${domains.map(([id,short,title,detail]) =>
       `<button type="button" class="domain-card ${id}" data-action="start" data-focus="${id}">
-        <span class="domain-monogram" aria-hidden="true">${short}</span>
+        <span class="domain-image-wrap" aria-hidden="true"><img class="domain-illustration" src="./public/domain-${short}.svg" alt="" /></span>
         <strong>${title}</strong><span>${detail}</span><b aria-hidden="true">↗</b></button>`).join('')}</div>
     <section class="info-strip"><div><strong>Datos temporales</strong><p>Este prototipo conserva la información solo mientras permanece abierta la página. No se guarda en el navegador ni se envía a servidores.</p></div>
       <button type="button" class="text-link" data-action="sources">Ver limitaciones →</button></section>
@@ -145,7 +145,7 @@ function render() {
   app.innerHTML = header() + '<main id="main-content">' + contents + '</main>' + nav() +
     '<footer class="footer">CaHReMe · Identidad Atlántico · Prototipo no validado para uso asistencial</footer>';
 }
-function navigate(page) { current.page = page; render(); scrollTo({ top: 0, behavior: 'instant' }); }
+function navigate(page) { current.page = page; render(); scrollTo({ top: 0, behavior: 'auto' }); }
 function start(focus) {
   current.focus = focus;
   current.step = sectionForFocus(focus);
@@ -183,3 +183,12 @@ app.addEventListener('click', event => {
   }
 });
 render();
+
+// Instala solo recursos estáticos. Los datos clínicos siguen en memoria y no se persisten.
+if (typeof window !== 'undefined' && typeof navigator !== 'undefined' &&
+    'serviceWorker' in navigator &&
+    (location.protocol === 'https:' || location.hostname === 'localhost')) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./service-worker.js').catch(() => {});
+  });
+}
