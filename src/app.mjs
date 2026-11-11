@@ -142,7 +142,7 @@ function pharmaLink(card) {
   let info=null;
   if(card.id==='FIN-HF-LABEL') info={drug:'finerenona',route:'ic_fevi40'};
   else if(card.id.startsWith('NSMRA-')) info={drug:'finerenona',route:'erc_dm2'};
-  else if(card.id.startsWith('SGLT2-')) info={drug:'empagliflozina',route:'erc'};
+  else if(card.id.startsWith('SGLT2-')) info={drug:'empagliflozina',route:draft.values.ic==='Sí'?'ic':draft.values.erc==='Sí'?'erc':'dm2'};
   if(!info) return '';
   return `<button type="button" class="text-link" data-action="open-drug"
     data-drug-id="${info.drug}" data-route-id="${info.route}">Consultar ficha CIMA específica →</button>`;
