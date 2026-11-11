@@ -20,13 +20,13 @@ test('service worker solo cachea recursos estáticos', () => {
   assert.ok(!sw.includes('indexedDB'));
   assert.ok(!sw.includes('localStorage'));
   assert.ok(!sw.includes('postMessage('));
-  for (const asset of ['src/app.mjs','src/model.mjs','src/consultas.mjs','src/styles.css','public/icon-concept.svg']) {
+  for (const asset of ['src/app.mjs','src/model.mjs','src/consultas.mjs','src/clinical/engine.mjs','src/styles.css','public/icon-concept.svg']) {
     assert.ok(sw.includes(asset));
   }
 });
 test('interfaz no contiene instrucciones clínicas reales ni almacenamiento de datos', () => {
   const app = read('src/app.mjs');
-  assert.ok(app.includes('No realiza diagnósticos'));
+  assert.ok(app.includes('no realiza diagnósticos'));
   assert.ok(!app.includes('localStorage.'));
   assert.ok(!app.includes('sessionStorage.'));
   assert.ok(!app.includes('fetch('));
