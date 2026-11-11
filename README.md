@@ -26,6 +26,17 @@ PWA independiente de apoyo a la decisión clínica en Atención Primaria en Espa
 
 Documentación: [Documento rector v0.1](docs/DOCUMENTO_RECTOR.md) · [Alcance e iteraciones del MVP](docs/MVP.md) · [Flujo de consulta](docs/FLUJO_DE_CONSULTA.md) · [Decisiones del proyecto](docs/DECISIONES.md).
 
+## Vista previa privada en GitHub Codespaces
+
+[**Abrir o reanudar CaHReMe en Codespaces**](https://codespaces.new/olsanju-hub/CaReMe/tree/feat/prototipo-interfaz?quickstart=1)
+
+1. Inicia sesión en GitHub y pulsa **Create codespace** la primera vez; para sesiones posteriores, **Resume this codespace**.
+2. Al abrirse el editor web, la configuración inicia el servidor de prueba en el puerto **4173**.
+3. Abre la notificación **Open in Browser** o la pestaña **Ports** y selecciona **CaHReMe — abrir interfaz**. Si no arranca, ejecuta `npm run dev` desde el terminal.
+4. Usa datos sintéticos. Al recargar el formulario se pierden; no hay backend ni persistencia.
+
+El Codespace y el puerto de vista previa son **privados** y requieren tu sesión de GitHub. Esta vista previa es una máquina de desarrollo; puede consumir la cuota de Codespaces. Deténla cuando termines de revisar. La URL de GitHub Pages aún no existe.
+
 ## Prototipo local (rama `feat/prototipo-interfaz`)
 
 Requiere Node.js 20 o superior (sin dependencias npm externas):
