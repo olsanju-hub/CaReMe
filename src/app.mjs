@@ -1,6 +1,7 @@
 import { SECTIONS, FIELDS, createDraft, setValue, setUnavailable, fieldState, sectionStats, totalStats, sectionForFocus } from './model.mjs';
 import { MODULES, MODULE_BY_ID, moduleFields, readMulti } from './consultas.mjs';
 import { SOURCES, evaluateRenal, evaluateFib4 } from './clinical/engine.mjs';
+import { integratePatient, INTEGRATION_SOURCES } from './clinical/integracion.mjs';
 
 let draft = createDraft();
 let current = { page: 'home', step: 0, focus: 'integral', module: null, mode:'quick' };
@@ -10,7 +11,7 @@ const escape = (value) => String(value ?? '').replace(/[&<>"']/g, c =>
 const counts = () => totalStats(draft);
 
 function banner() {
-  return '<div class="safety" role="note"><span class="safety-dot"></span><span>Prototipo clínico en revisión: calcula categorías G/A y FIB-4, pero no realiza diagnósticos ni indica tratamientos. No usar para tomar decisiones asistenciales.</span></div>';
+  return '<div class="safety" role="note"><span class="safety-dot"></span><span>Prototipo en revisión: cálculos G/A y FIB-4, y propuestas multiorgánicas para revisión. Ningún resultado autoriza diagnóstico, prescripción o suspensión farmacológica.</span></div>';
 }
 function header() {
   return `<header class="topbar"><div class="topbar-inner">
@@ -136,6 +137,35 @@ function calculatorsForModule(id) {
   return '';
 }
 
+function integratedCards(focus = null) {
+  const result=integratePatient(draft);
+  const match=(card)=>!focus || card.domains.includes(focus) ||
+    (focus==='Metabólico' && card.domains.includes('DM2'));
+  const groups=[
+    {title:'Revisiones de seguridad',cards:result.alerts.filter(match),className:'risk'},
+    {title:'Opciones que requieren evaluación médica',cards:result.options.filter(match),className:'candidate'},
+    {title:'Contexto y datos pendientes',cards:result.context.filter(match),className:'missing'}
+  ];
+  const nonempty=groups.filter(x=>x.cards.length>0);
+  return `<section class="integration-panel" aria-label="Integración cardiorrenal-hepatometabólica">
+    <div class="integration-head"><div><div class="eyebrow">INTEGRACIÓN MULTIORGÁNICA</div>
+    <h2>Prioridades para revisión clínica</h2>
+    <p>Basadas en antecedentes declarados y datos disponibles. No son órdenes médicas ni un plan de prescripción.</p>
+    </div><span class="integration-status">SIN PRESCRIPCIONES</span></div>
+    ${nonempty.length ? nonempty.map(group=>`<div class="integration-group">
+      <h3>${escape(group.title)}</h3>
+      <div class="integration-list">${group.cards.map(card=>`<article class="integration-card ${group.className}">
+        <h4>${escape(card.title)}</h4><p>${escape(card.summary)}</p>
+        <strong>Antes de decidir:</strong><ul>${card.checks.map(check=>`<li>${escape(check)}</li>`).join('')}</ul>
+        <details><summary>Reglas y fuentes (${card.sources.length})</summary>
+        <div class="integration-sources">${card.sources.map(id=>{
+          const source=Object.values(INTEGRATION_SOURCES).find(x=>x.id===id);
+          return source?`<a href="${escape(source.url)}" target="_blank" rel="noopener noreferrer">${escape(source.short)} · ${escape(source.section)} ↗</a>`:'';}).join('')}
+        </div></details></article>`).join('')}</div></div>`).join('')
+      : '<p class="integration-empty">No se han identificado condiciones documentadas para generar candidatos de revisión en este apartado. Esto no descarta enfermedad ni implica ausencia de tratamiento indicado.</p>'}
+    <p class="integration-disclaimer">La documentación clínica, las dosis y la idoneidad del principio activo deben verificarse en su ficha CIMA-AEMPS. Las actuaciones reales solo se registrarán con confirmación profesional.</p>
+  </section>`;
+}
 function consultationReview(module) {
   const fields = [...new Set([...module.quick,...module.detail])];
   const missing = fields.filter(id => fieldState(draft,id) === 'sin_registrar');
@@ -153,6 +183,7 @@ function consultationReview(module) {
         <strong class="${state}">${escape(value)}</strong></div>`;
     }).join('')}</div>
     ${calculatorsForModule(module.id)}
+    ${integratedCards(({dm2:'DM2',ic:'IC',erc:'Renal',obesidad:'Metabólico',hepatico:'Hepático',insulina:'DM2'})[module.id])}
     <div class="clinical-lock"><strong>Motor terapéutico pendiente de validación</strong>
       <p>${missing.length} datos sin registrar y ${invalid.length} entradas por revisar.
        Aquí aparecerán situación, siguiente paso, alternativas, seguridad, seguimiento y fuentes,
@@ -256,7 +287,8 @@ function summary() {
           return `<div><dt>${escape(f.label)}</dt><dd class="${state}">${content}</dd></div>`;
         }).join('')}</dl></section>`).join('')}</div>
     <div class="calc-stack">${renalResultCard()}${fib4ResultCard()}</div>
-    <div class="clinical-lock"><strong>Motor de decisiones clínicas desactivado</strong>
+    ${integratedCards()}
+    <div class="clinical-lock"><strong>Prescripción automática desactivada</strong>
       <p>Las categorías renales y el FIB-4 son indicadores descriptivos. No confirman diagnósticos ni generan tratamientos, ni descartan enfermedad por sí solos.</p></div>
     <div class="summary-actions"><button type="button" class="ghost" data-action="go-step" data-step="0">Volver a editar</button>
       <button type="button" class="primary" data-action="new">Finalizar y borrar datos</button></div></div>`;
@@ -267,6 +299,7 @@ function tools() {
     <p>Estas clasificaciones utilizan los datos ya introducidos en la consulta. No generan diagnósticos ni recomendaciones terapéuticas.</p>
     ${banner()}
     <div class="calc-stack">${renalResultCard()}${fib4ResultCard()}</div>
+    ${integratedCards()}
     <div class="tool-grid">
       ${['dm2','ic','obesidad','insulina'].map(id=>{
         const m=MODULE_BY_ID[id];
@@ -279,13 +312,14 @@ function tools() {
 }
 function sources() {
   return `<div class="page interior"><div class="eyebrow">TRANSPARENCIA</div><h1>Fuentes y validación</h1>
-  <p>CaHReMe incorpora cálculo descriptivo de categorías G/A y FIB-4 basado en fuentes identificadas. El resto de decisiones clínicas, incluidas las farmacológicas, están pendientes de validación.</p>
+  <p>CaHReMe calcula categorías G/A y FIB-4, además de mostrar candidatos multiorgánicos para revisión profesional. No determina idoneidad terapéutica individual ni genera dosis, recetas o suspensiones automáticas.</p>
   ${banner()}
   <section class="sources-card"><h2>Documentación de desarrollo</h2>
   <p>El proyecto se gestiona en un repositorio privado. El acceso a estos enlaces requiere los permisos correspondientes.</p>
   <a href="https://github.com/olsanju-hub/CaReMe/blob/feat/prototipo-interfaz/docs/DOCUMENTO_RECTOR.md" target="_blank" rel="noopener noreferrer">Documento rector ↗</a>
   <a href="https://github.com/olsanju-hub/CaReMe/blob/feat/prototipo-interfaz/docs/MVP.md" target="_blank" rel="noopener noreferrer">Alcance del MVP ↗</a>
   <a href="https://github.com/olsanju-hub/CaReMe/blob/feat/prototipo-interfaz/docs/FUENTES_CLINICAS.md" target="_blank" rel="noopener noreferrer">Registro de fuentes clínicas ↗</a>
+  <a href="https://github.com/olsanju-hub/CaReMe/blob/feat/prototipo-interfaz/docs/INTEGRACION_TERAPEUTICA.md" target="_blank" rel="noopener noreferrer">Matriz de integración terapéutica ↗</a>
   <a href="https://github.com/olsanju-hub/CaReMe/blob/feat/prototipo-interfaz/docs/DECISIONES.md" target="_blank" rel="noopener noreferrer">Decisiones de identidad ↗</a>
   </section>
   <section class="sources-card"><h2>Privacidad en esta versión</h2><p>Los valores permanecen exclusivamente en memoria durante la sesión abierta: no se usan cookies, almacenamiento local ni servicios remotos. Al recargar se pierden los datos.</p></section></div>`;
