@@ -2,6 +2,12 @@
 
 Estado: **decisión de producto para prototipo**, sin reglas clínicas activas.
 
+## Consultas de referencia añadidas (iteración A.2)
+
+La portada ofrece **siete rutas**: evaluación integral y seis consultas clínicas dirigidas (DM2, insuficiencia cardíaca, ERC, sobrepeso/obesidad, enfermedad hepática metabólica e insulinización). Cada consulta tiene tres vistas: **Rápida → Detallada → Resumen**. Se puede alternar entre ellas sin perder los datos. Los campos compartidos permanecen en memoria y se reutilizan entre módulos. Las entradas sin datos quedan «Sin registrar»; no se asigna resultado normal.
+
+**La vista «Resumen» solo recapitula información introducida, no es un resultado diagnóstico ni terapéutico.** Las salidas asistenciales permanecen desactivadas hasta contar con reglas y pruebas validadas.
+
 ## Entrada dual
 - **Evaluación integral (predeterminada):** empieza en contexto y recorre cardiovascular, renal, hepático, metabólico y tratamientos.
 - **Consulta dirigida:** permite entrar directamente en el dominio solicitado. No se considera que el resto de dominios esté descartado; el resumen los mantiene visibles como pendientes.
