@@ -86,9 +86,9 @@ La versión detallada añadirá, **solo después de validación**, dosis de inic
 | Inicio, navegación, formulario por dominios y resumen no clínico | Prototipo creado; pendiente revisión visual en navegador real |
 | DM2 rápida con sus criterios | **Captura rápida y detallada implementada; resultados clínicos no implementados** |
 | IC rápida y detallada | **Captura rápida y detallada implementada; resultados clínicos no implementados** |
-| ERC rápida y detallada | **Captura rápida y detallada implementada; resultados clínicos no implementados** |
+| ERC rápida y detallada | **Captura implementada; categorías G/A descriptivas KDIGO 2024 calculadas, sin diagnóstico ni recomendaciones terapéuticas** |
 | Sobrepeso/obesidad rápida y detallada | **Captura rápida y detallada implementada; resultados clínicos no implementados** |
-| Hepático rápido con interpretación validada | **Captura rápida y detallada implementada; interpretación clínica no implementada** |
+| Hepático rápido con interpretación validada | **Captura implementada; FIB-4 calculado con interpretación condicionada EASL 2024, pendiente revisión clínica formal y ruta terapéutica** |
 | Inicio/intensificación/desintensificación de insulina | **Captura de las tres situaciones implementada; algoritmo y recomendaciones no implementados** |
 | Recomendaciones clínicas y terapéuticas comprobadas | **No implementado** |
 | Biblioteca de algoritmos oficiales y leyenda farmacológica | **No implementado** |
