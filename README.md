@@ -11,7 +11,16 @@ PWA independiente de apoyo a la decisión clínica en Atención Primaria en Espa
 
 ## Requisito funcional de referencia
 
-CaHReMe debe cubrir **las seis consultas de GlucoGuía** (DM2, IC, ERC, sobrepeso/obesidad, enfermedad hepática metabólica e insulinización), **con consulta rápida, detalle y resultados equivalentes en funcionalidad**, ampliadas con evaluación integral, datos compartidos, recomendaciones clínicas trazables y seguimiento. **No está implementado todavía ese motor clínico.** Véase [matriz de equivalencia y brechas](docs/MATRIZ_EQUIVALENCIA_GLUCOGUIA.md).
+CaHReMe cubre ya la **navegación y captura de datos** de seis consultas inspiradas en GlucoGuía y debe completar su **lógica clínica validada** (DM2, IC, ERC, sobrepeso/obesidad, enfermedad hepática metabólica e insulinización), **con consulta rápida, detalle y resultados equivalentes en funcionalidad**, ampliadas con evaluación integral, datos compartidos, recomendaciones clínicas trazables y seguimiento. **El motor de resultados clínicos sigue pendiente.** Véase [matriz de equivalencia y brechas](docs/MATRIZ_EQUIVALENCIA_GLUCOGUIA.md).
+
+## Estado de las seis consultas (iteración A.2)
+
+- Se han implementado **seis pantallas dirigidas**, cada una con pestañas de **consulta rápida**, **revisión detallada** y **resumen de datos**.
+- Los campos habituales —TFGe, HbA1c, medicación, etc.— comparten un único estado de evaluación mientras la app está abierta, sin duplicar valores al cambiar de módulo.
+- Se admite selección simultánea de comorbilidades y clases farmacológicas. Los campos tienen estado registrado, ausente, no disponible o por revisar.
+- Se conserva además el séptimo acceso a **evaluación integral** del paciente.
+- **No se ha implementado el motor clínico de interpretación, cálculo o tratamiento**; la paridad de resultados con GlucoGuía sigue pendiente de verificación científica y desarrollo. No utilizar para decisiones asistenciales.
+- Pruebas automatizadas de rutas, captura y reutilización de datos; renderizado en dispositivos reales pendiente de revisión.
 
 ## Funcionalidades previstas
 - Entrada por paciente; consulta rápida y evaluación avanzada, con tratamiento explícito de información ausente.
