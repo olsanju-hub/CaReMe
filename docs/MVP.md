@@ -30,6 +30,12 @@ En la rama `feat/prototipo-interfaz` ya se muestran las seis consultas con **cap
 | UI-05 | Información de privacidad y estado de validación | Visible desde inicio y resultados |
 | UI-06 | Identidad Atlántico | Paleta, tipografía, estados de foco y contraste comprobables |
 
+## Estado parcial del bloque B (2026-11-11)
+
+Se han incorporado **categorías G/A (KDIGO 2024)** y **FIB-4 calculado (EASL-EASD-EASO 2024)** en `src/clinical/engine.mjs`, con controles de información ausente, situación aguda y límites por edad. Fuente, límites y pruebas: [registro clínico](FUENTES_CLINICAS.md).
+
+**No equivale a cierre de los módulos renal y hepático:** pendientes son cronicidad/documentación de causa, escalado/seguimiento, indicaciones y contraindicaciones farmacológicas, revisión clínica formal y demás cálculos. Ninguna recomendación de tratamiento se publica por estos resultados.
+
 ## Iteración B — cálculo validado por dominios
 
 | Código | Función | Condición de aceptación |
