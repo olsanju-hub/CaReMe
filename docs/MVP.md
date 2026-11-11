@@ -36,6 +36,12 @@ Se han incorporado **categorías G/A (KDIGO 2024)** y **FIB-4 calculado (EASL-EA
 
 **No equivale a cierre de los módulos renal y hepático:** pendientes son cronicidad/documentación de causa, escalado/seguimiento, indicaciones y contraindicaciones farmacológicas, revisión clínica formal y demás cálculos. Ninguna recomendación de tratamiento se publica por estos resultados.
 
+## Prototipo de integración terapéutica para revisión (2026-11-11)
+
+Se ha incorporado un motor determinista de **alertas de seguridad, candidatos farmacológicos y contexto pendiente**, sin elección de molécula ni dosis. Se basa en diagnósticos declarados, resultados G/A, FIB-4 y tratamiento actual. No se considera una recomendación asistencial operativa ni acredita paridad terapéutica con GlucoGuía.
+
+Fuentes y casos de prueba: [Integración terapéutica](INTEGRACION_TERAPEUTICA.md). Pendiente revisión clínica profesional, adaptación individual CIMA-AEMPS y completar el motor de seguimiento.
+
 ## Iteración B — cálculo validado por dominios
 
 | Código | Función | Condición de aceptación |
