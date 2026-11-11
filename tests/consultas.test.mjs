@@ -71,4 +71,9 @@ test('navegación rápida / detallada / resumen conserva los datos capturados', 
   assert.ok(root.innerHTML.includes('value="8.1"'), 'dato de HbA1c no compartido');
   click('module-mode',{mode:'review'});
   assert.ok(root.innerHTML.includes('Motor clínico pendiente de validación'));
+  click('home');
+  assert.ok(root.innerHTML.includes('Continuar evaluación integral'));
+  click('new');
+  assert.ok(root.innerHTML.includes('Nueva evaluación integral'));
+  assert.ok(!root.innerHTML.includes('Continuar evaluación integral'));
 });
