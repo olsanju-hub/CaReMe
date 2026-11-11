@@ -383,3 +383,43 @@ h2 { letter-spacing:-.025em }
   .integration-head h2 { font-size:1.23rem; }
   .integration-card { padding:14px 13px; }
 }
+
+/* Farmacología CIMA: ficha por indicación; visual separa datos del paciente y pauta de FT. */
+.pharma-library { border-top:1px solid var(--line); padding-top:24px; margin-top:28px; }
+.pharma-library h2 { margin:3px 0 7px; font-size:1.45rem; }
+.pharma-library>p { color:var(--muted); font-size:.84rem; }
+.pharma-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; margin-top:15px; }
+.pharma-preview { border:1px solid var(--line); border-radius:15px; background:#fff; padding:18px;
+  display:flex; flex-direction:column; justify-content:space-between; gap:15px; }
+.pharma-preview strong { display:block; font-size:1.05rem; }
+.pharma-preview span { color:var(--muted); display:block; margin-top:4px; font-size:.78rem; }
+.pharma-preview button { align-self:flex-start; }
+.drug-tabs { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:8px; margin:18px 0; }
+.drug-tabs button { padding:11px 13px; border-radius:12px; border:1px solid var(--line); text-align:left;
+  color:#2B5E69; background:#fff; font-weight:710; font-size:.8rem; }
+.drug-tabs button.active { border-color:var(--teal); background:var(--sea); color:#0D686F; }
+.drug-card { border:1px solid var(--line); border-radius:16px; background:#fff; padding:23px 25px;
+  margin-top:14px; box-shadow:0 7px 20px #12496205; }
+.drug-card h2 { margin:4px 0 8px; font-size:1.22rem; }
+.drug-card h3 { font-size:.9rem; margin-top:18px; }
+.drug-card>p { color:var(--muted); font-size:.82rem; }
+.drug-card ul { padding-left:20px; margin:10px 0 0; }
+.drug-card li { margin:6px 0; font-size:.83rem; color:#456771; }
+.drug-state { display:inline-block; background:#E7F1F1; color:#25757B; font-size:.7rem; font-weight:800;
+  border-radius:30px; padding:6px 11px; margin-bottom:9px; }
+.drug-state.bloqueo { background:#FCE8E4; color:#A44137; }
+.drug-state.datos_insuficientes { background:#FFF4E4; color:#986128; }
+.drug-warning,.drug-missing,.drug-checks { border-radius:13px; padding:14px 17px; margin:12px 0; }
+.drug-warning { background:#FFF0EB; border-left:3px solid #BA5A48; }
+.drug-missing { background:#FCF5E9; border-left:3px solid #BD965C; }
+.drug-checks { background:#EDF6F6; border-left:3px solid #549CA0; }
+.drug-warning strong,.drug-missing strong,.drug-checks strong { font-size:.84rem; }
+.drug-disclaimer { margin-top:16px; font-size:.8rem; color:#975E33!important; }
+.drug-source { border-top:1px solid var(--line); margin-top:20px; padding-top:16px; display:grid; gap:6px; }
+.drug-source strong { font-size:.76rem; color:#55717C; }
+.drug-source a { font-size:.84rem; font-weight:730; }
+@media(max-width:660px){
+ .pharma-grid { grid-template-columns:1fr; }
+ .drug-card { padding:18px 16px; }
+ .drug-tabs { grid-template-columns:1fr; }
+}
