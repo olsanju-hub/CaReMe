@@ -28,6 +28,23 @@ test('ERC no confirmada no genera indicación renal de iSGLT2',()=>{
   assert.ok(has(x.context,'CKD-CHRONICITY'));
   assert.ok(!has(x.options,'SGLT2-REVIEW'));
 });
+test('sospecha de cetoacidosis genera alerta incluso sin diagnósticos cardiorrenales',()=>{
+  const x=integratePatient(draft({cetoacidosis_sospecha:'Sí',farmacos_clases:['Metformina']}));
+  assert.ok(has(x.alerts,'KETO-URGENT-REVIEW'));
+  assert.ok(!has(x.options,'GLP-REVIEW'));
+  const y=integratePatient(draft({farmacos_clases:['iSGLT2'],
+    situacion_aguda:'Enfermedad aguda grave'}));
+  assert.ok(has(y.alerts,'SGLT2-CURRENT-ACUTE'));
+});
+test('la situación aguda no presenta candidatas farmacológicas',()=>{
+  const x=integratePatient(draft({...baseline,
+    situacion_aguda:'Enfermedad aguda grave'}));
+  assert.ok(has(x.alerts,'SGLT2-ACUTE-SAFETY'));
+  assert.ok(has(x.context,'GLP-ACUTE-DEFER'));
+  assert.ok(has(x.context,'NSMRA-ACUTE-DEFER'));
+  assert.ok(!has(x.options,'GLP-REVIEW'));
+  assert.ok(!has(x.options,'NSMRA-REVIEW'));
+});
 test('sin TFGe, iSGLT2 queda sin evaluación de inicio',()=>{
   const {tfge,...partial}=baseline;
   const x=integratePatient(draft(partial));
