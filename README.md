@@ -1,13 +1,13 @@
 # CaHReMe
 
-**Evaluación cardiorrenal-hepatometabólica — proyecto en diseño.**
+**Evaluación cardiorrenal-hepatometabólica — prototipo funcional de captura, sin motor clínico.**
 
 **Repositorio:** `olsanju-hub/CaReMe` · **Nombre visual:** CaHReMe (de trabajo)
 
 ## Propósito
 PWA independiente de apoyo a la decisión clínica en Atención Primaria en España. Evaluación integrada de los dominios **cardiovascular, renal, hepático y metabólico**, sin reducir la app a diabetes mellitus.
 
-> Estado: planificación. **No contiene algoritmos clínicos verificados y no debe utilizarse todavía para decisiones asistenciales.**
+> Estado: **prototipo de interfaz (iteración A, en revisión)**. No contiene algoritmos clínicos verificados y **no debe utilizarse para decisiones asistenciales**.
 
 ## Funcionalidades previstas
 - Entrada por paciente; consulta rápida y evaluación avanzada, con tratamiento explícito de información ausente.
@@ -24,7 +24,25 @@ PWA independiente de apoyo a la decisión clínica en Atención Primaria en Espa
 - **Ventanas:** dashboard de inicio; evaluación guiada; paneles de información auxiliar; resultados clínicos completos.
 - **Independencia:** no fusionar con NexoClx AP, Urg, 061 o Ped.
 
-Documentación: [Documento rector v0.1](docs/DOCUMENTO_RECTOR.md) · [Alcance e iteraciones del MVP](docs/MVP.md) · [Decisiones del proyecto](docs/DECISIONES.md).
+Documentación: [Documento rector v0.1](docs/DOCUMENTO_RECTOR.md) · [Alcance e iteraciones del MVP](docs/MVP.md) · [Flujo de consulta](docs/FLUJO_DE_CONSULTA.md) · [Decisiones del proyecto](docs/DECISIONES.md).
+
+## Prototipo local (rama `feat/prototipo-interfaz`)
+
+Requiere Node.js 20 o superior (sin dependencias npm externas):
+
+```bash
+npm run dev
+```
+
+Abrir `http://localhost:4173`. Para ejecutar pruebas y comprobar sintaxis:
+
+```bash
+npm run check
+```
+
+Incluye entrada integral o dirigida, captura por secciones, distinción entre campo registrado/no disponible/sin registrar/por revisar y resumen no interpretativo. **No guarda datos** en el navegador ni los envía a servicios externos; al recargar se pierde el formulario. No introducir datos identificativos.
+
+**Pendiente:** integrar el icono final aprobado y las ilustraciones anatómicas en tamaños adecuados; validar la experiencia móvil y accesibilidad; incorporar el manifiesto y funcionalidad PWA. El logotipo tipográfico actual es provisional y no sustituye el icono elegido.
 
 ## Plan por fases
 1. Documento rector y matriz de evidencia actualizada.
@@ -42,7 +60,7 @@ Documentación: [Documento rector v0.1](docs/DOCUMENTO_RECTOR.md) · [Alcance e 
 | Documentación inicial | Borrador v0.1 disponible para revisión |
 | Evidencia y especificaciones clínicas | Pendiente |
 | Motor de evaluación y recomendaciones | Pendiente |
-| Interfaz y PWA | Pendiente |
+| Interfaz y PWA | Prototipo inicial en rama de revisión; PWA pendiente |
 | Icono final exportado | Pendiente |
 | Pruebas y validación clínica | Pendiente |
 | Despliegue | Pendiente |
