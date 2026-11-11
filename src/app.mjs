@@ -34,7 +34,7 @@ function home() {
         <h1>Una visión completa.<br><em>Un paciente.</em></h1>
         <p>Evaluación multiorgánica y seis consultas dirigidas. Los datos compartidos no se vuelven a introducir.</p>
         <button class="primary hero-button" type="button" data-action="start" data-focus="integral">
-          ${Object.values(counts()).reduce((a,b)=>a+b,0) && (counts().registrado + counts().no_disponible + counts().revisar)>0 ? 'Continuar evaluación integral' : 'Nueva evaluación integral'}
+          ${(counts().registrado + counts().no_disponible + counts().revisar)>0 ? 'Continuar evaluación integral' : 'Nueva evaluación integral'}
           <span aria-hidden="true">→</span></button>
           ${(counts().registrado + counts().no_disponible + counts().revisar)>0
             ? '<button type="button" class="hero-reset" data-action="new">Borrar datos y comenzar otra evaluación</button>' : ''}
