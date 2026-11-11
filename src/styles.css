@@ -224,3 +224,24 @@ h2 { letter-spacing:-.025em }
   .nav-symbol { display:block; font-size:1.4rem; line-height:1.1; font-weight:500 }
 }
 @media(prefers-reduced-motion:reduce) { *,*::before,*::after { transition:none!important; scroll-behavior:auto!important } }
+
+/* Identidad orgánica provisional: los SVG son recursos de interfaz y no
+   sustituyen al icono A definitivo seleccionado por el propietario. */
+.brand-mark { overflow:hidden; background:linear-gradient(140deg,#117A94,#063157); }
+.brand-mark img { width:100%; height:100%; object-fit:cover; display:block; border-radius:12px; }
+.hero-art { width:285px; height:285px; filter:drop-shadow(0 12px 25px #052b4466) }
+.hero-logo { width:100%; height:100%; object-fit:contain; display:block; border-radius:26px; }
+.domain-image-wrap { height:89px; width:100%; display:flex; align-items:center; justify-content:flex-start; margin:0 0 12px; }
+.domain-illustration { display:block; width:125px; height:89px; object-fit:contain; object-position:left center; }
+.domain-card { min-height:242px; }
+.domain-card.cardio .domain-image-wrap { background:linear-gradient(105deg,#FFECE8,#FFFFFF); }
+.domain-card.renal .domain-image-wrap { background:linear-gradient(105deg,#EBF5FC,#FFFFFF); }
+.domain-card.hepatico .domain-image-wrap { background:linear-gradient(105deg,#FCF0E5,#FFFFFF); }
+.domain-card.metabolico .domain-image-wrap { background:linear-gradient(105deg,#E9F4F6,#FFFFFF); }
+.domain-image-wrap { padding-left:8px; border-radius:12px; }
+@media(max-width:600px){
+  .hero-art { right:-88px; top:-19px; width:235px; height:235px; opacity:.22; transform:rotate(7deg) }
+  .domain-card { min-height:203px; }
+  .domain-image-wrap { height:73px; margin-bottom:10px; }
+  .domain-illustration { width:105px; height:73px; }
+}
