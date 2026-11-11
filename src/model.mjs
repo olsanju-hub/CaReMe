@@ -69,7 +69,7 @@ export function fieldState(draft, id) {
   if (f.type === 'select' && !f.options.includes(v)) return 'revisar';
   if (f.type === 'multi') {
     const selected = readMulti(v);
-    if (!selected.length) return 'sin_registrar';
+    if (!selected.length) return v === '[]' ? 'sin_registrar' : 'revisar';
     if (new Set(selected).size !== selected.length ||
       !selected.every(item => f.options.includes(item))) return 'revisar';
     if (selected.some(item => /^(Sin |Ninguna )/.test(item)) && selected.length > 1) return 'revisar';
