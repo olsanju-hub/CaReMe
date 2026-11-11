@@ -51,9 +51,9 @@ Abrir `http://localhost:4173`. Para ejecutar pruebas y comprobar sintaxis:
 npm run check
 ```
 
-Incluye entrada integral o dirigida, captura por secciones, distinción entre campo registrado/no disponible/sin registrar/por revisar y resumen no interpretativo. **No guarda datos** en el navegador ni los envía a servicios externos; al recargar se pierde el formulario. No introducir datos identificativos.
+Incluye entrada integral o dirigida, captura por secciones, distinción entre campo registrado/no disponible/sin registrar/por revisar y resumen no interpretativo. Dispone de manifiesto PWA y caché **exclusivamente de los archivos estáticos** para pruebas de instalación y funcionamiento sin conexión una vez cargado. **No guarda datos** en el navegador ni los envía a servicios externos; al recargar se pierde el formulario. No introducir datos identificativos.
 
-**Pendiente:** integrar el icono final aprobado y las ilustraciones anatómicas en tamaños adecuados; validar la experiencia móvil y accesibilidad; incorporar el manifiesto y funcionalidad PWA. El logotipo tipográfico actual es provisional y no sustituye el icono elegido.
+**Recursos provisionales:** se han añadido cuatro ilustraciones anatómicas SVG originales y un símbolo SVG de instalación como **alternativa temporal**. El icono A de la tercera variante aprobada (ilustración rica en color, corazón superior, riñones, hígado y silueta humana en cuatro lóbulos) **no ha sido sustituido ni incorporado como archivo definitivo**. Queda pendiente exportarlo, contrastar su legibilidad en tamaños pequeños, instalarlo como icono principal y confirmar diseño en pantalla real. El SVG incluido no es el diseño final. No se han activado algoritmos médicos.
 
 ## Plan por fases
 1. Documento rector y matriz de evidencia actualizada.
@@ -71,7 +71,7 @@ Incluye entrada integral o dirigida, captura por secciones, distinción entre ca
 | Documentación inicial | Borrador v0.1 disponible para revisión |
 | Evidencia y especificaciones clínicas | Pendiente |
 | Motor de evaluación y recomendaciones | Pendiente |
-| Interfaz y PWA | Prototipo inicial en rama de revisión; PWA pendiente |
+| Interfaz y PWA | Prototipo en rama de revisión; manifiesto PWA y caché estática implementados; validación visual e instalación pendientes |
 | Icono final exportado | Pendiente |
 | Pruebas y validación clínica | Pendiente |
 | Despliegue | Pendiente |
