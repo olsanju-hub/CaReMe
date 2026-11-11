@@ -24,8 +24,9 @@ La herramienta no inicia, cambia, retira ni prescribe medicación. No elige mol�
 | ESC-HF-2026 | [ESC 2026 Guidelines for management of heart failure](https://www.escardio.org/guidelines/clinical-practice-guidelines/all-esc-practice-guidelines/heart-failure), sección 6.1.2 | Tratamiento de IC sintomática con independencia de FEVI, adaptado al individuo |
 | EASL-EASD-EASO-MASLD-2024 | [EASL-EASD-EASO 2024](https://pmc.ncbi.nlm.nih.gov/articles/PMC11299976/), apartado sobre terapias para comorbilidades y figura 4 | Diabetes, obesidad y MASLD; distinguir medicamentos metabólicos de tratamiento hepático dirigido |
 | CIMA-AEMPS-EMPAGLIFLOZINA | [Empagliflozina Tecnigen, ficha técnica](https://cima.aemps.es/cima/pdfs/es/ft/90784/FT_90784.html.pdf), apartado 4.4 | Cetoacidosis, suspensión en enfermedad aguda grave/cirugía mayor y uso según TFGe |
+| CIMA-AEMPS-FINERENONA | [Kerendia, ficha técnica](https://cima.aemps.es/cima/dochtml/ft/1211616002/FT_1211616002.html), apartados 4.2–4.5 | En ERC asociada a DM2, no iniciar finerenona con K >5,0 mmol/L; revisar ARM concomitante e interacciones |
 
-La ficha CIMA citada es **de un producto concreto con empagliflozina**, no valida automáticamente la posología, indicaciones ni advertencias de todos los iSGLT2. Antes de recomendar una molécula será obligatoria la comprobación **individual** de su ficha vigente. El módulo no genera dosis.
+Las fichas CIMA citadas corresponden a **productos concretos**: empagliflozina y finerenona; no validan automáticamente la posología, indicaciones ni advertencias de todas las moléculas de sus respectivas clases. Antes de recomendar una molécula será obligatoria la comprobación **individual** de su ficha vigente. El módulo no genera dosis.
 
 Las indicaciones, recomendaciones, autorizaciones europeas y financiación pueden cambiar: la matriz se versionará antes de uso asistencial. Las normas ESC 2026 deben prevalecer sobre resúmenes ESC de años previos en los puntos en que sean concordantes con evidencia actual.
 
@@ -48,13 +49,19 @@ No se recopilan nombres, DNI, números de historia ni se guardan datos al recarg
 | SGLT2-EGFR-UNKNOWN | Indicación potencial y TFGe no disponible | Contexto; **sin opción de inicio** |
 | SGLT2-LOW-GFR | Indicación potencial y TFGe <20 | Contexto; **sin inicio automático**. No equivale a ordenar suspensión de un tratamiento existente |
 | SGLT2-ACUTE-SAFETY | Indicación potencial y enfermedad aguda grave, cirugía mayor/ayuno prolongado o sospecha de cetoacidosis | Alerta prioritaria, **oculta la propuesta de inicio**; requiere valoración urgente si hay sospecha de cetoacidosis |
+| KETO-URGENT-REVIEW | Sospecha de cetoacidosis, independientemente de ERC/IC y del fármaco registrado | Alerta de valoración inmediata, sin depender de otras reglas |
+| SGLT2-CURRENT-ACUTE | Paciente con iSGLT2 registrado durante enfermedad aguda grave/cirugía mayor | Alerta para revisión del medicamento y situación aguda aunque no haya ERC/IC declaradas |
+| GLP-ACUTE-DEFER | Valoración aguda en paciente que podría optar a terapia incretínica | Se suprime candidato de intensificación hasta reevaluación clínica |
+| NSMRA-ACUTE-DEFER | Valoración aguda en paciente con posible elegibilidad ARM no esteroideo | Sin candidato de inicio durante enfermedad aguda |
 | SGLT2-EXISTING | iSGLT2 ya registrado | Contexto; evita recomendar duplicación de clase |
 | GLP-REVIEW | DM2 + ECV/ ERC crónica / obesidad por IMC aportado / enfermedad hepática declarada | Opción condicionada por indicación glucémica, CV, renal o peso; **no terapia dirigida a MASLD** |
 | GLP-EXISTING | arGLP-1 o agonista dual GIP/GLP-1 registrado en caso pertinente | Contexto; sin nuevo inicio |
 | INCRETIN-DOUBLE, INCRETIN-DPP4 | Combinaciones potencialmente redundantes | Alerta para conciliación, sin modificar tratamiento |
 | HF-MED-REVIEW | IC declarada con pioglitazona o saxagliptina registradas | Alerta para comprobar la ficha del medicamento y su idoneidad |
 | CKD-CHRONICITY | ERC declarada sin persistencia confirmada en ficha | Contexto; no convierte analítica aislada en ERC confirmada |
-| NSMRA-REVIEW | DM2 + ERC crónica, CAC >30 mg/g y TFGe >25 | Opción sujeta a potasio estable normal y tratamiento IECA/ARA-II optimizado. **No autoriza finerenona** sin todos los datos y CIMA |
+| NSMRA-REVIEW | DM2 + ERC crónica, CAC >30 mg/g y TFGe >25, sin bloqueo de seguridad | Opción sujeta a potasio estable normal y tratamiento IECA/ARA-II optimizado, comprobación de interacciones y ficha CIMA |
+| NSMRA-K-BLOCK | Misma rama, potasio sérico >5,0 mmol/L | Alerta; **no se presenta inicio de finerenona como candidato** |
+| NSMRA-MRA-EXISTING | Misma rama con clase ARM ya registrada | Alerta de conciliación; no se sugiere otro ARM mientras no se identifique el tratamiento actual |
 | NSMRA-MISSING | DM2 + ERC crónica con CAC/TFGe incompletas | Contexto; no propone ARM no esteroideo |
 | LIVER-NOT-INDICATION | Enfermedad hepática declarada sin otros condicionantes para GLP | Contexto: **la sola MASLD no autoriza farmacoterapia hepática** |
 | FIB4-CROSS | FIB-4 calculado interpretable por encima de 2,67 | Contexto: priorizar evaluación adicional de fibrosis, sin diagnóstico automático |
@@ -69,7 +76,8 @@ No se recopilan nombres, DNI, números de historia ni se guardan datos al recarg
 - TFGe no disponible, discordante o desactualizada.
 - Medicación registrada solo por clase sin molécula ni dosis; fármacos en transición.
 - Alergias revisadas «Sí» pero sin documentación fiable.
-- Paciente con enfermedad aguda, ayuno prolongado, cirugía o sospecha de cetoacidosis.
+- Paciente con enfermedad aguda, ayuno prolongado, cirugía o sospecha de cetoacidosis. Estas situaciones priorizan alertas y aplazan candidatos crónicos.
+- Potasio sérico >5,0 mmol/L en la rama de finerenona o un ARM ya registrado sin aclarar molécula.
 - Sospecha de MASLD utilizada como indicación farmacológica hepática dirigida.
 - Valor de FIB-4 usado sin contexto o en proceso agudo.
 
