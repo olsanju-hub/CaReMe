@@ -4,6 +4,12 @@
 **Fecha:** 2026-11-11  
 **Dependencia:** [Documento rector](DOCUMENTO_RECTOR.md)
 
+## Requisito de equivalencia funcional (2026-11-11)
+
+**Es imprescindible reproducir mediante implementación original la cobertura clínica funcional de las seis consultas de GlucoGuía**: DM2, IC, ERC, sobrepeso/obesidad, enfermedad hepática metabólica e insulinización, con consulta rápida, revisión detallada cuando exista, resultados y acceso a fuentes. **La evaluación integral es un séptimo acceso adicional, no reemplaza las seis consultas.**
+
+Las variables y resultados de cada consulta se detallan en la [matriz de equivalencia GlucoGuía → CaHReMe](MATRIZ_EQUIVALENCIA_GLUCOGUIA.md). La interfaz actual es solo un prototipo de captura y **todavía no cumple esa paridad**. No activar recomendaciones sin verificar evidencia vigente y casos clínicos.
+
 ## Resultado buscado
 Una evaluación integral de un adulto en consulta de AP, sin identificarlo, que muestre resultados por dominio y una síntesis de próximos pasos sin inventar una puntuación multiorgánica.
 
