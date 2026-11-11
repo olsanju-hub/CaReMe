@@ -345,3 +345,41 @@ h2 { letter-spacing:-.025em }
   .calc-type { font-size:.61rem; }
   .calc-values strong { font-size:1.7rem; }
 }
+
+
+/* Integración cardiorrenal-hepatometabólica: tarjetas de revisión, nunca recetas. */
+.integration-panel { margin:23px 0; padding:21px; border:1px solid var(--line);
+  border-radius:20px; background:#EFF6F6; }
+.integration-head { display:flex; justify-content:space-between; gap:16px; align-items:flex-start; }
+.integration-head h2 { font-size:1.4rem; margin:5px 0; }
+.integration-head p { color:#5D7880; font-size:.82rem; margin:0; max-width:620px; }
+.integration-status { white-space:nowrap; color:#0B757A; font-size:.64rem; letter-spacing:.1em;
+  font-weight:800; padding:7px 10px; border:1px solid #B8D6D5; background:#fff; border-radius:30px; }
+.integration-group { margin-top:22px; }
+.integration-group h3 { font-size:.83rem; letter-spacing:.01em; margin-bottom:10px; }
+.integration-list { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+.integration-card { background:#fff; border:1px solid var(--line); border-left:4px solid #A7C9CD;
+  border-radius:14px; padding:16px 17px; min-width:0; }
+.integration-card.risk { border-left-color:#C96B57; }
+.integration-card.candidate { border-left-color:#168E88; }
+.integration-card.missing { border-left-color:#B59A67; }
+.integration-card h4 { margin:0 0 6px; font-size:.94rem; line-height:1.35; }
+.integration-card p { font-size:.8rem; color:#4E6871; margin:6px 0 12px; line-height:1.5; }
+.integration-card strong { font-size:.73rem; }
+.integration-card ul { margin:6px 0 13px; padding-left:19px; }
+.integration-card li { color:#59737A; font-size:.75rem; line-height:1.45; margin-bottom:5px; }
+.integration-card details { border-top:1px solid #E8EEEF; padding-top:10px; }
+.integration-card summary { cursor:pointer; color:#13757B; font-size:.73rem; font-weight:700; }
+.integration-sources { margin-top:9px; display:grid; gap:8px; }
+.integration-sources a { font-size:.71rem; font-weight:650; overflow-wrap:anywhere; }
+.integration-disclaimer { color:#637C83; font-size:.75rem; margin:16px 0 0; }
+.integration-empty { font-size:.85rem; color:#5E747D; margin:16px 0 0; }
+@media(max-width:750px) {
+  .integration-list { grid-template-columns:1fr; }
+  .integration-head { flex-direction:column; }
+}
+@media(max-width:600px) {
+  .integration-panel { padding:16px 13px; border-radius:16px; }
+  .integration-head h2 { font-size:1.23rem; }
+  .integration-card { padding:14px 13px; }
+}
