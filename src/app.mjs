@@ -1,7 +1,8 @@
-import { SECTIONS, createDraft, setValue, setUnavailable, fieldState, sectionStats, totalStats, sectionForFocus } from './model.mjs';
+import { SECTIONS, FIELDS, createDraft, setValue, setUnavailable, fieldState, sectionStats, totalStats, sectionForFocus } from './model.mjs';
+import { MODULES, MODULE_BY_ID, moduleFields, readMulti } from './consultas.mjs';
 
 let draft = createDraft();
-let current = { page: 'home', step: 0, focus: 'integral' };
+let current = { page: 'home', step: 0, focus: 'integral', module: null, mode:'quick' };
 const app = document.getElementById('app');
 const escape = (value) => String(value ?? '').replace(/[&<>"']/g, c =>
   ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -26,30 +27,109 @@ function nav() {
     `<button type="button" class="${current.page === id ? 'active' : ''}" data-action="${id}" ${current.page === id ? 'aria-current="page"' : ''}>
       <span aria-hidden="true" class="nav-symbol">${sym}</span><span>${label}</span></button>`).join('')}</nav>`;
 }
-function home() {
-  const domains = [
-    ['cardio','cardiovascular','Cardiovascular','Presión arterial, lípidos y antecedentes.'],
-    ['renal','renal','Renal','Función renal, albuminuria y persistencia.'],
-    ['hepatico','hepatico','Hepático','Bioquímica hepática y esteatosis.'],
-    ['metabolico','metabolico','Metabólico','Glucosa, diabetes y adiposidad.']
-  ];
+function newHome() {
   return `<div class="page home">
     <section class="hero">
       <div class="hero-copy"><div class="eyebrow light">ATENCIÓN PRIMARIA · ESPAÑA</div>
-      <h1>Una visión completa.<br><em>Un paciente.</em></h1>
-      <p>Explora los cuatro dominios desde una sola evaluación. Introduce únicamente la información disponible.</p>
-      <button class="primary hero-button" type="button" data-action="start" data-focus="integral">Comenzar evaluación integral <span aria-hidden="true">→</span></button></div>
+        <h1>Una visión completa.<br><em>Un paciente.</em></h1>
+        <p>Evaluación multiorgánica y seis consultas dirigidas. Los datos compartidos no se vuelven a introducir.</p>
+        <button class="primary hero-button" type="button" data-action="start" data-focus="integral">Nueva evaluación integral <span aria-hidden="true">→</span></button>
+      </div>
       <div class="hero-art" aria-hidden="true"><img class="hero-logo" src="./public/icon-concept.svg" alt="" /></div>
     </section>
     ${banner()}
-    <div class="section-heading"><div><div class="eyebrow">ACCESOS DIRECTOS</div><h2>Consulta por dominio</h2></div>
-      <p>Una entrada rápida no oculta los demás dominios.</p></div>
-    <div class="domain-grid">${domains.map(([id,short,title,detail]) =>
-      `<button type="button" class="domain-card ${id}" data-action="start" data-focus="${id}">
-        <span class="domain-image-wrap" aria-hidden="true"><img class="domain-illustration" src="./public/domain-${short}.svg" alt="" /></span>
-        <strong>${title}</strong><span>${detail}</span><b aria-hidden="true">↗</b></button>`).join('')}</div>
-    <section class="info-strip"><div><strong>Datos temporales</strong><p>Este prototipo conserva la información solo mientras permanece abierta la página. No se guarda en el navegador ni se envía a servidores.</p></div>
-      <button type="button" class="text-link" data-action="sources">Ver limitaciones →</button></section>
+    <div class="section-heading"><div><div class="eyebrow">SEIS CONSULTAS CLÍNICAS</div><h2>¿Qué necesitas valorar?</h2></div>
+      <p>Consulta rápida y revisión detallada por problema. Sin interpretaciones automáticas todavía.</p>
+    </div>
+    <div class="module-grid">${MODULES.map(m =>
+      `<button type="button" class="module-card" data-action="start-module" data-module="${escape(m.id)}">
+      <span class="module-art" aria-hidden="true"><img src="./public/domain-${escape(m.domain)}.svg" alt="" /></span>
+      <span class="module-content"><strong>${escape(m.title)}</strong><small>${escape(m.short)}</small></span>
+      <span class="module-arrow" aria-hidden="true">↗</span></button>`
+    ).join('')}</div>
+    <section class="info-strip"><div><strong>Una ficha compartida, sin identificación</strong>
+      <p>Las seis consultas y la evaluación integral reutilizan la información disponible. Los datos permanecen en memoria y se pierden al recargar.</p></div>
+      <button type="button" class="text-link" data-action="sources">Fuentes y limitaciones →</button></section>
+  </div>`;
+}
+function moduleFieldMarkup(f) {
+  const unavailable = draft.unavailable.includes(f.id);
+  const value = draft.values[f.id] ?? '';
+  let control;
+  if (f.type === 'multi') {
+    const selected = readMulti(value);
+    control = `<fieldset class="checks-field" ${unavailable ? 'disabled' : ''}><legend class="sr-only">${escape(f.label)}</legend>
+      ${f.options.map(opt => `<label class="check-option"><input type="checkbox" data-field="${escape(f.id)}" value="${escape(opt)}"
+       ${selected.includes(opt) ? 'checked' : ''}/> ${escape(opt)}</label>`).join('')}</fieldset>`;
+  } else if (f.type === 'select') {
+    control = `<select id="f-${escape(f.id)}" data-field="${escape(f.id)}" ${unavailable ? 'disabled' : ''}>
+      <option value="">Selecciona una opción</option>${f.options.map(opt =>
+      `<option value="${escape(opt)}" ${value===opt?'selected':''}>${escape(opt)}</option>`).join('')}</select>`;
+  } else if (f.type === 'textarea') {
+    control = `<textarea id="f-${escape(f.id)}" data-field="${escape(f.id)}" rows="3" placeholder="Sin registrar" ${unavailable?'disabled':''}>${escape(value)}</textarea>`;
+  } else {
+    control = `<div class="input-unit"><input id="f-${escape(f.id)}" type="number" data-field="${escape(f.id)}"
+       inputmode="decimal" step="${f.integer?'1':'any'}" ${f.min !== undefined ? `min="${f.min}"` : 'min="0"'}
+       ${f.max !== undefined ? `max="${f.max}"` : ''}
+       value="${escape(value)}" placeholder="Sin registrar" ${unavailable?'disabled':''}/>
+       ${f.unit?`<span>${escape(f.unit)}</span>`:''}</div>`;
+  }
+  return `<div class="field module-field"><div class="field-head"><label ${f.type === 'multi' ? '' : `for="f-${escape(f.id)}"`}>${escape(f.label)}</label>
+    <button type="button" class="availability ${unavailable?'selected':''}"
+     data-action="unavailable" data-field-id="${escape(f.id)}" aria-pressed="${unavailable}">
+     ${unavailable?'No disponible ✓':'Marcar no disponible'}</button></div>${control}</div>`;
+}
+function consultationReview(module) {
+  const fields = [...new Set([...module.quick,...module.detail])];
+  const missing = fields.filter(id => fieldState(draft,id) === 'sin_registrar');
+  const invalid = fields.filter(id => fieldState(draft,id) === 'revisar');
+  return `<div class="module-review">
+    <h2>Resumen de captura · ${escape(module.title)}</h2>
+    <p>Información aportada en esta sesión. No constituye valoración diagnóstica ni terapéutica.</p>
+    <div class="review-list">${fields.map(id=>{
+      const f=FIELDS[id],state=fieldState(draft,id);
+      const value = state==='registrado' || state==='revisar'
+        ? (f.type==='multi' ? readMulti(draft.values[id]).join(' · ') : draft.values[id]) +
+          (f.unit ? ` ${f.unit}` : '')
+        : statusLabel(state);
+      return `<div class="review-row"><span>${escape(f.label)}</span>
+        <strong class="${state}">${escape(value)}</strong></div>`;
+    }).join('')}</div>
+    <div class="clinical-lock"><strong>Motor clínico pendiente de validación</strong>
+      <p>${missing.length} datos sin registrar y ${invalid.length} entradas por revisar.
+       Aquí aparecerán situación, siguiente paso, alternativas, seguridad, seguimiento y fuentes,
+       solo cuando cada regla esté verificada y probada.</p></div>
+    <div class="wizard-actions"><button type="button" class="ghost" data-action="module-mode" data-mode="quick">Volver a consulta</button>
+      <button class="primary" type="button" data-action="summary">Ver ficha integral →</button></div>
+  </div>`;
+}
+function moduleView() {
+  const m=MODULE_BY_ID[current.module];
+  if (!m) return home();
+  const mode=current.mode || 'quick';
+  const fields=moduleFields(m.id, mode === 'detail' ? 'detail' : 'quick');
+  const completed=fields.filter(id => fieldState(draft,id)==='registrado').length;
+  return `<div class="page module-page">
+    <div class="bread"><button data-action="home" type="button">Inicio</button><span>›</span><span>${escape(m.title)}</span></div>
+    <div class="module-title"><span class="module-icon"><img src="./public/domain-${escape(m.domain)}.svg" alt="" /></span>
+      <div><div class="eyebrow">CONSULTA DIRIGIDA · CAPTURA</div><h1>${escape(m.title)}</h1><p>${escape(m.short)}</p></div></div>
+    ${banner()}
+    <div class="module-tabs" role="group" aria-label="Nivel de revisión">
+      ${[['quick','Consulta rápida'],['detail','Revisión detallada'],['review','Resumen']].map(([id,name])=>
+       `<button type="button" data-action="module-mode" data-mode="${id}" class="${mode===id?'active':''}" aria-pressed="${mode===id}">${name}</button>`).join('')}
+    </div>
+    ${mode==='review' ? consultationReview(m) : `<section class="form-card">
+      <div class="form-title"><div><h2>${mode==='quick'?'Datos esenciales':'Datos clínicos detallados'}</h2>
+        <p>La información se comparte con los demás módulos y la evaluación integral.</p></div>
+        <span class="count-pill" id="section-count">${completed} de ${fields.length} registrados</span></div>
+      <div class="field-grid">${fields.map(id=>moduleFieldMarkup(FIELDS[id])).join('')}</div>
+      <div class="wizard-actions">
+        <button type="button" class="ghost" data-action="module-mode" data-mode="${mode==='quick'?'detail':'quick'}">${mode==='quick'?'Revisión detallada':'Consulta rápida'}</button>
+        <button type="button" class="primary" data-action="module-mode" data-mode="review">Ver resumen de datos →</button>
+      </div>
+    </section>`}
+    <div class="module-note"><strong>Documentación:</strong> matriz de equivalencia y reglas pendientes de verificación en fuentes actuales.</div>
+    <p class="privacy-note">No introduzcas identificadores del paciente. Los datos no se guardan después de cerrar o recargar.</p>
   </div>`;
 }
 function fieldMarkup(f) {
@@ -140,33 +220,55 @@ function sources() {
   <section class="sources-card"><h2>Privacidad en esta versión</h2><p>Los valores permanecen exclusivamente en memoria durante la sesión abierta: no se usan cookies, almacenamiento local ni servicios remotos. Al recargar se pierden los datos.</p></section></div>`;
 }
 function render() {
-  const contents = current.page === 'home' ? home() : current.page === 'evaluation' ? evaluation()
+  const contents = current.page === 'home' ? home() : current.page === 'module' ? moduleView() : current.page === 'evaluation' ? evaluation()
     : current.page === 'summary' ? summary() : current.page === 'tools' ? tools() : sources();
   app.innerHTML = header() + '<main id="main-content">' + contents + '</main>' + nav() +
     '<footer class="footer">CaHReMe · Identidad Atlántico · Prototipo no validado para uso asistencial</footer>';
 }
 function navigate(page) { current.page = page; render(); scrollTo({ top: 0, behavior: 'auto' }); }
 function start(focus) {
+  current.module = null;
   current.focus = focus;
   current.step = sectionForFocus(focus);
   navigate('evaluation');
 }
 app.addEventListener('input', event => {
   const el = event.target.closest('[data-field]');
-  if (!el || current.page !== 'evaluation') return;
-  draft = setValue(draft, el.dataset.field, el.value);
-  const counter = document.getElementById('section-count');
-  if (counter) counter.textContent = sectionStats(draft, SECTIONS[current.step]).registrado + ' registrados';
+  if (!el || !['evaluation','module'].includes(current.page)) return;
+  const id=el.dataset.field;
+  if (el.type === 'checkbox') {
+    const checked=[...document.querySelectorAll('input[data-field="'+id+'"]:checked')].map(e=>e.value);
+    const chosen=checked.filter(x=>! /^(Sin |Ninguna )/.test(x));
+    const selected=checked.length>1 && checked.some(x=>/^(Sin |Ninguna )/.test(x))
+      ? (el.checked && /^(Sin |Ninguna )/.test(el.value) ? [el.value] : chosen)
+      : checked;
+    draft = setValue(draft,id,JSON.stringify(selected));
+    // Refrescar tras seleccionar «ninguna» para garantizar exclusividad.
+    if (selected.length !== checked.length) return render();
+  } else draft=setValue(draft,id,el.value);
+  const counter=document.getElementById('section-count');
+  if (!counter) return;
+  const fields=current.page==='module'?moduleFields(current.module,current.mode):SECTIONS[current.step].fields.map(f=>f.id);
+  const n=fields.filter(key=>fieldState(draft,key)==='registrado').length;
+  counter.textContent=current.page==='module'?n+' de '+fields.length+' registrados':n+' registrados';
 });
 app.addEventListener('click', event => {
   const btn = event.target.closest('button[data-action]');
   if (!btn) return;
   const action = btn.dataset.action;
   if (action === 'start') return start(btn.dataset.focus || 'integral');
+  if (action === 'start-module') {
+    if (!MODULE_BY_ID[btn.dataset.module]) return;
+    current.module=btn.dataset.module; current.mode='quick'; return navigate('module');
+  }
+  if (action === 'module-mode') {
+    if (!['quick','detail','review'].includes(btn.dataset.mode)) return;
+    current.mode=btn.dataset.mode; return navigate('module');
+  }
   if (action === 'home') return navigate('home');
   if (action === 'tools') return navigate('tools');
   if (action === 'sources') return navigate('sources');
-  if (action === 'evaluation') return navigate('evaluation');
+  if (action === 'evaluation') return start('integral');
   if (action === 'summary') return navigate('summary');
   if (action === 'next') { current.step = Math.min(current.step + 1, SECTIONS.length - 1); return navigate('evaluation'); }
   if (action === 'prev') { current.step = Math.max(0, current.step - 1); return navigate('evaluation'); }
@@ -178,7 +280,7 @@ app.addEventListener('click', event => {
   }
   if (action === 'new') {
     if (!confirm('¿Borrar los datos de esta evaluación? Esta acción no se puede deshacer.')) return;
-    draft = createDraft(); current = { page: 'home', step: 0, focus: 'integral' };
+    draft = createDraft(); current = { page: 'home', step: 0, focus: 'integral', module:null,mode:'quick' };
     return navigate('home');
   }
 });
