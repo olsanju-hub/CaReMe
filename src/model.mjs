@@ -27,6 +27,8 @@ export const SECTIONS = [
     { id: 'ast', label: 'AST', unit: 'U/L', type: 'number' },
     { id: 'alt', label: 'ALT', unit: 'U/L', type: 'number' },
     { id: 'plaquetas', label: 'Plaquetas', unit: '10⁹/L', type: 'number' },
+    EXTRA_BY_ID.fib4_contexto,
+    EXTRA_BY_ID.fib4_agudo,
     { id: 'esteatosis', label: 'Esteatosis documentada', type: 'select', options: ['Sí', 'No'] }
   ]},
   { id: 'metabolico', title: 'Metabólico', short: 'Metabólico', intro: 'Diagnósticos y datos antropométricos/metabólicos.', fields: [
