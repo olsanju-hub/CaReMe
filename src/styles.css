@@ -314,3 +314,34 @@ h2 { letter-spacing:-.025em }
 .hero-reset { display:block; margin-top:12px; border:0; background:transparent; color:#D5F5F0;
   text-decoration:underline; text-underline-offset:3px; font-size:.81rem; font-weight:650; position:relative; z-index:2; padding:4px 0; }
 .hero-reset:hover { color:#fff; }
+
+/* Calculadoras: resultado trazable, no diagnóstico ni orden terapéutica. */
+.calc-stack { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; margin:22px 0; align-items:start; }
+.calc-card { background:#fff; border:1px solid var(--line); border-radius:18px; padding:23px; color:var(--ink); }
+.calc-top { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; }
+.calc-top h3 { margin:5px 0 0; font-size:1.2rem; letter-spacing:-.025em; }
+.calc-type { background:#E9F3F3; color:#356A72; padding:5px 9px; border-radius:30px;
+  font-size:.65rem; font-weight:750; white-space:nowrap; }
+.calc-values { display:grid; grid-template-columns:repeat(2,1fr); gap:12px; margin:19px 0 12px; }
+.calc-values div { background:#F1F7F7; border-radius:13px; padding:14px 16px; }
+.calc-values strong { display:block; font-size:1.9rem; line-height:1.1; letter-spacing:-.04em; color:#0C6975; }
+.calc-values small { display:block; font-size:.72rem; color:#627A80; padding-top:5px; }
+.fib-figure { margin:19px 0 15px; background:#F1F7F7; border-radius:13px;
+  padding:15px 17px; display:flex; flex-wrap:wrap; align-items:center; gap:12px; }
+.fib-figure strong { font-size:2.1rem; letter-spacing:-.04em; color:#0C6975; }
+.fib-figure span { font-size:.81rem; font-weight:700; color:#3E6973; flex:1; min-width:140px; }
+.calc-card>p { margin:12px 0; font-size:.84rem; line-height:1.5; }
+.calc-card .calc-limits { color:#607A82; font-size:.75rem; }
+.calc-card .clinical-missing { color:#865D30; background:#FCF6EC;
+  padding:9px 12px; border-radius:10px; font-size:.75rem; }
+.calc-card .calc-reported { color:#58737F; }
+.calc-card a { display:block; margin-top:15px; font-size:.78rem; font-weight:750; text-decoration:underline; text-underline-offset:3px; }
+.module-review .calc-card { margin-top:18px; }
+@media(max-width:850px){ .calc-stack { grid-template-columns:1fr; } }
+@media(max-width:600px) {
+  .calc-stack { gap:12px; margin:17px 0; }
+  .calc-card { padding:18px 16px; border-radius:15px; }
+  .calc-top h3 { font-size:1.08rem; }
+  .calc-type { font-size:.61rem; }
+  .calc-values strong { font-size:1.7rem; }
+}
