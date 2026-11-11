@@ -130,7 +130,7 @@ export function reviewDrug(draft,drugId,routeId) {
       blocked.push('No se recomienda iniciar empagliflozina con TFGe <20 (CIMA 4.2).');
     if(present(draft,'dm1')==='Sí')
       blocked.push('No utilizar empagliflozina en diabetes tipo 1 (CIMA 4.4).');
-    if(present(draft,'dm1')===null)
+    if([null,'No valorado'].includes(present(draft,'dm1')))
       checks.push('Confirmar ausencia de diabetes tipo 1.');
     if(keto==='Sí') blocked.push('Sospecha de cetoacidosis: evaluación inmediata; no iniciar.');
     else if(keto!== 'No') checks.push('Revisar riesgo de cetoacidosis, incluso euglucémica.');
@@ -145,13 +145,18 @@ export function reviewDrug(draft,drugId,routeId) {
       checks.push('Valorar hipoglucemia por combinación con insulina o sulfonilurea.');
     checks.push('Evaluar hipotensión/hipovolemia y situación de diuréticos.');
     if(routeId==='dm2') {
-      if(present(draft,'dm2')!=='Sí') missing.push('Confirmar DM2 y necesidad de optimizar control glucémico.');
+      if(present(draft,'dm2')==='No') blocked.push('No consta DM2: esta vía posológica no corresponde a la indicación seleccionada.');
+      else if(present(draft,'dm2')!=='Sí') missing.push('Confirmar DM2 y necesidad de optimizar control glucémico.');
       checks.push('25 mg corresponde solo al control glucémico de DM2, con TFGe ≥60, tolerancia y necesidad de intensificar.');
     } else if(routeId==='ic') {
-      if(present(draft,'ic')!=='Sí' || present(draft,'ic_sintomatica')!=='Sí')
+      if(present(draft,'ic')==='No' || present(draft,'ic_sintomatica')==='No')
+        blocked.push('La indicación requiere insuficiencia cardíaca crónica sintomática.');
+      else if(present(draft,'ic')!=='Sí' || present(draft,'ic_sintomatica')!=='Sí')
         missing.push('Confirmar IC crónica sintomática.');
     } else if(routeId==='erc') {
-      if(present(draft,'erc')!=='Sí' || present(draft,'persistencia')!=='Sí')
+      if(present(draft,'erc')==='No' || present(draft,'persistencia')==='No')
+        blocked.push('No consta ERC crónica: verificar la indicación seleccionada.');
+      else if(present(draft,'erc')!=='Sí' || present(draft,'persistencia')!=='Sí')
         missing.push('Confirmar enfermedad renal crónica documentada.');
     }
     checks.push('Verificar indicación, cobertura y ficha CIMA del producto que se prescribiría.');
@@ -180,15 +185,21 @@ export function reviewDrug(draft,drugId,routeId) {
     if(potassium!==null && potassium>4.8 && potassium<=5 && routeId==='erc_dm2')
       checks.push('Potasio >4,8 a 5,0: considerar solo con monitorización adicional las primeras cuatro semanas.');
     if(routeId==='erc_dm2') {
-      if(present(draft,'dm2')!=='Sí' || present(draft,'erc')!=='Sí' ||
-          present(draft,'persistencia')!=='Sí' || numerical(draft,'cac')===null ||
-          numerical(draft,'cac')<30) missing.push('Confirmar DM2 y ERC con albuminuria documentada.');
+      if(present(draft,'dm2')==='No' || present(draft,'erc')==='No' ||
+          present(draft,'persistencia')==='No' || (numerical(draft,'cac')!==null && numerical(draft,'cac')<30))
+        blocked.push('No consta la indicación ERC con albuminuria asociada a DM2 para esta vía.');
+      else if(present(draft,'dm2')!=='Sí' || present(draft,'erc')!=='Sí' ||
+          present(draft,'persistencia')!=='Sí' || numerical(draft,'cac')===null)
+        missing.push('Confirmar DM2 y ERC con albuminuria documentada.');
       if(present(draft,'ras_optimizado')!=='Sí')
         checks.push('Confirmar IECA/ARA-II optimizado o motivo documentado de no uso.');
     } else {
       const fevi=numerical(draft,'fevi');
-      if(present(draft,'ic')!=='Sí' || present(draft,'ic_sintomatica')!=='Sí' ||
-          fevi===null || fevi<40)
+      if(present(draft,'ic')==='No' || present(draft,'ic_sintomatica')==='No' ||
+          (fevi!==null && fevi<40))
+        blocked.push('La vía IC de finerenona exige IC crónica sintomática con FEVI ≥40 %.');
+      else if(present(draft,'ic')!=='Sí' || present(draft,'ic_sintomatica')!=='Sí' ||
+          fevi===null)
         missing.push('Confirmar IC crónica sintomática con FEVI ≥40 %.');
       checks.push('Aplicar tablas específicas de continuidad de la indicación IC, nunca las de ERC-DM2.');
     }
