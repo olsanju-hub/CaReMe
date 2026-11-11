@@ -6,41 +6,45 @@ export const MODULES = [
     id: 'dm2', title: 'Diabetes tipo 2', domain: 'metabolico',
     short: 'Control glucémico y tratamiento', 
     quick: ['dm_prioridad','dm_control'],
-    detail: ['hba1c','dm_objetivo','tfge','imc','dm_sintomas','comorbilidades','farmacos','alergias']
+    detail: ['hba1c','dm_objetivo','tfge','imc','dm_sintomas','comorbilidades','farmacos_clases','farmacos','alergias']
   },
   {
     id: 'ic', title: 'Insuficiencia cardíaca', domain: 'cardiovascular',
     short: 'Función ventricular y congestión',
     quick: ['ic_fevigrupo','congestion'],
-    detail: ['fevi','tfge','potasio','pas','pad','congestion','farmacos','alergias']
+    detail: ['fevi','tfge','potasio','pas','pad','congestion','farmacos_clases','farmacos','alergias']
   },
   {
     id: 'erc', title: 'Enfermedad renal crónica', domain: 'renal',
     short: 'Función renal, albuminuria y persistencia',
     quick: ['tfge','cac','persistencia'],
-    detail: ['tfge','cac','persistencia','potasio','creatinina','farmacos','alergias']
+    detail: ['tfge','cac','persistencia','potasio','creatinina','farmacos_clases','farmacos','alergias']
   },
   {
     id: 'obesidad', title: 'Sobrepeso y obesidad', domain: 'metabolico',
     short: 'Adiposidad y comorbilidades',
     quick: ['imc','dm2','obesidad_perfil'],
-    detail: ['peso','talla','imc','cintura','dm2','comorbilidades','farmacos','alergias']
+    detail: ['peso','talla','imc','cintura','dm2','comorbilidades','farmacos_clases','farmacos','alergias']
   },
   {
     id: 'hepatico', title: 'Enfermedad hepática metabólica', domain: 'hepatico',
     short: 'Esteatosis y valoración de fibrosis',
     quick: ['edad','fib4_informado','hepatico_valoracion','elastografia'],
-    detail: ['edad','esteatosis','hepatico_valoracion','ast','alt','plaquetas','fib4_informado','elastografia','farmacos']
+    detail: ['edad','esteatosis','hepatico_valoracion','ast','alt','plaquetas','fib4_informado','elastografia','farmacos_clases','farmacos']
   },
   {
     id: 'insulina', title: 'Insulinización', domain: 'metabolico',
     short: 'Inicio, intensificación o simplificación',
     quick: ['insulina_fase','insulina_perfil'],
-    detail: ['insulina_fase','imc','tfge','insulina_fragilidad','insulina_especiales','hba1c','farmacos','alergias']
+    detail: ['insulina_fase','imc','tfge','insulina_fragilidad','insulina_especiales','hba1c','farmacos_clases','farmacos','alergias']
   }
 ];
 export const MODULE_BY_ID = Object.fromEntries(MODULES.map(m => [m.id, m]));
 export const EXTRA_FIELDS = [
+  { id:'farmacos_clases', label:'Clases farmacológicas actuales', type:'multi',
+    options:['Sin tratamiento farmacológico','Metformina','iSGLT2','arGLP-1','Agonista dual GIP/GLP-1',
+      'iDPP-4','Sulfonilurea','Insulina','Pioglitazona','Saxagliptina','Repaglinida',
+      'IECA','ARA-II','INRA/ARNI','ARM','Betabloqueante'] },
   { id:'dm_prioridad', label:'Condicionantes clínicos presentes', type:'multi',
     options:['Sin condicionante seleccionado','Enfermedad cardiovascular / riesgo elevado','Insuficiencia cardíaca',
       'Enfermedad renal crónica','Obesidad','Enfermedad hepática metabólica','Fragilidad'] },
