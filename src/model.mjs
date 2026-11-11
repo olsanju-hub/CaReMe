@@ -8,7 +8,9 @@ export const SECTIONS = [
     { id: 'ecv', label: 'Enfermedad cardiovascular establecida', type: 'select', options: ['Sí', 'No'] },
     { id: 'ic', label: 'Insuficiencia cardíaca conocida', type: 'select', options: ['Sí', 'No'] },
     { id: 'erc', label: 'Enfermedad renal crónica conocida', type: 'select', options: ['Sí', 'No'] },
-    { id: 'hepatopatia', label: 'Enfermedad hepática conocida', type: 'select', options: ['Sí', 'No'] }
+    { id: 'hepatopatia', label: 'Enfermedad hepática conocida', type: 'select', options: ['Sí', 'No'] },
+    EXTRA_BY_ID.situacion_aguda,
+    EXTRA_BY_ID.cetoacidosis_sospecha
   ]},
   { id: 'cardio', title: 'Cardiovascular', short: 'Cardio', intro: 'Constantes y perfil lipídico disponibles.', fields: [
     { id: 'pas', label: 'Presión arterial sistólica', unit: 'mmHg', type: 'number' },
@@ -21,7 +23,10 @@ export const SECTIONS = [
     { id: 'creatinina', label: 'Creatinina sérica', unit: 'mg/dL', type: 'number' },
     { id: 'tfge', label: 'TFGe informada por laboratorio', unit: 'mL/min/1,73 m²', type: 'number' },
     { id: 'cac', label: 'Cociente albúmina/creatinina en orina', unit: 'mg/g', type: 'number' },
-    { id: 'persistencia', label: 'Alteración persistente documentada', type: 'select', options: ['Sí', 'No', 'No consta'] }
+    { id: 'persistencia', label: 'Alteración persistente documentada', type: 'select', options: ['Sí', 'No', 'No consta'] },
+    EXTRA_BY_ID.potasio_normal,
+    EXTRA_BY_ID.ras_optimizado,
+    EXTRA_BY_ID.potasio
   ]},
   { id: 'hepatico', title: 'Hepático', short: 'Hepático', intro: 'Pruebas disponibles para una futura estratificación validada.', fields: [
     { id: 'ast', label: 'AST', unit: 'U/L', type: 'number' },
@@ -33,14 +38,18 @@ export const SECTIONS = [
   ]},
   { id: 'metabolico', title: 'Metabólico', short: 'Metabólico', intro: 'Diagnósticos y datos antropométricos/metabólicos.', fields: [
     { id: 'dm2', label: 'DM2 conocida', type: 'select', options: ['Sí', 'No'] },
+    EXTRA_BY_ID.imc,
     { id: 'hba1c', label: 'Hemoglobina glucosilada (HbA1c)', unit: '%', type: 'number' },
     { id: 'peso', label: 'Peso', unit: 'kg', type: 'number' },
     { id: 'talla', label: 'Talla', unit: 'cm', type: 'number' },
     { id: 'cintura', label: 'Perímetro abdominal', unit: 'cm', type: 'number' }
   ]},
   { id: 'tratamiento', title: 'Tratamientos y seguridad', short: 'Tratamientos', intro: 'Datos declarados. No introduzcas nombres ni información identificativa.', fields: [
+    EXTRA_BY_ID.farmacos_clases,
     { id: 'farmacos', label: 'Tratamientos actuales (principios activos)', type: 'textarea' },
-    { id: 'alergias', label: 'Alergias o intolerancias relevantes', type: 'textarea' }
+    EXTRA_BY_ID.medicacion_revisada,
+    { id: 'alergias', label: 'Alergias o intolerancias relevantes', type: 'textarea' },
+    EXTRA_BY_ID.alergias_revisadas
   ]}
 ];
 export const FIELDS = { ...Object.fromEntries(SECTIONS.flatMap(s => s.fields.map(f => [f.id, f]))), ...EXTRA_BY_ID };
