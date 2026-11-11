@@ -24,7 +24,7 @@ PWA independiente de apoyo a la decisión clínica en Atención Primaria en Espa
 - **Ventanas:** dashboard de inicio; evaluación guiada; paneles de información auxiliar; resultados clínicos completos.
 - **Independencia:** no fusionar con NexoClx AP, Urg, 061 o Ped.
 
-Más detalles: [Decisiones del proyecto](docs/DECISIONES.md).
+Documentación: [Documento rector v0.1](docs/DOCUMENTO_RECTOR.md) · [Alcance e iteraciones del MVP](docs/MVP.md) · [Decisiones del proyecto](docs/DECISIONES.md).
 
 ## Plan por fases
 1. Documento rector y matriz de evidencia actualizada.
@@ -39,7 +39,7 @@ Más detalles: [Decisiones del proyecto](docs/DECISIONES.md).
 
 | Componente | Estado |
 | --- | --- |
-| Documentación inicial | En curso |
+| Documentación inicial | Borrador v0.1 disponible para revisión |
 | Evidencia y especificaciones clínicas | Pendiente |
 | Motor de evaluación y recomendaciones | Pendiente |
 | Interfaz y PWA | Pendiente |
