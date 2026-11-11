@@ -51,3 +51,9 @@ En resultados dirigidos, Herramientas y resumen integral se incorporan tres grup
 Se capturan situación clínica aguda, posible cetoacidosis, conciliación de tratamientos, revisión de alergias y datos de riesgo renal como condiciones explícitas. No se interpreta un campo vacío como «No» ni se registran cambios de tratamiento de forma automática.
 
 Reglas y limitaciones: [Integración terapéutica](INTEGRACION_TERAPEUTICA.md). Todas las dosis y prescripciones permanecen desactivadas.
+
+## Consulta farmacológica por molécula (bloque de CIMA)
+
+En «Herramientas» figura una biblioteca de empagliflozina y finerenona. La misma ficha puede tener distintas indicaciones, posología y requisitos; **la vía se elige explícitamente** y los datos de la consulta se reutilizan. Se muestran dosis de **referencia documental**, no recomendaciones personalizadas. Si hay bloqueos aparecen antes de la tabla de dosis y la página conserva una advertencia de no prescripción.
+
+Fuente y pruebas: [Farmacología CIMA](FARMACOLOGIA_CIMA.md). La aplicación no etiqueta al paciente como «apto» ni registra prescripción efectuada.
