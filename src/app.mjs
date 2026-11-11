@@ -138,6 +138,15 @@ function calculatorsForModule(id) {
   return '';
 }
 
+function pharmaLink(card) {
+  let info=null;
+  if(card.id==='FIN-HF-LABEL') info={drug:'finerenona',route:'ic_fevi40'};
+  else if(card.id.startsWith('NSMRA-')) info={drug:'finerenona',route:'erc_dm2'};
+  else if(card.id.startsWith('SGLT2-')) info={drug:'empagliflozina',route:'erc'};
+  if(!info) return '';
+  return `<button type="button" class="text-link" data-action="open-drug"
+    data-drug-id="${info.drug}" data-route-id="${info.route}">Consultar ficha CIMA específica →</button>`;
+}
 function integratedCards(focus = null) {
   const result=integratePatient(draft);
   const match=(card)=>!focus || card.domains.includes(focus) ||
@@ -162,7 +171,7 @@ function integratedCards(focus = null) {
         <div class="integration-sources">${card.sources.map(id=>{
           const source=Object.values(INTEGRATION_SOURCES).find(x=>x.id===id);
           return source?`<a href="${escape(source.url)}" target="_blank" rel="noopener noreferrer">${escape(source.short)} · ${escape(source.section)} ↗</a>`:'';}).join('')}
-        </div></details></article>`).join('')}</div></div>`).join('')
+        </div></details>${pharmaLink(card)}</article>`).join('')}</div></div>`).join('')
       : '<p class="integration-empty">No se han identificado condiciones documentadas para generar candidatos de revisión en este apartado. Esto no descarta enfermedad ni implica ausencia de tratamiento indicado.</p>'}
     <p class="integration-disclaimer">La documentación clínica, las dosis y la idoneidad del principio activo deben verificarse en su ficha CIMA-AEMPS. Las actuaciones reales solo se registrarán con confirmación profesional.</p>
   </section>`;
