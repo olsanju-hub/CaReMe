@@ -69,6 +69,14 @@ No se recopilan nombres, DNI, números de historia ni se guardan datos al recarg
 
 **No automatizado:** indicación específica por molécula, embarazo, factores de riesgo de cetoacidosis no recogidos, interacciones exhaustivas, pruebas longitudinales, contraindicación renal/hepática individual, financiación y prescripción. No presentar estas dimensiones como ya revisadas.
 
+## 4.1. Corrección por actualización de CIMA — finerenona
+
+La ficha técnica española de Kerendia consultada el **2026-11-11** recoge **dos indicaciones** distintas: ERC con albuminuria asociada a DM2 e insuficiencia cardíaca crónica sintomática con FEVI ≥40 %. El motor incorpora la tarjeta contextual `FIN-HF-LABEL` cuando existen datos de IC y FEVI ≥40. **No traslada** las dosis de la indicación renal a la cardíaca.
+
+El catálogo farmacológico diferencia pautas de referencia: en ERC-DM2 la dosis objetivo/máxima es **20 mg/día**, mientras que en IC la dosis objetivo puede ser **40 mg/día** cuando TFGe al inicio ≥60. En ambas indicaciones se requiere verificar K y TFGe antes de iniciar. La app sigue sin generar dosis individuales ni autorizaciones de prescripción.
+
+Detalle completo: [Farmacología CIMA-AEMPS](FARMACOLOGIA_CIMA.md).
+
 ## 5. Condiciones que pueden invalidar las conclusiones
 
 - Diagnóstico renal basado en medición aislada sin documentación de ≥3 meses.
