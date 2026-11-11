@@ -24,7 +24,7 @@ function header() {
 function nav() {
   const items = [['home','Inicio','⌂'],['evaluation','Evaluar','＋'],['tools','Herramientas','▦'],['sources','Fuentes','≡']];
   return `<nav class="bottom-nav" aria-label="Navegación principal">${items.map(([id,label,sym]) =>
-    `<button type="button" class="${current.page === id ? 'active' : ''}" data-action="${id}" ${current.page === id ? 'aria-current="page"' : ''}>
+    `<button type="button" class="${current.page === id || (id==='evaluation' && ['module','summary'].includes(current.page)) ? 'active' : ''}" data-action="${id}" ${current.page === id ? 'aria-current="page"' : ''}>
       <span aria-hidden="true" class="nav-symbol">${sym}</span><span>${label}</span></button>`).join('')}</nav>`;
 }
 function newHome() {
