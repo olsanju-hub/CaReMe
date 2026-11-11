@@ -95,6 +95,23 @@ test('FIB-4 elevado no desencadena tratamiento hepático específico',()=>{
   assert.ok(has(x.context,'FIB4-CROSS'));
   assert.ok(!has(x.options,'GLP-REVIEW'));
 });
+test('pauta existente o potasio alto bloquean candidata de ARM no esteroideo',()=>{
+  const high=integratePatient(draft({...baseline,potasio:'5.1',potasio_normal:'Sí'}));
+  assert.ok(has(high.alerts,'NSMRA-K-BLOCK'));
+  assert.ok(!has(high.options,'NSMRA-REVIEW'));
+  const limit=integratePatient(draft({...baseline,potasio:'5.0',potasio_normal:'No'}));
+  assert.ok(has(limit.options,'NSMRA-REVIEW'));
+  assert.ok(!has(limit.alerts,'NSMRA-K-BLOCK'));
+  const existing=integratePatient(draft({...baseline,
+    farmacos_clases:['Metformina','ARM']}));
+  assert.ok(has(existing.alerts,'NSMRA-MRA-EXISTING'));
+  assert.ok(!has(existing.options,'NSMRA-REVIEW'));
+});
+test('si falta RAS real, la lista de comprobación exige conciliación',()=>{
+  const x=integratePatient(draft(baseline));
+  const card=x.options.find(x=>x.id==='NSMRA-REVIEW');
+  assert.ok(card.checks.some(s=>s.includes('No consta IECA/ARA-II')));
+});
 test('todas las tarjetas conservan fuentes registradas y estructura',()=>{
   const x=integratePatient(draft(baseline));
   const ids=new Set(Object.values(INTEGRATION_SOURCES).map(s=>s.id));
