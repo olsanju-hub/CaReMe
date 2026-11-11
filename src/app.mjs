@@ -1,5 +1,6 @@
 import { SECTIONS, FIELDS, createDraft, setValue, setUnavailable, fieldState, sectionStats, totalStats, sectionForFocus } from './model.mjs';
 import { MODULES, MODULE_BY_ID, moduleFields, readMulti } from './consultas.mjs';
+import { SOURCES, evaluateRenal, evaluateFib4 } from './clinical/engine.mjs';
 
 let draft = createDraft();
 let current = { page: 'home', step: 0, focus: 'integral', module: null, mode:'quick' };
@@ -9,7 +10,7 @@ const escape = (value) => String(value ?? '').replace(/[&<>"']/g, c =>
 const counts = () => totalStats(draft);
 
 function banner() {
-  return '<div class="safety" role="note"><span class="safety-dot"></span><span>Prototipo de interfaz · No realiza diagnósticos, cálculos de riesgo ni recomendaciones de tratamiento.</span></div>';
+  return '<div class="safety" role="note"><span class="safety-dot"></span><span>Prototipo clínico en revisión: calcula categorías G/A y FIB-4, pero no realiza diagnósticos ni indica tratamientos. No usar para tomar decisiones asistenciales.</span></div>';
 }
 function header() {
   return `<header class="topbar"><div class="topbar-inner">
@@ -83,6 +84,58 @@ function moduleFieldMarkup(f) {
      data-action="unavailable" data-field-id="${escape(f.id)}" aria-pressed="${unavailable}">
      ${unavailable?'No disponible ✓':'Marcar no disponible'}</button></div>${control}</div>`;
 }
+function renalResultCard() {
+  const x=evaluateRenal(draft);
+  const g=x.categories.gfr || '—';
+  const a=x.categories.albuminuria || '—';
+  const info=x.inputs;
+  const note=x.missing.length ? '<p class="clinical-missing">Datos incompletos o por revisar: '+
+    x.missing.map(k=>escape(FIELDS[k]?.label||k)).join(' · ')+'</p>' : '';
+  return `<section class="calc-card" aria-label="Clasificación descriptiva renal">
+    <div class="calc-top"><div><span class="eyebrow">KDIGO 2024 · RESULTADO DESCRIPTIVO</span>
+      <h3>TFGe y albuminuria</h3></div><span class="calc-type">${escape(x.status)}</span></div>
+    <div class="calc-values">
+      <div><strong>${escape(g)}</strong><small>Función renal (G)</small></div>
+      <div><strong>${escape(a)}</strong><small>Albuminuria (A)</small></div>
+    </div>
+    <p>${escape(x.message)}</p>
+    ${note}
+    <p class="calc-limits">No determina por sí solo ERC ni la causa. La confirmación exige evaluar duración ≥3 meses y/o otros marcadores; no se calcula TFGe a partir de creatinina.</p>
+    <a href="${SOURCES.kdigo2024.url}" target="_blank" rel="noopener noreferrer">Fuente: KDIGO 2024, tablas 1–3 ↗</a>
+  </section>`;
+}
+function fib4ResultCard() {
+  const x=evaluateFib4(draft);
+  const displayed=x.status==='calculated' ? x.value.toFixed(2) : '—';
+  const interpretations={
+    lower_probability:'Bajo el umbral de cribado',
+    additional_assessment:'Requiere evaluación adicional',
+    higher_probability:'Probabilidad aumentada de fibrosis avanzada',
+    context_missing:'Contexto por completar',
+    age_limited:'Validez limitada por edad',
+    acute:'No interpretar durante enfermedad aguda',
+    not_evaluable:'No evaluable'
+  };
+  const reported=x.reported.state==='ok'
+    ? '<p class="calc-reported">Índice informado por otra fuente: '+escape(String(x.reported.value))+
+      ' (no sustituye al cálculo ni se interpreta automáticamente).</p>' : '';
+  const missing=x.missing.length ? '<p class="clinical-missing">Faltan o deben revisarse: '+
+    x.missing.map(k=>escape(FIELDS[k]?.label||k)).join(' · ')+'</p>' : '';
+  return `<section class="calc-card" aria-label="Cálculo FIB-4">
+    <div class="calc-top"><div><span class="eyebrow">EASL-EASD-EASO 2024 · ÍNDICE NO INVASIVO</span><h3>FIB-4</h3></div>
+      <span class="calc-type">${escape(x.status)}</span></div>
+    <div class="fib-figure"><strong>${displayed}</strong><span>${escape(interpretations[x.interpretation])}</span></div>
+    <p>${escape(x.note)}</p>${missing}${reported}
+    <p class="calc-limits">Fórmula: edad × AST / (plaquetas × √ALT). En edades &gt;65 se utiliza umbral inferior ajustado de 2,0; por debajo de 35 años su precisión es limitada. No confirma MASLD ni fibrosis.</p>
+    <a href="${SOURCES.easl2024.url}" target="_blank" rel="noopener noreferrer">Fuente: EASL-EASD-EASO 2024, figura 2 ↗</a>
+  </section>`;
+}
+function calculatorsForModule(id) {
+  if(id==='erc') return renalResultCard();
+  if(id==='hepatico') return fib4ResultCard();
+  return '';
+}
+
 function consultationReview(module) {
   const fields = [...new Set([...module.quick,...module.detail])];
   const missing = fields.filter(id => fieldState(draft,id) === 'sin_registrar');
@@ -99,7 +152,8 @@ function consultationReview(module) {
       return `<div class="review-row"><span>${escape(f.label)}</span>
         <strong class="${state}">${escape(value)}</strong></div>`;
     }).join('')}</div>
-    <div class="clinical-lock"><strong>Motor clínico pendiente de validación</strong>
+    ${calculatorsForModule(module.id)}
+    <div class="clinical-lock"><strong>Motor terapéutico pendiente de validación</strong>
       <p>${missing.length} datos sin registrar y ${invalid.length} entradas por revisar.
        Aquí aparecerán situación, siguiente paso, alternativas, seguridad, seguimiento y fuentes,
        solo cuando cada regla esté verificada y probada.</p></div>
@@ -201,25 +255,38 @@ function summary() {
             ? escape(draft.values[f.id]) + (f.unit ? ' ' + escape(f.unit) : '') : statusLabel(state);
           return `<div><dt>${escape(f.label)}</dt><dd class="${state}">${content}</dd></div>`;
         }).join('')}</dl></section>`).join('')}</div>
-    <div class="clinical-lock"><strong>Evaluación clínica todavía desactivada</strong>
-      <p>No se calcula riesgo, no se diagnostica ERC/MASLD/DM2 y no se generan tratamientos. Cada módulo necesitará evidencia documentada y pruebas antes de su activación.</p></div>
+    <div class="calc-stack">${renalResultCard()}${fib4ResultCard()}</div>
+    <div class="clinical-lock"><strong>Motor de decisiones clínicas desactivado</strong>
+      <p>Las categorías renales y el FIB-4 son indicadores descriptivos. No confirman diagnósticos ni generan tratamientos, ni descartan enfermedad por sí solos.</p></div>
     <div class="summary-actions"><button type="button" class="ghost" data-action="go-step" data-step="0">Volver a editar</button>
       <button type="button" class="primary" data-action="new">Finalizar y borrar datos</button></div></div>`;
 }
 function tools() {
-  return `<div class="page interior"><div class="eyebrow">EN PREPARACIÓN</div><h1>Herramientas clínicas</h1><p>Este apartado se habilitará progresivamente al incorporar fórmulas verificadas con sus fuentes y pruebas.</p>
-  ${banner()}<div class="tool-grid">${SECTIONS.filter(s => ['cardio','renal','hepatico','metabolico'].includes(s.id)).map(s =>
-    `<div class="tool-card"><span class="tag">Pendiente de validación</span><h2>${escape(s.title)}</h2><p>Especificación clínica y casos de referencia todavía no aprobados.</p></div>`).join('')}</div></div>`;
+  return `<div class="page interior">
+    <div class="eyebrow">MOTOR CLÍNICO · FASE DE CÁLCULO</div><h1>Herramientas de evaluación</h1>
+    <p>Estas clasificaciones utilizan los datos ya introducidos en la consulta. No generan diagnósticos ni recomendaciones terapéuticas.</p>
+    ${banner()}
+    <div class="calc-stack">${renalResultCard()}${fib4ResultCard()}</div>
+    <div class="tool-grid">
+      ${['dm2','ic','obesidad','insulina'].map(id=>{
+        const m=MODULE_BY_ID[id];
+        return `<div class="tool-card"><span class="tag">Algoritmo pendiente</span>
+          <h2>${escape(m.title)}</h2><p>La consulta rápida y detallada ya está disponible; los resultados clínicos necesitan especificación y revisión.</p>
+          <button type="button" class="text-link" data-action="start-module" data-module="${escape(m.id)}">Abrir consulta →</button>
+        </div>`;
+      }).join('')}
+    </div></div>`;
 }
 function sources() {
   return `<div class="page interior"><div class="eyebrow">TRANSPARENCIA</div><h1>Fuentes y validación</h1>
-  <p>CaHReMe es un prototipo. Actualmente solo está implementada la estructura de captura de datos, sin contenido de decisión clínica activado.</p>
+  <p>CaHReMe incorpora cálculo descriptivo de categorías G/A y FIB-4 basado en fuentes identificadas. El resto de decisiones clínicas, incluidas las farmacológicas, están pendientes de validación.</p>
   ${banner()}
   <section class="sources-card"><h2>Documentación de desarrollo</h2>
   <p>El proyecto se gestiona en un repositorio privado. El acceso a estos enlaces requiere los permisos correspondientes.</p>
-  <a href="https://github.com/olsanju-hub/CaReMe/blob/main/docs/DOCUMENTO_RECTOR.md" target="_blank" rel="noopener noreferrer">Documento rector ↗</a>
-  <a href="https://github.com/olsanju-hub/CaReMe/blob/main/docs/MVP.md" target="_blank" rel="noopener noreferrer">Alcance del MVP ↗</a>
-  <a href="https://github.com/olsanju-hub/CaReMe/blob/main/docs/DECISIONES.md" target="_blank" rel="noopener noreferrer">Decisiones de identidad ↗</a>
+  <a href="https://github.com/olsanju-hub/CaReMe/blob/feat/prototipo-interfaz/docs/DOCUMENTO_RECTOR.md" target="_blank" rel="noopener noreferrer">Documento rector ↗</a>
+  <a href="https://github.com/olsanju-hub/CaReMe/blob/feat/prototipo-interfaz/docs/MVP.md" target="_blank" rel="noopener noreferrer">Alcance del MVP ↗</a>
+  <a href="https://github.com/olsanju-hub/CaReMe/blob/feat/prototipo-interfaz/docs/FUENTES_CLINICAS.md" target="_blank" rel="noopener noreferrer">Registro de fuentes clínicas ↗</a>
+  <a href="https://github.com/olsanju-hub/CaReMe/blob/feat/prototipo-interfaz/docs/DECISIONES.md" target="_blank" rel="noopener noreferrer">Decisiones de identidad ↗</a>
   </section>
   <section class="sources-card"><h2>Privacidad en esta versión</h2><p>Los valores permanecen exclusivamente en memoria durante la sesión abierta: no se usan cookies, almacenamiento local ni servicios remotos. Al recargar se pierden los datos.</p></section></div>`;
 }
