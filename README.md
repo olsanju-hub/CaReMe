@@ -9,6 +9,10 @@ PWA independiente de apoyo a la decisión clínica en Atención Primaria en Espa
 
 > Estado: **prototipo de interfaz (iteración A, en revisión)**. No contiene algoritmos clínicos verificados y **no debe utilizarse para decisiones asistenciales**.
 
+## Requisito funcional de referencia
+
+CaHReMe debe cubrir **las seis consultas de GlucoGuía** (DM2, IC, ERC, sobrepeso/obesidad, enfermedad hepática metabólica e insulinización), **con consulta rápida, detalle y resultados equivalentes en funcionalidad**, ampliadas con evaluación integral, datos compartidos, recomendaciones clínicas trazables y seguimiento. **No está implementado todavía ese motor clínico.** Véase [matriz de equivalencia y brechas](docs/MATRIZ_EQUIVALENCIA_GLUCOGUIA.md).
+
 ## Funcionalidades previstas
 - Entrada por paciente; consulta rápida y evaluación avanzada, con tratamiento explícito de información ausente.
 - Estadificación y cálculo por dominio usando herramientas validadas, con límites de aplicabilidad.
