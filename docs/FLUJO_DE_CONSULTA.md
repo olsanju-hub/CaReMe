@@ -1,6 +1,6 @@
 # Flujo de consulta — CaHReMe
 
-Estado: **decisión de producto para prototipo**, sin reglas clínicas activas.
+Estado: **prototipo de captura, cálculo G/A y FIB-4, con opciones multiorgánicas no prescriptivas**. No validado para uso asistencial.
 
 ## Consultas de referencia añadidas (iteración A.2)
 
@@ -43,3 +43,11 @@ En la pantalla **Herramientas**, en el resumen integral y en las consultas renal
 - **FIB-4**: fórmula aplicada a edad, AST, ALT y plaquetas cuando están presentes; la interpretación exige contexto adecuado y ausencia de enfermedad aguda y advierte rendimiento limitado <35 años. Ajuste de corte inferior >65 años.
 
 Los resultados no generan diagnósticos ni conductas terapéuticas. Están documentados en [Fuentes y reglas clínicas](FUENTES_CLINICAS.md), con pruebas automatizadas; la revisión profesional formal sigue pendiente.
+
+## Integración multiorgánica de revisión (bloque C preliminar)
+
+En resultados dirigidos, Herramientas y resumen integral se incorporan tres grupos: **revisiones de seguridad**, **opciones que requieren evaluación médica** y **contexto o datos pendientes**. Las tarjetas proceden de reglas identificadas y permiten abrir la fuente exacta.
+
+Se capturan situación clínica aguda, posible cetoacidosis, conciliación de tratamientos, revisión de alergias y datos de riesgo renal como condiciones explícitas. No se interpreta un campo vacío como «No» ni se registran cambios de tratamiento de forma automática.
+
+Reglas y limitaciones: [Integración terapéutica](INTEGRACION_TERAPEUTICA.md). Todas las dosis y prescripciones permanecen desactivadas.
