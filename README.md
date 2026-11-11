@@ -1,17 +1,26 @@
 # CaHReMe
 
-**Evaluación cardiorrenal-hepatometabólica — prototipo con formularios y cálculos descriptivos, sin prescripción.**
+**Evaluación cardiorrenal-hepatometabólica — prototipo con cálculos y revisión multiorgánica, sin prescripción.**
 
 **Repositorio:** `olsanju-hub/CaReMe` · **Nombre visual:** CaHReMe (de trabajo)
 
 ## Propósito
 PWA independiente de apoyo a la decisión clínica en Atención Primaria en España. Evaluación integrada de los dominios **cardiovascular, renal, hepático y metabólico**, sin reducir la app a diabetes mellitus.
 
-> Estado: **prototipo funcional (iteración A + primer bloque B), en revisión**. Calcula categorías G/A (KDIGO 2024) y FIB-4 (EASL 2024) con límites de interpretación. No contiene recomendaciones terapéuticas validadas y **no debe utilizarse para decisiones asistenciales**.
+> Estado: **prototipo técnico en revisión**. Calcula categorías G/A y FIB-4 e identifica opciones multiorgánicas **para revisión profesional**, con comprobaciones pendientes. No prescribe, no suspende fármacos ni constituye validación para uso asistencial.
 
 ## Requisito funcional de referencia
 
-CaHReMe cubre ya la **navegación y captura de datos** de seis consultas inspiradas en GlucoGuía y debe completar su **lógica clínica validada** (DM2, IC, ERC, sobrepeso/obesidad, enfermedad hepática metabólica e insulinización), **con consulta rápida, detalle y resultados equivalentes en funcionalidad**, ampliadas con evaluación integral, datos compartidos, recomendaciones clínicas trazables y seguimiento. **El motor de resultados clínicos sigue pendiente.** Véase [matriz de equivalencia y brechas](docs/MATRIZ_EQUIVALENCIA_GLUCOGUIA.md).
+CaHReMe cubre ya la **navegación y captura de datos** de seis consultas inspiradas en GlucoGuía y debe completar su **lógica clínica validada** (DM2, IC, ERC, sobrepeso/obesidad, enfermedad hepática metabólica e insulinización), **con consulta rápida, detalle y resultados equivalentes en funcionalidad**, ampliadas con evaluación integral, datos compartidos, recomendaciones clínicas trazables y seguimiento. **Los algoritmos específicos de decisión terapéutica y seguimiento siguen pendientes.** Véase [matriz de equivalencia y brechas](docs/MATRIZ_EQUIVALENCIA_GLUCOGUIA.md).
+
+## Segundo bloque del motor clínico — integración multiorgánica
+
+- `src/clinical/integracion.mjs`: analiza diagnósticos declarados de DM2, IC, ERC, ECV y enfermedad hepática junto con TFGe, albuminuria, FIB-4 y clases farmacológicas.
+- En resultados dirigidos e integrales ofrece **alertas de seguridad**, **opciones para revisión profesional** y **datos pendientes**. No hay dosis, recetas ni actuaciones automáticas.
+- Cruza candidatos de beneficio cardiorrenal (iSGLT2), opciones incretínicas según comorbilidades y elegibilidad de ARM no esteroideos **solo como listas de comprobación**.
+- Prioriza situaciones agudas, sospecha de cetoacidosis y combinaciones potencialmente problemáticas. No afirma que alergias o contraindicaciones estén descartadas.
+- `tests/integracion.test.mjs`: escenarios con datos omitidos, TFGe <20, ERC no confirmada, terapia ya presente y duplicidades.
+- [Matriz de integración terapéutica](docs/INTEGRACION_TERAPEUTICA.md). Fichas CIMA **por principio activo, dosis y restricciones individuales pendientes**. Sin habilitación asistencial.
 
 ## Primer bloque del motor clínico — cálculos descriptivos
 
@@ -20,7 +29,7 @@ CaHReMe cubre ya la **navegación y captura de datos** de seis consultas inspira
 - Herramientas y resúmenes renal/hepático muestran resultados, limitaciones y vínculo a la fuente; faltantes no se transforman en cero.
 - `tests/clinical.test.mjs`: umbrales exactos, casos de referencia y estados no evaluables.
 - Documento [Fuentes y reglas clínicas](docs/FUENTES_CLINICAS.md).
-- **Estas funciones no están aprobadas para uso asistencial.** Las reglas terapéuticas siguen sin implementar.
+- **Estas funciones no están aprobadas para uso asistencial.** Las decisiones prescriptivas siguen sin implementar.
 
 ## Estado de las seis consultas (iteración A.2)
 
@@ -28,7 +37,7 @@ CaHReMe cubre ya la **navegación y captura de datos** de seis consultas inspira
 - Los campos habituales —TFGe, HbA1c, medicación, etc.— comparten un único estado de evaluación mientras la app está abierta, sin duplicar valores al cambiar de módulo.
 - Se admite selección simultánea de comorbilidades y clases farmacológicas. Los campos tienen estado registrado, ausente, no disponible o por revisar.
 - Se conserva además el séptimo acceso a **evaluación integral** del paciente.
-- **No se ha implementado el motor clínico de interpretación, cálculo o tratamiento**; la paridad de resultados con GlucoGuía sigue pendiente de verificación científica y desarrollo. No utilizar para decisiones asistenciales.
+- Ya existen cálculos G/A y FIB-4, y un motor **no prescriptivo** de alertas y candidatos de revisión. La paridad terapéutica con GlucoGuía sigue pendiente de verificación científica. No utilizar para decisiones asistenciales.
 - Pruebas automatizadas de rutas, captura y reutilización de datos; renderizado en dispositivos reales pendiente de revisión.
 
 ## Funcionalidades previstas
@@ -91,8 +100,8 @@ Incluye entrada integral o dirigida, captura por secciones, distinción entre ca
 | Componente | Estado |
 | --- | --- |
 | Documentación inicial | Borrador v0.1 disponible para revisión |
-| Evidencia y especificaciones clínicas | KDIGO G/A y EASL FIB-4 documentadas; resto pendiente |
-| Motor de evaluación y recomendaciones | Cálculos G/A y FIB-4 implementados; recomendaciones pendientes |
+| Evidencia y especificaciones clínicas | KDIGO, ADA 2026, ESC 2026, EASL y ficha CIMA de ejemplo; revisión terapéutica pendiente |
+| Motor de evaluación y recomendaciones | G/A, FIB-4 y candidatos multiorgánicos para revisión; prescripciones pendientes |
 | Interfaz y PWA | Prototipo en rama de revisión; manifiesto PWA y caché estática implementados; validación visual e instalación pendientes |
 | Icono final exportado | Pendiente |
 | Pruebas y validación clínica | Pendiente |
