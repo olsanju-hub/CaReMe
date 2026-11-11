@@ -30,7 +30,7 @@ export const MODULES = [
     id: 'hepatico', title: 'Enfermedad hepática metabólica', domain: 'hepatico',
     short: 'Esteatosis y valoración de fibrosis',
     quick: ['edad','fib4_informado','hepatico_valoracion','elastografia'],
-    detail: ['edad','esteatosis','hepatico_valoracion','ast','alt','plaquetas','fib4_informado','elastografia','farmacos_clases','farmacos']
+    detail: ['edad','esteatosis','hepatico_valoracion','fib4_contexto','fib4_agudo','ast','alt','plaquetas','fib4_informado','elastografia','farmacos_clases','farmacos']
   },
   {
     id: 'insulina', title: 'Insulinización', domain: 'metabolico',
@@ -67,6 +67,10 @@ export const EXTRA_FIELDS = [
     options:['Ninguna seleccionada','ECV o riesgo CV elevado','ERC o insuficiencia cardíaca',
       'Enfermedad hepática metabólica','Apnea obstructiva del sueño','Gonartrosis','Obesidad sarcopénica'] },
   { id:'fib4_informado',label:'FIB-4 informado (si está disponible)',type:'number',min:0,unit:'índice' },
+  { id:'fib4_contexto',label:'Contexto para evaluación FIB-4',type:'select',
+    options:['Perfil de riesgo compatible con evaluación MASLD','Sin indicación documentada','No consta'] },
+  { id:'fib4_agudo',label:'¿Enfermedad aguda o descompensación actual?',type:'select',
+    options:['No','Sí','No valorado'] },
   { id:'hepatico_valoracion',label:'Evaluación de otras causas',type:'select',
     options:['Esteatosis documentada y otras causas evaluadas','Valoración incompleta o pendiente','Desconocido'] },
   { id:'elastografia',label:'Elastografía hepática',type:'number',min:0,unit:'kPa' },
