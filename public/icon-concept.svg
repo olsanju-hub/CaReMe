@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="t d">
+<title id="t">CaHReMe — símbolo provisional de instalación</title><desc id="d">Cuatro lóbulos interconectados: cardiovascular, renal, hepático y metabólico. No sustituye el icono final aprobado.</desc>
+<defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#056c80"/><stop offset=".5" stop-color="#073e68"/><stop offset="1" stop-color="#061b4d"/></linearGradient>
+<linearGradient id="ring" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#00D7E3"/><stop offset=".5" stop-color="#BCFFFF"/><stop offset="1" stop-color="#28DBA9"/></linearGradient>
+<linearGradient id="organ" x1="0" x2="0" y1="0" y2="1"><stop stop-color="#FCAD9A"/><stop offset="1" stop-color="#DB576A"/></linearGradient></defs>
+<rect x="8" y="8" width="496" height="496" rx="116" fill="url(#bg)"/>
+<g fill="none" stroke="url(#ring)" stroke-width="17" stroke-linecap="round"><path d="M256 255C185 212 178 137 218 102C248 76 299 91 313 121C338 176 289 232 256 255Z"/><path d="M256 255C210 305 157 356 108 321C66 289 83 221 135 202C192 184 230 223 256 255Z"/><path d="M256 255C302 304 356 358 408 323C454 292 429 219 378 201C321 184 283 221 256 255Z"/><path d="M256 255C186 300 182 382 220 419C244 444 300 430 319 394C341 347 302 291 256 255Z"/></g>
+<g fill="url(#organ)" stroke="#FFE3D5" stroke-width="3">
+<path d="M255 198c-13-14-38-17-44-40-6-26 14-39 34-30 11 4 14 14 17 17 7-13 34-18 45-2 16 25-9 44-35 65-8 6-13 5-17-10Z"/>
+<path d="M166 263c-17-13-30-1-31 15-1 18 15 22 15 39 1 16 27 24 37 6 10-16-4-26-3-41 1-10-6-15-18-19Z"/>
+<path d="M343 263c17-13 30-1 31 15 1 18-15 22-15 39-1 16-27 24-37 6-10-16 4-26 3-41-1-10 6-15 18-19Z"/>
+<path d="M318 270c22-14 61-8 78-1 7 21-12 36-37 40l-28 11c-16 8-26-9-26-21 0-11 4-22 13-29Z" fill="#E58B5E"/>
+</g>
+<path d="M249 154c0-30 12-44 17-50m0 28 21-28m-22 15-18-16" fill="none" stroke="#8EEBFC" stroke-width="6" stroke-linecap="round"/>
+<g fill="#77E0E0" stroke="#BCFFFF" stroke-width="3"><circle cx="256" cy="345" r="19"/><path d="M219 415c1-37 17-53 37-53s37 16 37 53Z"/></g>
+</svg>
