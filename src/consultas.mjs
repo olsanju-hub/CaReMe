@@ -6,25 +6,25 @@ export const MODULES = [
     id: 'dm2', title: 'Diabetes tipo 2', domain: 'metabolico',
     short: 'Control glucémico y tratamiento', 
     quick: ['dm_prioridad','dm_control'],
-    detail: ['hba1c','dm_objetivo','tfge','imc','dm_sintomas','comorbilidades','farmacos_clases','farmacos','alergias']
+    detail: ['hba1c','dm_objetivo','tfge','imc','dm_sintomas','comorbilidades','situacion_aguda','cetoacidosis_sospecha','farmacos_clases','farmacos','medicacion_revisada','alergias','alergias_revisadas']
   },
   {
     id: 'ic', title: 'Insuficiencia cardíaca', domain: 'cardiovascular',
     short: 'Función ventricular y congestión',
     quick: ['ic_fevigrupo','congestion'],
-    detail: ['fevi','tfge','potasio','pas','pad','congestion','farmacos_clases','farmacos','alergias']
+    detail: ['fevi','tfge','potasio','pas','pad','congestion','situacion_aguda','farmacos_clases','farmacos','medicacion_revisada','alergias','alergias_revisadas']
   },
   {
     id: 'erc', title: 'Enfermedad renal crónica', domain: 'renal',
     short: 'Función renal, albuminuria y persistencia',
     quick: ['tfge','cac','persistencia'],
-    detail: ['tfge','cac','persistencia','potasio','creatinina','farmacos_clases','farmacos','alergias']
+    detail: ['tfge','cac','persistencia','potasio','potasio_normal','ras_optimizado','creatinina','situacion_aguda','cetoacidosis_sospecha','farmacos_clases','farmacos','medicacion_revisada','alergias','alergias_revisadas']
   },
   {
     id: 'obesidad', title: 'Sobrepeso y obesidad', domain: 'metabolico',
     short: 'Adiposidad y comorbilidades',
     quick: ['imc','dm2','obesidad_perfil'],
-    detail: ['peso','talla','imc','cintura','dm2','comorbilidades','farmacos_clases','farmacos','alergias']
+    detail: ['peso','talla','imc','cintura','dm2','comorbilidades','farmacos_clases','farmacos','medicacion_revisada','alergias','alergias_revisadas']
   },
   {
     id: 'hepatico', title: 'Enfermedad hepática metabólica', domain: 'hepatico',
@@ -36,11 +36,24 @@ export const MODULES = [
     id: 'insulina', title: 'Insulinización', domain: 'metabolico',
     short: 'Inicio, intensificación o simplificación',
     quick: ['insulina_fase','insulina_perfil'],
-    detail: ['insulina_fase','imc','tfge','insulina_fragilidad','insulina_especiales','hba1c','farmacos_clases','farmacos','alergias']
+    detail: ['insulina_fase','imc','tfge','insulina_fragilidad','insulina_especiales','hba1c','situacion_aguda','farmacos_clases','farmacos','medicacion_revisada','alergias','alergias_revisadas']
   }
 ];
 export const MODULE_BY_ID = Object.fromEntries(MODULES.map(m => [m.id, m]));
 export const EXTRA_FIELDS = [
+  { id:'situacion_aguda',label:'Situación clínica actual',type:'select',
+    options:['Estable sin proceso agudo grave','Enfermedad aguda grave',
+      'Cirugía mayor o ayuno prolongado','No valorada'] },
+  { id:'cetoacidosis_sospecha',label:'Sospecha clínica de cetoacidosis',type:'select',
+    options:['No','Sí','No valorada'] },
+  { id:'medicacion_revisada',label:'Tratamiento actual reconciliado',type:'select',
+    options:['Sí','No','No valorado'] },
+  { id:'alergias_revisadas',label:'Alergias e intolerancias comprobadas',type:'select',
+    options:['Sí','No','No valorado'] },
+  { id:'potasio_normal',label:'Potasio en rango de laboratorio y estable',type:'select',
+    options:['Sí','No','No valorado'] },
+  { id:'ras_optimizado',label:'IECA/ARA-II optimizado hasta dosis tolerada',type:'select',
+    options:['Sí','No','No valorado'] },
   { id:'farmacos_clases', label:'Clases farmacológicas actuales', type:'multi',
     options:['Sin tratamiento farmacológico','Metformina','iSGLT2','arGLP-1','Agonista dual GIP/GLP-1',
       'iDPP-4','Sulfonilurea','Insulina','Pioglitazona','Saxagliptina','Repaglinida',
