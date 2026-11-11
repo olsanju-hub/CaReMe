@@ -245,3 +245,69 @@ h2 { letter-spacing:-.025em }
   .domain-image-wrap { height:73px; margin-bottom:10px; }
   .domain-illustration { width:105px; height:73px; }
 }
+
+
+/* Consultas dirigidas: tarjetas originales y formulario en dos niveles */
+.module-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; }
+.module-card { border:1px solid var(--line); background:#fff; border-radius:18px; min-height:204px;
+  color:var(--ink); text-align:left; padding:15px 19px; display:flex; flex-direction:column;
+  position:relative; transition:box-shadow .16s,transform .16s; }
+.module-card:hover { transform:translateY(-2px); box-shadow:0 14px 24px #12496213; }
+.module-art { width:100%; height:107px; border-radius:12px; display:grid; place-items:center;
+  background:linear-gradient(110deg,#E9F4F5,#FBFDFD); }
+.module-art img { width:125px; height:100px; object-fit:contain; }
+.module-content { display:flex; flex-direction:column; margin-top:12px; padding-right:12px; }
+.module-content strong { font-size:.94rem; line-height:1.25; }
+.module-content small { color:var(--muted); font-size:.77rem; margin-top:4px; }
+.module-arrow { position:absolute; right:20px; bottom:22px; color:var(--teal); font-weight:800; font-size:1.2rem; }
+.module-title { display:flex; align-items:center; gap:17px; margin-bottom:14px; }
+.module-title h1 { font-size:2.2rem; margin:3px 0 4px; }
+.module-title p { color:var(--muted); margin:0; }
+.module-icon { background:#E6F2F2; width:84px; height:84px; border-radius:18px; flex:none; display:grid; place-items:center; }
+.module-icon img { width:76px; height:76px; object-fit:contain; }
+.module-tabs { border-radius:14px; background:#E3EEEE; padding:5px; display:grid;
+  grid-template-columns:repeat(3,1fr); gap:5px; margin:22px 0 14px; }
+.module-tabs button { color:#59737A; background:transparent; border:0; border-radius:10px;
+  min-height:43px; padding:9px 12px; font-size:.84rem; font-weight:700; }
+.module-tabs button.active { color:#0C6972; background:#fff; box-shadow:0 2px 8px #18516A0F; }
+.module-note { color:#637D85; font-size:.78rem; margin:16px 4px; }
+.checks-field { border:1px solid #CDDDE0; background:#FAFCFC; border-radius:11px;
+  padding:10px 13px; display:grid; gap:7px; margin:0; min-width:0; }
+.checks-field:disabled { opacity:.55; }
+.check-option { display:flex; align-items:flex-start; gap:9px; font-size:.79rem;
+  color:#284A58; font-weight:500!important; padding:4px 1px; cursor:pointer; }
+.check-option input { width:17px; height:17px; min-height:17px; margin:2px 0 0; flex:none; accent-color:#138B8B; }
+.sr-only { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; }
+.module-review { background:#fff; border:1px solid var(--line); border-radius:19px; padding:25px 29px; }
+.module-review h2 { font-size:1.4rem; margin:0 0 7px; }
+.module-review>p { color:var(--muted); font-size:.86rem; }
+.review-list { margin-top:22px; }
+.review-row { display:flex; justify-content:space-between; gap:16px; border-top:1px solid #E8EEEF;
+  padding:11px 0; align-items:flex-start; font-size:.81rem; }
+.review-row>span { color:#617982; max-width:48%; }
+.review-row>strong { text-align:right; overflow-wrap:anywhere; font-weight:650; max-width:52%; }
+.review-row>strong.no_disponible { color:#A16F42; }
+.review-row>strong.sin_registrar { color:#91A2A7; font-weight:500; }
+.review-row>strong.revisar { color:#A04B4B; }
+@media(max-width:850px) {
+  .module-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+}
+@media(max-width:600px) {
+  .module-grid { gap:10px; }
+  .module-card { min-height:184px; padding:12px; border-radius:15px; }
+  .module-art { height:89px; }
+  .module-art img { height:82px; width:104px; }
+  .module-content { margin-top:9px; }
+  .module-content strong { font-size:.82rem; }
+  .module-content small { font-size:.68rem; }
+  .module-arrow { bottom:13px; right:12px; }
+  .module-title { gap:12px; }
+  .module-title h1 { font-size:1.6rem; }
+  .module-icon { width:64px; height:64px; border-radius:14px; }
+  .module-icon img { width:60px; height:60px; }
+  .module-tabs { gap:2px; }
+  .module-tabs button { padding:8px 5px; font-size:.73rem; }
+  .module-review { padding:20px 16px; }
+  .module-review h2 { font-size:1.15rem; }
+  .review-row { font-size:.75rem; }
+}
