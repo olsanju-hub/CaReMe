@@ -1,17 +1,26 @@
 # CaHReMe
 
-**Evaluación cardiorrenal-hepatometabólica — prototipo funcional de captura, sin motor clínico.**
+**Evaluación cardiorrenal-hepatometabólica — prototipo con formularios y cálculos descriptivos, sin prescripción.**
 
 **Repositorio:** `olsanju-hub/CaReMe` · **Nombre visual:** CaHReMe (de trabajo)
 
 ## Propósito
 PWA independiente de apoyo a la decisión clínica en Atención Primaria en España. Evaluación integrada de los dominios **cardiovascular, renal, hepático y metabólico**, sin reducir la app a diabetes mellitus.
 
-> Estado: **prototipo de interfaz (iteración A, en revisión)**. No contiene algoritmos clínicos verificados y **no debe utilizarse para decisiones asistenciales**.
+> Estado: **prototipo funcional (iteración A + primer bloque B), en revisión**. Calcula categorías G/A (KDIGO 2024) y FIB-4 (EASL 2024) con límites de interpretación. No contiene recomendaciones terapéuticas validadas y **no debe utilizarse para decisiones asistenciales**.
 
 ## Requisito funcional de referencia
 
 CaHReMe cubre ya la **navegación y captura de datos** de seis consultas inspiradas en GlucoGuía y debe completar su **lógica clínica validada** (DM2, IC, ERC, sobrepeso/obesidad, enfermedad hepática metabólica e insulinización), **con consulta rápida, detalle y resultados equivalentes en funcionalidad**, ampliadas con evaluación integral, datos compartidos, recomendaciones clínicas trazables y seguimiento. **El motor de resultados clínicos sigue pendiente.** Véase [matriz de equivalencia y brechas](docs/MATRIZ_EQUIVALENCIA_GLUCOGUIA.md).
+
+## Primer bloque del motor clínico — cálculos descriptivos
+
+- `src/clinical/engine.mjs`: categorías G1–G5 y A1–A3 desde TFGe/CAC, sin deducir el diagnóstico de ERC por una medición aislada.
+- Cálculo FIB-4 desde edad, AST, ALT y plaquetas, con exclusión de interpretación en enfermedad aguda, contexto inadecuado y precaución en menores de 35 años; umbral ajustado en >65 años.
+- Herramientas y resúmenes renal/hepático muestran resultados, limitaciones y vínculo a la fuente; faltantes no se transforman en cero.
+- `tests/clinical.test.mjs`: umbrales exactos, casos de referencia y estados no evaluables.
+- Documento [Fuentes y reglas clínicas](docs/FUENTES_CLINICAS.md).
+- **Estas funciones no están aprobadas para uso asistencial.** Las reglas terapéuticas siguen sin implementar.
 
 ## Estado de las seis consultas (iteración A.2)
 
@@ -82,8 +91,8 @@ Incluye entrada integral o dirigida, captura por secciones, distinción entre ca
 | Componente | Estado |
 | --- | --- |
 | Documentación inicial | Borrador v0.1 disponible para revisión |
-| Evidencia y especificaciones clínicas | Pendiente |
-| Motor de evaluación y recomendaciones | Pendiente |
+| Evidencia y especificaciones clínicas | KDIGO G/A y EASL FIB-4 documentadas; resto pendiente |
+| Motor de evaluación y recomendaciones | Cálculos G/A y FIB-4 implementados; recomendaciones pendientes |
 | Interfaz y PWA | Prototipo en rama de revisión; manifiesto PWA y caché estática implementados; validación visual e instalación pendientes |
 | Icono final exportado | Pendiente |
 | Pruebas y validación clínica | Pendiente |
