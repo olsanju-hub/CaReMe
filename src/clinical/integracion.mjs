@@ -267,6 +267,20 @@ export function integratePatient(draft) {
       ['Completar TFGe y CAC y verificar tratamiento previo con IECA/ARA-II.'],
       ['KDIGO-2024-CKD','CIMA-AEMPS-FINERENONA'],['Renal']));
   }
+  // Indicación distinta de la ERC con DM2: finerenona en IC crónica con FEVI >=40%.
+  // Se presenta solo como consulta de ficha, sin equiparar posología ni idoneidad.
+  const feviForFin=number(draft,'fevi');
+  if(hf && feviForFin!==null && feviForFin>=40) {
+    const notes=['Revisar la indicación específica de IC con FEVI ≥40 % y síntomas confirmados.',
+      'Comprobar potasio y TFGe actuales, ARM concomitantes e inhibidores CYP3A4 potentes.',
+      'No reutilizar el objetivo de 20 mg de ERC-DM2 en IC; la FT contempla hasta 40 mg/día según función renal inicial.'];
+    if(potassium===null) notes.unshift('Potasio no disponible: no valorar inicio.');
+    if(potassium!==null && potassium>5) notes.unshift('Potasio >5,0 mmol/L: la ficha no permite iniciar finerenona.');
+    if(egfr===null || egfr<25) notes.unshift('Revisar función renal: inicio no recomendado con TFGe <25.');
+    add(card('FIN-HF-LABEL','context','Finerenona en IC: vía CIMA distinta de ERC-DM2',
+      'Kerendia tiene indicación en IC crónica sintomática con FEVI ≥40 %. Su pauta objetivo depende de la TFGe inicial y es distinta de la pauta en ERC asociada a DM2.',
+      notes,['CIMA-AEMPS-FINERENONA'],['IC','Cardiovascular']));
+  }
   if(hepatic.status==='calculated' &&
       hepatic.interpretation==='higher_probability') {
     add(card('FIB4-CROSS','context','Priorizar valoración adicional de fibrosis hepática',
