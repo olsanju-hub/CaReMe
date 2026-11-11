@@ -13,6 +13,16 @@ PWA independiente de apoyo a la decisión clínica en Atención Primaria en Espa
 
 CaHReMe cubre ya la **navegación y captura de datos** de seis consultas inspiradas en GlucoGuía y debe completar su **lógica clínica validada** (DM2, IC, ERC, sobrepeso/obesidad, enfermedad hepática metabólica e insulinización), **con consulta rápida, detalle y resultados equivalentes en funcionalidad**, ampliadas con evaluación integral, datos compartidos, recomendaciones clínicas trazables y seguimiento. **Los algoritmos específicos de decisión terapéutica y seguimiento siguen pendientes.** Véase [matriz de equivalencia y brechas](docs/MATRIZ_EQUIVALENCIA_GLUCOGUIA.md).
 
+## Primer bloque de verificación farmacológica (CIMA-AEMPS)
+
+- Se ha añadido `src/clinical/farmacologia.mjs`, con fichas **por principio activo y por indicación**, basadas en CIMA-AEMPS, para **empagliflozina** y **finerenona**.
+- Vías separadas: empagliflozina en DM2, IC y ERC; finerenona en **ERC con albuminuria asociada a DM2** y en **IC crónica sintomática con FEVI ≥40 %** (nueva vía diferenciada).
+- Cada ficha muestra posología **de referencia de la FT**, monitorización, contraindicaciones y verificaciones pendientes del caso. **No calcula dosis para el paciente, no prescribe y no considera ningún caso «apto» automáticamente**.
+- Los bloqueos incluyen TFGe insuficiente, potasio >5,0 para finerenona, diabetes tipo 1 o cetoacidosis para empagliflozina, interacción CYP3A4 potente, Addison y ARM concomitante cuando proceda.
+- Acceso: **Herramientas → Farmacología**, y enlaces desde las tarjetas relevantes.
+- Referencias y restricciones: [Farmacología CIMA](docs/FARMACOLOGIA_CIMA.md). Casos de prueba: `tests/farmacologia.test.mjs`.
+- **Pendiente**: validación clínica profesional, ajustes de continuidad por vía, revisión de interacciones exhaustivas, otros medicamentos y posterior autorización asistencial.
+
 ## Segundo bloque del motor clínico — integración multiorgánica
 
 - `src/clinical/integracion.mjs`: analiza diagnósticos declarados de DM2, IC, ERC, ECV y enfermedad hepática junto con TFGe, albuminuria, FIB-4 y clases farmacológicas.
@@ -100,8 +110,8 @@ Incluye entrada integral o dirigida, captura por secciones, distinción entre ca
 | Componente | Estado |
 | --- | --- |
 | Documentación inicial | Borrador v0.1 disponible para revisión |
-| Evidencia y especificaciones clínicas | KDIGO, ADA 2026, ESC 2026, EASL y ficha CIMA de ejemplo; revisión terapéutica pendiente |
-| Motor de evaluación y recomendaciones | G/A, FIB-4 y candidatos multiorgánicos para revisión; prescripciones pendientes |
+| Evidencia y especificaciones clínicas | KDIGO/ADA/EASL/ESC + CIMA empagliflozina y finerenona por indicación; validación clínica pendiente |
+| Motor de evaluación y recomendaciones | G/A, FIB-4, candidatos multiorgánicos y monografías CIMA no prescriptivas; prescripciones pendientes |
 | Interfaz y PWA | Prototipo en rama de revisión; manifiesto PWA y caché estática implementados; validación visual e instalación pendientes |
 | Icono final exportado | Pendiente |
 | Pruebas y validación clínica | Pendiente |
