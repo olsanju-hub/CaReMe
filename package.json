@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "node server.mjs",
     "test": "node --test tests/*.test.mjs",
-    "check": "npm test && node --check src/app.mjs && node --check src/model.mjs && node --check src/consultas.mjs && node --check server.mjs && node --check src/clinical/engine.mjs"
+    "check": "npm test && node --check src/app.mjs && node --check src/model.mjs && node --check src/consultas.mjs && node --check server.mjs && node --check src/clinical/engine.mjs && node --check src/clinical/integracion.mjs"
   },
   "engines": {
     "node": ">=20"
