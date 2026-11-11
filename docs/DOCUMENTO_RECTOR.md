@@ -14,6 +14,12 @@ La unidad de trabajo es **una evaluación de un paciente en una consulta**, no u
 
 Los términos y modelos CKM y hepatometabólicos se tratarán según su respaldo documental. No se fabricará una clasificación única denominada «CaHReMe» ni un índice numérico de riesgo multiorgánico no validado.
 
+## 1.1. Cobertura funcional de la referencia
+
+**Requisito confirmado por el propietario:** CaHReMe debe incluir como mínimo las seis consultas de GlucoGuía (DM2, insuficiencia cardíaca, ERC, sobrepeso/obesidad, enfermedad hepática metabólica e insulinización) con sus formularios rápidos, revisiones detalladas y tipos de resultados, además de la evaluación integral multiorgánica propuesta. No basta con un formulario general por dominio. Detalles y estado de brechas: [Matriz de equivalencia funcional](MATRIZ_EQUIVALENCIA_GLUCOGUIA.md).
+
+Se respetará la cobertura de la referencia, no se replicarán sin revisión sus umbrales o indicaciones si la evidencia vigente los modifica. Toda implementación será original; no se copiará el código de terceros.
+
 ## 2. Usuarios y contexto
 
 - Destinatarios: profesionales sanitarios, especialmente Medicina Familiar y Comunitaria.
