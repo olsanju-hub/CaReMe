@@ -55,6 +55,12 @@ Fuentes y casos de prueba: [Integración terapéutica](INTEGRACION_TERAPEUTICA.m
 
 Ninguno de estos cálculos se activará en producción antes de aprobar su especificación y su batería de pruebas.
 
+## Estado parcial del bloque farmacológico (2026-11-11)
+
+Se añadieron dos monografías CIMA-AEMPS: **empagliflozina** (DM2, IC y ERC) y **finerenona** (ERC-DM2 e IC con FEVI ≥40 %). La interfaz separa dosis **de referencia de ficha técnica** de criterios clínicos individuales. El estado nunca es «autorizado»: solo bloqueo, datos insuficientes o revisión profesional pendiente. El resultado no contiene pauta personalizada.
+
+[Fuentes y especificación CIMA](FARMACOLOGIA_CIMA.md). Pendientes: medicamentos restantes, decisiones de monitorización/ajustes y validación clínica completa.
+
 ## Iteración C — conducta y seguimiento
 
 | Código | Función | Condición de aceptación |
