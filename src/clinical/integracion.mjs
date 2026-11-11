@@ -130,6 +130,20 @@ export function integratePatient(draft) {
       ['ADA-2026-9'],['Metabólico']));
   }
 
+  // Una sospecha de cetoacidosis exige atención incluso sin IC/ERC registradas.
+  if(ketoWarning) {
+    add(card('KETO-URGENT-REVIEW','alert','Sospecha de cetoacidosis: valoración inmediata',
+      'Una sospecha clínica de cetoacidosis requiere evaluación inmediata independientemente de la glucemia o del diagnóstico de ERC/IC.',
+      ['Valorar signos y síntomas, glucemia, cetonemia, equilibrio ácido-base y gravedad.',
+       'Revisar inmediatamente todos los tratamientos en curso, incluidos los iSGLT2.'],
+      ['CIMA-AEMPS-EMPAGLIFLOZINA'],['DM2','Renal','Cardiovascular']));
+  }
+  if(unsafeAcute && classes.has('iSGLT2')) {
+    add(card('SGLT2-CURRENT-ACUTE','alert','iSGLT2 registrado durante situación aguda',
+      'En enfermedad aguda grave o cirugía mayor/ayuno prolongado debe revisarse interrupción temporal conforme a la ficha del principio activo.',
+      ['Revisar medicamento exacto, cetonemia, estado hemodinámico y requisitos de reanudación.'],
+      ['KDIGO-2024-CKD','CIMA-AEMPS-EMPAGLIFLOZINA'],['Renal','Cardiovascular','DM2']));
+  }
   // iSGLT2: separar indicación de beneficio pronóstico de seguridad para el inicio.
   if(dm2 && ckddiagnosed && !chronic) {
     add(card('CKD-CHRONICITY','context','Confirmar situación renal antes de usar la rama de ERC',
@@ -188,6 +202,11 @@ export function integratePatient(draft) {
         'Revisar molécula, beneficio esperado según comorbilidades, dosis y tolerancia antes de decidir cambios.',
         checks,['ADA-2026-9','ADA-2026-11','EASL-EASD-EASO-MASLD-2024'],
         ['DM2','Cardiovascular','Renal','Hepático']));
+    } else if(unsafeAcute || ketoWarning) {
+      add(card('GLP-ACUTE-DEFER','context','Posponer elección de terapia incretínica durante valoración aguda',
+        'La decisión de intensificación o cambio metabólico requiere primero resolver o valorar el proceso agudo.',
+        checks.concat(['Confirmar estabilidad clínica antes de revisar opciones de tratamiento crónico.']),
+        ['ADA-2026-9'],['Metabólico','DM2']));
     } else {
       if(egfr===null) checks.push('Comprobar función renal para elegir el principio activo concreto.');
       add(card('GLP-REVIEW','option','Valorar un arGLP-1 con evidencia según perfil',
@@ -211,7 +230,12 @@ export function integratePatient(draft) {
   // (CIMA-AEMPS, ficha de Kerendia), sin extrapolar automáticamente a otros ARM.
   if(dm2 && ckdEvidence && acr!==null && acr>30 && egfr!==null && egfr>25) {
     const sources=['KDIGO-2024-CKD','ADA-2026-11','CIMA-AEMPS-FINERENONA'];
-    if (classes.has('ARM')) {
+    if (unsafeAcute || ketoWarning) {
+      add(card('NSMRA-ACUTE-DEFER','context','No valorar inicio de ARM no esteroideo durante situación aguda',
+        'La decisión debe revisarse con potasio y función renal actualizados y paciente clínicamente estable.',
+        ['Priorizar evaluación del cuadro agudo; no realizar cambios automáticos de medicación.'],
+        sources,['Renal','Cardiovascular','DM2']));
+    } else if (classes.has('ARM')) {
       add(card('NSMRA-MRA-EXISTING','alert','ARM ya registrado: revisar duplicidades antes de finerenona',
         'Consta tratamiento de la clase ARM sin especificar molécula; no se propone añadir otro antagonista mineralocorticoide.',
         ['Identificar si ya utiliza espironolactona, eplerenona, finerenona u otro ARM.',
