@@ -2,9 +2,10 @@ import { SECTIONS, FIELDS, createDraft, setValue, setUnavailable, fieldState, se
 import { MODULES, MODULE_BY_ID, moduleFields, readMulti } from './consultas.mjs';
 import { SOURCES, evaluateRenal, evaluateFib4 } from './clinical/engine.mjs';
 import { integratePatient, INTEGRATION_SOURCES } from './clinical/integracion.mjs';
+import { DRUGS, getDrug, getDrugRoute, reviewDrug } from './clinical/farmacologia.mjs';
 
 let draft = createDraft();
-let current = { page: 'home', step: 0, focus: 'integral', module: null, mode:'quick' };
+let current = { page: 'home', step: 0, focus: 'integral', module: null, mode:'quick', drug:'empagliflozina', route:'dm2' };
 const app = document.getElementById('app');
 const escape = (value) => String(value ?? '').replace(/[&<>"']/g, c =>
   ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -293,6 +294,56 @@ function summary() {
     <div class="summary-actions"><button type="button" class="ghost" data-action="go-step" data-step="0">Volver a editar</button>
       <button type="button" class="primary" data-action="new">Finalizar y borrar datos</button></div></div>`;
 }
+function pharmaLibrary() {
+  return `<section class="pharma-library">
+  <div class="eyebrow">CIMA-AEMPS · FICHAS POR PRINCIPIO ACTIVO</div>
+  <h2>Farmacología verificada</h2>
+  <p>Dosis de ficha técnica, separadas por indicación. La aplicación no calcula recetas ni confirma elegibilidad.</p>
+  <div class="pharma-grid">${Object.values(DRUGS).map(drug=>`<article class="pharma-preview">
+    <div><strong>${escape(drug.generic)}</strong><span>${escape(drug.className)} · ${escape(drug.exampleBrand)}</span></div>
+    <button type="button" class="ghost" data-action="open-drug" data-drug-id="${escape(drug.id)}" data-route-id="${escape(drug.routes[0].id)}">Consultar ficha →</button>
+  </article>`).join('')}</div>
+  </section>`;
+}
+function drugView() {
+  const drug=getDrug(current.drug);
+  if(!drug) return tools();
+  const route=getDrugRoute(drug.id,current.route) || drug.routes[0];
+  const review=reviewDrug(draft,drug.id,route.id);
+  const states={bloqueo:'Bloqueo o precaución mayor',datos_insuficientes:'Datos esenciales incompletos',
+    revision_pendiente:'Revisión profesional pendiente'};
+  const items=(arr)=>arr.map(t=>`<li>${escape(t)}</li>`).join('');
+  return `<div class="page interior">
+    <div class="bread"><button type="button" data-action="tools">Herramientas</button><span>›</span><span>Farmacología</span></div>
+    <div class="eyebrow">FICHA TÉCNICA ESPAÑOLA · REFERENCIA NO PRESCRIPTIVA</div>
+    <h1>${escape(drug.generic)}</h1><p>${escape(drug.className)} · Referencia comercial: ${escape(drug.exampleBrand)}</p>
+    ${banner()}
+    <div class="drug-tabs" role="group" aria-label="Indicación farmacológica">
+      ${drug.routes.map(r=>`<button type="button" data-action="drug-route" data-route-id="${escape(r.id)}"
+        class="${r.id===route.id?'active':''}" aria-pressed="${r.id===route.id}">${escape(r.name)}</button>`).join('')}
+    </div>
+    <section class="drug-card">
+      <div class="drug-state ${escape(review.state)}">${escape(states[review.state])}</div>
+      <h2>Aplicación de la ficha al contexto introducido</h2>
+      <p>Datos declarados: esta pantalla no determina si el paciente puede recibir el medicamento.</p>
+      ${review.blocked.length ? `<div class="drug-warning"><strong>Bloqueos identificados</strong><ul>${items(review.blocked)}</ul></div>`:''}
+      ${review.missing.length ? `<div class="drug-missing"><strong>Información obligatoria pendiente</strong><ul>${items(review.missing)}</ul></div>`:''}
+      <div class="drug-checks"><strong>Verificaciones antes de prescribir</strong><ul>${items(review.checks)}</ul></div>
+    </section>
+    <section class="drug-card">
+      <div class="eyebrow">SOLO PAUTA DE FICHA TÉCNICA · NO DOSIS PERSONALIZADA</div>
+      <h2>${escape(route.name)}</h2>
+      <ul>${items(route.labelDoses)}</ul>
+      <p class="drug-disclaimer">La tabla es informativa incluso si existen bloqueos. No equivale a una recomendación para el paciente.</p>
+    </section>
+    <section class="drug-card"><h2>Monitorización y advertencias</h2>
+      <h3>Seguimiento de ficha técnica</h3><ul>${items(drug.monitoring)}</ul>
+      <h3>Precauciones y contraindicaciones relevantes</h3><ul>${items(drug.warningText)}</ul>
+      <div class="drug-source"><strong>CIMA-AEMPS · Revisado ${escape(drug.source.reviewed)}</strong>
+        <a href="${escape(drug.source.url)}" target="_blank" rel="noopener noreferrer">Abrir ficha técnica · apartados 4.1–4.5 ↗</a></div>
+    </section>
+  </div>`;
+}
 function tools() {
   return `<div class="page interior">
     <div class="eyebrow">MOTOR CLÍNICO · FASE DE CÁLCULO</div><h1>Herramientas de evaluación</h1>
@@ -300,6 +351,7 @@ function tools() {
     ${banner()}
     <div class="calc-stack">${renalResultCard()}${fib4ResultCard()}</div>
     ${integratedCards()}
+    ${pharmaLibrary()}
     <div class="tool-grid">
       ${['dm2','ic','obesidad','insulina'].map(id=>{
         const m=MODULE_BY_ID[id];
@@ -326,7 +378,7 @@ function sources() {
 }
 function render() {
   const contents = current.page === 'home' ? home() : current.page === 'module' ? moduleView() : current.page === 'evaluation' ? evaluation()
-    : current.page === 'summary' ? summary() : current.page === 'tools' ? tools() : sources();
+    : current.page === 'summary' ? summary() : current.page === 'tools' ? tools() : current.page === 'drug' ? drugView() : sources();
   app.innerHTML = header() + '<main id="main-content">' + contents + '</main>' + nav() +
     '<footer class="footer">CaHReMe · Identidad Atlántico · Prototipo no validado para uso asistencial</footer>';
 }
@@ -362,6 +414,17 @@ app.addEventListener('click', event => {
   if (!btn) return;
   const action = btn.dataset.action;
   if (action === 'start') return start(btn.dataset.focus || 'integral');
+  if (action === 'open-drug') {
+    const drug=getDrug(btn.dataset.drugId);
+    if (!drug) return;
+    current.drug=drug.id;
+    current.route=getDrugRoute(drug.id,btn.dataset.routeId)?.id || drug.routes[0].id;
+    return navigate('drug');
+  }
+  if (action === 'drug-route') {
+    if (!getDrugRoute(current.drug,btn.dataset.routeId)) return;
+    current.route=btn.dataset.routeId; return navigate('drug');
+  }
   if (action === 'start-module') {
     if (!MODULE_BY_ID[btn.dataset.module]) return;
     current.module=btn.dataset.module; current.mode='quick'; return navigate('module');
@@ -385,7 +448,7 @@ app.addEventListener('click', event => {
   }
   if (action === 'new') {
     if (!confirm('¿Borrar los datos de esta evaluación? Esta acción no se puede deshacer.')) return;
-    draft = createDraft(); current = { page: 'home', step: 0, focus: 'integral', module:null,mode:'quick' };
+    draft = createDraft(); current = { page: 'home', step: 0, focus: 'integral', module:null,mode:'quick',drug:'empagliflozina',route:'dm2' };
     return navigate('home');
   }
 });
