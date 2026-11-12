@@ -157,14 +157,17 @@ export function evaluateHeartFailure(draft,mode='quick'){
  const vitalUnknown=mode==='detail'&&
    (stability!=='Estable evaluado'||congestion===null||congestion==='No valorados');
  const safetyUnknown=mode==='detail'&&(
-   egfr===null||potassium===null||sbp===null||meds===null||!reconciled||!allergies);
+   fevi===null||egfr===null||potassium===null||sbp===null||
+   flags===null||meds===null||!reconciled||!allergies||
+   pregnancy===null||pregnancy==='No valorado');
  const mismatch=group&&fevi!==null&&(
    (group==='Reducida · FEVI <50 %'&&fevi>=50)||
    (group==='Preservada · FEVI ≥50 %'&&fevi<50));
+ const futureEcho=fevi!==null&&!!efDate&&!!evalDate&&efDate>evalDate;
  const redFlagsConflict=!!noRedFlags&&activeFlags.length>0;
  const criticalSafety=urgent||pregnancy==='Sí'||(potassium!==null&&potassium>5.5);
  const state=criticalSafety?'seguridad_prioritaria':
-   contradiction||mismatch||redFlagsConflict?'revisar_coherencia':
+   contradiction||mismatch||redFlagsConflict||futureEcho?'revisar_coherencia':
    !hasDiagnosis||(!chosenPhenotype&&mode==='quick')||noHFpEF||vitalUnknown||safetyUnknown
     ?'datos_insuficientes':'revision_pendiente';
  let situation=hasDiagnosis?'IC conocida: caracterizar estabilidad, FEVI y volemia.':
