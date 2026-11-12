@@ -54,6 +54,14 @@ export function reviewFinerenoneContinuation(draft, routeId) {
   if(routeId==='ic_fevi40' && initial===null)
     missing.push('TFGe al inicio de la indicación cardíaca (determina objetivo de dosis).');
 
+  if(status==='Interrumpido' && potassium!==null &&
+    ((routeId==='erc_dm2' && potassium>5.0) ||
+     (routeId==='ic_fevi40' && potassium>=5.5))) {
+    return answer('finerenona',routeId,'FIN-RESTART-K-BLOCK','alerta',
+      'Potasio fuera del umbral de reanudación de ficha CIMA',
+      'La ficha contiene criterios de reinicio distintos por indicación y evolución del potasio. No generar propuesta de reinicio con este valor.',
+      [],['Confirmar medidas analíticas, antecedentes de hiperpotasemia y situación clínica.']);
+  }
   if(status === 'Interrumpido') {
     return answer('finerenona',routeId,'FIN-RESTART-CONTEXT','revision_contextual',
       'Reinicio pendiente de reevaluación','La ficha diferencia condiciones de reinicio según indicación, potasio y motivo previo de suspensión. No reiniciar automáticamente.',
@@ -187,6 +195,11 @@ export function reviewEmpagliflozinContinuation(draft, routeId) {
       'Sospecha de cetoacidosis: no reanudar',
       'La ficha requiere evaluación inmediata. No presuponer que la suspensión ya se ha realizado.',
       [], ['Confirmar actuación médica y estado metabólico.']);
+    if(priorDka===null || priorDka==='No valorado')
+      return answer('empagliflozina',routeId,'EMP-DKA-HISTORY-UNKNOWN','datos_insuficientes',
+        'Falta antecedente de cetoacidosis con iSGLT2',
+        'No valorar reanudación hasta conocer antecedentes de cetoacidosis durante el tratamiento.',
+        ['Revisar si hubo cetoacidosis asociada a iSGLT2.']);
     if(priorDka==='Sí' && triggerResolved!=='Sí') return answer('empagliflozina',routeId,'EMP-PRIOR-DKA','precaucion',
       'No recomendar reinicio tras cetoacidosis asociada a iSGLT2',
       'CIMA desaconseja el reinicio tras cetoacidosis durante iSGLT2 salvo causa desencadenante identificada y claramente resuelta.',
