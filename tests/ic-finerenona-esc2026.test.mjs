@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import {createDraft,setValue} from '../src/model.mjs';
 import {evaluateHeartFailure} from '../src/clinical/insuficiencia-cardiaca.mjs';
 import {auditCrossDomain} from '../src/clinical/auditoria.mjs';
-import {reviewDrug} from '../src/clinical/farmacologia.mjs';
+import {reviewDrug,getDrugRoute} from '../src/clinical/farmacologia.mjs';
+import {readFileSync} from 'node:fs';
 const make=(d={})=>Object.entries(d).reduce((x,[k,v])=>setValue(x,k,
  Array.isArray(v)?JSON.stringify(v):String(v)),createDraft());
 const baseline={
@@ -89,4 +90,16 @@ test('reviewDrug no sustituye la indicación específica y preserva bloqueo por 
  assert.equal(reviewDrug(d,'finerenona','ic_fevi40').state,'bloqueo');
  const r=evaluateHeartFailure(d,'detail');
  assert.ok(!has(r,'HF-FINERENONE-CIMA-REVIEW'));
+});
+
+test('el enlace de la tarjeta IC abre la indicación CIMA correcta sin prescribir',()=>{
+ const route=getDrugRoute('finerenona','ic_fevi40');
+ assert.ok(route);
+ const app=readFileSync(new URL('../src/app.mjs',import.meta.url),'utf8');
+ assert.ok(app.includes('data-action="open-drug" data-drug-id="finerenona" data-route-id="ic_fevi40"'));
+ const decision=get();
+ const card=decision.options.find(x=>x.id==='HF-FINERENONE-CIMA-REVIEW');
+ assert.ok(card);
+ assert.equal(card.actionPerformed,false);
+ assert.equal(card.prescription,null);
 });
