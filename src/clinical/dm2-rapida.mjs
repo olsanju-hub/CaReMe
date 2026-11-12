@@ -38,6 +38,9 @@ export function evaluateDm2Quick(draft){
   const meds=multi(draft,'farmacos_clases');
   const classes=new Set(meds||[]);
   const hba1c=n(draft,'hba1c'),egfr=n(draft,'tfge');
+  const glucose=n(draft,'glucemia_actual');
+  const severeHypo=v(draft,'dm_hipoglucemias')==='Graves o recurrentes';
+  const pregnancy=v(draft,'embarazo')==='Sí';
   const bmi=n(draft,'imc');
   const objective=v(draft,'dm_objetivo'),symptoms=v(draft,'dm_sintomas');
   const reason=v(draft,'dm2');
@@ -90,6 +93,12 @@ export function evaluateDm2Quick(draft){
   }
   if(severeGlycemia)
     safety.push('HbA1c >10%: valorar necesidad de insulinización tras comprobar clínica, glucemia y seguridad, sin asumir una pauta automática.');
+  if(glucose!==null&&glucose>=300)
+    safety.push('Glucemia ≥300 mg/dL: valorar síntomas, cetonas y gravedad antes de iniciar modificaciones crónicas.');
+  if(severeHypo)
+    safety.push('Hipoglucemias graves o recurrentes: revisar pauta actual y objetivo antes de intensificar.');
+  if(pregnancy)
+    safety.push('Gestación en DM2: utilizar el circuito específico de diabetes y embarazo, no este algoritmo general.');
   if(unstable)
     safety.push('Situación aguda: priorizar estabilización y reconciliación; no iniciar/escalar tratamiento crónico desde esta consulta.');
   if(reason==='No'||dm1==='Sí'){
@@ -97,8 +106,9 @@ export function evaluateDm2Quick(draft){
   }
   const mismatch=safety.some(text=>text.includes('no coincide')||text.includes('La rama indica'));
   const blocked=!!audit.requiresResolution || mismatch || reason==='No' || dm1==='Sí';
-  const acutePriority=severeRisk||urgentSymptoms||severeGlycemia||unstable;
-  const status=severeRisk?'seguridad_prioritaria'
+  const safetyCritical=severeRisk||severeHypo||pregnancy||(glucose!==null&&glucose>=300);
+  const acutePriority=safetyCritical||urgentSymptoms||severeGlycemia||unstable;
+  const status=safetyCritical?'seguridad_prioritaria'
     :blocked?'revisar_coherencia'
     :acutePriority?'seguridad_prioritaria'
     :missing.length?'datos_insuficientes':'revision_pendiente';
@@ -107,6 +117,9 @@ export function evaluateDm2Quick(draft){
   if(severeRisk){
     situation='Sospecha de crisis metabólica aguda: prioridad clínica inmediata.';
     nextSteps.push('Evaluación urgente de gravedad, glucemia, cetonemia y equilibrio ácido-base; no seguir el algoritmo de intensificación crónica.');
+  } else if(safetyCritical){
+    situation='Prioridad de seguridad antes de cualquier intensificación glucémica.';
+    nextSteps.push('Valorar el problema de seguridad: glucemia actual, hipoglucemias o embarazo según corresponda; no emitir una pauta nueva desde esta pantalla.');
   } else if(blocked){
     situation='Incoherencias clínicas: no presentar opciones de inicio.';
     nextSteps.push('Conciliar diagnóstico, síntomas, mediciones y campos contradictorios antes de aplicar el algoritmo.');
