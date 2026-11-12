@@ -189,8 +189,7 @@ function verificationPanel() {
         <span class="verification-kind">${escape(priorities[item.priority]||'Revisar')}</span>
         <h3>${escape(item.title)}</h3><p>${escape(item.detail)}</p>
         ${item.fields.length?`<small>Campos: ${item.fields.map(id=>escape(FIELDS[id]?.label||id)).join(' · ')}</small>`:''}
-      </article>`).join('')}</div>
-
+      </article>`).join('')}</div>`
       :'<p>Sin comprobaciones pendientes detectadas por las reglas implementadas; esto no valida la historia ni equivale a alta clínica.</p>'}
     <h3>Controles derivados de actuaciones confirmadas</h3>
     ${followup.length?`<div class="verification-followup">${followup.map(x=>`
