@@ -26,25 +26,25 @@ test('KDIGO G: límites exactos y valores contiguos',()=>{
   for(const value of [0,-1,Infinity,NaN,null,'45']) assert.equal(gfrCategory(value),null);
 });
 test('KDIGO A: límites exactos 30 y 300 mg/g',()=>{
-  const cases=[[0,'A1'],[29.99,'A1'],[30,'A2'],[300,'A2'],[300.01,'A3']];
+  const cases=[[0,'A1'],[29.99,'A1'],[30,'A2'],[299.99,'A2'],[300,'A3'],[300.01,'A3']];
   for(const [value,expected] of cases) assert.equal(albuminuriaCategory(value),expected,String(value));
   for(const value of [-1,Infinity,NaN,null,'30']) assert.equal(albuminuriaCategory(value),null);
 });
 test('un único valor renal nunca confirma cronicidad',()=>{
-  const x=evaluateRenal(draft({tfge:'52',cac:'78'}));
+  const x=evaluateRenal(draft({tfge:'52',cac:'78',unidad_cac:'mg/g'}));
   assert.equal(x.status,'calculated');
   assert.deepEqual(x.categories,{gfr:'G3a',albuminuria:'A2'});
   assert.equal(x.chronicConfirmed,false);
   assert.match(x.message,/No se ha documentado cronicidad/);
 });
 test('marcar cronicidad no inventa causa ni otros criterios de ERC',()=>{
-  const x=evaluateRenal(draft({tfge:'94',cac:'14',persistencia:'Sí'}));
+  const x=evaluateRenal(draft({tfge:'94',cac:'14',unidad_cac:'mg/g',persistencia:'Sí'}));
   assert.equal(x.status,'calculated');
   assert.equal(x.markerPresent,false);
   assert.match(x.message,/No se identifican criterios/);
 });
 test('clasificación renal con cronicidad confirmada por declaración',()=>{
-  const x=evaluateRenal(draft({tfge:'29',cac:'301',persistencia:'Sí'}));
+  const x=evaluateRenal(draft({tfge:'29',cac:'301',unidad_cac:'mg/g',persistencia:'Sí'}));
   assert.equal(x.status,'calculated');
   assert.deepEqual(x.categories,{gfr:'G4',albuminuria:'A3'});
   assert.equal(x.markerPresent,true);
@@ -54,7 +54,7 @@ test('ausencia, indisponibilidad, cero y texto inválido no producen categorías
   const empty=evaluateRenal(draft());
   assert.equal(empty.status,'missing');
   assert.equal(empty.categories.gfr,null);
-  const one=evaluateRenal(draft({cac:'30'},['tfge']));
+  const one=evaluateRenal(draft({cac:'30',unidad_cac:'mg/g'},['tfge']));
   assert.equal(one.status,'partial');
   assert.equal(one.categories.gfr,null);
   assert.equal(one.categories.albuminuria,'A2');
