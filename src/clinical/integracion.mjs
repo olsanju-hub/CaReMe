@@ -115,7 +115,7 @@ export function integratePatient(draft) {
   const renal=evaluateRenal(draft);
   const hepatic=evaluateFib4(draft);
   const egfr=number(draft,'tfge');
-  const acr=number(draft,'cac');
+  const acr=renal.inputs.acr.state==='ok'?renal.inputs.acr.value:null;
   const potassium=number(draft,'potasio');
   const medication=medicationClasses(draft);
   const classes=new Set(medication || []);
