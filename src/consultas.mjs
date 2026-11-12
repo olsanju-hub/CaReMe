@@ -36,7 +36,7 @@ export const MODULES = [
     id: 'insulina', title: 'Insulinización', domain: 'metabolico',
     short: 'Inicio, intensificación o simplificación',
     quick: ['insulina_fase','insulina_perfil'],
-    detail: ['insulina_fase','edad','dm2','dm1','embarazo','insulina_esquema','insulina_dosis_basal','peso','imc','tfge','fecha_tfge','insulina_fragilidad','insulina_especiales','hba1c','fecha_hba1c','dm_objetivo_valor','dm_hba1c_fiable','glucemia_actual','insulina_ayunas','insulina_ayunas_objetivo','insulina_posprandial','insulina_hipo_nocturna','dm_hipoglucemias','insulina_autocuidado','dm_adherencia','dm_dosis_confirmadas','situacion_aguda','cetoacidosis_sospecha','lra_sospecha','farmacos_clases','farmacos','medicacion_revisada','alergias','alergias_revisadas']
+    detail: ['insulina_fase','edad','dm2','dm1','embarazo','insulina_esquema','insulina_dosis_basal','peso','imc','tfge','fecha_tfge','insulina_fragilidad','insulina_especiales','hba1c','fecha_hba1c','dm_objetivo_valor','dm_hba1c_fiable','glucemia_actual','insulina_ayunas','insulina_ayunas_objetivo','insulina_posprandial','insulina_hipo_nocturna','dm_hipoglucemias','insulina_motivo_simplificacion','insulina_autocuidado','dm_adherencia','dm_dosis_confirmadas','situacion_aguda','cetoacidosis_sospecha','lra_sospecha','farmacos_clases','farmacos','medicacion_revisada','alergias','alergias_revisadas']
   }
 ];
 export const MODULE_BY_ID = Object.fromEntries(MODULES.map(m => [m.id, m]));
@@ -184,6 +184,10 @@ export const EXTRA_FIELDS = [
     options:['Elevaciones posprandiales repetidas','Sin elevaciones significativas documentadas','No valorado']},
   {id:'insulina_hipo_nocturna',label:'Hipoglucemias nocturnas',type:'select',
     options:['Sí','No','No valoradas']},
+  {id:'insulina_motivo_simplificacion',label:'Motivo para valorar desintensificación',type:'select',
+    options:['Hipoglucemia o riesgo elevado','Fragilidad o dificultad de autocuidado',
+      'Insulinización transitoria con resolución del desencadenante',
+      'Carga terapéutica excesiva','No valorado']},
   {id:'insulina_autocuidado',label:'Capacidad y apoyo para administrar y vigilar insulina',type:'select',
     options:['Capacidad y apoyo adecuados confirmados','Requiere educación o apoyo','No valorada']},
   { id:'insulina_fase',label:'Situación de insulinización',type:'select',
