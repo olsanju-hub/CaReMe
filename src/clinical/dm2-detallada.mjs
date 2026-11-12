@@ -130,6 +130,7 @@ export function evaluateDm2Detail(draft){
  const comparable=reliable==='Fiable tras comprobación'&&
    !measurementInvalid&&!(measured&&assessed&&measured>assessed);
  const comparison=comparable?compareIndividualGoal(hba1c,goal):null;
+ const discrepancies=[];
  const quickControl=val(draft,'dm_control');
  const categoricalGoal=val(draft,'dm_objetivo');
  const categoricalLimit={
@@ -141,7 +142,6 @@ export function evaluateDm2Detail(draft){
    discrepancies.push('El objetivo categórico no coincide con el límite numérico: reconciliar ambos antes de valorar intensidad.');
  if(categoricalGoal==='Pendiente de individualizar'&&goal!==null)
    discrepancies.push('Se declara objetivo pendiente y simultáneamente un límite numérico acordado.');
- const discrepancies=[];
  if(quickControl&&hba1c!==null){
    if(quickControl.startsWith('Fuera del objetivo · HbA1c inferior')&&hba1c>=8.5)
      discrepancies.push('Tramo rápido HbA1c <8,5% incompatible con el resultado aportado.');
