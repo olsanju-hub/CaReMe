@@ -43,7 +43,7 @@ La ficha de IC usa dosis **10, 20 o 40 mg/día**; el objetivo depende de TFGe in
 | 5,5 a <6,0 | Interrumpir | Reducir a 10 mg | Reducir a 20 mg |
 | ≥6,0 | Interrumpir | Interrumpir | Interrumpir |
 
-Si TFGe disminuye **≥40 %**, la ficha recomienda considerar reducción o interrupción; se prioriza una revisión clínica. Las salidas distinguen **>30 %** de **≥40 %**, y no intentan calcular posología sin la dosis verdaderamente administrada. Para reinicio tras interrupción, el sistema requiere nueva valoración, sin generar una orden automática.
+Si TFGe disminuye **≥40 %**, la ficha recomienda considerar reducción o interrupción; se prioriza una revisión clínica. Las salidas distinguen **>30 %** de **≥40 %**, y no intentan calcular posología sin la dosis verdaderamente administrada. Para reinicio tras interrupción, el sistema requiere nueva valoración y señala potasio fuera del umbral de reanudación, sin generar una orden automática.
 
 En ambos itinerarios de finerenona, **K y TFGe se deben controlar a las cuatro semanas** de inicio, reinicio y modificación de dosis. Posteriormente, según situación y riesgo.
 
@@ -53,7 +53,7 @@ En ambos itinerarios de finerenona, **K y TFGe se deben controlar a las cuatro s
 - DM2: paso de 10 a 25 mg solo figura como opción documental si se declara tolerancia, necesidad de mayor control glucémico y TFGe ≥60.
 - Sospecha o diagnóstico de cetoacidosis: la ficha indica suspensión y **valoración inmediata**, incluso con glucemia poco elevada.
 - Hospitalización por enfermedad aguda grave o procedimiento quirúrgico mayor: la ficha indica interrupción, control de cetonas y reconsideración de reinicio tras **normalización de cuerpos cetónicos y estabilización clínica**.
-- Cetoacidosis previa durante un iSGLT2: **no recomendar reinicio** sin que se haya identificado y resuelto claramente otro factor desencadenante.
+- Cetoacidosis previa durante un iSGLT2: **no recomendar reinicio** sin que se haya identificado y resuelto claramente otro factor desencadenante. Si el antecedente no está valorado, la reanudación queda **no evaluable**.
 - Control de función renal antes del inicio y **al menos anual** durante tratamiento; adelantar según situación clínica y tratamientos asociados.
 
 La revisión no prescribe, no reanuda y no afirma que se haya suspendido empagliflozina. El módulo separa `emp_estado` (tratamiento realmente administrado o interrumpido) de las recomendaciones.
