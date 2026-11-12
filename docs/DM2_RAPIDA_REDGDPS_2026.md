@@ -56,17 +56,17 @@ La frecuencia sugerida de HbA1c es **orientativa**, no una cita programada: en o
 
 ## Corrección renal en el mismo incremento
 
-Se verificó [KDIGO CKD 2024](https://kdigo.org/wp-content/uploads/2024/03/KDIGO-2024-CKD-Guideline.pdf), tabla de clasificación C/G/A: **A1 <30 mg/g, A2 de 30 a <300 mg/g, A3 ≥300 mg/g**.
+Se verificó [KDIGO CKD 2024](https://kdigo.org/wp-content/uploads/2024/03/KDIGO-2024-CKD-Guideline.pdf), tabla de clasificación C/G/A: **A1 <30 mg/g, A2 de 30 a 300 mg/g, A3 >300 mg/g**.
 
 **Antes de este bloque:**
 - Sin unidad `unidad_cac`, `evaluateRenal` podía asumir mg/g y clasificar el valor.
-- El corte exacto de **300 mg/g** estaba asignado a **A2**, no A3.
+- El corte exacto de **300 mg/g** estaba asignado a **A2**. Se había cuestionado este límite durante la primera auditoría, pero la comprobación visual de la tabla 3 KDIGO confirmó que era correcto.
 
 **Después:**
 - La categoría A solo se obtiene con **unidad explícita `mg/g`** y resultado válido. No se convierte automáticamente `mg/mmol`.
 - `CAC_UNIT_MISSING` y `CAC_UNIT_INCOMPATIBLE` son hallazgos de **prioridad crítica** que bloquean propuestas farmacológicas integradas hasta completar/corregir el dato.
 - `integratePatient` utiliza el CAC **validado por `evaluateRenal`**, nunca la cifra cruda para decidir elegibilidad.
-- A3 se obtiene con **CAC ≥300 mg/g**. Las fronteras 29,99/30 y 299,99/300 están cubiertas por pruebas.
+- A3 se obtiene con **CAC >300 mg/g**. Las fronteras 29,99/30 y 300/300,01 están cubiertas por pruebas.
 - Un CAC elevado no permite por sí solo atribuir ERC sin comprobar la cronicidad y otras causas.
 
 ## Límites para el próximo bloque
