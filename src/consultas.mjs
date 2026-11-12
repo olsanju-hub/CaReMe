@@ -6,7 +6,7 @@ export const MODULES = [
     id: 'dm2', title: 'Diabetes tipo 2', domain: 'metabolico',
     short: 'Control glucémico y tratamiento', 
     quick: ['dm_prioridad','dm_control'],
-    detail: ['hba1c','dm_objetivo','dm1','tfge','imc','dm_sintomas','comorbilidades','situacion_aguda','cetoacidosis_sospecha','farmacos_clases','farmacos','medicacion_revisada','alergias','alergias_revisadas']
+    detail: ['hba1c','dm_objetivo','dm1','tfge','imc','retinopatia_dm','vision_subita','pancreatitis_sospecha','pancreatitis_previa','dm_sintomas','comorbilidades','situacion_aguda','cetoacidosis_sospecha','farmacos_clases','farmacos','medicacion_revisada','alergias','alergias_revisadas']
   },
   {
     id: 'ic', title: 'Insuficiencia cardíaca', domain: 'cardiovascular',
@@ -24,7 +24,7 @@ export const MODULES = [
     id: 'obesidad', title: 'Sobrepeso y obesidad', domain: 'metabolico',
     short: 'Adiposidad y comorbilidades',
     quick: ['imc','dm2','obesidad_perfil'],
-    detail: ['peso','talla','imc','cintura','dm2','comorbilidades','farmacos_clases','farmacos','medicacion_revisada','alergias','alergias_revisadas']
+    detail: ['peso','talla','imc','imc_inicio','comorbilidad_peso_confirmada','cintura','dm2','pancreatitis_sospecha','pancreatitis_previa','deshidratacion_gi','gastroparesia_grave','comorbilidades','farmacos_clases','farmacos','medicacion_revisada','alergias','alergias_revisadas']
   },
   {
     id: 'hepatico', title: 'Enfermedad hepática metabólica', domain: 'hepatico',
@@ -41,6 +41,23 @@ export const MODULES = [
 ];
 export const MODULE_BY_ID = Object.fromEntries(MODULES.map(m => [m.id, m]));
 export const EXTRA_FIELDS = [
+  { id:'imc_inicio', label:'IMC al inicio del tratamiento (Wegovy 7,2 mg)', type:'number',min:0,unit:'kg/m²' },
+  { id:'comorbilidad_peso_confirmada',label:'Comorbilidad asociada al peso confirmada',type:'select',
+    options:['Sí','No','No valorado'] },
+  { id:'pancreatitis_sospecha',label:'Sospecha actual de pancreatitis',type:'select',
+    options:['Sí','No','No valorado'] },
+  { id:'pancreatitis_previa',label:'Antecedente de pancreatitis',type:'select',
+    options:['Sí','No','No valorado'] },
+  { id:'deshidratacion_gi',label:'Vómitos/diarrea con deshidratación significativa',type:'select',
+    options:['Sí','No','No valorado'] },
+  { id:'gastroparesia_grave',label:'Gastroparesia/enfermedad digestiva grave',type:'select',
+    options:['Sí','No','No valorado'] },
+  { id:'retinopatia_dm',label:'Retinopatía diabética conocida',type:'select',
+    options:['Sí','No','No valorado'] },
+  { id:'vision_subita',label:'Pérdida súbita de visión actual',type:'select',
+    options:['Sí','No','No valorado'] },
+  { id:'embarazo_planificado',label:'Gestación planificada',type:'select',
+    options:['Sí','No','No procede','No valorado'] },
   { id:'fin_estado', label:'Situación actual de finerenona', type:'select',
     options:['En tratamiento','Interrumpido','No confirmado'] },
   { id:'fin_dosis_actual', label:'Dosis actual confirmada de finerenona', type:'select',
