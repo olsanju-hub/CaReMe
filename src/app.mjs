@@ -720,7 +720,12 @@ function tools() {
         <p>Inicio, intensificación y desintensificación según glucemias y tratamiento actual. Revisión ADA/EASD 2026 y redGDPS. Sin prescripción.</p>
         <button type="button" class="text-link" data-action="start-module" data-module="insulina">Abrir insulinización →</button>
       </div>
-      ${['ic','obesidad'].map(id=>{
+      <div class="tool-card"><span class="tag">Insuficiencia cardíaca · ESC 2026</span>
+        <h2>Insuficiencia cardíaca</h2>
+        <p>Fenotipo FEVI <50 % o ≥50 % con evidencia, congestión y clases farmacológicas para revisión. No diagnostica ni prescribe.</p>
+        <button type="button" class="text-link" data-action="start-module" data-module="ic">Abrir IC →</button>
+      </div>
+      ${['obesidad'].map(id=>{
         const m=MODULE_BY_ID[id];
         return `<div class="tool-card"><span class="tag">Algoritmo pendiente</span>
           <h2>${escape(m.title)}</h2><p>La consulta rápida y detallada ya está disponible; los resultados clínicos necesitan especificación y revisión.</p>
@@ -743,6 +748,8 @@ function sources() {
   <a href="https://github.com/olsanju-hub/CaReMe/blob/feat/prototipo-interfaz/docs/DM2_RAPIDA_REDGDPS_2026.md" target="_blank" rel="noopener noreferrer">DM2 rápida · redGDPS y ADA 2026 (estado provisional) ↗</a>
   <a href="https://github.com/olsanju-hub/CaReMe/blob/feat/prototipo-interfaz/docs/DM2_DETALLADA_ADA_REDGDPS_2026.md" target="_blank" rel="noopener noreferrer">DM2 detallada · objetivo, seguridad y fuentes ↗</a>
   <a href="https://github.com/olsanju-hub/CaReMe/blob/feat/prototipo-interfaz/docs/INSULINIZACION_ADA_EASD_2026.md" target="_blank" rel="noopener noreferrer">Insulinización · ADA/EASD 2026 y redGDPS 2022 ↗</a>
+  <a href="https://github.com/olsanju-hub/CaReMe/blob/feat/prototipo-interfaz/docs/IC_ESC_2026.md" target="_blank" rel="noopener noreferrer">Insuficiencia cardíaca · ESC 2026 y CIMA ↗</a>
+  <a href="https://www.escardio.org/guidelines/clinical-practice-guidelines/all-esc-practice-guidelines/heart-failure" target="_blank" rel="noopener noreferrer">Guía oficial ESC 2026 de insuficiencia cardíaca ↗</a>
   <a href="https://diabetesjournals.org/care/article/doi/10.2337/dci26-0141/172591" target="_blank" rel="noopener noreferrer">Consenso ADA/EASD de tratamiento DM2 2026 ↗</a>
   <a href="https://redgdps.org/algoritmo-de-tratamiento-de-la-dm2-de-la-redgdps-2026/" target="_blank" rel="noopener noreferrer">Algoritmo redGDPS 2026 · fuente oficial ↗</a>
   <a href="https://github.com/olsanju-hub/CaReMe/blob/feat/prototipo-interfaz/docs/DECISIONES.md" target="_blank" rel="noopener noreferrer">Decisiones de identidad ↗</a>
