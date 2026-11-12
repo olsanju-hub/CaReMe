@@ -100,10 +100,6 @@ export function reviewFinerenoneContinuation(draft, routeId) {
     'Ficha CIMA: interrupción con K ≥6,0',
     'La tabla 4 indica interrumpir a cualquier dosis. La reanudación exige reevaluar el potasio y sus causas.',
     [], ['No registrar la interrupción como ya efectuada; evaluar gravedad de la hiperpotasemia.']);
-  if(fall!==null && fall>=40) return answer('finerenona',routeId,'FIN-HF-GFR40','precaucion',
-    'Descenso TFGe ≥40 %: revisión prioritaria',
-    'La ficha indica considerar reducción o interrupción ante descenso de TFGe ≥40 %, además de valorar K.',
-    [], ['No aplicar una subida de dosis mientras no se aclare el deterioro renal.']);
   if(potassium >= 5.5) {
     if(dose === 10) return answer('finerenona',routeId,'FIN-HF-K55-HOLD','alerta',
       'Ficha CIMA: interrumpir 10 mg con K 5,5 a <6,0',
@@ -115,6 +111,14 @@ export function reviewFinerenoneContinuation(draft, routeId) {
       'Ficha CIMA: reducir 40 a 20 mg con K 5,5 a <6,0',
       'Tabla 4: reducción de la dosis actual de 40 a 20 mg.');
   }
+  if(fall!==null && fall>=40) return answer('finerenona',routeId,'FIN-HF-GFR40','precaucion',
+    'Descenso TFGe ≥40 %: revisión prioritaria',
+    'La ficha indica considerar reducir o interrumpir si TFGe desciende ≥40 %; no aplicar subida automática.',
+    [], ['Comprobar contexto clínico y potasio, con valoración médica prioritaria.']);
+  if(dose===40 && initial<60) return answer('finerenona',routeId,'FIN-HF-40-INITIAL-GFR','precaucion',
+    'Dosis actual 40 mg con objetivo de ficha de 20 mg',
+    'Con TFGe inicial entre 25 y <60, la dosis objetivo en IC es 20 mg/día. Revisar indicación y pauta actual.',
+    [], ['No modificar la pauta automáticamente.']);
   if(dose===40 && fall!==null && fall>30)
     return answer('finerenona',routeId,'FIN-HF-40-EGFR30','precaucion',
       'Ficha CIMA: reducir 40 a 20 mg por descenso TFGe >30 %',
