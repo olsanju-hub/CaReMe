@@ -135,6 +135,13 @@ test('anual de empagliflozina solo tras acción confirmada, manejando 29 de febr
   h=confirmedAction(h,{drugId:'empagliflozina',routeId:'erc',type:'interrupcion',performedOn:'2028-03-05',confirmedByClinician:true});
   assert.equal(followUpFromHistory(h)[1].dueOn,null);
 });
+test('ajuste de empagliflozina no borra el control renal anual',()=>{
+  let h=confirmedAction([],{drugId:'empagliflozina',routeId:'dm2',type:'inicio',
+    performedOn:'2026-11-12',doseMg:10,confirmedByClinician:true});
+  h=confirmedAction(h,{drugId:'empagliflozina',routeId:'dm2',type:'ajuste',
+    performedOn:'2027-01-01',doseMg:25,confirmedByClinician:true});
+  assert.equal(followUpFromHistory(h)[0].status,'previsto');
+});
 test('todas las salidas conservan el estado no prescriptivo',()=>{
   for(const result of [
     reviewFinerenoneContinuation(ck(),'erc_dm2'),
