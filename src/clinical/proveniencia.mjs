@@ -41,7 +41,12 @@ export function auditProvenance(draft) {
         [dateField,measurement]));
   }
   const cacUnit=get(draft,'unidad_cac');
-  if(get(draft,'cac')!==null && cacUnit && cacUnit!=='mg/g')
+  if(get(draft,'cac')!==null && cacUnit===null)
+    findings.push(signal('CAC_UNIT_MISSING','critical',
+      'Unidad de albuminuria no confirmada',
+      'No se interpreta CAC ni se permite valorar tratamientos basados en albuminuria hasta confirmar expresamente la unidad de laboratorio (mg/g).',
+      ['cac','unidad_cac']));
+  if(get(draft,'cac')!==null && cacUnit!==null && cacUnit!=='mg/g')
     findings.push(signal('CAC_UNIT_INCOMPATIBLE','critical',
       'Unidad de albuminuria distinta de mg/g',
       'La clasificación A implementada utiliza mg/g. No convertir ni interpretar automáticamente un valor introducido en mg/mmol o sin unidad contrastada.',
@@ -68,7 +73,7 @@ export function auditProvenance(draft) {
     measurementsDated:fields.filter(([id,date])=>get(draft,id)!==null && get(draft,date)!==null).length,
     asOf,
     fib4DatesCompatible:!hepaticDiscordant,
-    cacInMgG:!cacUnit||cacUnit==='mg/g',
+    cacInMgG:get(draft,'cac')===null||cacUnit==='mg/g',
     bmiCalculated:calculatedBmi,
     message:'La ausencia de fecha no confirma actualidad; la vigencia de cada resultado requiere juicio clínico. Sin conversión automática de unidades.'
   };
