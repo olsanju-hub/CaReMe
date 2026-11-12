@@ -20,12 +20,12 @@ PDF oficial: https://kdigo.org/wp-content/uploads/2024/03/KDIGO-2024-CKD-Guideli
 | REN-G-05 | 15 ≤TFGe <30 | G4 |
 | REN-G-06 | TFGe <15, positiva | G5 |
 | REN-A-01 | CAC <30 mg/g, no negativa | A1 |
-| REN-A-02 | 30 ≤CAC ≤300 mg/g | A2 |
-| REN-A-03 | CAC >300 mg/g | A3 |
+| REN-A-02 | 30 ≤CAC <300 mg/g | A2 |
+| REN-A-03 | CAC ≥300 mg/g | A3 |
 
 **Restricciones:** G/A describen resultados, **no determinan por sí solas el diagnóstico** de enfermedad renal crónica. ERC exige ≥3 meses de persistencia de alteraciones renales estructurales o funcionales con repercusión en la salud. Una medición aislada no permite inferir cronicidad. La etiología forma parte de CGA y no se calcula en la app. G1–G2 no indican ERC sin otros marcadores; tampoco una G1/A1 descarta daño renal por otras causas.
 
-**Comportamiento ante falta de datos:** se pueden obtener G y A de forma independiente; la cifra faltante aparece como «—». TFGe 0/negativa, CAC negativa o entradas no numéricas son inválidas y no generan categoría. «No consta» o «No» en persistencia impiden informar ERC confirmada.
+**Comportamiento ante falta de datos:** se pueden obtener G y A de forma independiente. **A requiere unidad mg/g confirmada**; si está ausente, en mg/mmol o «No consta», no se categoriza y se exige conciliación antes de utilizar albuminuria para decisiones. La cifra faltante aparece como «—». TFGe 0/negativa, CAC negativa o entradas no numéricas son inválidas y no generan categoría. «No consta» o «No» en persistencia impiden informar ERC confirmada.
 
 **Pendiente:** trayectoria temporal, confirmación de albuminuria, marcadores estructurales, ecuación de TFGe y valoración integrada de riesgo renal/derivación; no generar plan de actuación con G/A solas.
 
@@ -89,3 +89,7 @@ El código fuente se mantiene en `src/clinical/engine.mjs`. La batería `tests/c
 KDIGO 2024 requiere acreditar cronicidad y evaluar TFGe y albuminuria en su contexto. El clasificador G/A de CaHReMe utiliza **CAC en mg/g** y evita clasificar cifras en mg/mmol sin una transformación explícita y revisada. La fecha de cada analítica puede registrarse; su ausencia no prueba actualidad. FIB-4 no combina automáticamente AST, ALT y plaquetas con fechas registradas incompatibles.
 
 Las discrepancias y controles de procedencia son reglas técnicas internas, no recomendaciones farmacológicas independientes. [Informe de los tres bloques auditados](AUDITORIAS_3_BLOQUES.md).
+
+## Revisión de frontera y unidades · 12/11/2026
+
+Se corrigió el umbral **A3 ≥300 mg/g** (el valor 300 había sido asignado erróneamente a A2) y la aceptación de CAC sin unidad explícita. La cifra sin unidad se considera no interpretable para estratificación o decisión farmacológica. [Contrato técnico y reglas DM2](DM2_RAPIDA_REDGDPS_2026.md). Este control no establece diagnóstico de ERC.
