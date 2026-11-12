@@ -6,7 +6,7 @@ export const MODULES = [
     id: 'dm2', title: 'Diabetes tipo 2', domain: 'metabolico',
     short: 'Control glucémico y tratamiento', 
     quick: ['dm_prioridad','dm_control'],
-    detail: ['hba1c','dm_objetivo','dm1','tfge','imc','retinopatia_dm','vision_subita','pancreatitis_sospecha','pancreatitis_previa','dm_sintomas','comorbilidades','situacion_aguda','cetoacidosis_sospecha','farmacos_clases','farmacos','medicacion_revisada','alergias','alergias_revisadas']
+    detail: ['hba1c','dm_objetivo','dm1','acidosis_metabolica','hipoxia_tisular','ic_descompensada','insuficiencia_hepatica','lra_sospecha','contraste_yodado','cirugia_anestesia','tfge','imc','retinopatia_dm','vision_subita','pancreatitis_sospecha','pancreatitis_previa','dm_sintomas','comorbilidades','situacion_aguda','cetoacidosis_sospecha','farmacos_clases','farmacos','medicacion_revisada','alergias','alergias_revisadas']
   },
   {
     id: 'ic', title: 'Insuficiencia cardíaca', domain: 'cardiovascular',
@@ -18,7 +18,7 @@ export const MODULES = [
     id: 'erc', title: 'Enfermedad renal crónica', domain: 'renal',
     short: 'Función renal, albuminuria y persistencia',
     quick: ['tfge','cac','persistencia'],
-    detail: ['tfge','cac','persistencia','potasio','potasio_normal','ras_optimizado','cyp3a4_fuerte','addison','creatinina','situacion_aguda','cetoacidosis_sospecha','farmacos_clases','farmacos','medicacion_revisada','alergias','alergias_revisadas']
+    detail: ['tfge','cac','persistencia','lra_sospecha','contraste_yodado','potasio','potasio_normal','ras_optimizado','cyp3a4_fuerte','addison','creatinina','situacion_aguda','cetoacidosis_sospecha','farmacos_clases','farmacos','medicacion_revisada','alergias','alergias_revisadas']
   },
   {
     id: 'obesidad', title: 'Sobrepeso y obesidad', domain: 'metabolico',
@@ -41,6 +41,20 @@ export const MODULES = [
 ];
 export const MODULE_BY_ID = Object.fromEntries(MODULES.map(m => [m.id, m]));
 export const EXTRA_FIELDS = [
+  { id:'acidosis_metabolica',label:'Acidosis metabólica aguda sospechada o confirmada',type:'select',
+    options:['Sí','No','No valorado'] },
+  { id:'hipoxia_tisular',label:'Hipoxia tisular o enfermedad cardiorrespiratoria aguda',type:'select',
+    options:['Sí','No','No valorado'] },
+  { id:'ic_descompensada',label:'Insuficiencia cardíaca aguda/descompensada',type:'select',
+    options:['Sí','No','No valorado'] },
+  { id:'insuficiencia_hepatica',label:'Insuficiencia hepática conocida (cualquier grado)',type:'select',
+    options:['Sí','No','No valorado'] },
+  { id:'lra_sospecha',label:'Lesión renal aguda o deterioro renal reciente',type:'select',
+    options:['Sí','No','No valorado'] },
+  { id:'contraste_yodado',label:'Contraste yodado intravascular previsto o reciente',type:'select',
+    options:['Sí','No','No valorado'] },
+  { id:'cirugia_anestesia',label:'Cirugía con anestesia general, espinal o epidural',type:'select',
+    options:['Sí','No','No valorado'] },
   { id:'imc_inicio', label:'IMC al inicio del tratamiento (Wegovy 7,2 mg)', type:'number',min:0,unit:'kg/m²' },
   { id:'comorbilidad_peso_confirmada',label:'Comorbilidad asociada al peso confirmada',type:'select',
     options:['Sí','No','No valorado'] },
