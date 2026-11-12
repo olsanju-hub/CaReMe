@@ -79,3 +79,7 @@ Se verificó [KDIGO CKD 2024](https://kdigo.org/wp-content/uploads/2024/03/KDIGO
 - Las alertas generales no sustituyen evaluación clínica de urgencia; la priorización depende de la información declarada.
 
 **Criterio de aceptación de esta iteración:** resultado rápido reproducible, no prescriptivo, diferenciando estado glucémico, síntomas, comorbilidades, tratamientos actuales y datos contradictorios; corrección del fallo CAC; regresión completa de CI. El PR debe seguir como borrador.
+
+## Actualización posterior: DM2 detallada (12/11/2026)
+
+Ya existe una primera orientación de la consulta detallada, basada en la HbA1c medida y **el objetivo numérico individual**, con controles de medicación, adherencia, seguridad y datos incompletos. El módulo rápido sigue siendo independiente, y la revisión detallada no ofrece recetas ni dosis. La seguridad clínica de ambas rutas se contrasta ahora con las alertas de la evaluación integral. Consultar [DM2_DETALLADA_ADA_REDGDPS_2026.md](DM2_DETALLADA_ADA_REDGDPS_2026.md). La validación clínica externa y la paridad completa siguen pendientes.
