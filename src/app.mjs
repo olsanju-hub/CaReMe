@@ -51,7 +51,7 @@ function home() {
     </section>
     ${banner()}
     <div class="section-heading"><div><div class="eyebrow">SEIS CONSULTAS CLÍNICAS</div><h2>¿Qué necesitas valorar?</h2></div>
-      <p>Consulta rápida y revisión detallada por problema. Sin interpretaciones automáticas todavía.</p>
+      <p>Consulta rápida con orientación preliminar de DM2; otros módulos aún pendientes de validación.</p>
     </div>
     <div class="module-grid">${MODULES.map(m =>
       `<button type="button" class="module-card" data-action="start-module" data-module="${escape(m.id)}">
@@ -559,6 +559,10 @@ function tools() {
     ${pharmaLibrary()}
     <div class="followup-link"><button type="button" class="ghost" data-action="followup">Historial y calendario de controles →</button></div>
     <div class="tool-grid">
+      <div class="tool-card"><span class="tag">DM2 · versión clínica preliminar</span>
+        <h2>Diabetes tipo 2</h2><p>Consulta rápida con situación, seguridad, alternativas para revisión y fuentes redGDPS/ADA 2026. Sin prescripción; detalle aún pendiente.</p>
+        <button type="button" class="text-link" data-action="start-module" data-module="dm2">Abrir DM2 rápida →</button>
+      </div>
       ${['ic','obesidad','insulina'].map(id=>{
         const m=MODULE_BY_ID[id];
         return `<div class="tool-card"><span class="tag">Algoritmo pendiente</span>
@@ -579,6 +583,8 @@ function sources() {
   <a href="https://github.com/olsanju-hub/CaReMe/blob/feat/prototipo-interfaz/docs/FUENTES_CLINICAS.md" target="_blank" rel="noopener noreferrer">Registro de fuentes clínicas ↗</a>
   <a href="https://github.com/olsanju-hub/CaReMe/blob/feat/prototipo-interfaz/docs/INTEGRACION_TERAPEUTICA.md" target="_blank" rel="noopener noreferrer">Matriz de integración terapéutica ↗</a>
   <a href="https://github.com/olsanju-hub/CaReMe/blob/feat/prototipo-interfaz/docs/INCRETINAS_CIMA.md" target="_blank" rel="noopener noreferrer">Ozempic, Wegovy inyectable y Mounjaro · CIMA ↗</a>
+  <a href="https://github.com/olsanju-hub/CaReMe/blob/feat/prototipo-interfaz/docs/DM2_RAPIDA_REDGDPS_2026.md" target="_blank" rel="noopener noreferrer">DM2 rápida · redGDPS y ADA 2026 (estado provisional) ↗</a>
+  <a href="https://redgdps.org/algoritmo-de-tratamiento-de-la-dm2-de-la-redgdps-2026/" target="_blank" rel="noopener noreferrer">Algoritmo redGDPS 2026 · fuente oficial ↗</a>
   <a href="https://github.com/olsanju-hub/CaReMe/blob/feat/prototipo-interfaz/docs/DECISIONES.md" target="_blank" rel="noopener noreferrer">Decisiones de identidad ↗</a>
   </section>
   <section class="sources-card"><h2>Privacidad en esta versión</h2><p>Los valores permanecen exclusivamente en memoria durante la sesión abierta: no se usan cookies, almacenamiento local ni servicios remotos. Al recargar se pierden los datos.</p></section></div>`;
