@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "node server.mjs",
     "test": "node --test tests/*.test.mjs",
-    "check": "npm test && node --check src/app.mjs && node --check src/model.mjs && node --check src/consultas.mjs && node --check server.mjs && node --check src/clinical/engine.mjs && node --check src/clinical/integracion.mjs && node --check src/clinical/farmacologia.mjs && node --check src/clinical/continuidad.mjs && node --check src/clinical/incretinas.mjs && node --check src/clinical/basales.mjs"
+    "check": "npm test && node --check src/app.mjs && node --check src/model.mjs && node --check src/consultas.mjs && node --check server.mjs && node --check src/clinical/engine.mjs && node --check src/clinical/integracion.mjs && node --check src/clinical/farmacologia.mjs && node --check src/clinical/continuidad.mjs && node --check src/clinical/incretinas.mjs && node --check src/clinical/basales.mjs && node --check src/clinical/auditoria.mjs"
   },
   "engines": {
     "node": ">=20"
