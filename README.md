@@ -13,6 +13,15 @@ PWA independiente de apoyo a la decisión clínica en Atención Primaria en Espa
 
 CaHReMe cubre ya la **navegación y captura de datos** de seis consultas inspiradas en GlucoGuía y debe completar su **lógica clínica validada** (DM2, IC, ERC, sobrepeso/obesidad, enfermedad hepática metabólica e insulinización), **con consulta rápida, detalle y resultados equivalentes en funcionalidad**, ampliadas con evaluación integral, datos compartidos, recomendaciones clínicas trazables y seguimiento. **Los algoritmos específicos de decisión terapéutica y seguimiento siguen pendientes.** Véase [matriz de equivalencia y brechas](docs/MATRIZ_EQUIVALENCIA_GLUCOGUIA.md).
 
+## Corrección de unidad renal y primera orientación rápida DM2 (12/11/2026)
+
+- **CAC con unidad confirmada obligatoria:** `evaluateRenal()` exige `mg/g`, no convierte silenciosamente `mg/mmol`, y el motor de integración evita utilizar CAC no validado. Si se introduce un CAC sin unidad, las opciones terapéuticas relacionadas se retienen mediante auditoría.
+- **KDIGO A3:** frontera corregida a **≥300 mg/g**, A2 ahora 30 a <300 mg/g. Pruebas explícitas con los valores 29,99/30 y 299,99/300.
+- **DM2 rápida:** `src/clinical/dm2-rapida.mjs` produce situación clínica, próximos pasos, opciones por clase, alertas, datos a comprobar, reevaluación y fuentes redGDPS/ADA 2026. Se accede mediante «Ver orientación clínica rápida» o el resumen del módulo.
+- La consulta rápida distingue HbA1c **8,5 % como nivel de intensidad** del **objetivo individual**; síntomas, sospecha de CAD e hiperglucemia muy elevada se evalúan antes que un tratamiento crónico. No inventa medicamentos ausentes ni confirma acciones.
+- La **revisión detallada DM2 continúa pendiente**; el motor rápido no convierte ninguna opción en prescripción ni valida uso asistencial.
+- [Documentación clínica, alcance y escenarios](docs/DM2_RAPIDA_REDGDPS_2026.md). Tests `tests/dm2-rapida.test.mjs`, `tests/dm2-rapida-ui.test.mjs`, `tests/cac-unidad.test.mjs`.
+
 ## Auditoría funcional contra GlucoGuía 1.6 · 12/11/2026
 
 Se verificó directamente el código de la aplicación pública de referencia y el estado real de esta rama. Resultado: **seis consultas con captura rápida/detallada**, pero **ninguna de las seis tiene todavía paridad completa de salida clínica**; G/A y FIB-4, las fichas farmacológicas y el motor multiorgánico son capacidades parciales o adicionales, no sustitutos de una conducta por módulo.
