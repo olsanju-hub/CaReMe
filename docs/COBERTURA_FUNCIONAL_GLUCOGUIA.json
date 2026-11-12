@@ -139,10 +139,11 @@
         "medications"
       ],
       "capture": "implemented",
-      "quick_clinical_result": "missing",
-      "detailed_decision": "missing",
+      "quick_clinical_result": "partial",
+      "detailed_decision": "partial",
       "priority": "P0",
-      "gap": "Three routes captured but no insulin-specific recommendation flow or evidence-verified monitoring decisions."
+      "gap": "Las tres fases tienen primera orientación no prescriptiva, con perfil glucémico, seguridad y seguimiento. Faltan titulación individual por insulina/formulación, pautas prandiales, manejo con corticoterapia y validación clínica y móvil.",
+      "note": "Implementados src/clinical/insulinizacion.mjs y paneles rápidos/detallados. Referencia ADA/EASD 2026 + redGDPS 2022; no se calcula dosis individual."
     }
   ],
   "shared": [
@@ -215,6 +216,11 @@
       "id": "dm2_detailed_clinical_result",
       "status": "partial",
       "evidence": "src/clinical/dm2-detallada.mjs, src/app.mjs, tests/dm2-detallada.test.mjs, tests/dm2-transversal.test.mjs; no equivalente prescriptivo validado"
+    },
+    {
+      "id": "insulin_three_phase_result",
+      "status": "partial",
+      "evidence": "src/clinical/insulinizacion.mjs; src/app.mjs; tests/insulinizacion.test.mjs; tests/insulinizacion-ui.test.mjs"
     }
   ],
   "blockers": [
