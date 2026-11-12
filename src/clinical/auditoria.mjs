@@ -23,7 +23,10 @@ export const AUDIT_RULES=Object.freeze({
   MEDICATION_RECONCILIATION:'Declaración de no tratamiento incongruente con otros fármacos',
   MEDICATION_DETAILS:'Conciliación documentada sin clases o principios activos identificables',
   POTASSIUM_CONFLICT:'Potasio numérico no coherente con potasio declarado normal',
-  CLINICAL_FIELD_INVALID:'Campo clínico no válido para el cálculo'
+  CLINICAL_FIELD_INVALID:'Campo clínico no válido para el cálculo',
+  SEVERE_GLYCEMIA_REVIEW:'Glucemia muy elevada: revisar seguridad y descartar crisis',
+  SEVERE_HYPOGLYCEMIA_REVIEW:'Hipoglucemias graves o recurrentes: revisar pauta antes de intensificar',
+  PREGNANCY_DIABETES_PATHWAY:'Gestación: utilizar circuito específico de diabetes y embarazo'
 });
 function item(id,severity,title,detail,fields) {
   return {id,severity,title,detail,fields,requiresReview:true};
@@ -45,6 +48,22 @@ export function auditCrossDomain(draft) {
     out.push(item('RENAL_DECLARATION_REVIEW','warning','Revisar discordancia renal',
       'ERC figura como no conocida, pero se declara persistencia de marcadores analíticos compatibles; revisar diagnóstico y causa, sin deducirlos automáticamente.',
       ['erc','persistencia','tfge','cac']));
+  const currentGlucose=NUMBER(draft,'glucemia_actual');
+  if(currentGlucose!==null&&currentGlucose>=300)
+    out.push(item('SEVERE_GLYCEMIA_REVIEW','critical',
+      'Glucemia actual elevada: valoración prioritaria',
+      'Glucemia ≥300 mg/dL: valorar síntomas, cetonas y estado metabólico antes de considerar modificaciones crónicas. El valor aislado no diagnostica una crisis.',
+      ['glucemia_actual','cetoacidosis_sospecha','dm_sintomas']));
+  if(VALUE(draft,'dm_hipoglucemias')==='Graves o recurrentes')
+    out.push(item('SEVERE_HYPOGLYCEMIA_REVIEW','critical',
+      'Hipoglucemias graves o recurrentes',
+      'Revisar seguridad, régimen de insulina/secretagogos, autocuidado y objetivo individual antes de intensificar.',
+      ['dm_hipoglucemias','farmacos_clases','hba1c']));
+  if(yes('embarazo')&&yes('dm2'))
+    out.push(item('PREGNANCY_DIABETES_PATHWAY','critical',
+      'DM2 y embarazo: circuito clínico específico',
+      'El algoritmo general de tratamiento de adultos no gestantes no debe seleccionar fármacos para gestación.',
+      ['dm2','embarazo']));
   const acuteFlags=['cetoacidosis_sospecha','ic_descompensada','lra_sospecha',
     'acidosis_metabolica','deshidratacion_gi','pancreatitis_sospecha'];
   if(VALUE(draft,'situacion_aguda')==='Estable sin proceso agudo grave'&&
