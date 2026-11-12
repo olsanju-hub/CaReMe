@@ -146,6 +146,13 @@ function pharmaLink(card) {
   if(card.id==='FIN-HF-LABEL') info={drug:'finerenona',route:'ic_fevi40'};
   else if(card.id.startsWith('NSMRA-')) info={drug:'finerenona',route:'erc_dm2'};
   else if(card.id.startsWith('SGLT2-')) info={drug:'empagliflozina',route:draft.values.ic==='Sí'?'ic':draft.values.erc==='Sí'?'erc':'dm2'};
+  if(card.id==='GLP-REVIEW'||card.id==='GLP-EXISTING')
+    return `<div class="incretin-links">${[
+      ['semaglutida_ozempic','dm2','Ozempic · DM2'],
+      ['semaglutida_wegovy_sc','peso','Wegovy inyectable · peso'],
+      ['tirzepatida','dm2','Mounjaro · DM2']
+    ].map(([drug,route,label])=>`<button type="button" class="text-link" data-action="open-drug"
+      data-drug-id="${drug}" data-route-id="${route}">Consultar CIMA: ${label} →</button>`).join('')}</div>`;
   if(!info) return '';
   return `<button type="button" class="text-link" data-action="open-drug"
     data-drug-id="${info.drug}" data-route-id="${info.route}">Consultar ficha CIMA específica →</button>`;
@@ -340,6 +347,12 @@ function continuityPanel() {
   </section>`;
 }
 function followupPage() {
+  if(!['empagliflozina','finerenona'].includes(current.drug))
+    return `<div class="page interior"><h1>Seguimiento farmacológico</h1>
+      ${banner()}<section class="drug-card"><p>Este módulo aún no tiene un calendario
+      validado para la presentación seleccionada. No se registrarán actuaciones ni fechas inventadas.</p>
+      <button type="button" class="ghost" data-action="tools">Volver a Herramientas</button>
+      </section></div>`;
   const drug=getDrug(current.drug),route=getDrugRoute(current.drug,current.route);
   const events=followUpFromHistory(confirmedHistory);
   const last=confirmedHistory.filter(e=>e.drugId===current.drug && e.routeId===current.route);
@@ -424,7 +437,12 @@ function drugView() {
       <ul>${items(route.labelDoses)}</ul>
       <p class="drug-disclaimer">La tabla es informativa incluso si existen bloqueos. No equivale a una recomendación para el paciente.</p>
     </section>
-    ${continuityPanel()}
+    ${['finerenona','empagliflozina'].includes(drug.id)
+       ?continuityPanel()
+       :`<section class="drug-card"><h2>Escalada y seguimiento</h2>
+          <p>Solo se muestra la pauta autorizada de la ficha técnica. La decisión de escalada
+          requiere duración de tratamiento, tolerancia, situación clínica y revisión por el profesional.
+          No hay motor de continuación ni calendario automatizado para esta presentación.</p></section>`}
     <section class="drug-card"><h2>Monitorización y advertencias</h2>
       <h3>Seguimiento de ficha técnica</h3><ul>${items(drug.monitoring)}</ul>
       <h3>Precauciones y contraindicaciones relevantes</h3><ul>${items(drug.warningText)}</ul>
@@ -462,6 +480,7 @@ function sources() {
   <a href="https://github.com/olsanju-hub/CaReMe/blob/feat/prototipo-interfaz/docs/MVP.md" target="_blank" rel="noopener noreferrer">Alcance del MVP ↗</a>
   <a href="https://github.com/olsanju-hub/CaReMe/blob/feat/prototipo-interfaz/docs/FUENTES_CLINICAS.md" target="_blank" rel="noopener noreferrer">Registro de fuentes clínicas ↗</a>
   <a href="https://github.com/olsanju-hub/CaReMe/blob/feat/prototipo-interfaz/docs/INTEGRACION_TERAPEUTICA.md" target="_blank" rel="noopener noreferrer">Matriz de integración terapéutica ↗</a>
+  <a href="https://github.com/olsanju-hub/CaReMe/blob/feat/prototipo-interfaz/docs/INCRETINAS_CIMA.md" target="_blank" rel="noopener noreferrer">Ozempic, Wegovy inyectable y Mounjaro · CIMA ↗</a>
   <a href="https://github.com/olsanju-hub/CaReMe/blob/feat/prototipo-interfaz/docs/DECISIONES.md" target="_blank" rel="noopener noreferrer">Decisiones de identidad ↗</a>
   </section>
   <section class="sources-card"><h2>Privacidad en esta versión</h2><p>Los valores permanecen exclusivamente en memoria durante la sesión abierta: no se usan cookies, almacenamiento local ni servicios remotos. Al recargar se pierden los datos.</p></section></div>`;
