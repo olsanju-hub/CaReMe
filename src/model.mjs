@@ -44,6 +44,8 @@ export const SECTIONS = [
   { id: 'metabolico', title: 'Metabólico', short: 'Metabólico', intro: 'Diagnósticos y datos antropométricos/metabólicos.', fields: [
     { id: 'dm2', label: 'DM2 conocida', type: 'select', options: ['Sí', 'No'] },
     EXTRA_BY_ID.imc,
+    EXTRA_BY_ID.imc_inicio,
+    EXTRA_BY_ID.comorbilidad_peso_confirmada,
     { id: 'hba1c', label: 'Hemoglobina glucosilada (HbA1c)', unit: '%', type: 'number' },
     { id: 'peso', label: 'Peso', unit: 'kg', type: 'number' },
     { id: 'talla', label: 'Talla', unit: 'cm', type: 'number' },
@@ -55,7 +57,14 @@ export const SECTIONS = [
     EXTRA_BY_ID.medicacion_revisada,
     { id: 'alergias', label: 'Alergias o intolerancias relevantes', type: 'textarea' },
     EXTRA_BY_ID.alergias_revisadas,
-    EXTRA_BY_ID.embarazo
+    EXTRA_BY_ID.embarazo,
+    EXTRA_BY_ID.embarazo_planificado,
+    EXTRA_BY_ID.pancreatitis_sospecha,
+    EXTRA_BY_ID.pancreatitis_previa,
+    EXTRA_BY_ID.deshidratacion_gi,
+    EXTRA_BY_ID.gastroparesia_grave,
+    EXTRA_BY_ID.retinopatia_dm,
+    EXTRA_BY_ID.vision_subita
   ]}
 ];
 export const FIELDS = { ...Object.fromEntries(SECTIONS.flatMap(s => s.fields.map(f => [f.id, f]))), ...EXTRA_BY_ID };
