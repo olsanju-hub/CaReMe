@@ -13,6 +13,16 @@ PWA independiente de apoyo a la decisión clínica en Atención Primaria en Espa
 
 CaHReMe cubre ya la **navegación y captura de datos** de seis consultas inspiradas en GlucoGuía y debe completar su **lógica clínica validada** (DM2, IC, ERC, sobrepeso/obesidad, enfermedad hepática metabólica e insulinización), **con consulta rápida, detalle y resultados equivalentes en funcionalidad**, ampliadas con evaluación integral, datos compartidos, recomendaciones clínicas trazables y seguimiento. **Los algoritmos específicos de decisión terapéutica y seguimiento siguen pendientes.** Véase [matriz de equivalencia y brechas](docs/MATRIZ_EQUIVALENCIA_GLUCOGUIA.md).
 
+## Incretinas · revisión CIMA por producto e indicación
+
+- Se incorporaron **Ozempic subcutáneo (semaglutida · DM2)**, **Wegovy subcutáneo (semaglutida · control del peso)** y **Mounjaro (tirzepatida · DM2 o control del peso)** como tres fichas independientes.
+- Las pautas documentales contemplan los cambios de ficha de 2026: **Wegovy subcutáneo 7,2 mg/semana solo en circunstancias definidas**, mientras Wegovy **oral** queda expresamente fuera de este módulo.
+- Los formularios distinguen indicación, IMC, comorbilidad asociada al peso, función renal, embarazo y alertas de pancreatitis, intolerancia gastrointestinal o retinopatía. No generan dosis ni recetas.
+- Para **obesidad sin DM2**, la integración puede mostrar una **opción de revisión farmacológica** basada en IMC; no la convierte en indicación hepática dirigida ni atribuye elegibilidad o financiación.
+- Contrastes de seguridad por formulación y pruebas de frontera: `src/clinical/incretinas.mjs`, `tests/incretinas.test.mjs`.
+- [Documentación clínica de incretinas](docs/INCRETINAS_CIMA.md). Financiación por presentación y fecha debe comprobarse en BIFIMED.
+- **No habilitar continuidad/seguimiento ni prescripción de incretinas** hasta disponer de reglas específicas verificadas y revisión profesional.
+
 ## Bloque de continuidad y seguimiento condicionado a actuaciones confirmadas
 
 - `src/clinical/continuidad.mjs`: referencias de **continuidad y titulación** para finerenona por indicación ERC-DM2 (CIMA tabla 2) e IC FEVI ≥40 % (tabla 4), con límites de K y evolución de TFGe. No prescribe ni ajusta.
