@@ -32,7 +32,7 @@ test('IC negada y sintomática afirmada bloquea valoraciones por cualquier molé
  }
 });
 test('ERC no declarada con persistencia y marcadores anormales requiere revisión, no diagnóstico automático',()=>{
- const d=make({erc:'No',persistencia:'Sí',tfge:'50',cac:'50'});
+ const d=make({erc:'No',persistencia:'Sí',tfge:'50',cac:'50',unidad_cac:'mg/g'});
  const audit=auditCrossDomain(d);
  assert.equal(audit.status,'review');
  assert.ok(audit.findings.some(f=>f.id==='RENAL_DECLARATION_REVIEW'));
