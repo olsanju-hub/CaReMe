@@ -132,3 +132,9 @@ Se implementó el primer resultado específico de **DM2 rápida** en `src/clinic
 Se confirmó visualmente **A2 30–300 mg/g y A3 >300 mg/g** en KDIGO 2024 (tabla 3, S137), conservando 300 en A2; y se impide calcular albuminuria categórica o utilizar CAC en decisiones si no se ha confirmado la unidad `mg/g`. Un resultado en mg/mmol requiere transformación revisada fuera del motor vigente.
 
 [Especificación y fuentes del bloque](DM2_RAPIDA_REDGDPS_2026.md). Sin publicación ni validación asistencial.
+
+## DM2 detallada: primera salida clínica para revisión (12/11/2026)
+
+Se incorpora el motor `src/clinical/dm2-detallada.mjs` y su vista en la consulta dirigida. Interpreta el **objetivo numérico individual**, estado de HbA1c, conciliación, hipoglucemias y seguridad de las clases, manteniendo propuestas como candidatas de revisión. No calcula una pauta personalizada ni garantiza elegibilidad por producto.
+
+Las alarmas declaradas de glucemia ≥300 mg/dL, hipoglucemias graves y embarazo retienen candidatos también en la evaluación global. No existe aprobación para uso asistencial, aunque las pruebas automatizadas pasen. [Fuentes y contrato](DM2_DETALLADA_ADA_REDGDPS_2026.md).
