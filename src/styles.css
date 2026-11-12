@@ -452,3 +452,27 @@ h2 { letter-spacing:-.025em }
 .followup-description { display:block; font-size:.73rem; color:#667D85; margin-top:4px; }
 .followup-link { margin:12px 0 23px; }
 @media(max-width:650px) { .followup-form { grid-template-columns:1fr; gap:13px; } }
+
+
+/* Plan de verificación clínica: comprobaciones, nunca órdenes ni actos realizados. */
+.verification-panel { background:#F4F9F8; border:1px solid #CAE0E0; border-radius:18px;
+  padding:22px; margin:22px 0; }
+.verification-panel h2 { font-size:1.3rem; margin:6px 0; }
+.verification-panel h3 { font-size:.94rem; margin:18px 0 8px; }
+.verification-panel>p { color:#58737A; font-size:.84rem; }
+.verification-panel .verification-hold { background:#FFF0EC; color:#9D4038;
+  border-radius:10px; padding:11px 13px; font-weight:700; }
+.verification-list { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:11px; margin:16px 0; }
+.verification-item { background:#fff; border:1px solid #DDE9E9; border-left:4px solid #9DAFB1;
+  border-radius:12px; padding:14px 15px; min-width:0; }
+.verification-item.seguridad { border-left-color:#CB6F58; }
+.verification-item h3 { font-size:.87rem; margin:7px 0 5px; }
+.verification-item p { font-size:.78rem; color:#567179; line-height:1.5; margin:5px 0; }
+.verification-item small { font-size:.7rem; color:#74888C; }
+.verification-kind { text-transform:uppercase; letter-spacing:.06em; font-weight:800;
+  color:#5B7A7D; font-size:.62rem; }
+.verification-item.seguridad .verification-kind { color:#AE5D43; }
+.verification-followup { border-radius:12px; background:#fff; padding:10px 15px; border:1px solid #DBE9E9; }
+.verification-followup p { color:#567178; font-size:.81rem; }
+@media(max-width:750px) { .verification-list { grid-template-columns:1fr; } }
+@media(max-width:600px) { .verification-panel { padding:15px 13px; border-radius:15px; } }
