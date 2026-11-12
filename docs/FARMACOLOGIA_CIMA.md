@@ -87,3 +87,9 @@ La batería cubre: TFGe 19,9/20 para empagliflozina, TFGe 24,99/25 y K 5,0/5,01 
 Se añadieron las tablas completas de continuidad de **finerenona** diferenciadas por **ERC-DM2** (tabla 2) e **IC sintomática FEVI ≥40 %** (tabla 4), y la reevaluación de **empagliflozina** ante cetoacidosis, enfermedad aguda o ajuste del tratamiento glucémico. El resultado siempre es una **referencia de ficha**, sin prescripción. Los controles programables solo nacen de actuaciones confirmadas mediante fecha/dosis real.
 
 Especificación, umbrales, pruebas y limitaciones: [CONTINUIDAD_Y_SEGUIMIENTO.md](CONTINUIDAD_Y_SEGUIMIENTO.md).
+
+## 8. Incretinas añadidas por producto (12/11/2026)
+
+El catálogo se amplía con tres referencias de ficha CIMA: **Ozempic inyectable** (semaglutida · DM2), **Wegovy inyectable** (semaglutida · control del peso) y **Mounjaro** (tirzepatida · DM2/peso). Se evita trasladar pautas entre productos que contienen semaglutida; Wegovy oral se mantiene fuera del módulo. La información de dosis es exclusivamente documental. Se incluye contraste con BIFIMED por presentación, sin asumir financiación automática.
+
+Ver [INCRETINAS_CIMA.md](INCRETINAS_CIMA.md) para fuentes, restricciones, pruebas y límites.
