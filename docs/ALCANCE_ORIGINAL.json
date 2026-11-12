@@ -18,9 +18,9 @@
     },
     {
       "id": "dislipemia",
-      "status": "missing",
-      "evidence": "Captura de lípidos y exclusión SCORE2 con perfiles marcados",
-      "pending": "Objetivos, tratamiento por principio activo y escalada"
+      "status": "partial",
+      "evidence": "src/clinical/dislipemia.mjs: objetivos LDL absoluto/relativo, procedencia del riesgo, revisión de escalada y seguimiento confirmado; referencias CIMA y seguridad CrCl",
+      "pending": "Selección y titulación individual por producto, interacciones exhaustivas, HF/diabetes y TG específicos; revisión clínica y QA móvil"
     },
     {
       "id": "obesidad",
@@ -99,7 +99,7 @@
   },
   "next": [
     "Cálculo interno SCORE2-OP pendiente de parámetros primarios; variantes restantes",
-    "Algoritmo dislipemia",
+    "Completar dislipemia por producto y escenarios específicos",
     "Completar HTA por producto y derivación",
     "MASLD y obesidad",
     "Plan integral y validación",

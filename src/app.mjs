@@ -1,3 +1,4 @@
+import {LIPID_FIELDS,evaluateDyslipidemia} from './clinical/dislipemia.mjs';
 import {HTA_FIELDS,evaluateHypertension} from './clinical/hta.mjs';
 import {CKM_FIELDS,evaluateCkm} from './clinical/ckm.mjs';
 import {CV_FIELDS,OP_FIELDS,evaluateCvRisk} from './clinical/riesgo-cv.mjs';
@@ -66,6 +67,8 @@ function home() {
       <button type="button" class="primary" data-action="ckm">Valorar estadio CKM →</button></section>
     <section class="info-strip"><div><strong>Presión arterial e HTA</strong><p>Confirmación, contexto extraconsulta y revisión de objetivos.</p></div>
       <button type="button" class="primary" data-action="hta">Valorar presión arterial →</button></section>
+    <section class="info-strip"><div><strong>Dislipemia</strong><p>Riesgo lipídico, objetivos de LDL y revisión de tratamiento.</p></div>
+      <button type="button" class="primary" data-action="lipids">Valorar dislipemia →</button></section>
     <div class="module-grid">${MODULES.map(m =>
       `<button type="button" class="module-card" data-action="start-module" data-module="${escape(m.id)}">
       <span class="module-art" aria-hidden="true"><img src="./public/domain-${escape(m.domain)}.svg" alt="" /></span>
@@ -76,6 +79,39 @@ function home() {
       <p>Las seis consultas y la evaluación integral reutilizan la información disponible. Los datos permanecen en memoria y se pierden al recargar.</p></div>
       <button type="button" class="text-link" data-action="sources">Fuentes y limitaciones →</button></section>
   </div>`;
+}
+function lipidResult(){
+ const r=evaluateDyslipidemia(draft);
+ const list=xs=>xs.length?`<ul>${xs.map(x=>`<li>${escape(x)}</li>`).join('')}</ul>`:'';
+ return `<section id="lipid-result" class="dm2-result" aria-live="polite"><h2>Dislipemia: resultado para revisión</h2>
+ ${r.alerts.length?`<div class="dm2-safety"><h3>Prioridad clínica</h3>${list(r.alerts)}</div>`:''}
+ ${r.missing.length?`<h3>Información necesaria</h3>${list(r.missing)}`:''}
+ <h3>Riesgo y objetivos</h3><p>${r.risk?escape(r.risk)+' · '+escape(r.riskOrigin):'Categoría no confirmada; no se asigna objetivo automático.'}</p>
+ ${r.goal?`<p>Objetivo LDL <strong>&lt;${escape(r.goal.ldlLessThan)} mg/dL</strong>${r.goal.requiresFiftyPercent?' y reducción ≥50 % respecto al basal sin tratamiento.':'.'} Marco ESC/EAS 2025.</p>`:''}
+ ${r.comparison?`<p>Objetivo absoluto: <strong>${r.comparison.absoluteMet?'alcanzado':'no alcanzado'}</strong>. ${r.goal.requiresFiftyPercent?'Reducción ≥50 %: '+(r.comparison.reductionMet===null?'no evaluable':r.comparison.reductionMet?'alcanzada':'no alcanzada')+'.':''}</p>`:''}
+ ${r.reduction!==null?`<p>Reducción respecto al basal documentado: ${escape(r.reduction.toFixed(1))} %.</p>`:''}
+ ${r.nonHdl!==null?`<p>Colesterol no-HDL: ${escape(r.nonHdl.toFixed(1))} mg/dL.</p>`:''}
+ <h3>Próximos pasos</h3>${list(r.steps)}
+ ${r.options.length?`<h3>Opciones para valoración profesional</h3>${r.options.map(x=>`<article><h4>${escape(x.title)}</h4><p>${escape(x.detail)}</p></article>`).join('')}`:''}
+ <h3>Comprobaciones</h3>${list(r.checks)}
+ <h3>Seguimiento</h3>${r.followUp?`<p>Ventana orientativa: ${escape(r.followUp.from)} a ${escape(r.followUp.to)}. ${r.followUp.status==='plazo_superado'?'Plazo superado: revisar controles disponibles.':''} ${escape(r.followUp.text)}</p>`:'<p>No se genera una fecha de control desde una propuesta o con datos insuficientes. Individualizar seguimiento.</p>'}
+ <details><summary>Referencias farmacológicas CIMA · sin pauta individual</summary>${r.drugReferences.map(x=>`<h4>${escape(x.name)}</h4><p>${escape(x.reference)} <a href="${escape(x.source)}" target="_blank" rel="noopener noreferrer">Ficha técnica</a></p>`).join('')}</details>
+ <details><summary>Guías y fuentes</summary>${r.sources.map(x=>`<p><a href="${escape(x.url)}" target="_blank" rel="noopener noreferrer">${escape(x.title)}</a> · ${escape(x.locator)}</p>`).join('')}</details>
+ <p class="privacy-note">No prescribe ni confirma financiación o elegibilidad por producto. Validación clínica independiente pendiente.</p></section>`;
+}
+function lipidView(){
+ const basic=['edad','embarazo','lip_lactancia','fecha_evaluacion','colesterol_total','hdl','ldl','trigliceridos','fecha_lipidos','lip_metodo_ldl','lip_alarma'];
+ return `<div class="page"><div class="bread"><button type="button" data-action="home">Inicio</button><span>Dislipemia</span></div>
+ <h1>Dislipemia</h1>${banner()}<section class="form-card"><h2>Perfil lipídico disponible</h2><div class="field-grid">${basic.map(id=>moduleFieldMarkup(FIELDS[id])).join('')}</div>
+ <details><summary>Riesgo, basal y modificadores</summary><button type="button" class="text-link" data-action="cv-risk">Abrir evaluación del riesgo cardiovascular →</button><div class="field-grid">${LIPID_FIELDS.slice(10,24).filter(id=>!basic.includes(id)).map(id=>moduleFieldMarkup(FIELDS[id])).join('')}</div></details>
+ <details><summary>Tratamiento, seguridad y seguimiento</summary><div class="field-grid">${LIPID_FIELDS.filter(id=>!basic.includes(id)&&!LIPID_FIELDS.slice(10,24).includes(id)).map(id=>moduleFieldMarkup(FIELDS[id])).join('')}</div></details>
+ <button type="button" class="primary" data-action="lipid-result">Ver orientación de dislipemia →</button></section>
+ ${current.lipidVisible?lipidResult():''}</div>`;
+}
+function lipidSummaryCard(){
+ const r=evaluateDyslipidemia(draft);
+ return `<section class="calc-card"><h2>Dislipemia</h2><p>${r.alerts.length?'Existen alertas que requieren valoración.':r.goal?'Objetivo LDL para revisión: &lt;'+escape(r.goal.ldlLessThan)+' mg/dL; comprobar también reducción y contexto.':'Falta confirmar riesgo y procedencia del perfil.'}</p>
+ <button type="button" class="text-link" data-action="lipids">Ver riesgo, objetivo y tratamiento →</button></section>`;
 }
 function htaResult(){
  const r=evaluateHypertension(draft);
@@ -675,6 +711,7 @@ function summary() {
             ? escape(draft.values[f.id]) + (f.unit ? ' ' + escape(f.unit) : '') : statusLabel(state);
           return `<div><dt>${escape(f.label)}</dt><dd class="${state}">${content}</dd></div>`;
         }).join('')}</dl></section>`).join('')}</div>
+    ${lipidSummaryCard()}
     ${htaSummaryCard()}
     ${ckmSummaryCard()}
     <section class="calc-card"><h2>Riesgo cardiovascular</h2>
@@ -838,6 +875,7 @@ function tools() {
     <p>Estas clasificaciones utilizan los datos ya introducidos en la consulta. No generan diagnósticos ni recomendaciones terapéuticas.</p>
     ${banner()}
     <p class="privacy-note">La fecha y unidad real de cada analítica deben verificarse antes de utilizarla para decidir. Una fecha no consignada no significa que el resultado sea actual.</p>
+    ${lipidSummaryCard()}
     ${htaSummaryCard()}
     ${ckmSummaryCard()}
     <section class="calc-card"><h2>Riesgo cardiovascular</h2>
@@ -896,7 +934,7 @@ function sources() {
   <section class="sources-card"><h2>Privacidad en esta versión</h2><p>Los valores permanecen exclusivamente en memoria durante la sesión abierta: no se usan cookies, almacenamiento local ni servicios remotos. Al recargar se pierden los datos.</p></section></div>`;
 }
 function render() {
-  const contents = current.page === 'home' ? home() : current.page === 'hta' ? htaView() : current.page === 'ckm' ? ckmView() : current.page === 'cv-risk' ? cvRiskView() : current.page === 'module' ? moduleView() : current.page === 'evaluation' ? evaluation()
+  const contents = current.page === 'home' ? home() : current.page === 'lipids' ? lipidView() : current.page === 'hta' ? htaView() : current.page === 'ckm' ? ckmView() : current.page === 'cv-risk' ? cvRiskView() : current.page === 'module' ? moduleView() : current.page === 'evaluation' ? evaluation()
     : current.page === 'summary' ? summary() : current.page === 'tools' ? tools() : current.page === 'drug' ? drugView() : current.page === 'followup' ? followupPage() : sources();
   app.innerHTML = header() + '<main id="main-content">' + contents + '</main>' + nav() +
     '<footer class="footer">CaHReMe · Identidad Atlántico · Prototipo no validado para uso asistencial</footer>';
@@ -910,7 +948,7 @@ function start(focus) {
 }
 app.addEventListener('input', event => {
   const el = event.target.closest('[data-field]');
-  if (!el || !['evaluation','module','drug','cv-risk','ckm','hta'].includes(current.page)) return;
+  if (!el || !['evaluation','module','drug','cv-risk','ckm','hta','lipids'].includes(current.page)) return;
   const id=el.dataset.field;
   if (el.type === 'checkbox') {
     const checked=[...document.querySelectorAll('input[data-field="'+id+'"]:checked')].map(e=>e.value);
@@ -922,6 +960,7 @@ app.addEventListener('input', event => {
     // Refrescar tras seleccionar «ninguna» para garantizar exclusividad.
     if (selected.length !== checked.length) return render();
   } else draft=setValue(draft,id,el.value);
+  if(current.lipidVisible){current.lipidVisible=false;document.getElementById('lipid-result')?.remove();}
   if(current.htaVisible){current.htaVisible=false;document.getElementById('hta-result')?.remove();}
   if(current.ckmVisible){current.ckmVisible=false;document.getElementById('ckm-result')?.remove();}
   if(current.cvVisible){current.cvVisible=false;document.getElementById('cv-result')?.remove();}
@@ -948,7 +987,7 @@ app.addEventListener('input', event => {
   }
   const counter=document.getElementById('section-count');
   if (!counter) return;
-  const fields=current.page==='hta'?HTA_FIELDS:current.page==='ckm'?CKM_FIELDS:current.page==='cv-risk'?CV_FIELDS:current.page==='module'?moduleFields(current.module,current.mode):current.page==='drug'?currentContinuityFields():SECTIONS[current.step].fields.map(f=>f.id);
+  const fields=current.page==='lipids'?LIPID_FIELDS:current.page==='hta'?HTA_FIELDS:current.page==='ckm'?CKM_FIELDS:current.page==='cv-risk'?CV_FIELDS:current.page==='module'?moduleFields(current.module,current.mode):current.page==='drug'?currentContinuityFields():SECTIONS[current.step].fields.map(f=>f.id);
   const n=fields.filter(key=>fieldState(draft,key)==='registrado').length;
   counter.textContent=current.page==='module'?n+' de '+fields.length+' registrados':n+' registrados';
 });
@@ -956,6 +995,8 @@ app.addEventListener('click', event => {
   const btn = event.target.closest('button[data-action]');
   if (!btn) return;
   const action = btn.dataset.action;
+  if(action==='lipids'){current.lipidVisible=false;return navigate('lipids');}
+  if(action==='lipid-result'){if(current.page!=='lipids')return;current.lipidVisible=true;return render();}
   if(action==='hta'){current.htaVisible=false;return navigate('hta');}
   if(action==='hta-result'){if(current.page!=='hta')return;current.htaVisible=true;return render();}
   if(action==='ckm'){current.ckmVisible=false;return navigate('ckm');}

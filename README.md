@@ -287,3 +287,12 @@ Se reauditaron los límites de ARM conforme a ESC 2026 y CIMA de finerenona. El 
 - Captura inicial y revisión desplegable, accesos en inicio/herramientas/resumen, datos compartidos. Seis consultas previas conservadas.
 - **573/573 pruebas locales y sintaxis superadas**. UI con DOM simulado; revisión clínica independiente y pruebas reales en móvil pendientes.
 - [Contrato y auditoría HTA](docs/HTA_ESC_2024.md). HTA figura parcial en el alcance original. SCORE2-OP interno sigue pendiente; PR en borrador.
+
+
+## Primer circuito de dislipemia · 12/11/2026
+
+- Objetivos LDL según marco ESC/EAS 2025, con reducción ≥50% separada del objetivo absoluto en riesgo alto/muy alto. Categoría clínica documentada o estimación elegible; no se rebaja el riesgo basal desde lípidos tratados.
+- Revisión de inicio/escalada y referencias CIMA de atorvastatina, rosuvastatina y ezetimiba, sin dosis individual. CrCl separado de TFGe, Lp(a) sin conversión y prioridades de seguridad transversales.
+- Seguimiento orientativo solo tras cambio confirmado y fechado; perfil previo al cambio no provoca nueva escalada. Accesos en inicio, herramientas y resumen.
+- **671/671 pruebas locales y sintaxis superadas**, con interfaz simulada. Sin prueba real de iPhone ni validación clínica independiente.
+- [Contrato, fuentes y auditoría](docs/DISLIPEMIA_ESC_EAS_2025.md). Alcance original: dislipemia parcial; prescripción completa y MVP pendientes. PR en borrador.

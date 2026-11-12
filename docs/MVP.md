@@ -182,3 +182,8 @@ Existe una vía de registro de estimación externa HeartScore con procedencia, r
 ## Primer circuito de HTA · 12/11/2026
 
 Se añade evaluación propia de PA/HTA con confirmación por método, patrones discordantes, objetivo condicionado y revisión de tratamiento sin dosis. Alertas integradas en auditoría transversal. [Contrato y límites](HTA_ESC_2024.md). La matriz original marca HTA parcial, pendiente de CIMA por producto, circuitos completos y validación.
+
+
+## Primer circuito de dislipemia · 12/11/2026
+
+Se implementa un recorrido de objetivos, revisión de tratamiento y seguimiento desde actuaciones confirmadas. No prescribe dosis individuales ni completa todos los escenarios de dislipemia. [Contrato y auditoría](DISLIPEMIA_ESC_EAS_2025.md). La matriz original cambia dislipemia de ausente a parcial. Pruebas automatizadas e interfaz simulada: 671 superadas; revisión clínica y QA real pendientes. Próximos dominios a ampliar: MASLD y obesidad; continúan pendientes las rutas farmacológicas específicas.

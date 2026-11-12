@@ -3,6 +3,7 @@
  * El resultado no se convierte en objetivo lipídico, pauta o estadio CKM.
  */
 import {FIELDS,fieldState,externalOpAssociationValid} from '../model.mjs';
+import {readMulti} from '../consultas.mjs';
 import {auditCrossDomain} from './auditoria.mjs';
 export const CV_FIELDS=['edad','cv_sexo_modelo','cv_region','tabaco','ecv','ic','dm1','dm2','erc',
  'embarazo','cv_hfamiliar','cv_sintomas','pas','pad','fecha_pas','colesterol_total','hdl','ldl','fecha_lipidos','fecha_evaluacion'];
@@ -60,6 +61,10 @@ export function evaluateCvRisk(draft){
  }
  if(get(draft,'cv_hfamiliar')==='Sí'||(ldl!==null&&ldl>=190)||(tc!==null&&tc>310)){
   route='factor_individual';steps.push('Perfil lipídico marcado o sospecha familiar: revisar causas y circuito específico de dislipemia; no usar un SCORE2 bajo para reducir esa prioridad.');return result();
+ }
+ const lipidClasses=get(draft,'farmacos_clases')?readMulti(get(draft,'farmacos_clases')):[];
+ if(['Atorvastatina','Rosuvastatina','Otra'].includes(get(draft,'lip_estatina'))||get(draft,'lip_ezetimiba')==='Sí'||get(draft,'lip_otros')==='Tratamiento adicional confirmado'||lipidClasses.some(x=>['Estatina','Ezetimiba','Ácido bempedoico','Anticuerpo PCSK9'].includes(x))){
+  route='riesgo_basal_en_tratamiento';steps.push('Perfil bajo tratamiento hipolipemiante: no utilizarlo para rebajar automáticamente el riesgo basal. Revisar estratificación clínica en dislipemia.');return result();
  }
  if(get(draft,'dm2')==='Sí'){
   route='score2_diabetes_pendiente';steps.push('Valorar SCORE2-Diabetes en su población elegible y daño de órgano. No se calcula sustituyéndolo por SCORE2 general.');return result();

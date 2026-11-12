@@ -117,3 +117,8 @@ Se incorpora la clasificación descriptiva CKM desde la tabla 4 AHA/ACC/ADA/ASN 
 ## PA e HTA: ESC 2024
 
 Se verifica la guía oficial ESC 2024 para el primer circuito dirigido. [Reglas, fuente primaria, barreras operativas y auditoría](HTA_ESC_2024.md). No se confunde el umbral CKM 130/80 con diagnóstico de HTA ni se convierten referencias de clases en pautas individuales. CIMA por producto/dosis y validación clínica independiente siguen pendientes.
+
+
+## Dislipemia: revisión 12/11/2026
+
+Se incorporan ESC/EAS 2025 (tabla 3, umbrales y modificadores), secciones conservadas ESC/EAS 2019 y CIMA 69534/80213/77541. Las categorías lipídicas 2025 no son los cortes por edad de prevención 2021. Unidades de Lp(a) y CrCl tienen tratamiento separado, sin conversiones implícitas. [Matriz de reglas, fuentes primarias y límites](DISLIPEMIA_ESC_EAS_2025.md). Titulación individual, cobertura farmacológica exhaustiva y validación clínica permanecen pendientes.

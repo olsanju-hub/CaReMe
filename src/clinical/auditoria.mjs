@@ -15,6 +15,8 @@ const NUMBER=(draft,id)=>{
   const v=VALUE(draft,id);return v===null?null:Number(v);
 };
 export const AUDIT_RULES=Object.freeze({
+  LIPID_ACUTE_REVIEW:'Síntomas que exigen valoración aguda en dislipemia',
+  LIPID_TG_SEVERE:'TG >880 mg/dL: priorizar evaluación',
   BP_SEVERE_REVIEW:'PA ≥180 sistólica o ≥110 diastólica: valorar daño agudo',
   BP_ALARM_REVIEW:'Síntomas de alarma en la revisión de PA',
   DM_TYPE_CONFLICT:'DM1 y DM2 simultáneamente declaradas',
@@ -47,6 +49,12 @@ export function auditCrossDomain(draft) {
   const provenance=auditProvenance(draft);
   const out=[...provenance.findings];
   const yes=id=>VALUE(draft,id)==='Sí';
+  if(VALUE(draft,'lip_alarma')==='Sí')
+    out.push(item('LIPID_ACUTE_REVIEW','critical','Síntomas de alarma en revisión de lípidos',
+      'Dolor abdominal intenso con vómitos o debilidad intensa/orina oscura: priorizar valoración clínica antes de decisiones crónicas.', ['lip_alarma']));
+  if(NUMBER(draft,'trigliceridos')!==null&&NUMBER(draft,'trigliceridos')>880)
+    out.push(item('LIPID_TG_SEVERE','critical','Hipertrigliceridemia con prioridad de valoración',
+      'TG >880 mg/dL: valorar prevención de pancreatitis y contexto. La cifra no diagnostica pancreatitis ni indica ingreso por sí sola.', ['trigliceridos','fecha_lipidos','lip_alarma']));
   const currentSbp=NUMBER(draft,'pas'),currentDbp=NUMBER(draft,'pad'),outsideSbp=NUMBER(draft,'hta_fuera_pas'),outsideDbp=NUMBER(draft,'hta_fuera_pad');
   if((currentSbp!==null&&currentSbp>=180)||(currentDbp!==null&&currentDbp>=110)||(outsideSbp!==null&&outsideSbp>=180)||(outsideDbp!==null&&outsideDbp>=110))
     out.push(item('BP_SEVERE_REVIEW','critical','PA elevada que exige valoración prioritaria',
