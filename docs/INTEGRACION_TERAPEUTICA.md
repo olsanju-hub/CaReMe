@@ -102,3 +102,9 @@ La batería automatizada contempla multicomorbilidad, TFGe por debajo de 20, TFG
 El motor añade `WEIGHT-REVIEW` cuando el IMC aportado es ≥30 o ≥27 y <30 con comorbilidad asociada al peso confirmada, incluso sin DM2, siempre como revisión de alternativas y no como autorización automática. Se activa `WEIGHT-EXISTING` si ya consta una terapia incretínica y `WEIGHT-ACUTE-DEFER` si hay proceso agudo. No se confunde la coexistencia de MASLD con una indicación hepática dirigida.
 
 CIMA por producto: [INCRETINAS_CIMA.md](INCRETINAS_CIMA.md). Falta una comparación individual completa de seguridad, financiación e interacciones; no generar prescripciones ni pautas de escalada automáticas.
+
+## 8. Revisión renal de metformina y dapagliflozina (12/11/2026)
+
+La tarjeta iSGLT2 enlaza a empagliflozina y dapagliflozina, **sin extrapolar el umbral KDIGO de clase a una ficha CIMA**. Forxiga no recomienda iniciar con TFGe <25; de 20 a <25, el motor incluye una advertencia documental específica. Se añaden tarjetas de seguridad y contexto para metformina (especialmente TFGe <30, enfermedad aguda, acidosis e insuficiencia hepática). La metformina no se considera sustituto de protección pronóstica cardiorrenal por clase.
+
+Fuentes, condiciones y tests: [METFORMINA_DAPAGLIFLOZINA_CIMA.md](METFORMINA_DAPAGLIFLOZINA_CIMA.md). No se generan dosis individuales ni suspensiones automáticas.
