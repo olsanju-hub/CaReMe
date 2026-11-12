@@ -222,3 +222,9 @@ No inventar umbrales ni dosis. Verificar versiones de las guías, contraindicaci
 - La congestión lleva a revisión de diurético de asa y volemia, nunca titulación automática. FEVI ≥50 % necesita evidencia objetiva para considerar IC-FEp.
 - Fuentes ESC 2026 y fichas CIMA por producto. [Contrato, evidencia y riesgos residuales](docs/INSUFICIENCIA_CARDIACA_ESC_2026.md).
 - Pruebas: `tests/insuficiencia-cardiaca.test.mjs`, `tests/insuficiencia-cardiaca-seguridad.test.mjs`, `tests/insuficiencia-cardiaca-ui.test.mjs`. Pendientes validación clínica independiente y QA móvil.
+
+## Refinamiento de IC: ARM por indicación y ficha específica (12/11/2026)
+
+Se reauditaron los límites de ARM conforme a ESC 2026 y CIMA de finerenona. El circuito IC distingue una **revisión genérica** de ARM (TFGe ≥30 y K <5) de la **revisión específica de finerenona** en IC sintomática con FEVI ≥40, TFGe ≥25 y K ≤5, siempre con contraindicaciones registradas y sin duplicidad de ARM. En TFGe 25–29 o con K exactamente 5,0 solo puede aparecer la vía específica cuando conste seguridad suficiente. Se incluye enlace desde la tarjeta a la ficha CIMA por indicación y no se calculan dosis.
+
+[Auditoría de ESC 2026 y CIMA](docs/IC_ESC_2026.md) · pruebas `tests/ic-finerenona-esc2026.test.mjs`. Sigue pendiente la revisión clínica y farmacológica independiente.
