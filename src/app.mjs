@@ -3,8 +3,11 @@ import { MODULES, MODULE_BY_ID, moduleFields, readMulti } from './consultas.mjs'
 import { SOURCES, evaluateRenal, evaluateFib4 } from './clinical/engine.mjs';
 import { integratePatient, INTEGRATION_SOURCES } from './clinical/integracion.mjs';
 import { DRUGS, getDrug, getDrugRoute, reviewDrug } from './clinical/farmacologia.mjs';
+import { reviewFinerenoneContinuation, reviewEmpagliflozinContinuation, confirmedAction, followUpFromHistory } from './clinical/continuidad.mjs';
 
 let draft = createDraft();
+let confirmedHistory = [];
+let followupError = '';
 let current = { page: 'home', step: 0, focus: 'integral', module: null, mode:'quick', drug:'empagliflozina', route:'dm2' };
 const app = document.getElementById('app');
 const escape = (value) => String(value ?? '').replace(/[&<>"']/g, c =>
@@ -303,6 +306,78 @@ function summary() {
     <div class="summary-actions"><button type="button" class="ghost" data-action="go-step" data-step="0">Volver a editar</button>
       <button type="button" class="primary" data-action="new">Finalizar y borrar datos</button></div></div>`;
 }
+function currentContinuityFields() {
+  return current.drug==='finerenona'
+    ? ['fin_estado','fin_dosis_actual','potasio','tfge','fin_tfge_previa', ...(current.route==='ic_fevi40'?['fin_tfge_inicio']:[])]
+    : ['emp_estado','emp_dosis_actual','tfge','situacion_aguda','cetoacidosis_sospecha',
+       'emp_cetonas','emp_estable','emp_dka_previa','emp_factor_resuelto',
+       ...(current.route==='dm2'?['emp_control_insuficiente','emp_tolerancia']:[])];
+}
+function continuityPanel() {
+  const report=current.drug==='finerenona'
+    ? reviewFinerenoneContinuation(draft,current.route)
+    : reviewEmpagliflozinContinuation(draft,current.route);
+  const labels={alerta:'Alerta de seguridad',precaucion:'Revisión prioritaria',
+    datos_insuficientes:'Datos insuficientes',referencia:'Referencia de ficha técnica',
+    revision_contextual:'Reevaluación requerida'};
+  const fieldItems=currentContinuityFields();
+  return `<section class="drug-card" id="continuidad">
+    <div class="eyebrow">CONTINUIDAD Y TITULACIÓN · FICHA CIMA</div>
+    <h2>Reevaluación del tratamiento en curso</h2>
+    <p>Indica únicamente medicación realmente administrada y resultados analíticos disponibles.
+       Esta revisión es orientativa y no modifica ninguna pauta.</p>
+    <div class="field-grid continuity-fields">${fieldItems.map(id=>moduleFieldMarkup(FIELDS[id])).join('')}</div>
+    <button type="button" class="ghost continuity-recalc" data-action="refresh">Actualizar evaluación →</button>
+    <div class="continuity-result ${escape(report.state)}">
+      <span class="continuity-status">${escape(labels[report.state]||report.state)}</span>
+      <h3>${escape(report.title)}</h3>
+      <p>${escape(report.guidance)}</p>
+      ${report.missing.length ? `<strong>Información necesaria</strong><ul>${report.missing.map(t=>`<li>${escape(t)}</li>`).join('')}</ul>`:''}
+      ${report.cautions.length ? `<strong>Precauciones</strong><ul>${report.cautions.map(t=>`<li>${escape(t)}</li>`).join('')}</ul>`:''}
+      <small>Regla: ${escape(report.ruleId)} · ${escape(report.source.reference)}</small>
+    </div>
+    <button type="button" class="primary" data-action="followup">Registrar actuación realizada / ver seguimiento →</button>
+  </section>`;
+}
+function followupPage() {
+  const drug=getDrug(current.drug),route=getDrugRoute(current.drug,current.route);
+  const events=followUpFromHistory(confirmedHistory);
+  const last=confirmedHistory.filter(e=>e.drugId===current.drug && e.routeId===current.route);
+  const actionName={inicio:'Inicio',reinicio:'Reinicio',ajuste:'Modificación de dosis',interrupcion:'Interrupción'};
+  return `<div class="page interior">
+    <div class="bread"><button type="button" data-action="tools">Herramientas</button><span>›</span><span>Seguimiento</span></div>
+    <div class="eyebrow">REGISTRO EFECTIVAMENTE CONFIRMADO · NO PRESCRIPCIÓN</div>
+    <h1>Seguimiento farmacológico</h1>
+    <p>El calendario se genera exclusivamente cuando confirmas una actuación que ya se ha realizado. No crea avisos automáticos ni envía datos.</p>
+    ${banner()}
+    <section class="drug-card">
+      <h2>Registrar una actuación realizada</h2>
+      <p>Medicamento: <strong>${escape(drug.generic)}</strong>; indicación: <strong>${escape(route.name)}</strong>.</p>
+      <div class="followup-form">
+        <div><label for="action-type">Actuación ya realizada</label>
+        <select id="action-type"><option value="inicio">Inicio</option><option value="reinicio">Reinicio</option>
+        <option value="ajuste">Modificación de dosis</option><option value="interrupcion">Interrupción</option></select></div>
+        <div><label for="action-date">Fecha efectiva</label><input id="action-date" type="date" required /></div>
+      </div>
+      <label class="confirm-check"><input type="checkbox" id="action-confirm" />
+        Confirmo que esta actuación realmente se realizó. No es una recomendación de la aplicación.</label>
+      ${followupError ? `<p class="form-error" role="alert">${escape(followupError)}</p>`:''}
+      <button type="button" class="primary" data-action="confirm-med-action">Registrar actuación confirmada</button>
+    </section>
+    <section class="drug-card"><h2>Registro de esta indicación</h2>
+      ${last.length ? `<ul class="history-list">${last.map(x=>`<li><strong>${escape(x.performedOn)}</strong> · ${escape(actionName[x.type])} · confirmado</li>`).join('')}</ul>`
+       : '<p>No hay actuaciones confirmadas en esta sesión.</p>'}
+    </section>
+    <section class="drug-card"><h2>Controles vinculados a actuaciones confirmadas</h2>
+      ${events.length ? `<div class="review-list">${events.map(e=>`<div class="review-row">
+        <span><strong>${escape(e.drugId)}</strong> · ${escape(e.trigger)}
+          <small class="followup-description">${escape(e.description)}</small></span>
+        <strong>${e.dueOn?escape(e.dueOn):'Sin fecha fija'}</strong></div>`).join('')}</div>`
+        : '<p>Aún no hay controles programables: ninguna actuación se ha confirmado.</p>'}
+      <p class="drug-disclaimer">Estas fechas se muestran en pantalla, sin notificaciones. La periodicidad puede requerir adelanto o modificación según la situación clínica.</p>
+    </section>
+  </div>`;
+}
 function pharmaLibrary() {
   return `<section class="pharma-library">
   <div class="eyebrow">CIMA-AEMPS · FICHAS POR PRINCIPIO ACTIVO</div>
@@ -345,6 +420,7 @@ function drugView() {
       <ul>${items(route.labelDoses)}</ul>
       <p class="drug-disclaimer">La tabla es informativa incluso si existen bloqueos. No equivale a una recomendación para el paciente.</p>
     </section>
+    ${continuityPanel()}
     <section class="drug-card"><h2>Monitorización y advertencias</h2>
       <h3>Seguimiento de ficha técnica</h3><ul>${items(drug.monitoring)}</ul>
       <h3>Precauciones y contraindicaciones relevantes</h3><ul>${items(drug.warningText)}</ul>
@@ -361,6 +437,7 @@ function tools() {
     <div class="calc-stack">${renalResultCard()}${fib4ResultCard()}</div>
     ${integratedCards()}
     ${pharmaLibrary()}
+    <div class="followup-link"><button type="button" class="ghost" data-action="followup">Historial y calendario de controles →</button></div>
     <div class="tool-grid">
       ${['dm2','ic','obesidad','insulina'].map(id=>{
         const m=MODULE_BY_ID[id];
@@ -387,7 +464,7 @@ function sources() {
 }
 function render() {
   const contents = current.page === 'home' ? home() : current.page === 'module' ? moduleView() : current.page === 'evaluation' ? evaluation()
-    : current.page === 'summary' ? summary() : current.page === 'tools' ? tools() : current.page === 'drug' ? drugView() : sources();
+    : current.page === 'summary' ? summary() : current.page === 'tools' ? tools() : current.page === 'drug' ? drugView() : current.page === 'followup' ? followupPage() : sources();
   app.innerHTML = header() + '<main id="main-content">' + contents + '</main>' + nav() +
     '<footer class="footer">CaHReMe · Identidad Atlántico · Prototipo no validado para uso asistencial</footer>';
 }
@@ -400,7 +477,7 @@ function start(focus) {
 }
 app.addEventListener('input', event => {
   const el = event.target.closest('[data-field]');
-  if (!el || !['evaluation','module'].includes(current.page)) return;
+  if (!el || !['evaluation','module','drug'].includes(current.page)) return;
   const id=el.dataset.field;
   if (el.type === 'checkbox') {
     const checked=[...document.querySelectorAll('input[data-field="'+id+'"]:checked')].map(e=>e.value);
@@ -414,7 +491,7 @@ app.addEventListener('input', event => {
   } else draft=setValue(draft,id,el.value);
   const counter=document.getElementById('section-count');
   if (!counter) return;
-  const fields=current.page==='module'?moduleFields(current.module,current.mode):SECTIONS[current.step].fields.map(f=>f.id);
+  const fields=current.page==='module'?moduleFields(current.module,current.mode):current.page==='drug'?currentContinuityFields():SECTIONS[current.step].fields.map(f=>f.id);
   const n=fields.filter(key=>fieldState(draft,key)==='registrado').length;
   counter.textContent=current.page==='module'?n+' de '+fields.length+' registrados':n+' registrados';
 });
@@ -422,6 +499,28 @@ app.addEventListener('click', event => {
   const btn = event.target.closest('button[data-action]');
   if (!btn) return;
   const action = btn.dataset.action;
+  if (action === 'refresh') return render();
+  if (action === 'followup') { followupError=''; return navigate('followup'); }
+  if (action === 'confirm-med-action') {
+    const type=document.getElementById('action-type')?.value;
+    const performedOn=document.getElementById('action-date')?.value;
+    const checked=document.getElementById('action-confirm')?.checked === true;
+    const today=new Date();
+    const localToday=[today.getFullYear(),String(today.getMonth()+1).padStart(2,'0'),
+      String(today.getDate()).padStart(2,'0')].join('-');
+    if(!checked || !performedOn || performedOn>localToday) {
+      followupError='Debes confirmar la actuación y una fecha efectiva válida, que no puede ser futura.';
+      return render();
+    }
+    if(!confirm('¿Confirmas que la actuación se realizó realmente? No se está emitiendo una prescripción.')) return;
+    try {
+      confirmedHistory=confirmedAction(confirmedHistory,{
+        drugId:current.drug,routeId:current.route,type,performedOn,confirmedByClinician:true
+      });
+      followupError='';
+    } catch(e) { followupError=e?.message||'No se ha registrado la actuación'; }
+    return render();
+  }
   if (action === 'start') return start(btn.dataset.focus || 'integral');
   if (action === 'open-drug') {
     const drug=getDrug(btn.dataset.drugId);
@@ -457,7 +556,7 @@ app.addEventListener('click', event => {
   }
   if (action === 'new') {
     if (!confirm('¿Borrar los datos de esta evaluación? Esta acción no se puede deshacer.')) return;
-    draft = createDraft(); current = { page: 'home', step: 0, focus: 'integral', module:null,mode:'quick',drug:'empagliflozina',route:'dm2' };
+    draft = createDraft(); confirmedHistory=[]; followupError=''; current = { page: 'home', step: 0, focus: 'integral', module:null,mode:'quick',drug:'empagliflozina',route:'dm2' };
     return navigate('home');
   }
 });
