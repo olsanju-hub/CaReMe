@@ -120,8 +120,10 @@ export function evaluateHeartFailure(draft,mode='quick'){
    checks.push('Grupo FEVI heredado de una clasificación anterior: contrastar FEVI numérica con ESC 2026.');
  if(fevi!==null&&fevi>=50&&evidence!=='Confirmada por evaluación especializada')
    checks.push('Con FEVI ≥50%, no diagnosticar IC-FEp solo por la fracción de eyección: confirmar evidencia estructural/funcional y péptidos natriuréticos.');
- if(symptomatic==='No'&&hf==='Sí')
+ if(symptomatic==='No'&&hf==='Sí'){
    checks.push('Consta IC conocida sin síntomas actuales: confirmar síntomas previos, evolución de FEVI y estadio; no retirar automáticamente tratamientos por mejoría.');
+   if(mode==='detail')missing.push('Documentar síntomas previos y estadio de IC; ausencia de síntomas actuales no demuestra resolución.');
+ }
  const noRedFlags=flags?.includes('Sin señales de alarma tras valoración');
  const activeFlags=flags?.filter(x=>x!=='Sin señales de alarma tras valoración')||[];
  if(noRedFlags&&activeFlags.length)
