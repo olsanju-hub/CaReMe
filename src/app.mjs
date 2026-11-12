@@ -378,7 +378,7 @@ function consultationReview(module) {
     }).join('')}</div>
     ${calculatorsForModule(module.id)}
     ${module.id==='dm2'?dm2RapidResult()+dm2DetailedResult():''}
-    ${module.id==='insulina'?insulinResult('quick')+insulinResult('detail'):''}
+    ${module.id==='insulina'?insulinResult('detail'):''}
     ${integratedCards(({dm2:'DM2',ic:'IC',erc:'Renal',obesidad:'Metabólico',hepatico:'Hepático',insulina:'DM2'})[module.id])}
     ${module.id==='insulina'
       ? '<p class="clinical-lock">Insulinización: tres rutas de orientación y seguridad implementadas. La revisión clínica externa, dosis por producto y validación funcional permanecen pendientes.</p>'
@@ -429,7 +429,7 @@ function moduleView() {
       <button class="primary" type="button" data-action="dm2-result">Ver orientación clínica rápida →</button>
       <p>El resultado se genera para revisión. No prescribe ni confirma diagnósticos.</p>
     </div>${current.dm2ResultVisible?dm2RapidResult():''}`:''}
-    <div class="module-note"><strong>Documentación:</strong> las orientaciones rápida y detallada de DM2 son provisionales; otros módulos siguen pendientes.</div>
+    <div class="module-note"><strong>Documentación:</strong> las orientaciones de DM2 e insulinización son preliminares; los demás módulos y la validación clínica siguen pendientes.</div>
     <p class="privacy-note">No introduzcas identificadores del paciente. Los datos no se guardan después de cerrar o recargar.</p>
   </div>`;
 }
