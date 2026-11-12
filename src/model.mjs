@@ -108,7 +108,7 @@ export function fieldState(draft, id) {
       (f.min !== undefined && n < f.min) || (f.max !== undefined && n > f.max)) return 'revisar';
   }
   if (f.type === 'date') {
-    if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(v)) return 'revisar';
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) return 'revisar';
     const [year,month,day] = v.split('-').map(Number);
     const dt = new Date(Date.UTC(year,month-1,day));
     if (dt.getUTCFullYear()!==year || dt.getUTCMonth()+1!==month ||
