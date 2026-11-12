@@ -10,7 +10,7 @@ import { SOURCES, evaluateRenal } from './clinical/engine.mjs';
 import { integratePatient, INTEGRATION_SOURCES } from './clinical/integracion.mjs';
 import { DRUGS, getDrug, getDrugRoute, reviewDrug } from './clinical/farmacologia.mjs';
 import { reviewFinerenoneContinuation, reviewEmpagliflozinContinuation, confirmedAction, followUpFromHistory } from './clinical/continuidad.mjs';
-import { buildVerificationPlan } from './clinical/plan.mjs';
+import {buildIntegratedPlan} from './clinical/plan-integral.mjs';
 import { evaluateDm2Quick } from './clinical/dm2-rapida.mjs';
 import { evaluateDm2Detail } from './clinical/dm2-detallada.mjs';
 import { evaluateInsulinization } from './clinical/insulinizacion.mjs';
@@ -337,30 +337,41 @@ function pharmaLink(card) {
   return `<button type="button" class="text-link" data-action="open-drug"
     data-drug-id="${info.drug}" data-route-id="${info.route}">Consultar ficha CIMA específica →</button>`;
 }
-function verificationPanel() {
-  const plan=buildVerificationPlan(draft,confirmedHistory);
-  const priorities={seguridad:'Revisión prioritaria',completar:'Dato o conciliación pendiente'};
-  const followup=plan.followup.filter(x=>x.status!=='sustituido');
-  return `<section class="verification-panel" aria-label="Plan de verificación documental">
-    <div class="eyebrow">CONTROL DE CALIDAD · SIN PRESCRIPCIÓN</div>
-    <h2>Plan de verificación clínica</h2>
-    <p>${escape(plan.summary)}. Las comprobaciones no se registran como realizadas por aparecer aquí.</p>
-    ${plan.heldCandidates?`<p class="verification-hold">Se han retenido ${plan.heldCandidates} opciones hasta corregir las incoherencias clínicas.</p>`:''}
-    ${plan.checks.length?`<div class="verification-list">${plan.checks.map(item=>`
-      <article class="verification-item ${escape(item.priority)}">
-        <span class="verification-kind">${escape(priorities[item.priority]||'Revisar')}</span>
-        <h3>${escape(item.title)}</h3><p>${escape(item.detail)}</p>
-        ${item.fields.length?`<small>Campos: ${item.fields.map(id=>escape(FIELDS[id]?.label||id)).join(' · ')}</small>`:''}
-      </article>`).join('')}</div>`
-      :'<p>Sin comprobaciones pendientes detectadas por las reglas implementadas; esto no valida la historia ni equivale a alta clínica.</p>'}
-    <h3>Controles derivados de actuaciones confirmadas</h3>
-    ${followup.length?`<div class="verification-followup">${followup.map(x=>`
-      <p><strong>${x.dueOn?escape(x.dueOn):'Fecha a individualizar'}</strong> ·
-      ${escape(x.drugId)} — ${escape(x.description)}.</p>`).join('')}</div>`
-      :'<p>No se han generado controles nuevos: no hay actuaciones confirmadas que los activen.</p>'}
-    <p class="integration-disclaimer">Opciones terapéuticas identificadas: ${plan.candidates.length}.
-      Son propuestas para revisión, no tratamientos iniciados. Actuaciones registradas: ${plan.confirmedActions}.</p>
-  </section>`;
+function integratedPlanPanel(){
+ const p=buildIntegratedPlan(draft,confirmedHistory);
+ const label=id=>p.domains.find(x=>x.id===id)?.title??(id==='historial'?'Historial':id==='farmacologia'?'Tratamiento y controles':'Transversal');
+ const jump=d=>d.module?`<button type="button" class="text-link" data-action="start-module" data-module="${escape(d.module)}">Revisar →</button>`:`<button type="button" class="text-link" data-action="${escape(d.action)}">Revisar →</button>`;
+ const list=xs=>xs.length?`<ul>${xs.map(x=>`<li>${escape(x)}</li>`).join('')}</ul>`:'';
+ const priorities=kind=>p.priorities.filter(x=>x.priority===kind);
+ const tasks=xs=>xs.map(x=>`<article class="verification-item ${escape(x.priority)}"><h4>${escape(x.title)}</h4><p>${escape(x.detail)}</p><small>${escape(x.domains.map(label).join(' · '))}</small></article>`).join('');
+ const controls=xs=>xs.map(x=>`<article class="verification-item"><h4>${escape(label(x.domain))}${x.drugId?' · '+escape(x.drugId):''}</h4>
+ <p><strong>${x.from?escape(x.from)+' a '+escape(x.to):x.dueOn?escape(x.dueOn):'Sin fecha fija'}</strong></p><p>${escape(x.description)}</p>
+ ${x.temporalStatus==='plazo_superado'?'<p>Plazo pasado: revisar controles ya realizados y necesidades actuales; no se presupone falta de asistencia.</p>':''}
+ ${list(x.holdReasons)}<a href="${escape(x.source)}" target="_blank" rel="noopener noreferrer">Fuente del control ↗</a></article>`).join('');
+ const activeControls=p.controls.filter(x=>x.status!=='requiere_reevaluacion'),held=p.controls.filter(x=>x.status==='requiere_reevaluacion');
+ const routine=p.orientations.filter(x=>x.status==='orientacion_sin_cita'),conditional=p.orientations.filter(x=>x.status!=='orientacion_sin_cita');
+ const orientationList=xs=>xs.map(x=>`<p><strong>${escape(label(x.domain))}</strong> · ${escape(x.text)}</p>`).join('');
+ return `<section id="integrated-plan" class="verification-panel" aria-label="Plan integral de objetivos y seguimiento"><div class="eyebrow">SÍNTESIS PARA REVISIÓN PROFESIONAL</div>
+ <h2>Plan integral de objetivos y seguimiento</h2><p>${p.globalHold?'Resolver primero las alertas de seguridad. Las fechas previas no determinan la urgencia actual.':'Objetivos y plazos reunidos desde los módulos evaluados, con su procedencia.'}</p>
+ ${priorities('seguridad').length?`<div class="dm2-safety"><h3>Prioridad clínica</h3>${tasks(priorities('seguridad'))}</div>`:''}
+ <h3>Objetivos documentados para revisar</h3>
+ ${p.goals.length?p.goals.map(x=>`<article class="verification-item"><h4>${escape(x.title)}</h4><p>${escape(x.detail)}</p>${x.status==='reevaluar_seguridad'?'<p>Aplicación condicionada a resolver la seguridad actual.</p>':''}</article>`).join(''):'<p>No hay objetivos utilizables desde los módulos actuales. No se asignan objetivos universales ni se presume que estén alcanzados.</p>'}
+ <h3>Controles derivados de actuaciones confirmadas</h3>
+ ${activeControls.length?controls(activeControls):'<p>No se han generado controles nuevos aplicables: revisar confirmaciones, fechas y seguridad.</p>'}
+ ${held.length?`<details><summary>Plazos previos que requieren reevaluación (${held.length})</summary>${controls(held)}</details>`:''}
+ ${p.coordination.length?`<details><summary>Posible coordinación de controles</summary>${p.coordination.map(x=>`<p>${escape(x.from)} a ${escape(x.to)} · ${escape(x.text)}</p>`).join('')}</details>`:''}
+ <h3>Orientaciones sin cita individual</h3>${routine.length?orientationList(routine):'<p>No hay un intervalo individualizable mostrado desde los módulos actuales.</p>'}
+ ${conditional.length?`<details><summary>Orientaciones condicionadas a completar la evaluación</summary>${orientationList(conditional)}</details>`:''}
+ ${p.referrals.length?`<h3>Valoraciones especializadas propuestas</h3>${list(p.referrals.map(x=>label(x.domain)+': '+x.text+(x.status==='revisar_seguridad_y_urgencia'?' Revisar primero seguridad y urgencia actual.':'')))}`:''}
+ <details><summary>Plan de verificación clínica · datos pendientes y próximos pasos (${priorities('completar').length+priorities('revisar').length})</summary>${tasks(priorities('completar'))}${tasks(priorities('revisar'))}
+ ${p.priorities.length?'':'<p>Sin comprobaciones pendientes detectadas; esto no equivale a alta clínica.</p>'}</details>
+ ${p.cautions.length?`<details><summary>Comprobaciones y cautelas por área</summary>${p.domains.filter(d=>d.active).map(d=>`<h4>${escape(d.title)}</h4>${list(p.cautions.filter(x=>x.domain===d.id).map(x=>x.text))}`).join('')}</details>`:''}
+ <details open><summary>Cobertura de la evaluación</summary><p>Las áreas no evaluadas no se consideran normales ni libres de enfermedad. No se requieren pruebas solo para completar esta lista.</p>
+ ${p.domains.map(d=>`<p><strong>${escape(d.title)}</strong> · ${!d.active?'No evaluado':d.state==='fuera_de_ambito'?'Circuito específico':d.missingCount?'Datos por completar':'Para revisión profesional'} ${jump(d)}</p>`).join('')}</details>
+ ${p.contexts.length?`<details><summary>Contexto de riesgo y CKM</summary>${list(p.contexts.map(x=>x.text))}</details>`:''}
+ <details><summary>Fuentes de los módulos evaluados</summary>${p.domains.filter(d=>d.active).map(d=>`<h4>${escape(d.title)}</h4>${d.sources.map(x=>`<p><a href="${escape(x.url)}" target="_blank" rel="noopener noreferrer">${escape(x.title)}</a>${x.locator?' · '+escape(x.locator):''}</p>`).join('')}`).join('')}</details>
+ ${p.archivedControls.length?`<details><summary>Referencias históricas sustituidas (${p.archivedControls.length})</summary><p>No se presentan como controles actuales; se conservan en el historial de esta sesión.</p></details>`:''}
+ <p class="privacy-note">Propuestas para revisión, no tratamientos iniciados. Actuaciones registradas: ${p.history.acceptedRecords}.${p.history.heldRecords?' Registros históricos por conciliar: '+p.history.heldRecords+'.':''} No se considera realizada una prueba o enviada una derivación por aparecer aquí. Sin citas creadas ni prescripción. Validación clínica pendiente.</p></section>`;
 }
 function integratedCards(focus = null) {
   const result=integratePatient(draft);
@@ -742,6 +753,7 @@ function summary() {
     <div><strong>${stats.no_disponible}</strong><span>No disponibles</span></div>
     <div><strong>${stats.sin_registrar}</strong><span>Sin registrar</span></div>
     <div><strong>${stats.revisar}</strong><span>Por revisar</span></div></div>
+    ${integratedPlanPanel()}
     <div class="summary-grid">${SECTIONS.map((s,i) =>
       `<section class="summary-card"><div class="summary-card-head"><h2>${escape(s.title)}</h2>
         <button type="button" class="text-link" data-action="go-step" data-step="${i}">Editar →</button></div>
@@ -759,7 +771,7 @@ function summary() {
       <p>${evaluateCvRisk(draft).externalEstimate?'SCORE2-OP externo documentado: revisar procedencia y contexto.':evaluateCvRisk(draft).percent===null?'Sin porcentaje disponible: revisar elegibilidad, circuito y datos.':'SCORE2: '+escape(evaluateCvRisk(draft).percent.toFixed(1))+' % a 10 años; pendiente de revisión clínica.'}</p>
       <button type="button" class="text-link" data-action="cv-risk">Ver evaluación y fuentes →</button></section>
     <div class="calc-stack">${renalResultCard()}${fib4ResultCard()}</div>
-    ${verificationPanel()}
+    
     ${integratedCards()}
     <div class="clinical-lock"><strong>Prescripción automática desactivada</strong>
       <p>Las categorías renales y el FIB-4 son indicadores descriptivos. No confirman diagnósticos ni generan tratamientos, ni descartan enfermedad por sí solos.</p></div>
@@ -924,7 +936,7 @@ function tools() {
       <p>${evaluateCvRisk(draft).externalEstimate?'SCORE2-OP externo documentado: revisar procedencia y contexto.':evaluateCvRisk(draft).percent===null?'Sin porcentaje disponible: revisar elegibilidad, circuito y datos.':'SCORE2: '+escape(evaluateCvRisk(draft).percent.toFixed(1))+' % a 10 años; pendiente de revisión clínica.'}</p>
       <button type="button" class="text-link" data-action="cv-risk">Ver evaluación y fuentes →</button></section>
     <div class="calc-stack">${renalResultCard()}${fib4ResultCard()}</div>
-    ${verificationPanel()}
+    ${integratedPlanPanel()}
     ${integratedCards()}
     ${pharmaLibrary()}
     <div class="followup-link"><button type="button" class="ghost" data-action="followup">Historial y calendario de controles →</button></div>

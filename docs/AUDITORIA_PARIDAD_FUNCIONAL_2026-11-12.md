@@ -167,3 +167,8 @@ El hallazgo histórico `REPORTED_FIB4_NOT_USED` queda resuelto técnicamente por
 ## Actualización del bloque de obesidad · 12/11/2026
 
 Se incorpora salida propia rápida/detallada y resumen para obesidad: objetivos e intervención adaptada, evolución y revisión de tratamiento/derivación. Las seis consultas originales tienen primera salida clínica para revisión. `NO_MODULE_SPECIFIC_RESULT` continúa parcialmente resuelto porque no se ha demostrado paridad clínica completa ni QA real por módulo. [Contrato y auditoría](OBESIDAD_GIRO_CIMA.md).
+
+
+## Plan integral · 12/11/2026
+
+Se implementa una síntesis propia de objetivos y seguimiento, con áreas no evaluadas, prioridades y controles confirmados. La brecha de plan individualizado pasa de ausente a parcial: no equivale a prescripción o plan terapéutico validado ni demuestra paridad clínica con la referencia. [Contrato y auditoría](PLAN_INTEGRAL.md).

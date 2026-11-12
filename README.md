@@ -314,3 +314,12 @@ Se reauditaron los límites de ARM conforme a ESC 2026 y CIMA de finerenona. El 
 - Seguimiento trimestral solo desde plan realmente iniciado y confirmado; sin cita ni derivación supuestamente enviada. La integración evita candidatos de peso contradictorios con los condicionantes nutricionales registrados.
 - **853/853 pruebas locales y sintaxis superadas**; interfaz con DOM simulado. Revisión clínica y QA real móvil pendientes.
 - [Contrato, fuentes y auditoría](docs/OBESIDAD_GIRO_CIMA.md). Las seis consultas ya disponen de una primera salida propia; cobertura clínica completa y MVP pendientes. PR en borrador.
+
+
+## Plan integral de objetivos y seguimiento · 12/11/2026
+
+- Síntesis común de los motores existentes: seguridad, objetivos documentados, datos pendientes y derivaciones propuestas. Riesgo cardiovascular y CKM se conservan como contexto, sin convertirse en objetivos.
+- Controles desde actuaciones confirmadas o historia conciliada; las orientaciones sin fecha no se transforman en citas. Una alerta actual retiene la aplicación rutinaria del plazo anterior, conservando la referencia.
+- Posible coordinación por coincidencia de medición y plazo, sin fusionar indicaciones o cambiar ventanas. Las áreas no evaluadas no se consideran normales.
+- **907/907 pruebas locales y sintaxis superadas**. Interfaz con DOM simulado; revisión clínica independiente y QA real pendientes.
+- [Contrato y auditoría](docs/PLAN_INTEGRAL.md). Matrices actualizadas; MVP y prescripción completa no cerrados. PR en borrador.

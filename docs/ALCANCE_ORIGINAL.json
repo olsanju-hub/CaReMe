@@ -63,7 +63,8 @@
     {
       "id": "evaluacion_integral",
       "status": "partial",
-      "pending": "Síntesis completa de todos los dominios"
+      "pending": "Revisión clínica de cruces y QA real, junto a brechas de cada motor",
+      "evidence": "src/clinical/plan-integral.mjs: síntesis de diez recorridos con prioridades, objetivos y procedencia; áreas no evaluadas explícitas"
     },
     {
       "id": "motor_terapeutico",
@@ -73,7 +74,8 @@
     {
       "id": "seguimiento",
       "status": "partial",
-      "pending": "Objetivos y controles de todos los dominios; exportación no identificativa"
+      "pending": "Validación clínica y QA real; exportación no identificativa pendiente",
+      "evidence": "Controles nativos desde actuaciones confirmadas y referencias históricas conciliadas; orientación sin cita y coordinación sin sustituir plazos"
     },
     {
       "id": "pwa",
@@ -98,11 +100,10 @@
     "full_mvp": false
   },
   "next": [
+    "Auditoría global de coherencia y QA real; revisión clínica independiente",
     "Cálculo interno SCORE2-OP pendiente de parámetros primarios; variantes restantes",
     "Completar dislipemia por producto y escenarios específicos",
     "Completar HTA por producto y derivación",
-    "Integrar objetivos y seguimiento de todos los dominios; cerrar validación",
-    "Plan integral y validación",
     "Publicación versionada"
   ]
 }

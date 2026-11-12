@@ -203,8 +203,8 @@
     },
     {
       "id": "individualized_therapeutic_plan",
-      "status": "missing",
-      "evidence": "src/app.mjs 'Motor terapéutico pendiente de validación'"
+      "status": "partial",
+      "evidence": "src/clinical/plan-integral.mjs: objetivos documentados, prioridades y seguimiento para revisión. No prescriptor ni plan terapéutico validado."
     },
     {
       "id": "clinical_safety_audit",
@@ -260,6 +260,11 @@
       "id": "obesity_directed_result",
       "status": "partial",
       "evidence": "src/clinical/obesidad.mjs y tests/obesidad*.test.mjs; hábitos, objetivos, músculo y valoración bariátrica con seguimiento desde plan confirmado."
+    },
+    {
+      "id": "integrated_goals_followup",
+      "status": "partial",
+      "evidence": "Plan integral con procedencia, seguridad, activación por datos y controles confirmados; tests/plan-integral*.test.mjs."
     }
   ],
   "blockers": [

@@ -197,3 +197,8 @@ La consulta hepática usa FIB-4 informado con procedencia o cálculo fechado y r
 ## Obesidad: recorrido funcional · 12/11/2026
 
 Se completan para revisión las rutas de hábitos, objetivos, riesgo muscular, evolución y valoración bariátrica del bloque de obesidad. Reutiliza barreras CIMA por producto y mantiene seguimiento desde un plan iniciado/confirmado. [Contrato y auditoría](OBESIDAD_GIRO_CIMA.md). Verificación local:853 pruebas y sintaxis superadas; no sustituye validación clínica o QA real. El siguiente trabajo transversal es integrar objetivos/seguimiento entre dominios y completar validación; no se declara MVP cerrado.
+
+
+## Integración de objetivos y seguimiento · 12/11/2026
+
+Se incorpora un plan común que compone los resultados actuales y conserva sus límites. Mantiene separados objetivos, orientaciones y referencias de control desde actuaciones confirmadas; explicita las áreas no evaluadas. [Contrato y auditoría](PLAN_INTEGRAL.md). Verificación local:907 pruebas y sintaxis superadas; DOM simulado. Siguen pendientes validación clínica y QA real, además de brechas por dominio. No se declara MVP cerrado.

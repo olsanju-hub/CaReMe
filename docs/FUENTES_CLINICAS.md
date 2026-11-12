@@ -132,3 +132,8 @@ EASL-EASD-EASO 2024, figura 2 (J Hepatol p.501) y tabla 6 verificadas en el PDF 
 ## Obesidad · revisión12/11/2026
 
 Se verifican GIRO2.0 (abril2025), EASO2024, criterios ASMBS/IFSO2022 y CIMA vigente de Wegovy subcutáneo/Mounjaro. Los marcos clínicos no se intercambian con indicación o acceso quirúrgico local. El algoritmo redGDPS2025 aporta únicamente el intervalo de reevaluación; no se copian sus dosis/financiación. La guía redGDPS2026 se localizó anunciada, sin PDF íntegro verificado: no se le atribuyen reglas nuevas. [Fuentes primarias, reglas y límites](OBESIDAD_GIRO_CIMA.md).
+
+
+## Trazabilidad del plan integral · 12/11/2026
+
+La síntesis reutiliza objetivos y controles de los motores existentes con sus fuentes primarias. No introduce umbrales, plazos o recomendaciones clínicas nuevos ni acredita revalidación independiente del conjunto. [Contrato de composición y auditoría](PLAN_INTEGRAL.md). Las referencias de origen permanecen separadas; riesgo/CKM no se convierten en objetivos terapéuticos.
