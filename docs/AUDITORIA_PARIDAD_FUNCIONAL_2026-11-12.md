@@ -149,3 +149,10 @@ Las barreras globales de glucemia ≥300 mg/dL, hipoglucemias graves y embarazo 
 **Fotografía inicial superada:** se añadió una primera salida funcional en `src/clinical/insuficiencia-cardiaca.mjs` para consulta rápida/detallada, con FEVI, congestión, antecedentes, seguridad, medicamentos actuales y seguimiento. La clasificación utiliza **ESC 2026**, no el fenotipo intermedio histórico 41–49 %. La FEVI numérica no confirma por sí sola un diagnóstico, especialmente en la IC-FEp.
 
 No se considera paridad clínica completa: faltan validación externa de casos, etiología/subtipos, biomarcadores, dosificación individual por producto, seguimiento de alta y revisión visual móvil. [Contrato clínico y auditoría](IC_ESC_2026.md).
+
+
+## 12. Revisión de seguridad de IC (12/11/2026)
+
+El módulo dirigido de IC con fenotipos de **ESC 2026**, congestión y propuestas no prescriptivas se ha auditado tras su primera implementación. Ahora se requiere consignar fechas de FEVI, TFGe y potasio antes de generar candidatos; se controlan hiperpotasemia >5,5 mmol/L y posibles asociaciones RAAS incompatibles de manera transversal. Las propuestas mantienen trazabilidad, pero **no** validan por sí solas adecuación del tratamiento al caso.
+
+[Auditoría de IC](INSUFICIENCIA_CARDIACA_ESC_2026.md). Paridad clínica completa y revisión en móvil pendientes.
