@@ -476,3 +476,28 @@ h2 { letter-spacing:-.025em }
 .verification-followup p { color:#567178; font-size:.81rem; }
 @media(max-width:750px) { .verification-list { grid-template-columns:1fr; } }
 @media(max-width:600px) { .verification-panel { padding:15px 13px; border-radius:15px; } }
+
+/* Orientación rápida DM2: estado clínico diferenciado de acción confirmada. */
+.dm2-result-trigger {margin:16px 0 20px;display:flex;flex-wrap:wrap;align-items:center;gap:12px}
+.dm2-result-trigger p {font-size:.8rem;color:var(--muted);margin:0}
+.dm2-result {border:1px solid var(--line);border-radius:16px;background:#fff;
+ padding:23px;margin:20px 0 25px;box-shadow:0 6px 24px #17334709}
+.dm2-result h2 {font-size:1.35rem;margin:6px 0 12px}
+.dm2-result h3 {font-size:.98rem;margin:22px 0 9px}
+.dm2-result h4 {font-size:.89rem;margin:0 0 5px}
+.dm2-result p,.dm2-result li {font-size:.84rem;line-height:1.55}
+.dm2-result li {margin-bottom:7px}
+.dm2-status {display:inline-flex;padding:6px 11px;border-radius:9px;background:#E9F5F3;
+ font-size:.73rem;color:#176E70}
+.dm2-status.seguridad_prioritaria,.dm2-status.revisar_coherencia {
+ background:#FFF0EA;color:#9E4735}
+.dm2-safety,.dm2-missing {padding:12px 17px;margin:15px 0;border-radius:11px;background:#FFF2ED}
+.dm2-missing {background:#F0F6F6}
+.dm2-safety h3,.dm2-missing h3 {margin-top:3px}
+.dm2-options {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.dm2-options article {padding:14px;border:1px solid #DCE9E9;border-radius:12px;background:#F8FBFA}
+.dm2-options strong {font-size:.75rem}
+.dm2-sources {margin:18px 0;border-top:1px solid var(--line);padding-top:13px}
+.dm2-sources summary {font-weight:700;cursor:pointer}
+.dm2-sources small {font-size:.72rem;color:var(--muted)}
+@media(max-width:680px){.dm2-options{grid-template-columns:1fr}.dm2-result{padding:16px 13px}}
