@@ -124,3 +124,11 @@ Pacientes guardados por nombre, autenticación, integración con IB-Salut, histo
 Se añadieron barreras transversales de seguridad, comprobación documental de fechas y unidades, y un plan de verificación clínica separado de cualquier acción efectuada. El motor de continuidad se retiene ante incoherencias de datos, sin ocultar alertas agudas. No existe un límite universal programado de caducidad de analíticas.
 
 **139 pruebas automatizadas superadas** tras los tres bloques. Sigue pendiente la revisión clínica externa, la validación manual móvil, comprobación regulatoria y homologación del resto de algoritmos. Documento rector de este avance: [Auditorías de tres bloques](AUDITORIAS_3_BLOQUES.md).
+
+## DM2 rápida y seguridad del CAC (12/11/2026)
+
+Se implementó el primer resultado específico de **DM2 rápida** en `src/clinical/dm2-rapida.mjs`: situación, próximos pasos, clases de revisión, seguridad, datos faltantes, reevaluación y fuentes redGDPS/ADA 2026. Se utiliza la HbA1c 8,5% para clasificar intensidad inicial, no como objetivo terapéutico universal ni indicación automática de insulina. La revisión detallada de DM2 y la paridad clínica global de los seis módulos siguen pendientes.
+
+Se corrigió **A3 ≥300 mg/g** y se impide calcular albuminuria categórica o utilizar CAC en decisiones si no se ha confirmado la unidad `mg/g`. Un resultado en mg/mmol requiere transformación revisada fuera del motor vigente.
+
+[Especificación y fuentes del bloque](DM2_RAPIDA_REDGDPS_2026.md). Sin publicación ni validación asistencial.
