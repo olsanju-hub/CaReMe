@@ -138,3 +138,9 @@ Se confirmó visualmente **A2 30–300 mg/g y A3 >300 mg/g** en KDIGO 2024 (tabl
 Se incorpora el motor `src/clinical/dm2-detallada.mjs` y su vista en la consulta dirigida. Interpreta el **objetivo numérico individual**, estado de HbA1c, conciliación, hipoglucemias y seguridad de las clases, manteniendo propuestas como candidatas de revisión. No calcula una pauta personalizada ni garantiza elegibilidad por producto.
 
 Las alarmas declaradas de glucemia ≥300 mg/dL, hipoglucemias graves y embarazo retienen candidatos también en la evaluación global. No existe aprobación para uso asistencial, aunque las pruebas automatizadas pasen. [Fuentes y contrato](DM2_DETALLADA_ADA_REDGDPS_2026.md).
+
+## Insulinización DM2 · inicio, intensificación y simplificación (12/11/2026)
+
+Se incorporó `src/clinical/insulinizacion.mjs` y panel de revisión con tres recorridos. Las situaciones de ayunas controladas con hiperglucemia posprandial evitan una escalada automática de basal. Se priorizan los riesgos de hipoglucemia y se exige motivo/medicación real para orientar desintensificación.
+
+Las referencias ADA/EASD 2026 y ADA 2026 prevalecen en el contrato clínico sobre la referencia redGDPS insulinización 2022 si son incompatibles. Los datos y resultados siguen en memoria, sin prescripción ni calendario de insulinización. [Documentación clínica](INSULINIZACION_ADA_EASD_2026.md).
