@@ -118,3 +118,9 @@ Pacientes guardados por nombre, autenticación, integración con IB-Salut, histo
 - Identidad visual implementada y iconos optimizados.
 - Referencias y estado de validación visibles.
 - Ningún dato identificativo en el repositorio ni en telemetría.
+
+## Estado posterior a tres auditorías (12/11/2026)
+
+Se añadieron barreras transversales de seguridad, comprobación documental de fechas y unidades, y un plan de verificación clínica separado de cualquier acción efectuada. El motor de continuidad se retiene ante incoherencias de datos, sin ocultar alertas agudas. No existe un límite universal programado de caducidad de analíticas.
+
+**139 pruebas automatizadas superadas** tras los tres bloques. Sigue pendiente la revisión clínica externa, la validación manual móvil, comprobación regulatoria y homologación del resto de algoritmos. Documento rector de este avance: [Auditorías de tres bloques](AUDITORIAS_3_BLOQUES.md).
