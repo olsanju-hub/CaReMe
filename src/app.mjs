@@ -374,8 +374,9 @@ function followupPage() {
     <section class="drug-card"><h2>Controles vinculados a actuaciones confirmadas</h2>
       ${events.length ? `<div class="review-list">${events.map(e=>`<div class="review-row">
         <span><strong>${escape(e.drugId)}</strong> · ${escape(e.trigger)}
-          <small class="followup-description">${escape(e.description)}</small></span>
-        <strong>${e.dueOn?escape(e.dueOn):'Sin fecha fija'}</strong></div>`).join('')}</div>`
+          <small class="followup-description">${escape(e.description)}</small>
+          <small class="followup-status">${e.status==='sustituido'?'Sustituido por una actuación posterior':e.status==='previsto'?'Control previsto':'Reevaluación clínica pendiente'}</small></span>
+        <strong class="${e.status==='sustituido'?'followup-superseded':''}">${e.dueOn?escape(e.dueOn):'Sin fecha fija'}</strong></div>`).join('')}</div>`
         : '<p>Aún no hay controles programables: ninguna actuación se ha confirmado.</p>'}
       <p class="drug-disclaimer">Estas fechas se muestran en pantalla, sin notificaciones. La periodicidad puede requerir adelanto o modificación según la situación clínica.</p>
     </section>
