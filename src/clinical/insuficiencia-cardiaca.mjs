@@ -57,7 +57,9 @@ export function evaluateHeartFailure(draft,mode='quick'){
  const ef=classifyHf2026(fevi,evidence);
  const congestion=v(draft,'congestion');
  const stability=v(draft,'ic_estabilidad');
- const flags=many(draft,'ic_alarma');
+ const flagsInvalid=fieldState(draft,'ic_alarma')==='revisar';
+ const flags=many(draft,'ic_alarma')??(flagsInvalid
+   ?readMulti(String(draft.values.ic_alarma||'[]')):null);
  const acute=v(draft,'situacion_aguda'),decomp=v(draft,'ic_descompensada');
  const egfr=n(draft,'tfge'),potassium=n(draft,'potasio');
  const sbp=n(draft,'pas'),heartRate=n(draft,'ic_fc');
@@ -113,6 +115,7 @@ export function evaluateHeartFailure(draft,mode='quick'){
  const activeFlags=flags?.filter(x=>x!=='Sin señales de alarma tras valoración')||[];
  if(noRedFlags&&activeFlags.length)
    alerts.push('Se declararon simultáneamente ausencia y presencia de señales de alarma.');
+ if(flagsInvalid)alerts.push('El campo de señales de alarma contiene una combinación o formato no válido: revisar captura.');
  if(hf==='No'&&(symptomatic==='Sí'||fevi!==null))
    checks.push('IC negada y datos sugestivos aportados: verificar diagnóstico, no inferirlo por FEVI.');
  if(meds?.includes('Sin tratamiento farmacológico')&&meds.length>1)
@@ -138,7 +141,7 @@ export function evaluateHeartFailure(draft,mode='quick'){
  if(decomp==='Sí')alerts.push('Posible descompensación de IC: la ruta de optimización crónica no es adecuada.');
  if(lra==='Sí')alerts.push('Sospecha de lesión renal aguda: revisar volemia, causas y seguridad farmacológica.');
  if(pregnancy==='Sí')alerts.push('Embarazo: no utilizar selección farmacológica habitual de IC sin circuito especializado.');
- const contradiction=alerts.some(x=>
+ const contradiction=flagsInvalid||alerts.some(x=>
    x.includes('discordante')||x.includes('simultáneamente')||
    x.includes('Múltiples vías'))||
    (hf==='No'&&symptomatic==='Sí')||
