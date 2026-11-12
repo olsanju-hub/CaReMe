@@ -36,7 +36,7 @@ export const MODULES = [
     id: 'insulina', title: 'Insulinización', domain: 'metabolico',
     short: 'Inicio, intensificación o simplificación',
     quick: ['insulina_fase','insulina_perfil'],
-    detail: ['insulina_fase','imc','tfge','insulina_fragilidad','insulina_especiales','hba1c','situacion_aguda','farmacos_clases','farmacos','medicacion_revisada','alergias','alergias_revisadas']
+    detail: ['insulina_fase','edad','dm2','dm1','embarazo','insulina_esquema','insulina_dosis_basal','peso','imc','tfge','fecha_tfge','insulina_fragilidad','insulina_especiales','hba1c','fecha_hba1c','dm_objetivo_valor','dm_hba1c_fiable','glucemia_actual','insulina_ayunas','insulina_ayunas_objetivo','insulina_posprandial','insulina_hipo_nocturna','dm_hipoglucemias','insulina_autocuidado','dm_adherencia','dm_dosis_confirmadas','situacion_aguda','cetoacidosis_sospecha','lra_sospecha','farmacos_clases','farmacos','medicacion_revisada','alergias','alergias_revisadas']
   }
 ];
 export const MODULE_BY_ID = Object.fromEntries(MODULES.map(m => [m.id, m]));
@@ -174,6 +174,18 @@ export const EXTRA_FIELDS = [
   { id:'hepatico_valoracion',label:'Evaluación de otras causas',type:'select',
     options:['Esteatosis documentada y otras causas evaluadas','Valoración incompleta o pendiente','Desconocido'] },
   { id:'elastografia',label:'Elastografía hepática',type:'number',min:0,unit:'kPa' },
+  {id:'insulina_esquema',label:'Esquema de insulina realmente administrado',type:'select',
+    options:['Sin insulina','Solo basal','Basal y prandial','Premezclas','Otro esquema','No confirmado']},
+  {id:'insulina_dosis_basal',label:'Dosis basal total actual confirmada',type:'number',min:0,unit:'U/día'},
+  {id:'insulina_ayunas',label:'Glucemia en ayunas habitual',type:'number',min:0,unit:'mg/dL'},
+  {id:'insulina_ayunas_objetivo',label:'Glucemia en ayunas respecto al objetivo individual',type:'select',
+    options:['En objetivo individual','Por encima del objetivo','Por debajo del objetivo','No valorado']},
+  {id:'insulina_posprandial',label:'Patrón posprandial',type:'select',
+    options:['Elevaciones posprandiales repetidas','Sin elevaciones significativas documentadas','No valorado']},
+  {id:'insulina_hipo_nocturna',label:'Hipoglucemias nocturnas',type:'select',
+    options:['Sí','No','No valoradas']},
+  {id:'insulina_autocuidado',label:'Capacidad y apoyo para administrar y vigilar insulina',type:'select',
+    options:['Capacidad y apoyo adecuados confirmados','Requiere educación o apoyo','No valorada']},
   { id:'insulina_fase',label:'Situación de insulinización',type:'select',
     options:['Valorar inicio','En tratamiento basal · valorar intensificación','Valorar desintensificación'] },
   { id:'insulina_perfil',label:'Situación clínica asociada',type:'multi',
