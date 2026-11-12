@@ -146,13 +146,19 @@ function pharmaLink(card) {
   if(card.id==='FIN-HF-LABEL') info={drug:'finerenona',route:'ic_fevi40'};
   else if(card.id.startsWith('NSMRA-')) info={drug:'finerenona',route:'erc_dm2'};
   else if(card.id.startsWith('SGLT2-')) info={drug:'empagliflozina',route:draft.values.ic==='Sí'?'ic':draft.values.erc==='Sí'?'erc':'dm2'};
-  if(['GLP-REVIEW','GLP-EXISTING','WEIGHT-REVIEW','WEIGHT-EXISTING'].includes(card.id))
-    return `<div class="incretin-links">${[
+  if(['GLP-REVIEW','GLP-EXISTING','WEIGHT-REVIEW','WEIGHT-EXISTING'].includes(card.id)) {
+    const candidates=card.id.startsWith('WEIGHT-') ? [
+      ['semaglutida_wegovy_sc','peso','Wegovy inyectable · peso'],
+      ['tirzepatida','peso','Mounjaro · peso']
+    ] : [
       ['semaglutida_ozempic','dm2','Ozempic · DM2'],
       ['semaglutida_wegovy_sc','peso','Wegovy inyectable · peso'],
       ['tirzepatida','dm2','Mounjaro · DM2']
-    ].map(([drug,route,label])=>`<button type="button" class="text-link" data-action="open-drug"
+    ];
+    return `<div class="incretin-links">${candidates.map(([drug,route,label])=>`<button
+      type="button" class="text-link" data-action="open-drug"
       data-drug-id="${drug}" data-route-id="${route}">Consultar CIMA: ${label} →</button>`).join('')}</div>`;
+  }
   if(!info) return '';
   return `<button type="button" class="text-link" data-action="open-drug"
     data-drug-id="${info.drug}" data-route-id="${info.route}">Consultar ficha CIMA específica →</button>`;
