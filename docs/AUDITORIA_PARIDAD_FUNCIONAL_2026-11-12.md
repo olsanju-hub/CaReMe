@@ -121,3 +121,11 @@ El archivo `manifest.webmanifest` aún describe un prototipo «sin cálculos», 
 **La paridad de cobertura de datos y navegación está avanzada. La paridad de conducta clínica y resultados permanece incompleta.** Los 139 tests anteriores verificaban funciones del prototipo y seguridad de reglas implementadas, **no** demostraban igualdad funcional con GlucoGuía.
 
 No fusionar el PR #4 ni etiquetar CaHReMe como lista para uso asistencial. Mantener trazabilidad de cada regla con su evidencia y no trasladar material ajeno sin permisos.
+
+## 9. Actualización posterior a la auditoría inicial (12/11/2026)
+
+**El informe precedente conserva los hallazgos del estado de partida.** Se han aplicado ya los siguientes cambios en la misma rama: (1) el CAC no puede categorizarse ni servir para proponer tratamientos con unidad no declarada o diferente de mg/g; (2) corrección de **A3 a ≥300 mg/g** conforme a KDIGO; (3) se añadió la salida propia de **DM2 rápida** con estado glucémico, comorbilidades coexistentes, tratamiento actual, seguridad, reevaluación y fuentes verificadas redGDPS/ADA 2026; (4) se actualizó el manifiesto PWA para reconocer los cálculos y la nueva orientación.
+
+**Paridad actualizada:** 6/6 módulos conservan captura, **DM2 rápida tiene ahora una primera salida clínica no prescriptiva**, pero **0/6 módulos acreditan todavía la paridad clínica completa rápida+detallada**. Quedan pendientes el detalle DM2, los otros recorridos completos y la revisión de navegador real.
+
+Véase [DM2 rápida y corrección del CAC](DM2_RAPIDA_REDGDPS_2026.md) y el [inventario actualizado](COBERTURA_FUNCIONAL_GLUCOGUIA.json).
