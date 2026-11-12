@@ -129,6 +129,6 @@ Se añadieron barreras transversales de seguridad, comprobación documental de f
 
 Se implementó el primer resultado específico de **DM2 rápida** en `src/clinical/dm2-rapida.mjs`: situación, próximos pasos, clases de revisión, seguridad, datos faltantes, reevaluación y fuentes redGDPS/ADA 2026. Se utiliza la HbA1c 8,5% para clasificar intensidad inicial, no como objetivo terapéutico universal ni indicación automática de insulina. La revisión detallada de DM2 y la paridad clínica global de los seis módulos siguen pendientes.
 
-Se corrigió **A3 ≥300 mg/g** y se impide calcular albuminuria categórica o utilizar CAC en decisiones si no se ha confirmado la unidad `mg/g`. Un resultado en mg/mmol requiere transformación revisada fuera del motor vigente.
+Se confirmó visualmente **A2 30–300 mg/g y A3 >300 mg/g** en KDIGO 2024 (tabla 3, S137), conservando 300 en A2; y se impide calcular albuminuria categórica o utilizar CAC en decisiones si no se ha confirmado la unidad `mg/g`. Un resultado en mg/mmol requiere transformación revisada fuera del motor vigente.
 
 [Especificación y fuentes del bloque](DM2_RAPIDA_REDGDPS_2026.md). Sin publicación ni validación asistencial.
