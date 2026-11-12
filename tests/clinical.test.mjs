@@ -26,7 +26,7 @@ test('KDIGO G: límites exactos y valores contiguos',()=>{
   for(const value of [0,-1,Infinity,NaN,null,'45']) assert.equal(gfrCategory(value),null);
 });
 test('KDIGO A: límites exactos 30 y 300 mg/g',()=>{
-  const cases=[[0,'A1'],[29.99,'A1'],[30,'A2'],[299.99,'A2'],[300,'A3'],[300.01,'A3']];
+  const cases=[[0,'A1'],[29.99,'A1'],[30,'A2'],[299.99,'A2'],[300,'A2'],[300.01,'A3']];
   for(const [value,expected] of cases) assert.equal(albuminuriaCategory(value),expected,String(value));
   for(const value of [-1,Infinity,NaN,null,'30']) assert.equal(albuminuriaCategory(value),null);
 });
