@@ -33,4 +33,13 @@ test('biblioteca ofrece cinco productos y mantiene diferenciadas las vías de in
  click('followup');
  assert.match(app.innerHTML,/no tiene un calendario/);
  assert.doesNotMatch(app.innerHTML,/Registrar actuación confirmada/);
+ click('start-module',{module:'obesidad'});
+ click('module-mode',{mode:'detail'});
+ handlers.input({target:{closest:()=>({dataset:{field:'imc'},value:'31',type:'number'})}});
+ handlers.input({target:{closest:()=>({dataset:{field:'dm2'},value:'No',type:'select-one'})}});
+ click('summary');
+ assert.match(app.innerHTML,/Revisar tratamiento farmacológico del peso/);
+ assert.match(app.innerHTML,/data-drug-id="tirzepatida" data-route-id="peso"/);
+ assert.match(app.innerHTML,/data-drug-id="semaglutida_wegovy_sc" data-route-id="peso"/);
+ assert.doesNotMatch(app.innerHTML,/data-drug-id="semaglutida_ozempic"/);
 });
