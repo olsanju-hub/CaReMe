@@ -98,12 +98,16 @@ export function evaluateDm2Quick(draft){
   const mismatch=safety.some(text=>text.includes('no coincide')||text.includes('La rama indica'));
   const blocked=!!audit.requiresResolution || mismatch || reason==='No' || dm1==='Sí';
   const acutePriority=severeRisk||urgentSymptoms||severeGlycemia||unstable;
-  const status=blocked?'revisar_coherencia'
+  const status=severeRisk?'seguridad_prioritaria'
+    :blocked?'revisar_coherencia'
     :acutePriority?'seguridad_prioritaria'
     :missing.length?'datos_insuficientes':'revision_pendiente';
   let situation='Faltan datos para situar la rama DM2 rápida.';
   const nextSteps=[];
-  if(blocked){
+  if(severeRisk){
+    situation='Sospecha de crisis metabólica aguda: prioridad clínica inmediata.';
+    nextSteps.push('Evaluación urgente de gravedad, glucemia, cetonemia y equilibrio ácido-base; no seguir el algoritmo de intensificación crónica.');
+  } else if(blocked){
     situation='Incoherencias clínicas: no presentar opciones de inicio.';
     nextSteps.push('Conciliar diagnóstico, síntomas, mediciones y campos contradictorios antes de aplicar el algoritmo.');
     safety.push(...audit.critical.map(x=>x.title));
