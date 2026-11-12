@@ -152,7 +152,7 @@ test('muestra ratio basal por peso como medición descriptiva, sin diagnosticar 
  });
  assert.equal(x.glycemicPattern.basalPerKg,0.5);
  assert.ok(x.checks.some(s=>s.includes('cálculo descriptivo')));
- assert.ok(x.checks.some(s=>s.includes('no aplicar un umbral numérico aislado')));
+ assert.ok(x.checks.some(s=>/no aplicar un umbral numérico aislado/i.test(s)));
 });
 test('desintensificación: simplificar esquema complejo con motivo y datos confirmados',()=>{
  const x=run({
