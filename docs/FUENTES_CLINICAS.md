@@ -93,3 +93,7 @@ Las discrepancias y controles de procedencia son reglas técnicas internas, no r
 ## Revisión de frontera y unidades · 12/11/2026
 
 Se verificó visualmente la tabla 3 KDIGO 2024, página S137: **A2 comprende 30–300 mg/g y A3 corresponde a >300 mg/g**. Por tanto, **300 mg/g debe quedar en A2**, tal como estaba en la versión original. Se corrigió únicamente la aceptación previa de CAC sin unidad explícita. La cifra sin unidad se considera no interpretable para estratificación o decisión farmacológica. [Contrato técnico y reglas DM2](DM2_RAPIDA_REDGDPS_2026.md). Este control no establece diagnóstico de ERC.
+
+## Insulinización DM2 (12/11/2026)
+
+La nueva ruta se fundamenta en consenso ADA/EASD 2026, ADA 2026 secciones 6, 9 y 13, redGDPS de insulinización 2022 como referencia contextual española y ficha CIMA individual de insulina glargina U100 como ejemplo de producto. Las pautas de referencia no se convierten en dosis individualizadas. [Especificación y enlaces oficiales](INSULINIZACION_ADA_EASD_2026.md).
