@@ -7,6 +7,7 @@ import { reviewFinerenoneContinuation, reviewEmpagliflozinContinuation, confirme
 import { buildVerificationPlan } from './clinical/plan.mjs';
 import { evaluateDm2Quick } from './clinical/dm2-rapida.mjs';
 import { evaluateDm2Detail } from './clinical/dm2-detallada.mjs';
+import { evaluateInsulinization } from './clinical/insulinizacion.mjs';
 
 let draft = createDraft();
 let confirmedHistory = [];
@@ -318,6 +319,47 @@ function dm2DetailedResult() {
     <p class="privacy-note">No se ha prescrito ni modificado ningún medicamento. La selección individual y revisión clínica externa siguen pendientes.</p>
   </section>`;
 }
+function insulinResult(mode) {
+  const result=evaluateInsulinization(draft,mode);
+  const stateLabels={
+    revision_pendiente:'Orientación para revisión',
+    datos_insuficientes:'Información pendiente',
+    seguridad_prioritaria:'Prioridad clínica de seguridad',
+    revisar_coherencia:'Conciliar información contradictoria'
+  };
+  const li=items=>items.length
+    ?`<ul>${items.map(v=>`<li>${escape(v)}</li>`).join('')}</ul>`
+    :'<p>No se han registrado elementos en esta sección.</p>';
+  const r=result.glycemicPattern;
+  return `<section id="insulin-result" class="dm2-result insulin-result" aria-live="polite">
+    <div class="eyebrow">INSULINIZACIÓN DM2 · ADA/EASD 2026 · REVISIÓN NO PRESCRIPTIVA</div>
+    <h2>${escape(result.phase||'Seleccionar el circuito de insulinización')}</h2>
+    <strong class="dm2-status ${escape(result.state)}">${escape(stateLabels[result.state]||'Revisión')}</strong>
+    <p>${escape(result.summary)}</p>
+    ${mode==='detail'?`<div class="dm2-detail-metrics">
+      <div><small>Ayunas respecto al objetivo</small><strong>${escape(r.fastingStatus||'No valorado')}</strong></div>
+      <div><small>Patrón posprandial</small><strong>${escape(r.postmeal||'No valorado')}</strong></div>
+      <div><small>Insulina basal actual</small><strong>${r.basalUnits===null?'No registrada':escape(r.basalUnits)+' U/día'}</strong></div>
+    </div>`:''}
+    ${result.alerts.length?`<div class="dm2-safety"><h3>Alertas de seguridad</h3>${li(result.alerts)}</div>`:''}
+    ${result.missing.length?`<div class="dm2-missing"><h3>Información necesaria</h3>${li(result.missing)}</div>`:''}
+    <h3>Próximas comprobaciones</h3>${li(result.nextSteps)}
+    <h3>Alternativas para valoración profesional</h3>
+    ${result.options.length?`<div class="dm2-options">${result.options.map(o=>
+      `<article><h4>${escape(o.title)}</h4><p>${escape(o.rationale)}</p>
+       <strong>Antes de decidir</strong>${li(o.checks)}</article>`).join('')}</div>`
+      :'<p>No se propone iniciar, ajustar ni retirar insulina con los datos disponibles.</p>'}
+    <h3>Seguridad y educación terapéutica</h3>${li(result.checks)}
+    <h3>Seguimiento</h3><p>${escape(result.followUp)}</p>
+    <details class="dm2-sources"><summary>Guías y ficha técnica</summary><ul>
+      ${Object.values(result.sources).map(x=>`<li>
+        <a href="${escape(x.url)}" target="_blank" rel="noopener noreferrer">${escape(x.name)}</a>
+        <small> · ${escape(x.detail)}</small></li>`).join('')}
+    </ul></details>
+    <p class="privacy-note">Las referencias de dosis de las guías no son dosis individualizadas.
+    La aplicación no registra una prescripción, modificación ni administración de insulina.</p>
+  </section>`;
+}
 function consultationReview(module) {
   const fields = [...new Set([...module.quick,...module.detail])];
   const missing = fields.filter(id => fieldState(draft,id) === 'sin_registrar');
@@ -336,8 +378,11 @@ function consultationReview(module) {
     }).join('')}</div>
     ${calculatorsForModule(module.id)}
     ${module.id==='dm2'?dm2RapidResult()+dm2DetailedResult():''}
+    ${module.id==='insulina'?insulinResult('quick')+insulinResult('detail'):''}
     ${integratedCards(({dm2:'DM2',ic:'IC',erc:'Renal',obesidad:'Metabólico',hepatico:'Hepático',insulina:'DM2'})[module.id])}
-    ${module.id==='dm2'
+    ${module.id==='insulina'
+      ? '<p class="clinical-lock">Insulinización: tres rutas de orientación y seguridad implementadas. La revisión clínica externa, dosis por producto y validación funcional permanecen pendientes.</p>'
+      :module.id==='dm2'
       ? '<p class="clinical-lock">DM2: orientación rápida y primera interpretación detallada implementadas. La validación clínica formal y selección por principio activo siguen pendientes.</p>'
       : `<div class="clinical-lock"><strong>Motor terapéutico pendiente de validación</strong>
       <p>${missing.length} datos sin registrar y ${invalid.length} entradas por revisar.
@@ -372,6 +417,10 @@ function moduleView() {
         <button type="button" class="primary" data-action="module-mode" data-mode="review">Ver resumen de datos →</button>
       </div>
     </section>`}
+    ${m.id==='insulina' && (mode==='quick'||mode==='detail')?`<div class="dm2-result-trigger">
+      <button class="primary" type="button" data-action="insulin-result">Ver orientación de insulinización →</button>
+      <p>Inicio, intensificación o desintensificación. No prescribe ni modifica dosis.</p>
+    </div>${current.insulinVisible?insulinResult(mode):''}`:''}
     ${m.id==='dm2' && mode==='detail'?`<div class="dm2-result-trigger">
       <button class="primary" type="button" data-action="dm2-detailed-result">Ver orientación clínica detallada →</button>
       <p>Comparación con objetivo individual, conciliación y seguridad antes de valorar alternativas.</p>
@@ -674,6 +723,11 @@ app.addEventListener('input', event => {
     // Refrescar tras seleccionar «ninguna» para garantizar exclusividad.
     if (selected.length !== checked.length) return render();
   } else draft=setValue(draft,id,el.value);
+  if(current.insulinVisible){
+    current.insulinVisible=false;
+    const previous=document.getElementById('insulin-result');
+    if(previous&&typeof previous.remove==='function')previous.remove();
+  }
   if(current.dm2ResultVisible||current.dm2DetailedVisible){
     current.dm2ResultVisible=false;current.dm2DetailedVisible=false;
     for(const id of ['dm2-rapid-result','dm2-detailed-result']){
@@ -691,6 +745,11 @@ app.addEventListener('click', event => {
   const btn = event.target.closest('button[data-action]');
   if (!btn) return;
   const action = btn.dataset.action;
+  if (action === 'insulin-result') {
+    if(current.page!=='module'||current.module!=='insulina'||
+      !['quick','detail'].includes(current.mode))return;
+    current.insulinVisible=true;return render();
+  }
   if (action === 'dm2-detailed-result') {
     if(current.page!=='module'||current.module!=='dm2'||current.mode!=='detail')return;
     current.dm2DetailedVisible=true;return render();
@@ -737,7 +796,7 @@ app.addEventListener('click', event => {
   }
   if (action === 'start-module') {
     if (!MODULE_BY_ID[btn.dataset.module]) return;
-    current.module=btn.dataset.module; current.mode='quick'; current.dm2ResultVisible=false; current.dm2DetailedVisible=false; return navigate('module');
+    current.module=btn.dataset.module; current.mode='quick'; current.dm2ResultVisible=false; current.dm2DetailedVisible=false; current.insulinVisible=false; return navigate('module');
   }
   if (action === 'module-mode') {
     if (!['quick','detail','review'].includes(btn.dataset.mode)) return;
