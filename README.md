@@ -212,3 +212,13 @@ No inventar umbrales ni dosis. Verificar versiones de las guías, contraindicaci
 - **Bloque 3:** plan operativo **de verificación, no prescripción** `src/clinical/plan.mjs` y auditoría de continuidad/seguimiento. Los controles solo se vinculan a actuaciones realmente confirmadas. **139 pruebas superadas**.
 - Documentación de riesgos encontrados, reglas, comprobaciones posteriores y pendientes: [Auditorías de tres bloques](docs/AUDITORIAS_3_BLOQUES.md).
 - Las pruebas no validan por sí solas uso clínico ni sustituyen revisión de fichas CIMA, casos externos o evaluación de la interfaz en dispositivo real. El PR continúa **en borrador**, sin fusión ni despliegue.
+
+
+## Insuficiencia cardíaca: auditoría ESC 2026 y controles de seguridad (12/11/2026)
+
+- Módulo dirigido con FEVI **<50% / ≥50%** según ESC 2026, revisión de congestión y propuestas de clases terapéuticas **no prescriptivas** en IC conocida y estable.
+- La consulta detallada exige fechas documentadas de FEVI, TFGe, potasio y evaluación antes de ofrecer candidatos; sin fechas no se presupone vigencia.
+- Se coordinan alarmas y bloqueos transversales de **K >5,5 mmol/L**, duplicidad declarada de IECA/ARA-II/ARNI, signos de descompensación y discordancias de FEVI.
+- La congestión lleva a revisión de diurético de asa y volemia, nunca titulación automática. FEVI ≥50 % necesita evidencia objetiva para considerar IC-FEp.
+- Fuentes ESC 2026 y fichas CIMA por producto. [Contrato, evidencia y riesgos residuales](docs/INSUFICIENCIA_CARDIACA_ESC_2026.md).
+- Pruebas: `tests/insuficiencia-cardiaca.test.mjs`, `tests/insuficiencia-cardiaca-seguridad.test.mjs`, `tests/insuficiencia-cardiaca-ui.test.mjs`. Pendientes validación clínica independiente y QA móvil.
