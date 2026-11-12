@@ -157,3 +157,7 @@ No asigna diagnóstico por FEVI aislada, no administra diuréticos y no calcula 
 Se ha auditado y reforzado la primera orientación de `src/clinical/insuficiencia-cardiaca.mjs`. Se diferencia FEVI <50 % y ≥50 % con evidencia objetiva, congestión, estabilidad y terapia fundacional. Se requieren fechas de FEVI/TFGe/K antes de revisar opciones; un registro antiguo o sin fecha no se asume actual. Hiperpotasemia significativa y duplicidad RAAS se integran en las barreras comunes de todos los motores y fichas.
 
 [Fuentes y especificación](INSUFICIENCIA_CARDIACA_ESC_2026.md). No hay prescripciones, ajustes de diuréticos o actuaciones ejecutadas por el prototipo.
+
+## Revisión específica de ARM en IC (12/11/2026)
+
+La consulta IC ya diferencia las condiciones de valoración de un ARM genérico de la **indicación CIMA de finerenona para FEVI ≥40**, con TFGe ≥25, K ≤5,0 y revisión de contraindicaciones. No extrapola las dosis/umbrales de ERC-DM2 ni registra tratamiento administrado. Pruebas de frontera añadidas; detalles en [IC_ESC_2026.md](IC_ESC_2026.md). No existe validación clínica independiente.
