@@ -72,8 +72,8 @@ export function auditCrossDomain(draft) {
     out.push(item('POTASSIUM_CONFLICT','warning','Revisar coherencia del potasio',
       'La ficha indica potasio normal y estable, pero el valor obliga a comprobar el rango de referencia y contexto. El rango utilizado aquí (3,5–5,0 mmol/L) es solo un control de coherencia, no diagnóstico.',
       ['potasio','potasio_normal']));
-  for(const id of ['edad','tfge','cac','potasio','ast','alt','plaquetas','imc','fevi',
-    'fecha_evaluacion','fecha_tfge','fecha_cac','fecha_potasio',
+  for(const id of ['edad','hba1c','dm_objetivo_valor','glucemia_actual','tfge','cac','potasio','ast','alt','plaquetas','imc','fevi',
+    'fecha_evaluacion','fecha_hba1c','fecha_tfge','fecha_cac','fecha_potasio',
     'fecha_ast','fecha_alt','fecha_plaquetas']){
     if(FIELDS[id]&&fieldState(draft,id)==='revisar') {
       const isDate=id.startsWith('fecha_');
