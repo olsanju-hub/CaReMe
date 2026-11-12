@@ -616,8 +616,8 @@ function tools() {
     ${pharmaLibrary()}
     <div class="followup-link"><button type="button" class="ghost" data-action="followup">Historial y calendario de controles →</button></div>
     <div class="tool-grid">
-      <div class="tool-card"><span class="tag">DM2 · versión clínica preliminar</span>
-        <h2>Diabetes tipo 2</h2><p>Consulta rápida con situación, seguridad, alternativas para revisión y fuentes redGDPS/ADA 2026. Sin prescripción; detalle aún pendiente.</p>
+      <div class="tool-card"><span class="tag">DM2 · rápida y detallada preliminares</span>
+        <h2>Diabetes tipo 2</h2><p>Consulta rápida y revisión detallada por objetivo individual, conciliación y seguridad. Fuentes redGDPS/ADA 2026; sin prescripción.</p>
         <button type="button" class="text-link" data-action="start-module" data-module="dm2">Abrir DM2 rápida →</button>
       </div>
       ${['ic','obesidad','insulina'].map(id=>{
@@ -641,6 +641,7 @@ function sources() {
   <a href="https://github.com/olsanju-hub/CaReMe/blob/feat/prototipo-interfaz/docs/INTEGRACION_TERAPEUTICA.md" target="_blank" rel="noopener noreferrer">Matriz de integración terapéutica ↗</a>
   <a href="https://github.com/olsanju-hub/CaReMe/blob/feat/prototipo-interfaz/docs/INCRETINAS_CIMA.md" target="_blank" rel="noopener noreferrer">Ozempic, Wegovy inyectable y Mounjaro · CIMA ↗</a>
   <a href="https://github.com/olsanju-hub/CaReMe/blob/feat/prototipo-interfaz/docs/DM2_RAPIDA_REDGDPS_2026.md" target="_blank" rel="noopener noreferrer">DM2 rápida · redGDPS y ADA 2026 (estado provisional) ↗</a>
+  <a href="https://github.com/olsanju-hub/CaReMe/blob/feat/prototipo-interfaz/docs/DM2_DETALLADA_ADA_REDGDPS_2026.md" target="_blank" rel="noopener noreferrer">DM2 detallada · objetivo, seguridad y fuentes ↗</a>
   <a href="https://redgdps.org/algoritmo-de-tratamiento-de-la-dm2-de-la-redgdps-2026/" target="_blank" rel="noopener noreferrer">Algoritmo redGDPS 2026 · fuente oficial ↗</a>
   <a href="https://github.com/olsanju-hub/CaReMe/blob/feat/prototipo-interfaz/docs/DECISIONES.md" target="_blank" rel="noopener noreferrer">Decisiones de identidad ↗</a>
   </section>
