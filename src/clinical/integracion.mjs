@@ -55,6 +55,16 @@ export const INTEGRATION_SOURCES = Object.freeze({
     id:'CIMA-AEMPS-MOUNJARO',short:'CIMA-AEMPS · Mounjaro',
     section:'FT, apartados 4.1–4.4',
     url:'https://cima.aemps.es/cima/dochtml/ft/1221685002/FT_1221685002.html'
+  },
+  cimaMet: {
+    id:'CIMA-AEMPS-METFORMINA',short:'CIMA-AEMPS · Metformina Tarbis',
+    section:'FT, apartados 4.2–4.5',
+    url:'https://cima.aemps.es/cima/dochtml/ft/76579/FT_76579.html'
+  },
+  cimaDapa: {
+    id:'CIMA-AEMPS-DAPAGLIFLOZINA',short:'CIMA-AEMPS · Forxiga',
+    section:'FT, apartados 4.1–4.5',
+    url:'https://cima.aemps.es/cima/dochtml/ft/112795007/'
   }
 });
 
@@ -171,9 +181,11 @@ export function integratePatient(draft) {
   if(sglt2Indication) {
     const checks=[...security];
     if(egfr===null) checks.push('TFGe reciente obligatoria para comprobar condiciones de uso e inicio.');
+    if(egfr!==null && egfr>=20 && egfr<25)
+      checks.push('TFGe entre 20 y <25: no extrapolar la recomendación de inicio KDIGO de clase a dapagliflozina, cuya ficha CIMA no recomienda iniciar por debajo de 25.');
     if(acute===null || acute==='No valorada') checks.push('Valorar enfermedad aguda grave, cirugía o ayuno prolongado.');
     if(ketones===null || ketones==='No valorada') checks.push('Valorar riesgo o sospecha clínica de cetoacidosis.');
-    const supports=['KDIGO-2024-CKD', ...(dm2?['ADA-2026-9','ADA-2026-11']:[]), ...(hf?['ESC-HF-2026']:[]),'CIMA-AEMPS-EMPAGLIFLOZINA'];
+    const supports=['KDIGO-2024-CKD', ...(dm2?['ADA-2026-9','ADA-2026-11']:[]), ...(hf?['ESC-HF-2026']:[]),'CIMA-AEMPS-EMPAGLIFLOZINA','CIMA-AEMPS-DAPAGLIFLOZINA'];
     if(ketoWarning || unsafeAcute) {
       add(card('SGLT2-ACUTE-SAFETY','alert','Seguridad de iSGLT2 en situación aguda',
         ketoWarning
@@ -205,6 +217,45 @@ export function integratePatient(draft) {
         checks.concat(['Verificar el diagnóstico y situación de IC/ERC, tolerancia y estado de volumen.',
           'Seleccionar molécula, indicación autorizada y dosis únicamente tras revisar CIMA-AEMPS.']),
         supports, ['Renal','Cardiovascular','DM2']));
+    }
+  }
+
+  // Metformina: control de seguridad, sin presentarla como protección cardiorrenal.
+  if(dm2) {
+    const metSources=['CIMA-AEMPS-METFORMINA','ADA-2026-9'];
+    if(classes.has('Metformina')) {
+      const danger= (egfr!==null && egfr<30) ||
+        value(draft,'lra_sospecha')==='Sí' ||
+        value(draft,'ic_descompensada')==='Sí' ||
+        value(draft,'acidosis_metabolica')==='Sí' ||
+        value(draft,'insuficiencia_hepatica')==='Sí';
+      if(danger) {
+        add(card('MET-SAFETY','alert','Metformina actual: revisar contraindicación o interrupción',
+          'Consta metformina y un condicionante renal o agudo relevante de ficha técnica. Valorar seguridad y posibles actuaciones clínicas; no se registra ningún cambio.',
+          ['Revisar TFGe, estabilidad renal, hipoxia, acidosis y tratamiento realmente administrado.',
+           'No atribuir una suspensión sin confirmación.'],
+          metSources,['DM2','Renal','Metabólico']));
+      } else {
+        add(card('MET-CURRENT','context','Metformina registrada',
+          'Revisar tolerancia, TFGe, dosis vigente y medidas de seguridad; la función renal condiciona el máximo de ficha.',
+          ['Comprobar indicaciones temporales de suspensión ante contraste yodado, anestesia o deshidratación.'],
+          metSources,['DM2','Renal']));
+      }
+    } else if(unsafeAcute || ketoWarning) {
+      add(card('MET-ACUTE-DEFER','context','Posponer valoración de metformina durante enfermedad aguda',
+        'Durante un cuadro agudo o sospecha de cetoacidosis se requiere evaluación clínica antes de iniciar tratamiento crónico.',
+        ['Confirmar estabilidad y función renal antes de valorar indicación.'],
+        metSources,['DM2','Metabólico']));
+    } else if(egfr!==null && egfr<30) {
+      add(card('MET-LOW-GFR','alert','Metformina: contraindicada con TFGe <30',
+        'La ficha técnica no permite usar metformina en este rango de filtrado.',
+        ['Comprobar si recibe metformina y valorar situación renal clínica.'],
+        metSources,['DM2','Renal']));
+    } else {
+      add(card('MET-REVIEW','context','Metformina: revisar indicación y límites de ficha',
+        'La metformina es una alternativa de control glucémico en DM2; el máximo de dosis depende de TFGe y otras contraindicaciones.',
+        [...security,'Comprobar acidosis, hipoxia, deshidratación, insuficiencia hepática, contraste o cirugía programada.'],
+        metSources,['DM2','Metabólico']));
     }
   }
 
