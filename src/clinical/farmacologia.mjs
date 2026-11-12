@@ -10,6 +10,7 @@ import { fieldState } from '../model.mjs';
 import { readMulti } from '../consultas.mjs';
 import { INCRETIN_DRUGS, reviewIncretinDrug } from './incretinas.mjs';
 import { BASE_DRUGS, reviewBaseDrug } from './basales.mjs';
+import { auditCrossDomain } from './auditoria.mjs';
 
 const EMPA_URL = 'https://cima.aemps.es/cima/dochtml/ft/114930014';
 const FINE_URL = 'https://cima.aemps.es/cima/dochtml/ft/1211616002/FT_1211616002.html';
@@ -109,7 +110,7 @@ function unique(items) { return [...new Set(items)]; }
  * Revisar una vía de ficha técnica frente al formulario sin prescribir.
  * No devuelve dosis individual, aptitud terapéutica ni orden clínica.
  */
-export function reviewDrug(draft,drugId,routeId) {
+function reviewDrugUnverified(draft,drugId,routeId) {
   const drug=getDrug(drugId), route=getDrugRoute(drugId,routeId);
   if(!drug || !route) throw new Error('Medicamento o indicación no reconocidos');
   if(Object.hasOwn(INCRETIN_DRUGS,drugId)) return reviewIncretinDrug(draft,drugId,routeId);
@@ -221,5 +222,22 @@ export function reviewDrug(draft,drugId,routeId) {
     labelRoute:route.name, patientDose:null, prescription:null,
     monitoring:drug.monitoring.slice(),
     notice:'Solo información de ficha técnica; NO es una prescripción ni confirmación de elegibilidad.'
+  };
+}
+
+/** En todos los productos se aplican alertas transversales antes de mostrar el estado. */
+export function reviewDrug(draft,drugId,routeId) {
+  const result=reviewDrugUnverified(draft,drugId,routeId);
+  const audit=auditCrossDomain(draft);
+  if(!audit.requiresResolution)
+    return { ...result, audit };
+  return {
+    ...result,
+    state:'bloqueo',
+    blocked:[...new Set([...result.blocked,
+      ...audit.critical.map(f=>'Incoherencia transversal: '+f.title+'.')])],
+    audit,
+    patientDose:null,prescription:null,
+    notice:'Revisión retenida por incoherencias críticas. Corregir el formulario antes de cualquier decisión.'
   };
 }
