@@ -68,8 +68,14 @@ export function albuminuriaCategory(number) {
 }
 export function evaluateRenal(draft) {
   const { values = {}, unavailable = [] } = draft || {};
-  const egfr = input(values, unavailable, 'tfge', { positive: true });
-  const acr = input(values, unavailable, 'cac', { nonNegative: true });
+  const assessedOn = values.fecha_evaluacion;
+  const dateAfter = id => typeof assessedOn==='string' && /^\\d{4}-/.test(assessedOn) &&
+    typeof values[id]==='string' && /^\\d{4}-/.test(values[id]) && values[id]>assessedOn;
+  const egfrValue = input(values, unavailable, 'tfge', { positive: true });
+  const acrValue = input(values, unavailable, 'cac', { nonNegative: true });
+  const egfr = dateAfter('fecha_tfge') ? {state:'invalid',value:null} : egfrValue;
+  const acr = (values.unidad_cac && values.unidad_cac!=='mg/g') || dateAfter('fecha_cac')
+    ? {state:'invalid',value:null} : acrValue;
   const chronicity = pickSelect(values, unavailable, 'persistencia', ['Sí','No','No consta']);
   const categories = {
     gfr: egfr.state === 'ok' ? gfrCategory(egfr.value) : null,
@@ -121,10 +127,16 @@ export function evaluateFib4(draft) {
   const acute = pickSelect(values,unavailable,'fib4_agudo',['No','Sí','No valorado']);
   const missing = Object.entries(parts).filter(([,v])=>v.state !== 'ok').map(([k])=>k);
   const invalid = Object.values(parts).some(v=>v.state==='invalid');
-  const computed = !missing.length
+  const dates=['fecha_ast','fecha_alt','fecha_plaquetas'].map(id=>values[id]).filter(Boolean);
+  const dateMismatch=dates.length===3 && new Set(dates).size>1;
+  const assessedOn=values.fecha_evaluacion;
+  const futureDate=assessedOn && dates.some(date=>date>assessedOn);
+  const unmergeableDates=dateMismatch || futureDate;
+  const computed = !missing.length && !unmergeableDates
     ? computeFib4(parts.edad.value,parts.ast.value,parts.alt.value,parts.plaquetas.value)
     : null;
-  let status = invalid || (computed === null && !missing.length) ? 'invalid'
+  let status = unmergeableDates ? 'not_comparable'
+    : invalid || (computed === null && !missing.length) ? 'invalid'
     : computed === null ? 'missing' : 'calculated';
   let interpretation = 'not_evaluable';
   let note = 'Se requiere edad, AST, ALT y plaquetas; no se asigna riesgo con datos incompletos.';
@@ -158,6 +170,8 @@ export function evaluateFib4(draft) {
     }
   } else if (status === 'invalid') {
     note = 'Hay datos no válidos. La fórmula requiere valores positivos de AST, ALT y plaquetas, y edad adulta.';
+  } else if (status === 'not_comparable') {
+    note = 'No se genera FIB-4: las analíticas tienen fechas incompatibles entre sí o con la fecha de evaluación.';
   }
   return {
     source: SOURCES.easl2024.id, status,
