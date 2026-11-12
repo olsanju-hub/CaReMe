@@ -17,8 +17,8 @@ export const MODULES = [
   {
     id: 'erc', title: 'Enfermedad renal crónica', domain: 'renal',
     short: 'Función renal, albuminuria y persistencia',
-    quick: ['tfge','cac','persistencia'],
-    detail: ['tfge','cac','persistencia','lra_sospecha','contraste_yodado','potasio','potasio_normal','ras_optimizado','cyp3a4_fuerte','addison','creatinina','situacion_aguda','cetoacidosis_sospecha','farmacos_clases','farmacos','medicacion_revisada','alergias','alergias_revisadas']
+    quick: ['tfge','cac','unidad_cac','persistencia'],
+    detail: ['tfge','fecha_tfge','cac','unidad_cac','fecha_cac','persistencia','lra_sospecha','contraste_yodado','potasio','fecha_potasio','potasio_normal','ras_optimizado','cyp3a4_fuerte','addison','creatinina','situacion_aguda','cetoacidosis_sospecha','farmacos_clases','farmacos','medicacion_revisada','alergias','alergias_revisadas']
   },
   {
     id: 'obesidad', title: 'Sobrepeso y obesidad', domain: 'metabolico',
@@ -30,7 +30,7 @@ export const MODULES = [
     id: 'hepatico', title: 'Enfermedad hepática metabólica', domain: 'hepatico',
     short: 'Esteatosis y valoración de fibrosis',
     quick: ['edad','fib4_informado','hepatico_valoracion','elastografia'],
-    detail: ['edad','hepatica_grave','esteatosis','hepatico_valoracion','fib4_contexto','fib4_agudo','ast','alt','plaquetas','fib4_informado','elastografia','farmacos_clases','farmacos']
+    detail: ['edad','fecha_ast','fecha_alt','fecha_plaquetas','hepatica_grave','esteatosis','hepatico_valoracion','fib4_contexto','fib4_agudo','ast','alt','plaquetas','fib4_informado','elastografia','farmacos_clases','farmacos']
   },
   {
     id: 'insulina', title: 'Insulinización', domain: 'metabolico',
@@ -41,6 +41,15 @@ export const MODULES = [
 ];
 export const MODULE_BY_ID = Object.fromEntries(MODULES.map(m => [m.id, m]));
 export const EXTRA_FIELDS = [
+  { id:'fecha_evaluacion',label:'Fecha de evaluación clínica',type:'date' },
+  { id:'fecha_tfge',label:'Fecha de TFGe',type:'date' },
+  { id:'fecha_cac',label:'Fecha de cociente albúmina/creatinina',type:'date' },
+  { id:'unidad_cac',label:'Unidad real del CAC consignado',type:'select',
+    options:['mg/g','mg/mmol','No consta'] },
+  { id:'fecha_potasio',label:'Fecha del potasio sérico',type:'date' },
+  { id:'fecha_ast',label:'Fecha de AST',type:'date' },
+  { id:'fecha_alt',label:'Fecha de ALT',type:'date' },
+  { id:'fecha_plaquetas',label:'Fecha de plaquetas',type:'date' },
   { id:'acidosis_metabolica',label:'Acidosis metabólica aguda sospechada o confirmada',type:'select',
     options:['Sí','No','No valorado'] },
   { id:'hipoxia_tisular',label:'Hipoxia tisular o enfermedad cardiorrespiratoria aguda',type:'select',
