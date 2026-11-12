@@ -106,3 +106,9 @@ La guía ESC 2026 (publicada 28/08/2026) reemplaza la clasificación ESC 2021/20
 ## IC ESC 2026 · verificación del 12/11/2026
 
 Se utiliza la [ESC 2026](https://www.escardio.org/guidelines/clinical-practice-guidelines/all-esc-practice-guidelines/heart-failure), publicada 28/08/2026, como guía principal en sustitución del esquema de tres grupos de FEVI de 2021/2023. IC-FEr: **FEVI <50 %**; IC-FEp: **FEVI ≥50 %** con evidencia clínica y cardíaca objetiva. En IC sintomática estable, la guía recomienda iSGLT2 y ARM por fenotipo/indicación; para IC-FEr estable también ARNI/IECA y betabloqueantes, con comprobación de seguridad. Los diuréticos de asa se individualizan por congestión. Los productos se verifican por separado en CIMA. [Contrato completo](INSUFICIENCIA_CARDIACA_ESC_2026.md).
+
+
+
+## CKM 2026 · contrato y estado actual
+
+Se incorpora la clasificación descriptiva CKM desde la tabla 4 AHA/ACC/ADA/ASN 2026, sin extrapolar sus umbrales a diagnóstico español de HTA o tratamientos. [Fuentes, discrepancias y auditoría](CKM_2026.md). Se conserva explícitamente la discrepancia de frontera renal y se distingue SCORE2 de PREVENT-CVD. El módulo no calcula PREVENT ni asigna estadio 0 desde datos ausentes. Pendiente revisión clínica independiente.

@@ -56,8 +56,9 @@
   "cross_cutting": [
     {
       "id": "ckm",
-      "status": "missing",
-      "pending": "Contrato de estadificación con guía vigente; no inferir estadio desde SCORE2"
+      "status": "partial",
+      "pending": "Revisión clínica independiente; discrepancia renal CAC 300; evidencia subclínica automatizada y cálculo PREVENT no implementados",
+      "evidence": "src/clinical/ckm.mjs; estadios 0–4 para revisión, mínimo documentado, 4a/4b y procedencia"
     },
     {
       "id": "evaluacion_integral",
@@ -97,7 +98,7 @@
     "full_mvp": false
   },
   "next": [
-    "Contrato CKM actualizado",
+    "Revisión clínica del contrato CKM y frontera renal",
     "SCORE2-OP/Diabetes/CKD Add-On con casos de referencia",
     "Algoritmo HTA",
     "Algoritmo dislipemia",

@@ -167,3 +167,8 @@ La consulta IC ya diferencia las condiciones de valoración de un ARM genérico 
 ## Recuperación del alcance original y primer SCORE2 · 12/11/2026
 
 La [matriz de alcance original](ALCANCE_ORIGINAL.json) complementa la equivalencia GlucoGuía. Se añade cálculo SCORE2 para elegibles 40–69 años en España, con exclusiones y acceso desde inicio, herramientas y resumen. Los seis módulos originales se mantienen. CKM y algoritmos propios de HTA/dislipemia continúan pendientes; no se declara un MVP completo. [Auditoría](RIESGO_CV_SCORE2.md).
+
+
+## Primera clasificación CKM · 12/11/2026
+
+Se implementa `evaluateCkm` con estado final para revisión o mínimo respaldado por datos cuando la evaluación es incompleta. Acceso compartido desde inicio, herramientas y resumen. [Contrato CKM](CKM_2026.md). El requisito CKM pasa de ausente a parcial en la matriz original; siguen pendientes validación y cierre de las otras áreas.

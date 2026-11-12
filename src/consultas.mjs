@@ -45,6 +45,23 @@ export const MODULES = [
 ];
 export const MODULE_BY_ID = Object.fromEntries(MODULES.map(m => [m.id, m]));
 export const EXTRA_FIELDS = [
+  {id:'ckm_evaluacion_confirmada',label:'Datos de estadificación CKM revisados clínicamente',type:'select',options:['Sí','No','No valorado']},
+  {id:'ckm_cvd',label:'Enfermedad cardiovascular clínica (coronaria, IC, ictus, EAP o FA)',type:'select',options:['Confirmada','No identificada tras revisión','No valorada']},
+  {id:'ckm_subclinica',label:'Aterosclerosis subclínica o pre-IC',type:'select',options:['Confirmada por evaluación clínica/especializada','No identificada en evaluación disponible','No valorada']},
+  {id:'ckm_fecha_cvd',label:'Fecha de documentación cardiovascular CKM',type:'date'},
+  {id:'ckm_fecha_subclinica',label:'Fecha de evidencia subclínica o pre-IC',type:'date'},
+  {id:'ckm_prevent',label:'Equivalente de riesgo externo PREVENT-CVD',type:'select',options:['PREVENT-CVD ≥20 % a 10 años documentado','No identificado tras revisión','No valorado']},
+  {id:'ckm_fecha_prevent',label:'Fecha de cálculo externo PREVENT-CVD',type:'date'},
+  {id:'ckm_version_prevent',label:'Versión del cálculo externo PREVENT',type:'select',options:['Calculadora AHA revisada desde 14/10/2026','Versión no confirmada']},
+  {id:'ckm_ascendencia',label:'Umbral de adiposidad de la guía CKM',type:'select',options:['Umbral general','Ascendencia asiática','No valorado']},
+  {id:'ckm_pa_contexto',label:'Presión arterial usada para CKM',type:'select',options:['Valor habitual validado','Medición aislada / no confirmada']},
+  {id:'ckm_hta_tratada',label:'Tratamiento antihipertensivo por HTA confirmado',type:'select',options:['Sí','No','No valorado']},
+  {id:'ckm_mets',label:'Síndrome metabólico documentado',type:'select',options:['Sí','No','No valorado']},
+  {id:'ckm_reemplazo_renal',label:'Tratamiento renal sustitutivo crónico',type:'select',options:['Sí','No','No consta']},
+  {id:'ckm_lipidos',label:'Perfil lipídico revisado para CKM',type:'select',options:['Sin alteración relevante','Alteración que requiere valoración','No valorado']},
+  {id:'trigliceridos',label:'Triglicéridos',type:'number',min:0,unit:'mg/dL'},
+  {id:'glucemia_ayunas',label:'Glucemia confirmada en ayunas',type:'number',min:0,unit:'mg/dL'},
+  {id:'fecha_glucemia_ayunas',label:'Fecha de glucemia en ayunas',type:'date'},
   {id:'cv_sexo_modelo',label:'Sexo utilizado por la ecuación SCORE2',type:'select',options:['Hombre','Mujer']},
   {id:'cv_region',label:'Calibración regional confirmada',type:'select',options:['España · región ESC de riesgo bajo','Otra región / no confirmada']},
   {id:'cv_hfamiliar',label:'Hipercolesterolemia familiar conocida o sospechada',type:'select',options:['Sí','No','No valorada']},

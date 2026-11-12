@@ -258,3 +258,13 @@ Se reauditaron los límites de ARM conforme a ESC 2026 y CIMA de finerenona. El 
 - Acceso desde inicio, herramientas y resumen; circuito explícito cuando corresponde revisar diabetes, ERC, enfermedad establecida u otra exclusión. No se extrapola a SCORE2-OP o Diabetes.
 - **421 pruebas locales superadas y sintaxis correcta**. QA visual real y revisión clínica independiente pendientes. Sin prescripción ni estadio CKM automático.
 - [Fuentes y auditoría](docs/RIESGO_CV_SCORE2.md). PR en borrador; no fusionar como producto clínicamente validado.
+
+
+## Primera estadificación CKM · 12/11/2026
+
+- Motor original `src/clinical/ckm.mjs`, basado en tabla 4 AHA/ACC/ADA/ASN 2026: estadio para revisión o mínimo documentado con evaluación incompleta; 4a/4b según evidencia renal.
+- Se distingue CKM de SCORE2/PREVENT y CAC urinario de calcio coronario. Sin pruebas avanzadas obligatorias solo para completar pantalla.
+- Datos ausentes, cronicidad, fechas, contexto agudo y evidencia subclínica tienen controles propios. La frontera renal CAC 300 mg/g se señala como discrepancia, sin cambiar G/A silenciosamente.
+- Accesos en inicio, herramientas y resumen; seis consultas previas conservadas. PREVENT no se calcula aquí; solo puede declararse un equivalente externo verificado por el profesional.
+- **492/492 pruebas locales y sintaxis superadas.** UI con DOM simulado; revisión clínica independiente y QA móvil pendientes.
+- [Contrato, fuentes y auditoría](docs/CKM_2026.md). La matriz original marca CKM parcial; no se declara MVP completo. Mantener PR en borrador.

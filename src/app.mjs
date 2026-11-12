@@ -1,3 +1,4 @@
+import {CKM_FIELDS,evaluateCkm} from './clinical/ckm.mjs';
 import {CV_FIELDS,evaluateCvRisk} from './clinical/riesgo-cv.mjs';
 import { SECTIONS, FIELDS, createDraft, setValue, setUnavailable, fieldState, sectionStats, totalStats, sectionForFocus } from './model.mjs';
 import { MODULES, MODULE_BY_ID, moduleFields, readMulti } from './consultas.mjs';
@@ -60,6 +61,8 @@ function home() {
     </div>
     <section class="info-strip"><div><strong>Riesgo cardiovascular</strong><p>SCORE2 para el grupo elegible en España; selección de circuito cuando no procede.</p></div>
       <button type="button" class="primary" data-action="cv-risk">Valorar riesgo cardiovascular →</button></section>
+    <section class="info-strip"><div><strong>Estadificación CKM</strong><p>Contexto cardiovascular, renal y metabólico con evidencia disponible.</p></div>
+      <button type="button" class="primary" data-action="ckm">Valorar estadio CKM →</button></section>
     <div class="module-grid">${MODULES.map(m =>
       `<button type="button" class="module-card" data-action="start-module" data-module="${escape(m.id)}">
       <span class="module-art" aria-hidden="true"><img src="./public/domain-${escape(m.domain)}.svg" alt="" /></span>
@@ -70,6 +73,35 @@ function home() {
       <p>Las seis consultas y la evaluación integral reutilizan la información disponible. Los datos permanecen en memoria y se pierden al recargar.</p></div>
       <button type="button" class="text-link" data-action="sources">Fuentes y limitaciones →</button></section>
   </div>`;
+}
+function ckmResult(){
+ const r=evaluateCkm(draft);
+ const list=xs=>xs.length?`<ul>${xs.map(x=>`<li>${escape(x)}</li>`).join('')}</ul>`:'';
+ const title=r.stage!==null?'Estadio CKM '+(r.substage||r.stage)+' · para revisión'
+  :r.minimumStage!==null?'Evidencia de al menos estadio '+r.minimumStage+' · evaluación incompleta':'Estadio CKM no evaluable';
+ return `<section id="ckm-result" class="dm2-result" aria-live="polite"><h2>${escape(title)}</h2>
+  ${r.alerts.length?`<div class="dm2-safety">${list(r.alerts)}</div>`:''}
+  ${r.evidence.length?`<h3>Evidencia aportada</h3>${list(r.evidence)}`:''}
+  ${r.missing.length?`<h3>Información que falta revisar</h3>${list(r.missing)}`:''}
+  <h3>Interpretación y límites</h3>${list(r.notes)}
+  <p><a href="${escape(r.source.url)}" target="_blank" rel="noopener noreferrer">${escape(r.source.title)}</a> · ${escape(r.source.locator)}</p>
+  <p class="privacy-note">Sin diagnóstico o tratamiento automático. Revisión clínica independiente pendiente.</p></section>`;
+}
+function ckmView(){
+ return `<div class="page"><div class="bread"><button type="button" data-action="home">Inicio</button><span>Estadificación CKM</span></div>
+  <h1>Estadificación CKM</h1>${banner()}
+  <p>Se utilizan los datos disponibles. Una evaluación incompleta no equivale a estadio 0 ni obliga a solicitar pruebas sin indicación.</p>
+  <section class="form-card"><h2>Contexto y evidencia</h2><div class="field-grid">${CKM_FIELDS.map(id=>moduleFieldMarkup(FIELDS[id])).join('')}</div>
+  <button type="button" class="primary" data-action="ckm-result">Ver estadificación CKM →</button></section>
+  ${current.ckmVisible?ckmResult():''}</div>`;
+}
+function ckmSummaryCard(){
+ const r=evaluateCkm(draft);
+ return `<section class="calc-card"><h2>Estadificación CKM</h2><p>${r.stage!==null
+  ?'Estadio '+escape(r.substage||r.stage)+' para revisión clínica.'
+  :r.minimumStage!==null?'Al menos estadio '+escape(r.minimumStage)+' documentado; evaluación incompleta.'
+  :'No evaluable con los datos revisados actualmente.'}</p>
+  <button type="button" class="text-link" data-action="ckm">Revisar estadio, evidencia y límites →</button></section>`;
 }
 function cvRiskView(){
  const r=evaluateCvRisk(draft);
@@ -602,6 +634,7 @@ function summary() {
             ? escape(draft.values[f.id]) + (f.unit ? ' ' + escape(f.unit) : '') : statusLabel(state);
           return `<div><dt>${escape(f.label)}</dt><dd class="${state}">${content}</dd></div>`;
         }).join('')}</dl></section>`).join('')}</div>
+    ${ckmSummaryCard()}
     <section class="calc-card"><h2>Riesgo cardiovascular</h2>
       <p>${evaluateCvRisk(draft).percent===null?'Sin porcentaje disponible: revisar elegibilidad, circuito y datos.':'SCORE2: '+escape(evaluateCvRisk(draft).percent.toFixed(1))+' % a 10 años; pendiente de revisión clínica.'}</p>
       <button type="button" class="text-link" data-action="cv-risk">Ver evaluación y fuentes →</button></section>
@@ -763,6 +796,7 @@ function tools() {
     <p>Estas clasificaciones utilizan los datos ya introducidos en la consulta. No generan diagnósticos ni recomendaciones terapéuticas.</p>
     ${banner()}
     <p class="privacy-note">La fecha y unidad real de cada analítica deben verificarse antes de utilizarla para decidir. Una fecha no consignada no significa que el resultado sea actual.</p>
+    ${ckmSummaryCard()}
     <section class="calc-card"><h2>Riesgo cardiovascular</h2>
       <p>${evaluateCvRisk(draft).percent===null?'Sin porcentaje disponible: revisar elegibilidad, circuito y datos.':'SCORE2: '+escape(evaluateCvRisk(draft).percent.toFixed(1))+' % a 10 años; pendiente de revisión clínica.'}</p>
       <button type="button" class="text-link" data-action="cv-risk">Ver evaluación y fuentes →</button></section>
@@ -819,7 +853,7 @@ function sources() {
   <section class="sources-card"><h2>Privacidad en esta versión</h2><p>Los valores permanecen exclusivamente en memoria durante la sesión abierta: no se usan cookies, almacenamiento local ni servicios remotos. Al recargar se pierden los datos.</p></section></div>`;
 }
 function render() {
-  const contents = current.page === 'home' ? home() : current.page === 'cv-risk' ? cvRiskView() : current.page === 'module' ? moduleView() : current.page === 'evaluation' ? evaluation()
+  const contents = current.page === 'home' ? home() : current.page === 'ckm' ? ckmView() : current.page === 'cv-risk' ? cvRiskView() : current.page === 'module' ? moduleView() : current.page === 'evaluation' ? evaluation()
     : current.page === 'summary' ? summary() : current.page === 'tools' ? tools() : current.page === 'drug' ? drugView() : current.page === 'followup' ? followupPage() : sources();
   app.innerHTML = header() + '<main id="main-content">' + contents + '</main>' + nav() +
     '<footer class="footer">CaHReMe · Identidad Atlántico · Prototipo no validado para uso asistencial</footer>';
@@ -833,7 +867,7 @@ function start(focus) {
 }
 app.addEventListener('input', event => {
   const el = event.target.closest('[data-field]');
-  if (!el || !['evaluation','module','drug','cv-risk'].includes(current.page)) return;
+  if (!el || !['evaluation','module','drug','cv-risk','ckm'].includes(current.page)) return;
   const id=el.dataset.field;
   if (el.type === 'checkbox') {
     const checked=[...document.querySelectorAll('input[data-field="'+id+'"]:checked')].map(e=>e.value);
@@ -845,6 +879,7 @@ app.addEventListener('input', event => {
     // Refrescar tras seleccionar «ninguna» para garantizar exclusividad.
     if (selected.length !== checked.length) return render();
   } else draft=setValue(draft,id,el.value);
+  if(current.ckmVisible){current.ckmVisible=false;document.getElementById('ckm-result')?.remove();}
   if(current.cvVisible){current.cvVisible=false;document.getElementById('cv-result')?.remove();}
   if(current.renalVisible){
     current.renalVisible=false;
@@ -869,7 +904,7 @@ app.addEventListener('input', event => {
   }
   const counter=document.getElementById('section-count');
   if (!counter) return;
-  const fields=current.page==='cv-risk'?CV_FIELDS:current.page==='module'?moduleFields(current.module,current.mode):current.page==='drug'?currentContinuityFields():SECTIONS[current.step].fields.map(f=>f.id);
+  const fields=current.page==='ckm'?CKM_FIELDS:current.page==='cv-risk'?CV_FIELDS:current.page==='module'?moduleFields(current.module,current.mode):current.page==='drug'?currentContinuityFields():SECTIONS[current.step].fields.map(f=>f.id);
   const n=fields.filter(key=>fieldState(draft,key)==='registrado').length;
   counter.textContent=current.page==='module'?n+' de '+fields.length+' registrados':n+' registrados';
 });
@@ -877,6 +912,8 @@ app.addEventListener('click', event => {
   const btn = event.target.closest('button[data-action]');
   if (!btn) return;
   const action = btn.dataset.action;
+  if(action==='ckm'){current.ckmVisible=false;return navigate('ckm');}
+  if(action==='ckm-result'){if(current.page!=='ckm')return;current.ckmVisible=true;return render();}
   if(action==='cv-risk'){current.cvVisible=false;return navigate('cv-risk');}
   if(action==='cv-risk-result'){if(current.page!=='cv-risk')return;current.cvVisible=true;return render();}
   if (action === 'renal-result') {
