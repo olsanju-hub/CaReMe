@@ -28,6 +28,7 @@ export const AUDIT_RULES=Object.freeze({
   SEVERE_HYPOGLYCEMIA_REVIEW:'Hipoglucemias graves o recurrentes: revisar pauta antes de intensificar',
   PREGNANCY_DIABETES_PATHWAY:'Gestación: utilizar circuito específico de diabetes y embarazo',
   HF_RED_FLAGS:'IC: signos de alarma cardiorrespiratorios en el formulario',
+  HF_ALARMS_CONFLICT:'IC: selección simultánea de ausencia y presencia de alarmas',
   HF_DECOMPENSATION:'IC: descompensación o inestabilidad activa',
   HF_EF_CONFLICT:'IC: grupo ESC 2026 discordante con FEVI medida',
   HF_CRITICAL_POTASSIUM:'IC: potasio elevado con posible riesgo inmediato',
