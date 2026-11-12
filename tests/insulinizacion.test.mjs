@@ -221,6 +221,37 @@ test('esquema desconocido, adherencia o autocuidado pendientes impiden candidato
   assert.equal(x.options.length,0);
  }
 });
+test('dosis basal positiva con esquema sin insulina se considera contradicción',()=>{
+ const x=run({insulina_dosis_basal:'20'});
+ assert.equal(x.state,'revisar_coherencia');
+ assert.equal(x.options.length,0);
+ assert.ok(x.contradictions.includes('DOSIS_BASAL_SIN_INSULINA'));
+});
+test('no se ofrecen ajustes sin valorar hipoglucemia nocturna',()=>{
+ const x=run({
+   insulina_fase:INSULIN_PHASES.intensificacion,
+   insulina_esquema:'Solo basal',insulina_dosis_basal:'18',
+   farmacos_clases:['Insulina'],
+   insulina_hipo_nocturna:'No valoradas',
+   insulina_ayunas_objetivo:'Por encima del objetivo',
+   insulina_posprandial:'Sin elevaciones significativas documentadas'
+ });
+ assert.equal(x.state,'datos_insuficientes');
+ assert.equal(x.options.length,0);
+ assert.ok(x.missing.some(s=>s.includes('hipoglucemia nocturna')));
+});
+test('una consulta rápida con DM2 no confirmada explica el circuito sin emitir candidato',()=>{
+ for(const [phase,phrase] of [
+   [INSULIN_PHASES.inicio,'GLP-1'],
+   [INSULIN_PHASES.intensificacion,'posprandiales'],
+   [INSULIN_PHASES.desintensificacion,'simplificación']
+ ]){
+   const x=run({dm2:'',insulina_fase:phase},'quick');
+   assert.equal(x.state,'datos_insuficientes');
+   assert.equal(x.options.length,0);
+   assert.ok(x.nextSteps.some(s=>s.includes(phrase)),phase);
+ }
+});
 test('validar fuente 2026 preferente sobre la referencia redGDPS 2022',()=>{
  const x=run();
  assert.ok(x.sourceIds.includes('ADA-EASD-DM2-2026'));
