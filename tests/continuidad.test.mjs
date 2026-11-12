@@ -113,6 +113,21 @@ test('4 semanas de finerenona solo tras inicio/reinicio/ajuste efectivamente con
   assert.equal(checks[2].dueOn,null);
   assert.equal(checks[0].description,'Control de potasio sérico y TFGe a las 4 semanas');
 });
+test('un ajuste o interrupción confirmado sustituye controles futuros previos',()=>{
+  let h=[];
+  const done=(type,date,dose=10)=>({drugId:'finerenona',routeId:'erc_dm2',
+    type,performedOn:date,doseMg:dose,confirmedByClinician:true});
+  h=confirmedAction(h,done('inicio','2026-11-12'));
+  h=confirmedAction(h,done('ajuste','2026-11-20',20));
+  h=confirmedAction(h,done('interrupcion','2026-11-25',null));
+  const follow=followUpFromHistory(h);
+  assert.equal(follow[0].dueOn,'2026-12-10');
+  assert.equal(follow[0].status,'sustituido');
+  assert.equal(follow[1].dueOn,'2026-12-18');
+  assert.equal(follow[1].status,'sustituido');
+  assert.equal(follow[2].dueOn,null);
+  assert.equal(follow[2].status,'requiere_reevaluacion');
+});
 test('anual de empagliflozina solo tras acción confirmada, manejando 29 de febrero',()=>{
   let h=confirmedAction([],{drugId:'empagliflozina',routeId:'erc',type:'inicio',performedOn:'2028-02-29',doseMg:10,confirmedByClinician:true});
   const x=followUpFromHistory(h);
