@@ -45,6 +45,16 @@ export const INTEGRATION_SOURCES = Object.freeze({
     id:'CIMA-AEMPS-FINERENONA',short:'CIMA-AEMPS · Finerenona',
     section:'Ficha técnica Kerendia, apartados 4.2–4.5',
     url:'https://cima.aemps.es/cima/dochtml/ft/1211616002/FT_1211616002.html'
+  },
+  cimaWegovy: {
+    id:'CIMA-AEMPS-WEGOVY-SC',short:'CIMA-AEMPS · Wegovy inyectable',
+    section:'FT, apartados 4.1–4.4',
+    url:'https://cima.aemps.es/cima/dochtml/ft/1211608006/FT_1211608006.html'
+  },
+  cimaMounjaro: {
+    id:'CIMA-AEMPS-MOUNJARO',short:'CIMA-AEMPS · Mounjaro',
+    section:'FT, apartados 4.1–4.4',
+    url:'https://cima.aemps.es/cima/dochtml/ft/1221685002/FT_1221685002.html'
   }
 });
 
@@ -81,7 +91,11 @@ export function integratePatient(draft) {
   const cvd=value(draft,'ecv')==='Sí';
   const steatosis=value(draft,'esteatosis')==='Sí';
   const liverKnown=value(draft,'hepatopatia')==='Sí';
-  const obesity=(number(draft,'imc') ?? -1) >= 30;
+  const bmi=number(draft,'imc');
+  const obesity=(bmi ?? -1) >= 30;
+  const overweightComorbid=(bmi!==null && bmi>=27 && bmi<30 &&
+    value(draft,'comorbilidad_peso_confirmada')==='Sí');
+  const weightEligible=obesity || overweightComorbid;
   const renal=evaluateRenal(draft);
   const hepatic=evaluateFib4(draft);
   const egfr=number(draft,'tfge');
@@ -109,6 +123,7 @@ export function integratePatient(draft) {
   if(cvd) riskDomains.push('ECV');
   if(steatosis || liverKnown) riskDomains.push('Afectación hepática declarada');
   if(obesity) riskDomains.push('Obesidad por IMC aportado');
+  else if(overweightComorbid) riskDomains.push('Sobrepeso con comorbilidad declarada');
 
   if (hf && (classes.has('Pioglitazona') || classes.has('Saxagliptina'))) {
     add(card('HF-MED-REVIEW','alert','Revisar tratamientos en insuficiencia cardíaca',
@@ -219,7 +234,33 @@ export function integratePatient(draft) {
         ['DM2','Cardiovascular','Renal','Hepático']));
     }
   }
-  if((steatosis || liverKnown) && !glpContexts) {
+  // Control del peso sin DM2: indicación por IMC y comorbilidad en fichas
+  // de Wegovy subcutáneo y Mounjaro. No es una indicación hepática directa.
+  if(weightEligible && !dm2) {
+    const weightSources=['CIMA-AEMPS-WEGOVY-SC','CIMA-AEMPS-MOUNJARO'];
+    if(classes.has('arGLP-1') || classes.has('Agonista dual GIP/GLP-1')) {
+      add(card('WEIGHT-EXISTING','context','Terapia incretínica ya registrada para revisión',
+        'No se propone iniciar un segundo medicamento. Identificar molécula, indicación, tolerancia y objetivos antes de cambios.',
+        [...security,'Confirmar principio activo, formulación y última dosis.'],
+        weightSources,['Metabólico']));
+    } else if(unsafeAcute || ketoWarning) {
+      add(card('WEIGHT-ACUTE-DEFER','context','Posponer valoración farmacológica de peso durante proceso agudo',
+        'Priorizar la situación clínica aguda antes de valorar intensificación de tratamiento crónico del peso.',
+        ['Confirmar estabilidad y descartar deshidratación o complicación aguda.'],
+        weightSources,['Metabólico']));
+    } else {
+      const checks=[...security,
+        'Confirmar IMC actual y comorbilidad asociada al peso si IMC está entre 27 y <30.',
+        'Verificar embarazo o planificación gestacional, pancreatitis, tolerancia digestiva y tratamiento incretínico previo.',
+        'Diferenciar Wegovy inyectable, Wegovy oral y Ozempic: no comparten posología.',
+        'Comprobar indicación, financiación por presentación y principio activo en CIMA/BIFIMED.'];
+      if(egfr===null) checks.push('TFGe actual: Wegovy inyectable no recomendado con TFGe <30.');
+      add(card('WEIGHT-REVIEW','option','Revisar tratamiento farmacológico del peso',
+        'El IMC declarado cumple un umbral de la indicación adulta de Wegovy inyectable y Mounjaro. Esto no determina elegibilidad individual, financiación ni tratamiento dirigido a MASLD.',
+        checks,weightSources,['Metabólico']));
+    }
+  }
+  if((steatosis || liverKnown) && !glpContexts && !weightEligible) {
     add(card('LIVER-NOT-INDICATION','context','La afectación hepática aislada no indica fármacos incretínicos',
       'Evaluar factores cardiometabólicos y fibrosis cuando corresponda. No iniciar fármacos para MASH por la mera sospecha de MASLD.',
       ['Verificar diagnóstico, estadio y criterios de derivación si hay riesgo de fibrosis.'],
