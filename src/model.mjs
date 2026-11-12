@@ -4,6 +4,7 @@ import { EXTRA_BY_ID, readMulti } from './consultas.mjs';
 export const SECTIONS = [
   { id: 'contexto', title: 'Contexto clínico', short: 'Contexto', intro: 'Antecedentes que ayudan a contextualizar la evaluación.', fields: [
     { id: 'edad', label: 'Edad', unit: 'años', type: 'number', integer: true, min: 18, max: 120 },
+    EXTRA_BY_ID.fecha_evaluacion,
     { id: 'tabaco', label: 'Tabaquismo', type: 'select', options: ['Nunca', 'Actual', 'Exfumador'] },
     { id: 'ecv', label: 'Enfermedad cardiovascular establecida', type: 'select', options: ['Sí', 'No'] },
     { id: 'ic', label: 'Insuficiencia cardíaca conocida', type: 'select', options: ['Sí', 'No'] },
@@ -26,11 +27,15 @@ export const SECTIONS = [
   { id: 'renal', title: 'Renal', short: 'Renal', intro: 'Datos de función renal, albuminuria y persistencia conocida.', fields: [
     { id: 'creatinina', label: 'Creatinina sérica', unit: 'mg/dL', type: 'number' },
     { id: 'tfge', label: 'TFGe informada por laboratorio', unit: 'mL/min/1,73 m²', type: 'number' },
+    EXTRA_BY_ID.fecha_tfge,
     { id: 'cac', label: 'Cociente albúmina/creatinina en orina', unit: 'mg/g', type: 'number' },
+    EXTRA_BY_ID.unidad_cac,
+    EXTRA_BY_ID.fecha_cac,
     { id: 'persistencia', label: 'Alteración persistente documentada', type: 'select', options: ['Sí', 'No', 'No consta'] },
     EXTRA_BY_ID.potasio_normal,
     EXTRA_BY_ID.ras_optimizado,
     EXTRA_BY_ID.potasio,
+    EXTRA_BY_ID.fecha_potasio,
     EXTRA_BY_ID.cyp3a4_fuerte,
     EXTRA_BY_ID.addison,
     EXTRA_BY_ID.lra_sospecha,
@@ -38,8 +43,11 @@ export const SECTIONS = [
   ]},
   { id: 'hepatico', title: 'Hepático', short: 'Hepático', intro: 'Pruebas disponibles para una futura estratificación validada.', fields: [
     { id: 'ast', label: 'AST', unit: 'U/L', type: 'number' },
+    EXTRA_BY_ID.fecha_ast,
     { id: 'alt', label: 'ALT', unit: 'U/L', type: 'number' },
+    EXTRA_BY_ID.fecha_alt,
     { id: 'plaquetas', label: 'Plaquetas', unit: '10⁹/L', type: 'number' },
+    EXTRA_BY_ID.fecha_plaquetas,
     EXTRA_BY_ID.fib4_contexto,
     EXTRA_BY_ID.fib4_agudo,
     EXTRA_BY_ID.hepatica_grave,
@@ -98,6 +106,13 @@ export function fieldState(draft, id) {
     const n = Number(v);
     if (!Number.isFinite(n) || n < 0 || (f.integer && !Number.isInteger(n)) ||
       (f.min !== undefined && n < f.min) || (f.max !== undefined && n > f.max)) return 'revisar';
+  }
+  if (f.type === 'date') {
+    if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(v)) return 'revisar';
+    const [year,month,day] = v.split('-').map(Number);
+    const dt = new Date(Date.UTC(year,month-1,day));
+    if (dt.getUTCFullYear()!==year || dt.getUTCMonth()+1!==month ||
+        dt.getUTCDate()!==day) return 'revisar';
   }
   if (f.type === 'select' && !f.options.includes(v)) return 'revisar';
   if (f.type === 'multi') {
