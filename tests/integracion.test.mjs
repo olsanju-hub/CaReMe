@@ -161,6 +161,28 @@ test('finerenona en IC FEVI ≥40 se distingue de ERC-DM2',()=>{
   const y=integratePatient(draft({...baseline,fevi:'39.9',dm2:'No',erc:'No'}));
   assert.ok(!has(y.context,'FIN-HF-LABEL'));
 });
+test('metformina en DM2 con TFGe <30 no aparece como candidato seguro',()=>{
+ const x=integratePatient(draft({dm2:'Sí',tfge:'29.9',farmacos_clases:['Metformina']}));
+ assert.ok(has(x.alerts,'MET-SAFETY'));
+ assert.ok(!has(x.context,'MET-REVIEW'));
+ const y=integratePatient(draft({dm2:'Sí',tfge:'29.9',farmacos_clases:['Sin tratamiento farmacológico']}));
+ assert.ok(has(y.alerts,'MET-LOW-GFR'));
+});
+test('metformina: revisión contextual si DM2 y TFGe sin contraindicación renal',()=>{
+ const x=integratePatient(draft({dm2:'Sí',tfge:'60',farmacos_clases:['Sin tratamiento farmacológico']}));
+ assert.ok(has(x.context,'MET-REVIEW'));
+ assert.ok(!has(x.alerts,'MET-LOW-GFR'));
+ const y=integratePatient(draft({dm2:'Sí',situacion_aguda:'Enfermedad aguda grave'}));
+ assert.ok(has(y.context,'MET-ACUTE-DEFER'));
+ assert.ok(!has(y.context,'MET-REVIEW'));
+});
+test('para iSGLT2 con TFGe 20–<25 queda advertencia individual de dapagliflozina',()=>{
+ const x=integratePatient(draft({...baseline,tfge:'22'}));
+ const card=x.options.find(z=>z.id==='SGLT2-REVIEW');
+ assert.ok(card);
+ assert.ok(card.checks.some(t=>t.includes('dapagliflozina')));
+ assert.ok(card.sources.includes('CIMA-AEMPS-DAPAGLIFLOZINA'));
+});
 test('todas las tarjetas conservan fuentes registradas y estructura',()=>{
   const x=integratePatient(draft(baseline));
   const ids=new Set(Object.values(INTEGRATION_SOURCES).map(s=>s.id));
