@@ -13,6 +13,18 @@ PWA independiente de apoyo a la decisión clínica en Atención Primaria en Espa
 
 CaHReMe cubre ya la **navegación y captura de datos** de seis consultas inspiradas en GlucoGuía y debe completar su **lógica clínica validada** (DM2, IC, ERC, sobrepeso/obesidad, enfermedad hepática metabólica e insulinización), **con consulta rápida, detalle y resultados equivalentes en funcionalidad**, ampliadas con evaluación integral, datos compartidos, recomendaciones clínicas trazables y seguimiento. **Los algoritmos específicos de decisión terapéutica y seguimiento siguen pendientes.** Véase [matriz de equivalencia y brechas](docs/MATRIZ_EQUIVALENCIA_GLUCOGUIA.md).
 
+## Auditoría funcional contra GlucoGuía 1.6 · 12/11/2026
+
+Se verificó directamente el código de la aplicación pública de referencia y el estado real de esta rama. Resultado: **seis consultas con captura rápida/detallada**, pero **ninguna de las seis tiene todavía paridad completa de salida clínica**; G/A y FIB-4, las fichas farmacológicas y el motor multiorgánico son capacidades parciales o adicionales, no sustitutos de una conducta por módulo.
+
+**Bloqueos detectados:** una cifra de CAC puede clasificarse sin unidad explícita; el FIB-4 informado no alimenta la salida hepática cuando faltan AST/ALT/plaquetas; DM2 e insulinización necesitan un motor de conducta específico. La inspección se hizo por código, no por navegador real, y no acredita equivalencia clínica.
+
+- [Informe verificado y prioridades P0–P2](docs/AUDITORIA_PARIDAD_FUNCIONAL_2026-11-12.md).
+- [Inventario de cobertura comprobable](docs/COBERTURA_FUNCIONAL_GLUCOGUIA.json).
+- [Matriz de requisitos original (versión histórica)](docs/MATRIZ_EQUIVALENCIA_GLUCOGUIA.md).
+
+**Siguiente incremento propuesto:** cerrar la unidad obligatoria de CAC y desarrollar un flujo clínico de consulta rápida para DM2, con reglas clínicas versionadas y pruebas. **No fusionar ni desplegar para uso asistencial.**
+
 ## Metformina y dapagliflozina · seguridad renal y condiciones de uso
 
 - Fichas CIMA independientes en `src/clinical/basales.mjs`: **metformina de liberación inmediata** (DM2) y **dapagliflozina / Forxiga** (DM2, IC crónica sintomática, ERC).
