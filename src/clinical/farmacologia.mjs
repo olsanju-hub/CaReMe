@@ -9,6 +9,7 @@
 import { fieldState } from '../model.mjs';
 import { readMulti } from '../consultas.mjs';
 import { INCRETIN_DRUGS, reviewIncretinDrug } from './incretinas.mjs';
+import { BASE_DRUGS, reviewBaseDrug } from './basales.mjs';
 
 const EMPA_URL = 'https://cima.aemps.es/cima/dochtml/ft/114930014';
 const FINE_URL = 'https://cima.aemps.es/cima/dochtml/ft/1211616002/FT_1211616002.html';
@@ -83,7 +84,8 @@ export const DRUGS = Object.freeze({
       'Revisar CYP3A4, trimetoprim/cotrimoxazol, suplementos de K, pomelo y antecedentes de hiperpotasemia.'
     ]
   },
-  ...INCRETIN_DRUGS
+  ...INCRETIN_DRUGS,
+  ...BASE_DRUGS
 });
 export const DRUG_IDS = Object.keys(DRUGS);
 export function getDrug(id) { return Object.hasOwn(DRUGS,id) ? DRUGS[id] : null; }
@@ -111,6 +113,7 @@ export function reviewDrug(draft,drugId,routeId) {
   const drug=getDrug(drugId), route=getDrugRoute(drugId,routeId);
   if(!drug || !route) throw new Error('Medicamento o indicación no reconocidos');
   if(Object.hasOwn(INCRETIN_DRUGS,drugId)) return reviewIncretinDrug(draft,drugId,routeId);
+  if(Object.hasOwn(BASE_DRUGS,drugId)) return reviewBaseDrug(draft,drugId,routeId);
   const blocked=[], missing=[], checks=[];
   const age=numerical(draft,'edad');
   const egfr=numerical(draft,'tfge');
