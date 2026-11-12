@@ -610,7 +610,7 @@ app.addEventListener('input', event => {
     // Refrescar tras seleccionar «ninguna» para garantizar exclusividad.
     if (selected.length !== checked.length) return render();
   } else draft=setValue(draft,id,el.value);
-  if(current.page==='module' && current.module==='dm2' && current.mode==='quick') {
+  if(current.dm2ResultVisible){
     current.dm2ResultVisible=false;
     const oldResult=document.getElementById('dm2-rapid-result');
     if(oldResult && typeof oldResult.remove==='function')oldResult.remove();
@@ -667,7 +667,7 @@ app.addEventListener('click', event => {
   }
   if (action === 'start-module') {
     if (!MODULE_BY_ID[btn.dataset.module]) return;
-    current.module=btn.dataset.module; current.mode='quick'; return navigate('module');
+    current.module=btn.dataset.module; current.mode='quick'; current.dm2ResultVisible=false; return navigate('module');
   }
   if (action === 'module-mode') {
     if (!['quick','detail','review'].includes(btn.dataset.mode)) return;
