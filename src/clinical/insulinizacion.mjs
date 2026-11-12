@@ -143,6 +143,8 @@ export function evaluateInsulinization(draft,mode='quick'){
   if(phase===INSULIN_PHASES.intensificacion){
    if(scheme==='Solo basal'&&!(basalUnits!==null&&basalUnits>0))
      missing.push('Dosis basal actual, confirmada y mayor que cero.');
+   if(nightHypo===null||nightHypo==='No valoradas')
+     missing.push('Valorar hipoglucemia nocturna antes de modificar insulina.');
 
    for(const [id,label] of [
     ['insulina_ayunas_objetivo','Ayunas respecto a objetivo individual'],
@@ -171,6 +173,8 @@ export function evaluateInsulinization(draft,mode='quick'){
  if(medicines.has('iSGLT2')||medicines.has('arGLP-1')||medicines.has('Agonista dual GIP/GLP-1'))
    checks.push('Revisar beneficio cardiorrenal y seguridad del tratamiento coexistente; no retirarlo por iniciar insulina de forma automática.');
  if(phase===INSULIN_PHASES.inicio){
+  if(scheme==='Sin insulina'&&basalUnits!==null&&basalUnits>0)
+   alerts.push('Se declara ausencia de insulina pero hay dosis basal actual positiva: conciliar situación y pauta.');
   if(scheme && !['Sin insulina','No confirmado'].includes(scheme))
    alerts.push('Se solicita iniciar insulina, pero consta un esquema de insulina ya administrado; reconciliar la fase.');
   if(medicines.has('Insulina')&&scheme==='Sin insulina')
@@ -202,6 +206,8 @@ export function evaluateInsulinization(draft,mode='quick'){
     ?['FASE_SIN_INSULINA']:[]),
   ...(medicines.has('Insulina')&&scheme==='Sin insulina'
     ?['MEDICACION_ESQUEMA_INCOMPATIBLE']:[]),
+  ...(scheme==='Sin insulina'&&basalUnits!==null&&basalUnits>0
+    ?['DOSIS_BASAL_SIN_INSULINA']:[]),
   ...(phase!==INSULIN_PHASES.inicio&&phase&&classes!==null&&
     !medicines.has('Insulina') ?['INSULINA_NO_CONCILIADA']:[])
  ];
@@ -239,6 +245,12 @@ export function evaluateInsulinization(draft,mode='quick'){
   nextSteps.push('Evaluar inmediatamente la situación de seguridad y la necesidad de atención urgente; no utilizar la titulación rutinaria de esta pantalla.');
  } else if(dm2!=='Sí'||dm1==='Sí'){
   nextSteps.push('Confirmar tipo y diagnóstico de diabetes antes de aplicar una ruta de insulinización para DM2.');
+  if(mode==='quick'&&phase===INSULIN_PHASES.inicio)
+    nextSteps.push('En DM2 confirmada y sin crisis, revisar primero si procede terapia basada en GLP-1 y, de estar indicada, basal una vez al día; ninguna dosis individual.');
+  if(mode==='quick'&&phase===INSULIN_PHASES.intensificacion)
+    nextSteps.push('En DM2 con basal confirmada, separar glucemia de ayunas de elevaciones posprandiales antes de intensificar.');
+  if(mode==='quick'&&phase===INSULIN_PHASES.desintensificacion)
+    nextSteps.push('Con insulina realmente administrada, revisar hipoglucemias, fragilidad y carga terapéutica como motivos de simplificación.');
  } else if(blocked){
   nextSteps.push('Reconciliar diagnóstico, fase, tratamiento y discrepancias antes de valorar cambios.');
  } else if(clinicalPriority){
