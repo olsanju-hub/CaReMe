@@ -88,6 +88,9 @@ export function evaluateInsulinization(draft,mode='quick'){
  const medicines=new Set(classes||[]);
  const scheme=value(draft,'insulina_esquema');
  const age=number(draft,'edad');
+ const pregnancy=value(draft,'embarazo');
+ const reliable=value(draft,'dm_hba1c_fiable');
+ const HbDate=value(draft,'fecha_hba1c');
  const dm2=value(draft,'dm2');
  const dm1=value(draft,'dm1');
  const hypo=value(draft,'dm_hipoglucemias');
@@ -95,6 +98,7 @@ export function evaluateInsulinization(draft,mode='quick'){
  const fastingStatus=value(draft,'insulina_ayunas_objetivo');
  const postmeal=value(draft,'insulina_posprandial');
  const nightHypo=value(draft,'insulina_hipo_nocturna');
+ const simplifyReason=value(draft,'insulina_motivo_simplificacion');
  const basalUnits=number(draft,'insulina_dosis_basal');
  const weight=number(draft,'peso');
  const a1c=number(draft,'hba1c');
@@ -107,6 +111,8 @@ export function evaluateInsulinization(draft,mode='quick'){
  const select=(id,title,rationale,requirements,refs=['ADA-EASD-DM2-2026','ADA-2026-9'])=>
    options.push(suggestion(id,title,rationale,requirements,refs));
  if(!phase)missing.push('Seleccionar inicio, intensificación o desintensificación.');
+ if(age===null||age<18)missing.push('Confirmar edad adulta.');
+ if(pregnancy===null||pregnancy==='No valorado')missing.push('Confirmar gestación antes de seguir circuito general.');
  if(profiles===null)missing.push('Registrar perfil clínico o seleccionar ausencia de situación especial.');
  if(dm2!=='Sí')missing.push('Confirmar diagnóstico previo de DM2 antes de aplicar un circuito específico.');
  if(dm1===null||dm1==='No valorado')
@@ -128,11 +134,23 @@ export function evaluateInsulinization(draft,mode='quick'){
    ['dm_adherencia','Adherencia real al tratamiento'],
    ['dm_dosis_confirmadas','Confirmación de dosis de tratamiento actual'],
    ['tfge','TFGe y seguridad renal']])if(limited(id))missing.push(label);
+  if(phase===INSULIN_PHASES.inicio||phase===INSULIN_PHASES.intensificacion){
+   if(a1c===null||goal===null||reliable!=='Fiable tras comprobación')
+     missing.push('HbA1c fiable y objetivo numérico individual para justificar intensificación rutinaria.');
+   if(a1c!==null&&HbDate===null)
+     missing.push('Fecha de HbA1c por confirmar.');
+  }
   if(phase===INSULIN_PHASES.intensificacion){
+   if(scheme==='Solo basal'&&!(basalUnits!==null&&basalUnits>0))
+     missing.push('Dosis basal actual, confirmada y mayor que cero.');
+
    for(const [id,label] of [
     ['insulina_ayunas_objetivo','Ayunas respecto a objetivo individual'],
     ['insulina_posprandial','Patrón posprandial']])if(limited(id))missing.push(label);
   }
+  if(phase===INSULIN_PHASES.desintensificacion&&
+      (simplifyReason===null||simplifyReason==='No valorado'))
+    missing.push('Documentar motivo de desintensificación y carga terapéutica.');
   if(phase===INSULIN_PHASES.desintensificacion&&limited('insulina_fragilidad'))
    missing.push('Fragilidad y complejidad de autocuidado evaluadas.');
  }
@@ -188,6 +206,9 @@ export function evaluateInsulinization(draft,mode='quick'){
     !medicines.has('Insulina') ?['INSULINA_NO_CONCILIADA']:[])
  ];
  if(dm1==='Sí'||dm2==='No')contradictions.push('TIPO_DIABETES_INCOMPATIBLE');
+ if((phase===INSULIN_PHASES.inicio||phase===INSULIN_PHASES.intensificacion)&&
+   a1c!==null&&goal!==null&&a1c<goal)
+   checks.push('HbA1c en objetivo individual: no iniciar ni intensificar por el valor aislado; revisar indicación y comorbilidades.');
  const urgent=acute.keto||acute.hypo||acute.pregnant||
    number(draft,'glucemia_actual')>=300 && number(draft,'glucemia_actual')!==null;
  const clinicalPriority=urgent||acute.acute||nightHypo==='Sí'||
@@ -208,7 +229,9 @@ export function evaluateInsulinization(draft,mode='quick'){
  );
  let state=urgent||clinicalPriority?'seguridad_prioritaria':
    blocked?'revisar_coherencia':
-   !phase||dm2!=='Sí'||mode==='detail'&&requireDetailed?'datos_insuficientes':
+   !phase||profiles===null||dm2!=='Sí'||dm1!=='No'||age===null||
+    pregnancy===null||pregnancy==='No valorado'||
+    mode==='detail'&&requireDetailed?'datos_insuficientes':
    'revision_pendiente';
  if(!phase){
   nextSteps.push('Identificar si se trata de inicio, intensificación o simplificación, y completar antecedentes.');
@@ -228,7 +251,8 @@ export function evaluateInsulinization(draft,mode='quick'){
    nextSteps.push('Ya hay terapia basada en GLP-1; revisar respuesta y tolerancia, sin duplicar.');
   else
    nextSteps.push('Sin hiperglucemia grave, valorar terapia basada en GLP-1 antes de insulina cuando sea apropiada.');
-  if(mode==='detail'&&!requireDetailed&&scheme==='Sin insulina'){
+  if(mode==='detail'&&!requireDetailed&&scheme==='Sin insulina'&&
+     a1c!==null&&goal!==null&&a1c>=goal){
    select('INS-START-BASAL','Revisar inicio de insulina basal',
     'Cuando está indicada, la insulina basal una vez al día suele ser el esquema inicial más sencillo en DM2.',
     ['Confirmar indicación real, peso, producto concreto, pauta y seguimiento de glucosa; individualizar en especial ante fragilidad o ERC.',
@@ -237,7 +261,9 @@ export function evaluateInsulinization(draft,mode='quick'){
   }
  } else if(phase===INSULIN_PHASES.intensificacion){
   nextSteps.push('Comprobar HbA1c/objetivo, glucemias de ayunas y posprandiales, técnica y dosis de basal realmente administradas.');
-  if(fastingStatus==='En objetivo individual'&&postmeal==='Elevaciones posprandiales repetidas'){
+  if(a1c!==null&&goal!==null&&a1c<goal){
+   nextSteps.push('HbA1c en objetivo: revisar patrones y seguridad; no intensificar por un valor aislado.');
+  } else if(fastingStatus==='En objetivo individual'&&postmeal==='Elevaciones posprandiales repetidas'){
    nextSteps.push('La elevación residual parece posprandial: evitar subir basal solo por HbA1c.');
    if(mode==='detail'&&!requireDetailed&&scheme==='Solo basal'&&nightHypo!=='Sí'){
     if(!(medicines.has('arGLP-1')||medicines.has('Agonista dual GIP/GLP-1')))
@@ -264,7 +290,8 @@ export function evaluateInsulinization(draft,mode='quick'){
   nextSteps.push('Revisar motivo de simplificación, objetivo individual, hipoglucemias, funcionalidad y capacidad de autocuidado.');
   if(acute.hypo||nightHypo==='Sí')
    checks.push('Identificar episodios de hipoglucemia y priorizar su prevención antes de una nueva pauta.');
-  if(mode==='detail'&&!requireDetailed&&scheme!=='Sin insulina'){
+  if(mode==='detail'&&!requireDetailed&&scheme!=='Sin insulina'&&
+     simplifyReason!==null&&simplifyReason!=='No valorado'){
    select('INS-DEINTENSIFY-REVIEW','Valorar simplificación del esquema insulínico',
     'En fragilidad, hipoglucemias, alta carga terapéutica o cambio de situación clínica puede ser apropiado reducir complejidad.',
     ['Revisar glucemia/MCG, perfil previo, alimentación, apoyos y objetivos funcionales.',
