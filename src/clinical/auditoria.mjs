@@ -7,6 +7,7 @@
  */
 import { FIELDS, fieldState } from '../model.mjs';
 import { readMulti } from '../consultas.mjs';
+import { auditProvenance } from './proveniencia.mjs';
 
 const VALUE = (draft,id) => fieldState(draft,id)==='registrado'
   ? String(draft.values[id]) : null;
@@ -28,7 +29,8 @@ function item(id,severity,title,detail,fields) {
   return {id,severity,title,detail,fields,requiresReview:true};
 }
 export function auditCrossDomain(draft) {
-  const out=[];
+  const provenance=auditProvenance(draft);
+  const out=[...provenance.findings];
   const yes=id=>VALUE(draft,id)==='Sí';
   const no=id=>VALUE(draft,id)==='No';
   if(yes('dm1')&&yes('dm2'))
@@ -77,7 +79,8 @@ export function auditCrossDomain(draft) {
         [id]));
   }
   const critical=out.filter(f=>f.severity==='critical');
-  return {status:critical.length?'critical':out.length?'review':'clear',
+  return {provenance,
+    status:critical.length?'critical':out.length?'review':'clear',
     critical,findings:out,requiresResolution:critical.length>0,
     summary:critical.length
       ? 'Existen incoherencias críticas: no presentar candidatos farmacológicos como opciones de inicio.'
