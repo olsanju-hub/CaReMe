@@ -18,7 +18,7 @@ export const MODULES = [
     id: 'erc', title: 'Enfermedad renal crónica', domain: 'renal',
     short: 'Función renal, albuminuria y persistencia',
     quick: ['tfge','cac','unidad_cac','persistencia'],
-    detail: ['tfge','fecha_tfge','cac','unidad_cac','fecha_cac','persistencia','lra_sospecha','contraste_yodado','potasio','fecha_potasio','potasio_normal','ras_optimizado','cyp3a4_fuerte','addison','creatinina','situacion_aguda','cetoacidosis_sospecha','farmacos_clases','farmacos','medicacion_revisada','alergias','alergias_revisadas']
+    detail: ['fecha_evaluacion','tfge','fecha_tfge','cac','unidad_cac','fecha_cac','persistencia','lra_sospecha','contraste_yodado','potasio','fecha_potasio','potasio_normal','ras_optimizado','cyp3a4_fuerte','addison','creatinina','situacion_aguda','cetoacidosis_sospecha','farmacos_clases','farmacos','medicacion_revisada','alergias','alergias_revisadas']
   },
   {
     id: 'obesidad', title: 'Sobrepeso y obesidad', domain: 'metabolico',
@@ -30,7 +30,7 @@ export const MODULES = [
     id: 'hepatico', title: 'Enfermedad hepática metabólica', domain: 'hepatico',
     short: 'Esteatosis y valoración de fibrosis',
     quick: ['edad','fib4_informado','hepatico_valoracion','elastografia'],
-    detail: ['edad','fecha_ast','fecha_alt','fecha_plaquetas','hepatica_grave','esteatosis','hepatico_valoracion','fib4_contexto','fib4_agudo','ast','alt','plaquetas','fib4_informado','elastografia','farmacos_clases','farmacos']
+    detail: ['edad','fecha_evaluacion','fecha_ast','fecha_alt','fecha_plaquetas','hepatica_grave','esteatosis','hepatico_valoracion','fib4_contexto','fib4_agudo','ast','alt','plaquetas','fib4_informado','elastografia','farmacos_clases','farmacos']
   },
   {
     id: 'insulina', title: 'Insulinización', domain: 'metabolico',
