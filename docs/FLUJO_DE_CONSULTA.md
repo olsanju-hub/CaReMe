@@ -57,3 +57,9 @@ Reglas y limitaciones: [Integración terapéutica](INTEGRACION_TERAPEUTICA.md). 
 En «Herramientas» figura una biblioteca de empagliflozina y finerenona. La misma ficha puede tener distintas indicaciones, posología y requisitos; **la vía se elige explícitamente** y los datos de la consulta se reutilizan. Se muestran dosis de **referencia documental**, no recomendaciones personalizadas. Si hay bloqueos aparecen antes de la tabla de dosis y la página conserva una advertencia de no prescripción.
 
 Fuente y pruebas: [Farmacología CIMA](FARMACOLOGIA_CIMA.md). La aplicación no etiqueta al paciente como «apto» ni registra prescripción efectuada.
+
+## Acciones confirmadas y calendario (bloque 12/11/2026)
+
+La pantalla de farmacología permite consultar continuidad por **indicación y dosis actual**. El historial de actuaciones no se alimenta del motor de recomendaciones: requiere confirmación del médico, fecha efectiva y dosis administrada (salvo interrupción). Solo las actuaciones confirmadas generan controles programables. Las fechas sustituidas por un cambio posterior permanecen en el historial con estado «sustituido». Al borrar una evaluación, se borra también el historial temporal.
+
+Fuente, reglas y límites: [Continuidad y seguimiento](CONTINUIDAD_Y_SEGUIMIENTO.md).
