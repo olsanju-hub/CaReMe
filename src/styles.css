@@ -518,3 +518,10 @@ h2 { letter-spacing:-.025em }
 .insulin-result .dm2-safety{border-left:4px solid #C26D51}
 .insulin-result .dm2-options article{border-left:3px solid #138B8B}
 @media(max-width:680px){.insulin-result .dm2-detail-metrics{grid-template-columns:1fr}}
+
+/* IC ESC 2026: resultado no prescriptivo; fenotipo y urgencia legibles en móvil. */
+.ic-result .dm2-detail-metrics {grid-template-columns:repeat(2,minmax(0,1fr))}
+.ic-result .dm2-detail-metrics strong {font-size:.93rem;line-height:1.36}
+.ic-result .dm2-safety {border-left:4px solid #B75D47}
+.ic-result .dm2-options article {border-left:3px solid #138B8B}
+@media(max-width:680px){.ic-result .dm2-detail-metrics{grid-template-columns:1fr}}
