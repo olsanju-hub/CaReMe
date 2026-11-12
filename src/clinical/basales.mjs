@@ -155,7 +155,7 @@ export function reviewBaseDrug(draft,drugId,routeId){
     if(dehydration==='Sí')
       blocked.push('Depleción de volumen/deshidratación: no proponer inicio hasta corregir y revisar clínica.');
     if(present(draft,'hepatica_grave')==='Sí')
-      checks.push('CIMA Forxiga: en insuficiencia hepática grave recomienda inicio de 5 mg y titulación específica; no extrapolar 10 mg.');
+      blocked.push('Insuficiencia hepática grave: no aplicar la pauta general de 10 mg de inicio; CIMA Forxiga recomienda comenzar con 5 mg y valorar aumento según tolerancia.');
     if(med?.includes('iSGLT2'))
       blocked.push('iSGLT2 ya registrado: no proponer un segundo fármaco de la clase sin conciliación.');
     if(med?.includes('Insulina')||med?.includes('Sulfonilurea'))
