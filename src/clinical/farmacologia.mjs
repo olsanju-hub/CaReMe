@@ -8,6 +8,7 @@
  */
 import { fieldState } from '../model.mjs';
 import { readMulti } from '../consultas.mjs';
+import { INCRETIN_DRUGS, reviewIncretinDrug } from './incretinas.mjs';
 
 const EMPA_URL = 'https://cima.aemps.es/cima/dochtml/ft/114930014';
 const FINE_URL = 'https://cima.aemps.es/cima/dochtml/ft/1211616002/FT_1211616002.html';
@@ -81,7 +82,8 @@ export const DRUGS = Object.freeze({
       'Monitorización periódica según resultados, TFGe y factores de riesgo de hiperpotasemia.',
       'Revisar CYP3A4, trimetoprim/cotrimoxazol, suplementos de K, pomelo y antecedentes de hiperpotasemia.'
     ]
-  }
+  },
+  ...INCRETIN_DRUGS
 });
 export const DRUG_IDS = Object.keys(DRUGS);
 export function getDrug(id) { return Object.hasOwn(DRUGS,id) ? DRUGS[id] : null; }
@@ -108,6 +110,7 @@ function unique(items) { return [...new Set(items)]; }
 export function reviewDrug(draft,drugId,routeId) {
   const drug=getDrug(drugId), route=getDrugRoute(drugId,routeId);
   if(!drug || !route) throw new Error('Medicamento o indicación no reconocidos');
+  if(Object.hasOwn(INCRETIN_DRUGS,drugId)) return reviewIncretinDrug(draft,drugId,routeId);
   const blocked=[], missing=[], checks=[];
   const age=numerical(draft,'edad');
   const egfr=numerical(draft,'tfge');
