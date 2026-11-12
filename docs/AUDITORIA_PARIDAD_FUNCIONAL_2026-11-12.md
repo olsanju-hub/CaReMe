@@ -135,3 +135,11 @@ Véase [DM2 rápida y corrección del CAC](DM2_RAPIDA_REDGDPS_2026.md) y el [inv
 La matriz histórica y las brechas descritas en el análisis inicial son una fotografía del estado anterior. Ahora **DM2 rápida y detallada cuentan con una primera salida funcional**, incluyendo objetivo individual numérico, conciliación de dosis y adherencia, alertas, candidatos condicionales y seguimiento orientativo. `src/clinical/dm2-detallada.mjs` y [documentación](DM2_DETALLADA_ADA_REDGDPS_2026.md).
 
 Las barreras globales de glucemia ≥300 mg/dL, hipoglucemias graves y embarazo se han unificado con el motor integrado. **Paridad clínica completa de DM2 aún no demostrada**: faltan revisión científica independiente, validación por escenarios reales, selección por producto con financiación y prueba manual en navegador móvil. Los otros cinco módulos conservan su propia lista de pendientes.
+
+## 11. Actualización insulinización (12/11/2026)
+
+**El apartado de insulinización de la matriz inicial ya es histórico:** el módulo dispone ahora de resultados preliminares de inicio, intensificación y desintensificación con clasificación de patrones glucémicos, seguridad, educación y seguimiento. `src/clinical/insulinizacion.mjs`.
+
+**Paridad funcional completa pendiente:** no se ha validado prescripción individualizada por formulación, titulación, conversiones de insulinas, dosis prandiales, temporalidad del seguimiento o QA móvil; las referencias de dosis no se ejecutan. Los algoritmos antiguos de redGDPS 2022 se contextualizan frente a ADA/EASD 2026.
+
+[Documento de insulinización](INSULINIZACION_ADA_EASD_2026.md).
