@@ -16,7 +16,7 @@ CaHReMe cubre ya la **navegación y captura de datos** de seis consultas inspira
 ## Corrección de unidad renal y primera orientación rápida DM2 (12/11/2026)
 
 - **CAC con unidad confirmada obligatoria:** `evaluateRenal()` exige `mg/g`, no convierte silenciosamente `mg/mmol`, y el motor de integración evita utilizar CAC no validado. Si se introduce un CAC sin unidad, las opciones terapéuticas relacionadas se retienen mediante auditoría.
-- **KDIGO A3:** frontera corregida a **≥300 mg/g**, A2 ahora 30 a <300 mg/g. Pruebas explícitas con los valores 29,99/30 y 299,99/300.
+- **KDIGO, tabla 3 (S137):** A2 **30–300 mg/g**, A3 **>300 mg/g**. Se conserva el límite exacto de la guía: **300 permanece en A2**; las pruebas cubren 299,99/300/300,01.
 - **DM2 rápida:** `src/clinical/dm2-rapida.mjs` produce situación clínica, próximos pasos, opciones por clase, alertas, datos a comprobar, reevaluación y fuentes redGDPS/ADA 2026. Se accede mediante «Ver orientación clínica rápida» o el resumen del módulo.
 - La consulta rápida distingue HbA1c **8,5 % como nivel de intensidad** del **objetivo individual**; síntomas, sospecha de CAD e hiperglucemia muy elevada se evalúan antes que un tratamiento crónico. No inventa medicamentos ausentes ni confirma acciones.
 - La **revisión detallada DM2 continúa pendiente**; el motor rápido no convierte ninguna opción en prescripción ni valida uso asistencial.
