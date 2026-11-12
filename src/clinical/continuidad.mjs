@@ -271,10 +271,11 @@ export function confirmedAction(history, action) {
 export function followUpFromHistory(history) {
   if(!Array.isArray(history)) throw new Error('Historial no válido');
   const events=[];
-  for(const action of history) {
+  for(const [actionIndex, action] of history.entries()) {
     if(action.confirmed!==true || !parseISO(action.performedOn)) continue;
     if(action.drugId==='finerenona' && ['inicio','reinicio','ajuste'].includes(action.type)) {
       events.push({
+        performedOn:action.performedOn, actionIndex,
         drugId:action.drugId,routeId:action.routeId,
         dueOn:plusDays(action.performedOn,28),
         description:'Control de potasio sérico y TFGe a las 4 semanas',
@@ -284,6 +285,7 @@ export function followUpFromHistory(history) {
     } else if(action.drugId==='empagliflozina' &&
       ['inicio','reinicio'].includes(action.type)) {
       events.push({
+        performedOn:action.performedOn, actionIndex,
         drugId:action.drugId,routeId:action.routeId,
         dueOn:plusYear(action.performedOn),
         description:'Comprobar función renal al menos anualmente; adelantar según contexto clínico',
@@ -298,5 +300,18 @@ export function followUpFromHistory(history) {
       });
     }
   }
-  return events;
+  for(const event of events) {
+    if(!event.dueOn) {
+      event.status='requiere_reevaluacion';
+      continue;
+    }
+    const subsequent=history.some((action,index)=>
+      index>event.actionIndex && action.confirmed===true &&
+      action.drugId===event.drugId && action.routeId===event.routeId &&
+      ['ajuste','interrupcion','reinicio','inicio'].includes(action.type) &&
+      parseISO(action.performedOn) && action.performedOn<=event.dueOn);
+    event.status=subsequent?'sustituido':'previsto';
+    // Ninguna fecha se elimina: se conserva el historial documental de controles.
+  }
+  return events.map(({actionIndex,performedOn,...event})=>event);
 }
