@@ -12,7 +12,9 @@ export const SECTIONS = [
     EXTRA_BY_ID.ic_sintomatica,
     { id: 'hepatopatia', label: 'Enfermedad hepática conocida', type: 'select', options: ['Sí', 'No'] },
     EXTRA_BY_ID.situacion_aguda,
-    EXTRA_BY_ID.cetoacidosis_sospecha
+    EXTRA_BY_ID.cetoacidosis_sospecha,
+    EXTRA_BY_ID.ic_descompensada,
+    EXTRA_BY_ID.hipoxia_tisular
   ]},
   { id: 'cardio', title: 'Cardiovascular', short: 'Cardio', intro: 'Constantes y perfil lipídico disponibles.', fields: [
     { id: 'pas', label: 'Presión arterial sistólica', unit: 'mmHg', type: 'number' },
@@ -30,7 +32,9 @@ export const SECTIONS = [
     EXTRA_BY_ID.ras_optimizado,
     EXTRA_BY_ID.potasio,
     EXTRA_BY_ID.cyp3a4_fuerte,
-    EXTRA_BY_ID.addison
+    EXTRA_BY_ID.addison,
+    EXTRA_BY_ID.lra_sospecha,
+    EXTRA_BY_ID.contraste_yodado
   ]},
   { id: 'hepatico', title: 'Hepático', short: 'Hepático', intro: 'Pruebas disponibles para una futura estratificación validada.', fields: [
     { id: 'ast', label: 'AST', unit: 'U/L', type: 'number' },
@@ -39,6 +43,7 @@ export const SECTIONS = [
     EXTRA_BY_ID.fib4_contexto,
     EXTRA_BY_ID.fib4_agudo,
     EXTRA_BY_ID.hepatica_grave,
+    EXTRA_BY_ID.insuficiencia_hepatica,
     { id: 'esteatosis', label: 'Esteatosis documentada', type: 'select', options: ['Sí', 'No'] }
   ]},
   { id: 'metabolico', title: 'Metabólico', short: 'Metabólico', intro: 'Diagnósticos y datos antropométricos/metabólicos.', fields: [
@@ -64,7 +69,9 @@ export const SECTIONS = [
     EXTRA_BY_ID.deshidratacion_gi,
     EXTRA_BY_ID.gastroparesia_grave,
     EXTRA_BY_ID.retinopatia_dm,
-    EXTRA_BY_ID.vision_subita
+    EXTRA_BY_ID.vision_subita,
+    EXTRA_BY_ID.acidosis_metabolica,
+    EXTRA_BY_ID.cirugia_anestesia
   ]}
 ];
 export const FIELDS = { ...Object.fromEntries(SECTIONS.flatMap(s => s.fields.map(f => [f.id, f]))), ...EXTRA_BY_ID };
