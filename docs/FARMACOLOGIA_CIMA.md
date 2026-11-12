@@ -81,3 +81,9 @@ La batería cubre: TFGe 19,9/20 para empagliflozina, TFGe 24,99/25 y K 5,0/5,01 
 - Incorporar las fichas de otros principios activos prioritarios de DM2/CKM con revisión CIMA independiente.
 - Revisar rutas de insuficiencia cardíaca y DM2 con guías actuales; registrar discrepancias.
 - Desarrollar calendario de controles y reevaluación condicionados a la indicación y al tratamiento **efectivamente confirmado**, evitando atribuir acciones no realizadas.
+
+## 7. Continuidad de tratamiento, titulación y seguimiento (12/11/2026)
+
+Se añadieron las tablas completas de continuidad de **finerenona** diferenciadas por **ERC-DM2** (tabla 2) e **IC sintomática FEVI ≥40 %** (tabla 4), y la reevaluación de **empagliflozina** ante cetoacidosis, enfermedad aguda o ajuste del tratamiento glucémico. El resultado siempre es una **referencia de ficha**, sin prescripción. Los controles programables solo nacen de actuaciones confirmadas mediante fecha/dosis real.
+
+Especificación, umbrales, pruebas y limitaciones: [CONTINUIDAD_Y_SEGUIMIENTO.md](CONTINUIDAD_Y_SEGUIMIENTO.md).
