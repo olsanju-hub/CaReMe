@@ -91,16 +91,18 @@ test('empagliflozina 25 mg solo como referencia DM2, no IC/ ERC',()=>{
   assert.equal(reviewEmpagliflozinContinuation(er({emp_dosis_actual:'25'}),'erc').ruleId,'EMP-25-VERIFY');
 });
 test('la app no registra acciones sin confirmación explícita ni fecha válida',()=>{
-  const raw={drugId:'finerenona',routeId:'erc_dm2',type:'inicio',performedOn:'2026-11-12'};
+  const raw={drugId:'finerenona',routeId:'erc_dm2',type:'inicio',performedOn:'2026-11-12',doseMg:10};
   assert.throws(()=>confirmedAction([],raw),/confirmación explícita/);
   assert.throws(()=>confirmedAction([],{...raw,confirmedByClinician:true,performedOn:'2026-02-30'}),/Fecha/);
   assert.throws(()=>confirmedAction([],{...raw,confirmedByClinician:true,routeId:'dm2'}),/Indicación/);
   const history=confirmedAction([],{...raw,confirmedByClinician:true});
   assert.equal(history.length,1); assert.equal(history[0].confirmed,true);
+  assert.equal(history[0].doseMg,10);
+  assert.throws(()=>confirmedAction([],{...raw,doseMg:null,confirmedByClinician:true}),/dosis/);
   assert.deepEqual(followUpFromHistory([]),[]);
 });
 test('4 semanas de finerenona solo tras inicio/reinicio/ajuste efectivamente confirmados',()=>{
-  const event=(type,date)=>({drugId:'finerenona',routeId:'erc_dm2',type,performedOn:date,confirmedByClinician:true});
+  const event=(type,date)=>({drugId:'finerenona',routeId:'erc_dm2',type,performedOn:date,doseMg:type==='interrupcion'?null:10,confirmedByClinician:true});
   let history=[];
   history=confirmedAction(history,event('inicio','2026-11-12'));
   history=confirmedAction(history,event('ajuste','2027-01-15'));
@@ -112,7 +114,7 @@ test('4 semanas de finerenona solo tras inicio/reinicio/ajuste efectivamente con
   assert.equal(checks[0].description,'Control de potasio sérico y TFGe a las 4 semanas');
 });
 test('anual de empagliflozina solo tras acción confirmada, manejando 29 de febrero',()=>{
-  let h=confirmedAction([],{drugId:'empagliflozina',routeId:'erc',type:'inicio',performedOn:'2028-02-29',confirmedByClinician:true});
+  let h=confirmedAction([],{drugId:'empagliflozina',routeId:'erc',type:'inicio',performedOn:'2028-02-29',doseMg:10,confirmedByClinician:true});
   const x=followUpFromHistory(h);
   assert.equal(x[0].dueOn,'2029-02-28');
   h=confirmedAction(h,{drugId:'empagliflozina',routeId:'erc',type:'interrupcion',performedOn:'2028-03-05',confirmedByClinician:true});
