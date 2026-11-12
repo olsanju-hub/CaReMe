@@ -81,15 +81,23 @@ export function evaluateHeartFailure(draft,mode='quick'){
  if(flags===null)missing.push('Valorar signos de alarma; no asumir que están ausentes.');
  if(mode==='detail'){
   if(fevi===null)missing.push('FEVI numérica documentada.');
+  if(fevi!==null&&(!efDate||!evalDate))
+    missing.push('Confirmar fecha de FEVI y fecha de evaluación para interpretar su contexto.');
   if(symptomatic===null||symptomatic==='No valorado')
     missing.push('Confirmar síntomas presentes o previos y estadio clínico.');
   if(stability===null||stability==='No valorada')
     missing.push('Valorar estabilidad hemodinámica y respiratoria.');
   if(egfr===null)missing.push('TFGe para valorar seguridad y elegibilidad de productos.');
+  if(egfr!==null&&(!egfrDate||!evalDate))
+    missing.push('Confirmar fecha de TFGe y fecha de evaluación antes de revisar tratamiento.');
   if(potassium===null)missing.push('Potasio sérico para valorar ARM.');
+  if(potassium!==null&&(!potDate||!evalDate))
+    missing.push('Confirmar fecha de potasio y fecha de evaluación antes de revisar ARM.');
   if(sbp===null)missing.push('Presión arterial sistólica.');
   if(meds===null||!reconciled)
     missing.push('Conciliar clases y dosis realmente administradas.');
+  if(symptomatic==='No valorado')
+    checks.push('No inferir ausencia de IC sintomática de un dato no valorado.');
   if(!allergies)missing.push('Verificar alergias e intolerancias.');
   if(pregnancy===null||pregnancy==='No valorado')
     checks.push('Confirmar gestación antes de cualquier selección farmacológica.');
@@ -125,10 +133,14 @@ export function evaluateHeartFailure(draft,mode='quick'){
  if(combinedRAAS>=2)alerts.push('Múltiples vías IECA/ARA-II/ARNI declaradas: conciliar asociaciones potencialmente incompatibles.');
  if(medication.has('ARM')&&potassium!==null&&potassium>5)
    alerts.push('ARM registrado con potasio >5 mmol/L: revisar hiperpotasemia y ficha individual antes de continuar o titular.');
+ if(potassium!==null&&potassium>5.5&&potassium<6)
+   alerts.push('Potasio >5,5 y <6 mmol/L: verificar cifra y evolución; revisar tratamiento hiperpotasemiante antes de cambios.');
  if(potassium!==null&&potassium>=6)
    alerts.push('Potasio ≥6 mmol/L: confirmar muestra, ECG, clínica y valorar atención urgente según contexto.');
  if(sbp!==null&&sbp<90)
    alerts.push('PAS <90 mmHg: evaluar perfusión y síntomas, no titular tratamientos hipotensores automáticamente.');
+ if(sbp!==null&&sbp>=90&&sbp<100)
+   checks.push('PAS 90–99 mmHg: valorar hipotensión sintomática, volemia y tolerancia antes de intensificar fármacos vasodilatadores.');
  if(heartRate!==null&&heartRate<50)
    alerts.push('Frecuencia cardíaca <50 lpm: revisar síntomas, conducción y tratamiento cronotropo.');
  if(congestion==='Presentes')
@@ -162,6 +174,7 @@ export function evaluateHeartFailure(draft,mode='quick'){
  const safetyUnknown=mode==='detail'&&(
    fevi===null||egfr===null||potassium===null||sbp===null||
    flags===null||meds===null||!reconciled||!allergies||
+   !efDate||!evalDate||!egfrDate||!potDate||
    pregnancy===null||pregnancy==='No valorado');
  const mismatch=group&&fevi!==null&&(
    (group==='Reducida · FEVI <50 %'&&fevi>=50)||
