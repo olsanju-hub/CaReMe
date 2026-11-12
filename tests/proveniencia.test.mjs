@@ -79,7 +79,7 @@ test('fecha hepática posterior a evaluación bloquea índice aun con las tres f
  assert.equal(evaluateFib4(d).value,null);
 });
 test('si no hay fechas no se afirma actualidad ni se inventa antigüedad',()=>{
- const d=draft({tfge:55,cac:90,ast:40,alt:25,plaquetas:200,edad:55});
+ const d=draft({tfge:55,cac:90,unidad_cac:'mg/g',ast:40,alt:25,plaquetas:200,edad:55});
  const provenance=auditProvenance(d);
  assert.ok(provenance.undated.includes('TFGe'));
  assert.ok(provenance.undated.includes('CAC'));
