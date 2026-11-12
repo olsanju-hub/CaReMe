@@ -77,6 +77,11 @@ test('Ozempic no es vía de obesidad y requiere DM2 confirmada',()=>{
  assert.equal(review('semaglutida_ozempic','dm2',{dm2:'No'}).state,'bloqueo');
  assert.equal(review('semaglutida_ozempic','dm2',{dm2:'No valorado'}).state,'datos_insuficientes');
 });
+test('TFGe ausente impide dar por revisada Wegovy SC; DM1 contradice ruta DM2',()=>{
+ assert.equal(review('semaglutida_wegovy_sc','peso',{tfge:''}).state,'datos_insuficientes');
+ assert.equal(review('semaglutida_ozempic','dm2',{dm1:'Sí'}).state,'bloqueo');
+ assert.equal(review('tirzepatida','dm2',{dm1:'Sí'}).state,'bloqueo');
+});
 test('gestación bloquea inicio; se distinguen periodos antes de embarazo planificado',()=>{
  for(const id of Object.keys(INCRETIN_DRUGS)){
    const route=INCRETIN_DRUGS[id].routes[0].id;
