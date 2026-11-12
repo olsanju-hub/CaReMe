@@ -748,6 +748,7 @@ function sources() {
   <a href="https://github.com/olsanju-hub/CaReMe/blob/feat/prototipo-interfaz/docs/DM2_RAPIDA_REDGDPS_2026.md" target="_blank" rel="noopener noreferrer">DM2 rápida · redGDPS y ADA 2026 (estado provisional) ↗</a>
   <a href="https://github.com/olsanju-hub/CaReMe/blob/feat/prototipo-interfaz/docs/DM2_DETALLADA_ADA_REDGDPS_2026.md" target="_blank" rel="noopener noreferrer">DM2 detallada · objetivo, seguridad y fuentes ↗</a>
   <a href="https://github.com/olsanju-hub/CaReMe/blob/feat/prototipo-interfaz/docs/INSULINIZACION_ADA_EASD_2026.md" target="_blank" rel="noopener noreferrer">Insulinización · ADA/EASD 2026 y redGDPS 2022 ↗</a>
+  <a href="https://github.com/olsanju-hub/CaReMe/blob/feat/prototipo-interfaz/docs/INSUFICIENCIA_CARDIACA_ESC_2026.md" target="_blank" rel="noopener noreferrer">Insuficiencia cardíaca · ESC 2026 y control de seguridad ↗</a>
   <a href="https://github.com/olsanju-hub/CaReMe/blob/feat/prototipo-interfaz/docs/IC_ESC_2026.md" target="_blank" rel="noopener noreferrer">Insuficiencia cardíaca · ESC 2026 y CIMA ↗</a>
   <a href="https://www.escardio.org/guidelines/clinical-practice-guidelines/all-esc-practice-guidelines/heart-failure" target="_blank" rel="noopener noreferrer">Guía oficial ESC 2026 de insuficiencia cardíaca ↗</a>
   <a href="https://diabetesjournals.org/care/article/doi/10.2337/dci26-0141/172591" target="_blank" rel="noopener noreferrer">Consenso ADA/EASD de tratamiento DM2 2026 ↗</a>
