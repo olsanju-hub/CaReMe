@@ -93,3 +93,9 @@ Especificación, umbrales, pruebas y limitaciones: [CONTINUIDAD_Y_SEGUIMIENTO.md
 El catálogo se amplía con tres referencias de ficha CIMA: **Ozempic inyectable** (semaglutida · DM2), **Wegovy inyectable** (semaglutida · control del peso) y **Mounjaro** (tirzepatida · DM2/peso). Se evita trasladar pautas entre productos que contienen semaglutida; Wegovy oral se mantiene fuera del módulo. La información de dosis es exclusivamente documental. Se incluye contraste con BIFIMED por presentación, sin asumir financiación automática.
 
 Ver [INCRETINAS_CIMA.md](INCRETINAS_CIMA.md) para fuentes, restricciones, pruebas y límites.
+
+## 9. Metformina y dapagliflozina (12/11/2026)
+
+Se añaden fichas CIMA de **metformina Tarbis 850/1000 mg (liberación inmediata, DM2)** y **dapagliflozina Forxiga (DM2, IC y ERC)**. Los límites renales **no son intercambiables**: metformina tiene reducción de máximos diarios según filtrado y contraindicación con TFGe <30; Forxiga no requiere ajuste por TFGe pero no se recomienda iniciarla con TFGe <25. Se muestran advertencias por acidosis, situaciones agudas, contraste o cirugía, y se distingue inicio de tratamiento ya instaurado.
+
+Ver [METFORMINA_DAPAGLIFLOZINA_CIMA.md](METFORMINA_DAPAGLIFLOZINA_CIMA.md). Estas fichas siguen siendo no prescriptivas y no autorizan un calendario de seguimiento nuevo.
