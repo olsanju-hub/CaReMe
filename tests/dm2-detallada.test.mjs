@@ -6,7 +6,7 @@ import {compareIndividualGoal,evaluateDm2Detail,DM2_DETAIL_SOURCES} from '../src
 const draft=(values={})=>Object.entries(values).reduce((d,[key,value])=>
  setValue(d,key,Array.isArray(value)?JSON.stringify(value):String(value)),createDraft());
 const base={
- dm2:'Sí',dm1:'No',hba1c:'7.8',dm_objetivo_valor:'7',
+ dm2:'Sí',dm1:'No',edad:'65',embarazo:'No procede',hba1c:'7.8',dm_objetivo_valor:'7',
  dm_hba1c_fiable:'Fiable tras comprobación',fecha_hba1c:'2026-11-10',
  fecha_evaluacion:'2026-11-12',dm_sintomas:'Ausentes',dm_hipoglucemias:'No referidas',
  dm_adherencia:'Adecuada confirmada',dm_dosis_confirmadas:'Sí',
@@ -155,6 +155,43 @@ test('sin confirmación diagnóstica de IC/ERC no atribuye automáticamente indi
  assert.ok(x.checks.some(s=>s.includes('confirmar el diagnóstico')));
  assert.ok(x.checks.some(s=>s.includes('cronicidad')));
  assert.ok(!x.alternatives.some(o=>o.id==='DM2-DETAIL-SGLT2-REVIEW'));
+});
+test('embarazo, lesión renal aguda y metformina con TFGe <30 retienen candidatos',()=>{
+ for(const value of [
+  {embarazo:'Sí'},
+  {lra_sospecha:'Sí'},
+  {farmacos_clases:['Metformina'],tfge:'29.9'}
+ ]){
+  const x=review(value);
+  assert.equal(x.state,'seguridad_prioritaria',JSON.stringify(value));
+  assert.equal(x.alternatives.length,0);
+ }
+});
+test('duplicidad iDPP-4 + GLP-1 requiere conciliación antes de proponer otra clase',()=>{
+ const x=review({farmacos_clases:['iDPP-4','arGLP-1']});
+ assert.equal(x.state,'revisar_coherencia');
+ assert.equal(x.alternatives.length,0);
+ assert.ok(x.alerts.some(s=>s.includes('iDPP-4')));
+});
+test('objetivos categórico y numérico incompatibles impiden elección',()=>{
+ const x=review({dm_objetivo:'Inferior a 6,5 %',dm_objetivo_valor:'8'});
+ assert.equal(x.state,'revisar_coherencia');
+ assert.ok(x.alerts.some(s=>s.includes('objetivo categórico')));
+ assert.equal(x.alternatives.length,0);
+});
+test('embarazo sin valorar, edad o tipo de diabetes sin confirmar mantienen revisión incompleta',()=>{
+ for(const value of [
+  {embarazo:''},{edad:''},{dm1:'No valorado'}
+ ]){
+  const x=review(value);
+  assert.equal(x.state,'datos_insuficientes');
+  assert.equal(x.alternatives.length,0);
+ }
+});
+test('tramo rápido HbA1c incoherente con resultado cuantitativo impide alternativas',()=>{
+ const x=review({dm_control:'Fuera del objetivo · HbA1c inferior a 8,5 %',hba1c:'8.5'});
+ assert.equal(x.state,'revisar_coherencia');
+ assert.ok(x.alerts.some(s=>s.includes('Tramo rápido')));
 });
 test('fuentes y contrato no prescriptivo se conservan',()=>{
  const x=review();
