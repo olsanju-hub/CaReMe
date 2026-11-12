@@ -124,7 +124,7 @@ No fusionar el PR #4 ni etiquetar CaHReMe como lista para uso asistencial. Mante
 
 ## 9. Actualización posterior a la auditoría inicial (12/11/2026)
 
-**El informe precedente conserva los hallazgos del estado de partida.** Se han aplicado ya los siguientes cambios en la misma rama: (1) el CAC no puede categorizarse ni servir para proponer tratamientos con unidad no declarada o diferente de mg/g; (2) corrección de **A3 a ≥300 mg/g** conforme a KDIGO; (3) se añadió la salida propia de **DM2 rápida** con estado glucémico, comorbilidades coexistentes, tratamiento actual, seguridad, reevaluación y fuentes verificadas redGDPS/ADA 2026; (4) se actualizó el manifiesto PWA para reconocer los cálculos y la nueva orientación.
+**El informe precedente conserva los hallazgos del estado de partida.** Se han aplicado ya los siguientes cambios en la misma rama: (1) el CAC no puede categorizarse ni servir para proponer tratamientos con unidad no declarada o diferente de mg/g; (2) comprobación directa de la tabla 3 KDIGO: **A2 30–300 mg/g y A3 >300 mg/g**, conservando 300 mg/g en A2; (3) se añadió la salida propia de **DM2 rápida** con estado glucémico, comorbilidades coexistentes, tratamiento actual, seguridad, reevaluación y fuentes verificadas redGDPS/ADA 2026; (4) se actualizó el manifiesto PWA para reconocer los cálculos y la nueva orientación.
 
 **Paridad actualizada:** 6/6 módulos conservan captura, **DM2 rápida tiene ahora una primera salida clínica no prescriptiva**, pero **0/6 módulos acreditan todavía la paridad clínica completa rápida+detallada**. Quedan pendientes el detalle DM2, los otros recorridos completos y la revisión de navegador real.
 
