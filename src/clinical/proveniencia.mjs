@@ -49,7 +49,7 @@ export function auditProvenance(draft) {
   const hepatic=['fecha_ast','fecha_alt','fecha_plaquetas']
     .map(field=>get(draft,field)).filter(Boolean);
   const hepaticAllMeasured=['ast','alt','plaquetas'].every(id=>get(draft,id)!==null);
-  const hepaticDiscordant=hepaticAllMeasured && hepatic.length===3 && new Set(hepatic).size>1;
+  const hepaticDiscordant=hepaticAllMeasured && hepatic.length>=2 && new Set(hepatic).size>1;
   if(hepaticDiscordant)
     findings.push(signal('FIB4_DIFFERENT_DATES','warning',
       'FIB-4 con analíticas de fechas distintas',
