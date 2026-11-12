@@ -6,6 +6,7 @@ import { DRUGS, getDrug, getDrugRoute, reviewDrug } from './clinical/farmacologi
 import { reviewFinerenoneContinuation, reviewEmpagliflozinContinuation, confirmedAction, followUpFromHistory } from './clinical/continuidad.mjs';
 import { buildVerificationPlan } from './clinical/plan.mjs';
 import { evaluateDm2Quick } from './clinical/dm2-rapida.mjs';
+import { evaluateDm2Detail } from './clinical/dm2-detallada.mjs';
 
 let draft = createDraft();
 let confirmedHistory = [];
@@ -265,6 +266,58 @@ function dm2RapidResult() {
     <p class="privacy-note">${escape(r.scope)} Ninguna alternativa es una prescripción realizada.</p>
   </section>`;
 }
+function dm2DetailedResult() {
+  const result=evaluateDm2Detail(draft);
+  const labels={
+    revision_pendiente:'Orientación detallada para revisión',
+    datos_insuficientes:'Datos necesarios pendientes',
+    seguridad_prioritaria:'Seguridad clínica prioritaria',
+    revisar_coherencia:'Incoherencias pendientes de conciliación'
+  };
+  const li=values=>values.length
+    ?`<ul>${values.map(value=>`<li>${escape(value)}</li>`).join('')}</ul>`
+    :'<p>Sin elementos registrados en esta sección.</p>';
+  const goal=result.objective;
+  const comparison=goal.comparison;
+  const numberText=number=>number===null?'No registrado':number.toLocaleString('es-ES',{maximumFractionDigits:2});
+  return `<section id="dm2-detailed-result" class="dm2-result dm2-detailed" aria-live="polite">
+    <div class="eyebrow">DM2 DETALLADA · REDGDPS / ADA 2026 · SIN PRESCRIPCIÓN</div>
+    <h2>Interpretación del objetivo individual</h2>
+    <strong class="dm2-status ${escape(result.state)}">${escape(labels[result.state]||'Revisión pendiente')}</strong>
+    <div class="dm2-detail-metrics">
+      <div><small>HbA1c aportada</small><strong>${escape(numberText(goal.hba1c))}${goal.hba1c!==null?' %':''}</strong></div>
+      <div><small>Objetivo individual: HbA1c inferior a</small><strong>${escape(numberText(goal.limit))}${goal.limit!==null?' %':''}</strong></div>
+      <div><small>Diferencia respecto al límite</small><strong>${comparison
+        ?escape((comparison.difference>0?'+':'')+numberText(comparison.difference)+' puntos')
+        :'No evaluable'}</strong></div>
+    </div>
+    <p>${escape(goal.message)} Es un objetivo declarado por el profesional, no calculado por la aplicación.</p>
+    <h3>Situación</h3><p>${escape(result.situation)}</p>
+    ${result.alerts.length?`<div class="dm2-safety"><h3>Alertas y contradicciones</h3>${li(result.alerts)}</div>`:''}
+    ${result.missing.length?`<div class="dm2-missing"><h3>Datos esenciales pendientes</h3>${li(result.missing)}</div>`:''}
+    <h3>Conciliación del tratamiento</h3>
+    <p>Clases glucémicas registradas: ${result.medicationSummary.count}.
+      Dosis confirmadas: ${result.medicationSummary.dosesConfirmed?'Sí':'No'}.
+      Adherencia: ${escape(result.medicationSummary.adherence||'No valorada')}.</p>
+    <p>${result.medicationSummary.classes.length
+      ?escape(result.medicationSummary.classes.join(' · '))
+      :'No se han identificado clases glucémicas; esto no significa ausencia de tratamiento.'}</p>
+    <h3>Siguientes pasos</h3>${li(result.nextSteps)}
+    <h3>Opciones condicionadas a revisión</h3>
+    ${result.alternatives.length?`<div class="dm2-options">${result.alternatives.map(option=>
+      `<article><h4>${escape(option.title)}</h4><p>${escape(option.reason)}</p>
+       <strong>Antes de decidir</strong>${li(option.conditions)}</article>`).join('')}</div>`
+      :'<p>No se emiten propuestas farmacológicas con los datos actuales; revisar las alertas y la información pendiente.</p>'}
+    <h3>Comprobaciones restantes</h3>${li(result.checks)}
+    <h3>Seguimiento</h3><p>${escape(result.followUp)}</p>
+    <details class="dm2-sources"><summary>Guías y fichas de referencia</summary><ul>
+      ${Object.values(result.sources).map(source=>
+        `<li><a href="${escape(source.url)}" target="_blank" rel="noopener noreferrer">${escape(source.name)}</a>
+        <small> · ${escape(source.detail)}</small></li>`).join('')}
+    </ul></details>
+    <p class="privacy-note">No se ha prescrito ni modificado ningún medicamento. La selección individual y revisión clínica externa siguen pendientes.</p>
+  </section>`;
+}
 function consultationReview(module) {
   const fields = [...new Set([...module.quick,...module.detail])];
   const missing = fields.filter(id => fieldState(draft,id) === 'sin_registrar');
@@ -282,10 +335,10 @@ function consultationReview(module) {
         <strong class="${state}">${escape(value)}</strong></div>`;
     }).join('')}</div>
     ${calculatorsForModule(module.id)}
-    ${module.id==='dm2'?dm2RapidResult():''}
+    ${module.id==='dm2'?dm2RapidResult()+dm2DetailedResult():''}
     ${integratedCards(({dm2:'DM2',ic:'IC',erc:'Renal',obesidad:'Metabólico',hepatico:'Hepático',insulina:'DM2'})[module.id])}
     ${module.id==='dm2'
-      ? '<p class="clinical-lock">DM2: orientación rápida implementada; revisión detallada terapéutica y validación clínica formal pendientes.</p>'
+      ? '<p class="clinical-lock">DM2: orientación rápida y primera interpretación detallada implementadas. La validación clínica formal y selección por principio activo siguen pendientes.</p>'
       : `<div class="clinical-lock"><strong>Motor terapéutico pendiente de validación</strong>
       <p>${missing.length} datos sin registrar y ${invalid.length} entradas por revisar.
        Aquí aparecerán situación, siguiente paso, alternativas, seguridad, seguimiento y fuentes,
@@ -319,11 +372,15 @@ function moduleView() {
         <button type="button" class="primary" data-action="module-mode" data-mode="review">Ver resumen de datos →</button>
       </div>
     </section>`}
+    ${m.id==='dm2' && mode==='detail'?`<div class="dm2-result-trigger">
+      <button class="primary" type="button" data-action="dm2-detailed-result">Ver orientación clínica detallada →</button>
+      <p>Comparación con objetivo individual, conciliación y seguridad antes de valorar alternativas.</p>
+    </div>${current.dm2DetailedVisible?dm2DetailedResult():''}`:''}
     ${m.id==='dm2' && mode==='quick'?`<div class="dm2-result-trigger">
       <button class="primary" type="button" data-action="dm2-result">Ver orientación clínica rápida →</button>
       <p>El resultado se genera para revisión. No prescribe ni confirma diagnósticos.</p>
     </div>${current.dm2ResultVisible?dm2RapidResult():''}`:''}
-    <div class="module-note"><strong>Documentación:</strong> las recomendaciones rápidas de DM2 son provisionales; otras consultas siguen sin salida clínica validada.</div>
+    <div class="module-note"><strong>Documentación:</strong> las orientaciones rápida y detallada de DM2 son provisionales; otros módulos siguen pendientes.</div>
     <p class="privacy-note">No introduzcas identificadores del paciente. Los datos no se guardan después de cerrar o recargar.</p>
   </div>`;
 }
@@ -616,10 +673,12 @@ app.addEventListener('input', event => {
     // Refrescar tras seleccionar «ninguna» para garantizar exclusividad.
     if (selected.length !== checked.length) return render();
   } else draft=setValue(draft,id,el.value);
-  if(current.dm2ResultVisible){
-    current.dm2ResultVisible=false;
-    const oldResult=document.getElementById('dm2-rapid-result');
-    if(oldResult && typeof oldResult.remove==='function')oldResult.remove();
+  if(current.dm2ResultVisible||current.dm2DetailedVisible){
+    current.dm2ResultVisible=false;current.dm2DetailedVisible=false;
+    for(const id of ['dm2-rapid-result','dm2-detailed-result']){
+      const previous=document.getElementById(id);
+      if(previous && typeof previous.remove==='function')previous.remove();
+    }
   }
   const counter=document.getElementById('section-count');
   if (!counter) return;
@@ -631,6 +690,10 @@ app.addEventListener('click', event => {
   const btn = event.target.closest('button[data-action]');
   if (!btn) return;
   const action = btn.dataset.action;
+  if (action === 'dm2-detailed-result') {
+    if(current.page!=='module'||current.module!=='dm2'||current.mode!=='detail')return;
+    current.dm2DetailedVisible=true;return render();
+  }
   if (action === 'dm2-result') {
     if(current.page!=='module'||current.module!=='dm2'||current.mode!=='quick')return;
     current.dm2ResultVisible=true;
@@ -673,7 +736,7 @@ app.addEventListener('click', event => {
   }
   if (action === 'start-module') {
     if (!MODULE_BY_ID[btn.dataset.module]) return;
-    current.module=btn.dataset.module; current.mode='quick'; current.dm2ResultVisible=false; return navigate('module');
+    current.module=btn.dataset.module; current.mode='quick'; current.dm2ResultVisible=false; current.dm2DetailedVisible=false; return navigate('module');
   }
   if (action === 'module-mode') {
     if (!['quick','detail','review'].includes(btn.dataset.mode)) return;
