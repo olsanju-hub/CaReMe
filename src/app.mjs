@@ -1,3 +1,4 @@
+import {HTA_FIELDS,evaluateHypertension} from './clinical/hta.mjs';
 import {CKM_FIELDS,evaluateCkm} from './clinical/ckm.mjs';
 import {CV_FIELDS,OP_FIELDS,evaluateCvRisk} from './clinical/riesgo-cv.mjs';
 import { SECTIONS, FIELDS, createDraft, setValue, setUnavailable, fieldState, sectionStats, totalStats, sectionForFocus } from './model.mjs';
@@ -63,6 +64,8 @@ function home() {
       <button type="button" class="primary" data-action="cv-risk">Valorar riesgo cardiovascular →</button></section>
     <section class="info-strip"><div><strong>Estadificación CKM</strong><p>Contexto cardiovascular, renal y metabólico con evidencia disponible.</p></div>
       <button type="button" class="primary" data-action="ckm">Valorar estadio CKM →</button></section>
+    <section class="info-strip"><div><strong>Presión arterial e HTA</strong><p>Confirmación, contexto extraconsulta y revisión de objetivos.</p></div>
+      <button type="button" class="primary" data-action="hta">Valorar presión arterial →</button></section>
     <div class="module-grid">${MODULES.map(m =>
       `<button type="button" class="module-card" data-action="start-module" data-module="${escape(m.id)}">
       <span class="module-art" aria-hidden="true"><img src="./public/domain-${escape(m.domain)}.svg" alt="" /></span>
@@ -73,6 +76,41 @@ function home() {
       <p>Las seis consultas y la evaluación integral reutilizan la información disponible. Los datos permanecen en memoria y se pierden al recargar.</p></div>
       <button type="button" class="text-link" data-action="sources">Fuentes y limitaciones →</button></section>
   </div>`;
+}
+function htaResult(){
+ const r=evaluateHypertension(draft);
+ const labels={no_evaluable:'Patrón no evaluable',elevacion_sostenida:'Elevación en consulta y fuera de consulta',
+ compatible_bata_blanca:'Patrón compatible con HTA de bata blanca',efecto_bata_blanca:'Posible efecto de bata blanca durante tratamiento',
+ compatible_hta_enmascarada:'Patrón compatible con HTA enmascarada',posible_mal_control_enmascarado:'Posible mal control enmascarado',
+ sin_elevacion_diagnostica_sostenida:'Sin elevación diagnóstica en las medias disponibles',
+ consulta_rango_hta:'PA de consulta en rango de HTA: confirmar',consulta_pa_elevada:'PA de consulta elevada',consulta_pa_no_elevada:'PA de consulta no elevada'};
+ const list=xs=>xs.length?`<ul>${xs.map(x=>`<li>${escape(x)}</li>`).join('')}</ul>`:'';
+ return `<section id="hta-result" class="dm2-result" aria-live="polite"><h2>Valoración de presión arterial</h2>
+ ${r.alerts.length?`<div class="dm2-safety"><h3>Prioridad de revisión</h3>${list(r.alerts)}</div>`:''}
+ <p>${escape(labels[r.pattern]||'Revisar contexto clínico')}</p>
+ ${r.missing.length?`<h3>Información necesaria</h3>${list(r.missing)}`:''}
+ <h3>Próximos pasos</h3>${list(r.steps)}
+ <h3>Objetivo durante tratamiento</h3>${r.target
+ ?`<p>Referencia de consulta: PAS 120–129 y PAD 70–79 mmHg, si se tolera. ${escape(r.target.context)}</p>`
+ :'<p>Objetivo individual pendiente de valoración; no se aplica automáticamente un intervalo intensivo.</p>'}
+ ${r.options.length?`<h3>Opciones para revisión profesional</h3>${r.options.map(x=>`<article><h4>${escape(x.title)}</h4><p>${escape(x.detail)}</p>${list(x.checks)}</article>`).join('')}`:''}
+ <h3>Comprobaciones</h3>${list(r.checks)}<h3>Reevaluación</h3><p>${escape(r.followUp)}</p>
+ <p><a href="${escape(r.source.url)}" target="_blank" rel="noopener noreferrer">${escape(r.source.title)}</a> · ${escape(r.source.locator)}</p>
+ <p class="privacy-note">No confirma diagnósticos ni inicia o modifica una pauta individual. Validación clínica independiente pendiente.</p></section>`;
+}
+function htaView(){
+ const basic=['edad','embarazo','fecha_evaluacion','hta_conocida','pas','pad','fecha_pas','hta_consulta_calidad','hta_alarma','hta_dano_agudo','hta_tratamiento'];
+ return `<div class="page"><div class="bread"><button type="button" data-action="home">Inicio</button><span>PA e HTA</span></div>
+ <h1>Presión arterial e HTA</h1>${banner()}
+ <section class="form-card"><h2>Datos iniciales</h2><div class="field-grid">${basic.map(id=>moduleFieldMarkup(FIELDS[id])).join('')}</div>
+ <details><summary>AMPA/MAPA, seguridad y revisión de tratamiento</summary><div class="field-grid">${HTA_FIELDS.filter(id=>!basic.includes(id)).map(id=>moduleFieldMarkup(FIELDS[id])).join('')}</div></details>
+ <button type="button" class="primary" data-action="hta-result">Ver orientación de PA e HTA →</button></section>
+ ${current.htaVisible?htaResult():''}</div>`;
+}
+function htaSummaryCard(){
+ const r=evaluateHypertension(draft);
+ return `<section class="calc-card"><h2>Presión arterial e HTA</h2><p>${r.alerts.length?'Hay alertas que requieren valoración.':r.office?'Medición de consulta disponible; revisar confirmación y contexto.':'Faltan mediciones estandarizadas y contexto clínico.'}</p>
+ <button type="button" class="text-link" data-action="hta">Ver confirmación y objetivos →</button></section>`;
 }
 function ckmResult(){
  const r=evaluateCkm(draft);
@@ -637,6 +675,7 @@ function summary() {
             ? escape(draft.values[f.id]) + (f.unit ? ' ' + escape(f.unit) : '') : statusLabel(state);
           return `<div><dt>${escape(f.label)}</dt><dd class="${state}">${content}</dd></div>`;
         }).join('')}</dl></section>`).join('')}</div>
+    ${htaSummaryCard()}
     ${ckmSummaryCard()}
     <section class="calc-card"><h2>Riesgo cardiovascular</h2>
       <p>${evaluateCvRisk(draft).externalEstimate?'SCORE2-OP externo documentado: revisar procedencia y contexto.':evaluateCvRisk(draft).percent===null?'Sin porcentaje disponible: revisar elegibilidad, circuito y datos.':'SCORE2: '+escape(evaluateCvRisk(draft).percent.toFixed(1))+' % a 10 años; pendiente de revisión clínica.'}</p>
@@ -799,6 +838,7 @@ function tools() {
     <p>Estas clasificaciones utilizan los datos ya introducidos en la consulta. No generan diagnósticos ni recomendaciones terapéuticas.</p>
     ${banner()}
     <p class="privacy-note">La fecha y unidad real de cada analítica deben verificarse antes de utilizarla para decidir. Una fecha no consignada no significa que el resultado sea actual.</p>
+    ${htaSummaryCard()}
     ${ckmSummaryCard()}
     <section class="calc-card"><h2>Riesgo cardiovascular</h2>
       <p>${evaluateCvRisk(draft).externalEstimate?'SCORE2-OP externo documentado: revisar procedencia y contexto.':evaluateCvRisk(draft).percent===null?'Sin porcentaje disponible: revisar elegibilidad, circuito y datos.':'SCORE2: '+escape(evaluateCvRisk(draft).percent.toFixed(1))+' % a 10 años; pendiente de revisión clínica.'}</p>
@@ -856,7 +896,7 @@ function sources() {
   <section class="sources-card"><h2>Privacidad en esta versión</h2><p>Los valores permanecen exclusivamente en memoria durante la sesión abierta: no se usan cookies, almacenamiento local ni servicios remotos. Al recargar se pierden los datos.</p></section></div>`;
 }
 function render() {
-  const contents = current.page === 'home' ? home() : current.page === 'ckm' ? ckmView() : current.page === 'cv-risk' ? cvRiskView() : current.page === 'module' ? moduleView() : current.page === 'evaluation' ? evaluation()
+  const contents = current.page === 'home' ? home() : current.page === 'hta' ? htaView() : current.page === 'ckm' ? ckmView() : current.page === 'cv-risk' ? cvRiskView() : current.page === 'module' ? moduleView() : current.page === 'evaluation' ? evaluation()
     : current.page === 'summary' ? summary() : current.page === 'tools' ? tools() : current.page === 'drug' ? drugView() : current.page === 'followup' ? followupPage() : sources();
   app.innerHTML = header() + '<main id="main-content">' + contents + '</main>' + nav() +
     '<footer class="footer">CaHReMe · Identidad Atlántico · Prototipo no validado para uso asistencial</footer>';
@@ -870,7 +910,7 @@ function start(focus) {
 }
 app.addEventListener('input', event => {
   const el = event.target.closest('[data-field]');
-  if (!el || !['evaluation','module','drug','cv-risk','ckm'].includes(current.page)) return;
+  if (!el || !['evaluation','module','drug','cv-risk','ckm','hta'].includes(current.page)) return;
   const id=el.dataset.field;
   if (el.type === 'checkbox') {
     const checked=[...document.querySelectorAll('input[data-field="'+id+'"]:checked')].map(e=>e.value);
@@ -882,6 +922,7 @@ app.addEventListener('input', event => {
     // Refrescar tras seleccionar «ninguna» para garantizar exclusividad.
     if (selected.length !== checked.length) return render();
   } else draft=setValue(draft,id,el.value);
+  if(current.htaVisible){current.htaVisible=false;document.getElementById('hta-result')?.remove();}
   if(current.ckmVisible){current.ckmVisible=false;document.getElementById('ckm-result')?.remove();}
   if(current.cvVisible){current.cvVisible=false;document.getElementById('cv-result')?.remove();}
   if(current.renalVisible){
@@ -907,7 +948,7 @@ app.addEventListener('input', event => {
   }
   const counter=document.getElementById('section-count');
   if (!counter) return;
-  const fields=current.page==='ckm'?CKM_FIELDS:current.page==='cv-risk'?CV_FIELDS:current.page==='module'?moduleFields(current.module,current.mode):current.page==='drug'?currentContinuityFields():SECTIONS[current.step].fields.map(f=>f.id);
+  const fields=current.page==='hta'?HTA_FIELDS:current.page==='ckm'?CKM_FIELDS:current.page==='cv-risk'?CV_FIELDS:current.page==='module'?moduleFields(current.module,current.mode):current.page==='drug'?currentContinuityFields():SECTIONS[current.step].fields.map(f=>f.id);
   const n=fields.filter(key=>fieldState(draft,key)==='registrado').length;
   counter.textContent=current.page==='module'?n+' de '+fields.length+' registrados':n+' registrados';
 });
@@ -915,6 +956,8 @@ app.addEventListener('click', event => {
   const btn = event.target.closest('button[data-action]');
   if (!btn) return;
   const action = btn.dataset.action;
+  if(action==='hta'){current.htaVisible=false;return navigate('hta');}
+  if(action==='hta-result'){if(current.page!=='hta')return;current.htaVisible=true;return render();}
   if(action==='ckm'){current.ckmVisible=false;return navigate('ckm');}
   if(action==='ckm-result'){if(current.page!=='ckm')return;current.ckmVisible=true;return render();}
   if(action==='cv-risk'){current.cvVisible=false;return navigate('cv-risk');}

@@ -15,6 +15,8 @@ const NUMBER=(draft,id)=>{
   const v=VALUE(draft,id);return v===null?null:Number(v);
 };
 export const AUDIT_RULES=Object.freeze({
+  BP_SEVERE_REVIEW:'PA ≥180 sistólica o ≥110 diastólica: valorar daño agudo',
+  BP_ALARM_REVIEW:'Síntomas de alarma en la revisión de PA',
   DM_TYPE_CONFLICT:'DM1 y DM2 simultáneamente declaradas',
   HF_DECLARATION_CONFLICT:'IC ausente pero IC crónica sintomática declarada',
   RENAL_DECLARATION_REVIEW:'ERC declarada ausente con marcadores persistentes',
@@ -45,6 +47,14 @@ export function auditCrossDomain(draft) {
   const provenance=auditProvenance(draft);
   const out=[...provenance.findings];
   const yes=id=>VALUE(draft,id)==='Sí';
+  const currentSbp=NUMBER(draft,'pas'),currentDbp=NUMBER(draft,'pad'),outsideSbp=NUMBER(draft,'hta_fuera_pas'),outsideDbp=NUMBER(draft,'hta_fuera_pad');
+  if((currentSbp!==null&&currentSbp>=180)||(currentDbp!==null&&currentDbp>=110)||(outsideSbp!==null&&outsideSbp>=180)||(outsideDbp!==null&&outsideDbp>=110))
+    out.push(item('BP_SEVERE_REVIEW','critical','PA elevada que exige valoración prioritaria',
+      'PA aportada ≥180 mmHg sistólica o ≥110 mmHg diastólica: repetir la medición y valorar daño agudo de órgano antes de decisiones crónicas. La cifra sola no establece emergencia hipertensiva.', ['pas','pad','fecha_pas','hta_fuera_pas','hta_fuera_pad','hta_fuera_fecha','hta_dano_agudo']));
+  const bpFlags=readMulti(String(draft.values.hta_alarma||'[]')).filter(x=>x!=='Sin señales de alarma tras valoración');
+  if(bpFlags.length||VALUE(draft,'hta_dano_agudo')==='Sospecha clínica')
+    out.push(item('BP_ALARM_REVIEW','critical','Señales de alarma durante revisión de PA',
+      'Valorar de forma urgente síntomas o daño agudo de órgano; retener candidatos crónicos hasta aclarar seguridad, aunque la PA no esté disponible.', ['hta_alarma','hta_dano_agudo','pas','pad']));
   const no=id=>VALUE(draft,id)==='No';
   if(yes('dm1')&&yes('dm2'))
     out.push(item('DM_TYPE_CONFLICT','critical','Confirmar clasificación de diabetes',

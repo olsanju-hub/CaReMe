@@ -177,3 +177,8 @@ Se implementa `evaluateCkm` con estado final para revisión o mínimo respaldado
 ## SCORE2-OP externo · 12/11/2026
 
 Existe una vía de registro de estimación externa HeartScore con procedencia, revisión y asociación a la ficha actual. No equivale a cálculo interno OP ni cierra su requisito. [Límites y pruebas](SCORE2_OP_EXTERNO.md).
+
+
+## Primer circuito de HTA · 12/11/2026
+
+Se añade evaluación propia de PA/HTA con confirmación por método, patrones discordantes, objetivo condicionado y revisión de tratamiento sin dosis. Alertas integradas en auditoría transversal. [Contrato y límites](HTA_ESC_2024.md). La matriz original marca HTA parcial, pendiente de CIMA por producto, circuitos completos y validación.

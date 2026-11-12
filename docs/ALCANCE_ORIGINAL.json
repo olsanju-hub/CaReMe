@@ -12,9 +12,9 @@
     },
     {
       "id": "hta",
-      "status": "missing",
-      "evidence": "Captura de PA y alertas; no algoritmo propio",
-      "pending": "Confirmación diagnóstica, objetivos, tratamiento y seguimiento"
+      "status": "partial",
+      "evidence": "src/clinical/hta.mjs: umbrales por método, patrones, confirmación, objetivo condicionado y revisión de tratamiento; alertas transversales",
+      "pending": "Algoritmos/dosis por producto y titulación CIMA, HTA resistente/secundaria, validación clínica y QA real"
     },
     {
       "id": "dislipemia",
@@ -98,10 +98,9 @@
     "full_mvp": false
   },
   "next": [
-    "Revisión clínica del contrato CKM y frontera renal",
-    "SCORE2-OP/Diabetes/CKD Add-On con casos de referencia",
-    "Algoritmo HTA",
+    "Cálculo interno SCORE2-OP pendiente de parámetros primarios; variantes restantes",
     "Algoritmo dislipemia",
+    "Completar HTA por producto y derivación",
     "MASLD y obesidad",
     "Plan integral y validación",
     "Publicación versionada"

@@ -112,3 +112,8 @@ Se utiliza la [ESC 2026](https://www.escardio.org/guidelines/clinical-practice-g
 ## CKM 2026 · contrato y estado actual
 
 Se incorpora la clasificación descriptiva CKM desde la tabla 4 AHA/ACC/ADA/ASN 2026, sin extrapolar sus umbrales a diagnóstico español de HTA o tratamientos. [Fuentes, discrepancias y auditoría](CKM_2026.md). Se conserva explícitamente la discrepancia de frontera renal y se distingue SCORE2 de PREVENT-CVD. El módulo no calcula PREVENT ni asigna estadio 0 desde datos ausentes. Pendiente revisión clínica independiente.
+
+
+## PA e HTA: ESC 2024
+
+Se verifica la guía oficial ESC 2024 para el primer circuito dirigido. [Reglas, fuente primaria, barreras operativas y auditoría](HTA_ESC_2024.md). No se confunde el umbral CKM 130/80 con diagnóstico de HTA ni se convierten referencias de clases en pautas individuales. CIMA por producto/dosis y validación clínica independiente siguen pendientes.

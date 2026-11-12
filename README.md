@@ -277,3 +277,13 @@ Se reauditaron los límites de ARM conforme a ESC 2026 y CIMA de finerenona. El 
 - Cambiar datos o disponibilidad invalida la confirmación; asociación de la ficha solo en memoria. Sin transmisión automática de datos a HeartScore.
 - **521/521 pruebas locales y sintaxis superadas**. Casos de transcripción e interfaz simulada; no validación numérica de la fórmula OP ni QA real móvil.
 - [Auditoría y límites](docs/SCORE2_OP_EXTERNO.md). PR en borrador; pendiente motor OP interno, variantes restantes y revisión clínica.
+
+
+## Primer algoritmo dirigido de PA e HTA · 12/11/2026
+
+- Motor `src/clinical/hta.mjs`: separa PA de consulta de AMPA/MAPA, distingue patrones compatibles con bata blanca/enmascarada y confirma calidad/fechas antes de interpretar.
+- Revisión de objetivos durante tratamiento condicionada por edad, fragilidad, ortostatismo y tolerancia. Sin diagnóstico o pauta automática.
+- Orientación de confirmación y revisión farmacológica por clases, con CIMA por producto/dosis todavía pendiente. Alertas graves de PA/síntomas retienen candidatos en todos los dominios.
+- Captura inicial y revisión desplegable, accesos en inicio/herramientas/resumen, datos compartidos. Seis consultas previas conservadas.
+- **573/573 pruebas locales y sintaxis superadas**. UI con DOM simulado; revisión clínica independiente y pruebas reales en móvil pendientes.
+- [Contrato y auditoría HTA](docs/HTA_ESC_2024.md). HTA figura parcial en el alcance original. SCORE2-OP interno sigue pendiente; PR en borrador.
