@@ -97,3 +97,7 @@ Se verificó visualmente la tabla 3 KDIGO 2024, página S137: **A2 comprende 30�
 ## Insulinización DM2 (12/11/2026)
 
 La nueva ruta se fundamenta en consenso ADA/EASD 2026, ADA 2026 secciones 6, 9 y 13, redGDPS de insulinización 2022 como referencia contextual española y ficha CIMA individual de insulina glargina U100 como ejemplo de producto. Las pautas de referencia no se convierten en dosis individualizadas. [Especificación y enlaces oficiales](INSULINIZACION_ADA_EASD_2026.md).
+
+## Insuficiencia cardíaca ESC 2026 (12/11/2026)
+
+La guía ESC 2026 (publicada 28/08/2026) reemplaza la clasificación ESC 2021/2023 de FEVI ≤40/41–49/≥50 por dos fenotipos: <50 y ≥50 con evidencia de IC-FEp. La valoración dirigida incluye congestión, clase farmacológica, seguridad renal/potasio y signos de alarma, con referencias CIMA separadas de las indicaciones de guía. [Especificación con enlaces primarios](IC_ESC_2026.md).
