@@ -386,7 +386,10 @@ function heartFailureResult(mode){
     <h3>Clases y actuaciones a considerar</h3>
     ${r.options.length?`<div class="dm2-options">${r.options.map(x=>
        `<article><h4>${escape(x.title)}</h4><p>${escape(x.reason)}</p>
-        <strong>Antes de decidir</strong>${list(x.checks)}</article>`).join('')}</div>`
+        <strong>Antes de decidir</strong>${list(x.checks)}
+        ${x.id==='HF-FINERENONE-CIMA-REVIEW'
+          ?'<button type="button" class="text-link" data-action="open-drug" data-drug-id="finerenona" data-route-id="ic_fevi40">Comprobar ficha CIMA de finerenona para IC →</button>'
+          :''}</article>`).join('')}</div>`
       :'<p>Sin candidatos de inicio: completar diagnóstico, estabilidad y seguridad antes de valorar tratamientos.</p>'}
     <h3>Comprobaciones</h3>${list(r.checks)}
     <h3>Reevaluación</h3><p>${escape(r.followUp)}</p>
