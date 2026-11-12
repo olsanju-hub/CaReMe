@@ -4,6 +4,8 @@
 **Estado:** especificación funcional; no es una validación clínica.  
 **Referencia inspeccionada:** [aarnal80/diabetes-congreso-mobile](https://github.com/aarnal80/diabetes-congreso-mobile), README, `index.html`, `app.js` y `flow.js`. README: **GlucoGuía 1.6**, noviembre de 2026, Dr. Antonio Arnal y Francisco M. Adán Gil. Web de referencia: https://aarnal80.github.io/diabetes-congreso-mobile/
 
+> **Actualización del 12/11/2026:** este documento conserva la **especificación y el mapa de brechas históricos al 11/11/2026**. Las secciones que dicen «no implementado» corresponden a esa fecha y no sustituyen la revisión posterior. Para estado real verificado mediante código, consultar [Auditoría de paridad funcional 12/11/2026](AUDITORIA_PARIDAD_FUNCIONAL_2026-11-12.md) y [inventario de cobertura](COBERTURA_FUNCIONAL_GLUCOGUIA.json). Todavía **no existe paridad completa de resultados clínicos en ningún módulo**.
+
 ## Decisión vinculante de producto
 
 **CaHReMe conservará como mínimo la cobertura funcional de los seis módulos de la referencia —consulta rápida, revisión detallada, campos clínicos, orientación y fuentes— y la ampliará con evaluación integral cardiovascular-hepática-renal-metabólica.** La información de la referencia se utiliza como inventario funcional, no como autoridad clínica ni como licencia para copiar código, textos extensos, iconografía o PDF.
