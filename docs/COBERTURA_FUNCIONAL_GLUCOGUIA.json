@@ -1,0 +1,242 @@
+{
+  "schema": "cahreme-functional-coverage-v1",
+  "audited_on": "2026-11-12",
+  "basis": {
+    "reference_repo": "aarnal80/diabetes-congreso-mobile",
+    "reference_version": "GlucoGuía 1.6",
+    "reference_files": [
+      "README.md",
+      "app.js",
+      "flow.js",
+      "mobile.js",
+      "drug-legend.js",
+      "sw.js",
+      "index.html",
+      "manifest.webmanifest"
+    ],
+    "reference_app_js_blob": "c60bf8bc72db8a0a4b863b8e50c0a8d04dfb3705",
+    "target_repo": "olsanju-hub/CaReMe",
+    "target_branch": "feat/prototipo-interfaz",
+    "method": "source-code inspection; no real-device equivalence test"
+  },
+  "status_meanings": {
+    "implemented": "Capture or behavior present and identifiable in source, not clinical approval",
+    "partial": "One or more expected functions exist but core result is not equivalent",
+    "missing": "No equivalent operational behavior verified"
+  },
+  "modules": [
+    {
+      "id": "dm2",
+      "reference_quick": [
+        "clinical_priority",
+        "glycemic_control_relative_to_target"
+      ],
+      "reference_detail": [
+        "hba1c",
+        "individualized_target",
+        "egfr",
+        "bmi",
+        "symptoms",
+        "comorbidities",
+        "medications"
+      ],
+      "capture": "implemented",
+      "quick_clinical_result": "missing",
+      "detailed_decision": "partial",
+      "priority": "P0",
+      "gap": "No complete result by glycemic branch, HbA1c 8.5% symptomatic status, number of treatment classes and objective; general multiorgan candidates are not module parity."
+    },
+    {
+      "id": "ic",
+      "reference_quick": [
+        "fevi_category",
+        "congestion"
+      ],
+      "reference_detail": [
+        "fevi_exact",
+        "egfr",
+        "congestion",
+        "medications"
+      ],
+      "capture": "implemented",
+      "quick_clinical_result": "missing",
+      "detailed_decision": "partial",
+      "priority": "P1",
+      "gap": "No validated decision output by FEVI and congestion, no equivalent heart-failure pillar/diuretic review."
+    },
+    {
+      "id": "erc",
+      "reference_quick": [
+        "egfr",
+        "uacr_mg_per_g",
+        "chronicity"
+      ],
+      "reference_detail": [
+        "egfr",
+        "uacr",
+        "chronicity",
+        "potassium",
+        "medications"
+      ],
+      "capture": "implemented",
+      "quick_clinical_result": "partial",
+      "detailed_decision": "partial",
+      "priority": "P1",
+      "gap": "G/A and candidates exist; complete renal action pathway, potassium urgency, RAAS and follow-up cadence not equivalent."
+    },
+    {
+      "id": "obesidad",
+      "reference_quick": [
+        "bmi",
+        "dm2",
+        "dominant_comorbidity"
+      ],
+      "reference_detail": [
+        "bmi",
+        "dm2",
+        "comorbidities",
+        "medications"
+      ],
+      "capture": "implemented",
+      "quick_clinical_result": "partial",
+      "detailed_decision": "partial",
+      "priority": "P1",
+      "gap": "Weight-drug candidate exists; structured lifestyle, sarcopenia, reevaluation and surgery referral pathways absent."
+    },
+    {
+      "id": "hepatico",
+      "reference_quick": [
+        "age",
+        "reported_fib4",
+        "initial_assessment",
+        "optional_elastography"
+      ],
+      "reference_detail": [
+        "age",
+        "reported_fib4",
+        "initial_assessment",
+        "optional_elastography"
+      ],
+      "capture": "implemented",
+      "quick_clinical_result": "partial",
+      "detailed_decision": "partial",
+      "priority": "P1",
+      "gap": "Calculated FIB-4 exists; externally reported FIB-4 not used for decision, elastography and referral transitions missing."
+    },
+    {
+      "id": "insulina",
+      "reference_quick": [
+        "start_intensify_deintensify",
+        "clinical_profile"
+      ],
+      "reference_detail": [
+        "insulin_stage",
+        "bmi",
+        "egfr",
+        "frailty",
+        "special_situations",
+        "medications"
+      ],
+      "capture": "implemented",
+      "quick_clinical_result": "missing",
+      "detailed_decision": "missing",
+      "priority": "P0",
+      "gap": "Three routes captured but no insulin-specific recommendation flow or evidence-verified monitoring decisions."
+    }
+  ],
+  "shared": [
+    {
+      "id": "six_modules",
+      "status": "implemented",
+      "evidence": "src/consultas.mjs MODULES; src/app.mjs moduleView"
+    },
+    {
+      "id": "integral_route",
+      "status": "implemented",
+      "evidence": "src/app.mjs evaluation; summary"
+    },
+    {
+      "id": "shared_session_values",
+      "status": "implemented",
+      "evidence": "src/model.mjs createDraft and setValue; src/app.mjs shared draft"
+    },
+    {
+      "id": "g_a_and_calculated_fib4",
+      "status": "implemented",
+      "evidence": "src/clinical/engine.mjs"
+    },
+    {
+      "id": "drug_monographs",
+      "status": "partial",
+      "evidence": "src/clinical/farmacologia.mjs seven product entries, without patient-specific prescriptions"
+    },
+    {
+      "id": "reference_pdf_library",
+      "status": "missing",
+      "evidence": "src/app.mjs sources() has GitHub documentation links, not original algorithm PDFs"
+    },
+    {
+      "id": "drug_class_legend",
+      "status": "missing",
+      "evidence": "No equivalent contextual pharmacological class/principle-active legend in directed results"
+    },
+    {
+      "id": "reading_settings",
+      "status": "missing",
+      "evidence": "No user-facing reading size/contrast controls verified"
+    },
+    {
+      "id": "offline_pwa",
+      "status": "partial",
+      "evidence": "manifest.webmanifest and service-worker.js exist; real device install/offline untested"
+    },
+    {
+      "id": "real_device_review",
+      "status": "missing",
+      "evidence": "No manual iPhone/desktop validation evidence available"
+    },
+    {
+      "id": "individualized_therapeutic_plan",
+      "status": "missing",
+      "evidence": "src/app.mjs 'Motor terapéutico pendiente de validación'"
+    },
+    {
+      "id": "clinical_safety_audit",
+      "status": "implemented",
+      "evidence": "src/clinical/auditoria.mjs and src/clinical/plan.mjs; independent addition"
+    }
+  ],
+  "blockers": [
+    {
+      "id": "CAC_UNIT_ABSENT_ASSUMED_MG_G",
+      "priority": "P0",
+      "owner_area": "src/clinical/engine.mjs and src/clinical/proveniencia.mjs",
+      "finding": "Renal engine accepts CAC when unidad_cac is missing; source description implies missing unit is not validated. Restrict downstream interpretation until unit is explicit."
+    },
+    {
+      "id": "REPORTED_FIB4_NOT_USED",
+      "priority": "P1",
+      "owner_area": "src/clinical/engine.mjs",
+      "finding": "fib4_informado is parsed but reported.value is not used by decision/status; quick hepatic route cannot evaluate entered FIB-4 alone."
+    },
+    {
+      "id": "NO_MODULE_SPECIFIC_RESULT",
+      "priority": "P0",
+      "owner_area": "src/app.mjs consultationReview",
+      "finding": "Directed module shows capture summary and clinical-lock, not equivalent quick/detailed decision flow."
+    },
+    {
+      "id": "MANIFEST_DESCRIPTION_STALE",
+      "priority": "P2",
+      "owner_area": "manifest.webmanifest",
+      "finding": "Manifest still describes 'sin cálculos', although renal G/A and FIB-4 are implemented."
+    }
+  ],
+  "release_gate": {
+    "verified_full_parity": false,
+    "clinical_validation": "pending",
+    "mobile_qa": "pending",
+    "keep_pr_draft": true,
+    "no_prescription": true
+  }
+}
