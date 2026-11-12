@@ -73,6 +73,31 @@ test('si consta iSGLT2 no se sugiere añadir otro',()=>{
   assert.ok(has(x.context,'SGLT2-EXISTING'));
   assert.ok(!has(x.options,'SGLT2-REVIEW'));
 });
+test('obesidad sin DM2: referencia CIMA para tratamiento del peso, no indicación hepática',()=>{
+ const x=integratePatient(draft({imc:'31',dm2:'No',esteatosis:'Sí'}));
+ assert.ok(has(x.options,'WEIGHT-REVIEW'));
+ assert.ok(!has(x.context,'LIVER-NOT-INDICATION'));
+ const card=x.options.find(c=>c.id==='WEIGHT-REVIEW');
+ assert.ok(card.sources.includes('CIMA-AEMPS-WEGOVY-SC'));
+ assert.ok(card.sources.includes('CIMA-AEMPS-MOUNJARO'));
+ assert.ok(card.summary.includes('no determina elegibilidad'));
+});
+test('sobrepeso con comorbilidad explicitada, sin DM2, puede activar solo una revisión condicionada',()=>{
+ const x=integratePatient(draft({imc:'27',dm2:'No',comorbilidad_peso_confirmada:'Sí'}));
+ assert.ok(has(x.options,'WEIGHT-REVIEW'));
+ const y=integratePatient(draft({imc:'29.99',dm2:'No',comorbilidad_peso_confirmada:'No'}));
+ assert.ok(!has(y.options,'WEIGHT-REVIEW'));
+ const z=integratePatient(draft({imc:'26.99',dm2:'No',comorbilidad_peso_confirmada:'Sí'}));
+ assert.ok(!has(z.options,'WEIGHT-REVIEW'));
+});
+test('tratamiento incretínico actual y proceso agudo evitan nuevo candidato de peso',()=>{
+ const ongoing=integratePatient(draft({imc:'34',dm2:'No',farmacos_clases:['arGLP-1']}));
+ assert.ok(has(ongoing.context,'WEIGHT-EXISTING'));
+ assert.ok(!has(ongoing.options,'WEIGHT-REVIEW'));
+ const acute=integratePatient(draft({imc:'34',dm2:'No',situacion_aguda:'Enfermedad aguda grave'}));
+ assert.ok(has(acute.context,'WEIGHT-ACUTE-DEFER'));
+ assert.ok(!has(acute.options,'WEIGHT-REVIEW'));
+});
 test('liver-only no convierte MASLD en indicación farmacológica',()=>{
   const x=integratePatient(draft({hepatopatia:'Sí',esteatosis:'Sí'}));
   assert.ok(has(x.context,'LIVER-NOT-INDICATION'));
