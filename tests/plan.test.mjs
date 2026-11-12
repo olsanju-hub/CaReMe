@@ -12,7 +12,7 @@ const draft=(values={})=>Object.entries(values).reduce((d,[k,v])=>
 const has=(array,id)=>array.some(x=>x.id===id);
 
 test('un plan no contiene dosis prescritas ni actuaciones supuestamente realizadas',()=>{
- const p=buildVerificationPlan(draft({dm2:'Sí',erc:'Sí',tfge:'55',cac:'90'}));
+ const p=buildVerificationPlan(draft({dm2:'Sí',erc:'Sí',tfge:'55',cac:'90',unidad_cac:'mg/g'}));
  assert.equal(p.metadata.noPrescription,true);
  assert.equal(p.metadata.noPerformedActionsInferred,true);
  assert.equal(p.confirmedActions,0);
@@ -33,7 +33,7 @@ test('una incoherencia crítica suprime candidatos y crea comprobación identifi
  assert.ok(p.checks.some(x=>x.priority==='seguridad'));
 });
 test('no se inventa cronicidad de ERC ni fecha de analítica ausente',()=>{
- const p=buildVerificationPlan(draft({erc:'Sí',persistencia:'No consta',tfge:'53',cac:'70'}));
+ const p=buildVerificationPlan(draft({erc:'Sí',persistencia:'No consta',tfge:'53',cac:'70',unidad_cac:'mg/g'}));
  assert.ok(has(p.checks,'VERIFY-CKD-CHRONICITY'));
  assert.ok(has(p.checks,'VERIFY-LAB-DATES'));
  assert.ok(p.checks.some(x=>x.detail.includes('No considerar los resultados automáticamente recientes')));
@@ -43,7 +43,7 @@ test('si el potasio no consta, el plan lo solicita cuando se declara finerenona 
  assert.ok(has(p.checks,'COMPLETE-POTASSIUM'));
 });
 test('plan programado únicamente tras confirmación de actuación real',()=>{
- const d=draft({erc:'Sí',persistencia:'Sí',tfge:'55',cac:'90',potasio:'4.3'});
+ const d=draft({erc:'Sí',persistencia:'Sí',tfge:'55',cac:'90',unidad_cac:'mg/g',potasio:'4.3'});
  const none=buildVerificationPlan(d,[]);
  assert.equal(none.followup.length,0);
  const history=confirmedAction([],{drugId:'finerenona',routeId:'erc_dm2',
