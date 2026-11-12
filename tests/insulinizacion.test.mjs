@@ -241,12 +241,14 @@ test('no se ofrecen ajustes sin valorar hipoglucemia nocturna',()=>{
  assert.ok(x.missing.some(s=>s.includes('hipoglucemia nocturna')));
 });
 test('una consulta rápida con DM2 no confirmada explica el circuito sin emitir candidato',()=>{
- for(const [phase,phrase] of [
-   [INSULIN_PHASES.inicio,'GLP-1'],
-   [INSULIN_PHASES.intensificacion,'posprandiales'],
-   [INSULIN_PHASES.desintensificacion,'simplificación']
+ for(const [phase,phrase,scheme] of [
+   [INSULIN_PHASES.inicio,'GLP-1','Sin insulina'],
+   [INSULIN_PHASES.intensificacion,'posprandiales','Solo basal'],
+   [INSULIN_PHASES.desintensificacion,'simplificación','Basal y prandial']
  ]){
-   const x=run({dm2:'',insulina_fase:phase},'quick');
+   const isInsulin=scheme!=='Sin insulina';
+   const x=run({dm2:'',insulina_fase:phase,insulina_esquema:scheme,
+      farmacos_clases:isInsulin?['Insulina']:['Metformina']},'quick');
    assert.equal(x.state,'datos_insuficientes');
    assert.equal(x.options.length,0);
    assert.ok(x.nextSteps.some(s=>s.includes(phrase)),phase);
