@@ -62,6 +62,7 @@ export function gfrCategory(number) {
     : number >= 30 ? 'G3b'
     : number >= 15 ? 'G4' : 'G5';
 }
+// KDIGO 2024, tabla 3, p. S137: A1 <30, A2 30–300, A3 >300 mg/g.
 export function albuminuriaCategory(number) {
   if (typeof number !== 'number' || !Number.isFinite(number) || number < 0) return null;
   return number < 30 ? 'A1' : number <= 300 ? 'A2' : 'A3';
