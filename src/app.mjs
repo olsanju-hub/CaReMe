@@ -77,6 +77,9 @@ function moduleFieldMarkup(f) {
       `<option value="${escape(opt)}" ${value===opt?'selected':''}>${escape(opt)}</option>`).join('')}</select>`;
   } else if (f.type === 'textarea') {
     control = `<textarea id="f-${escape(f.id)}" data-field="${escape(f.id)}" rows="3" placeholder="Sin registrar" ${unavailable?'disabled':''}>${escape(value)}</textarea>`;
+  } else if (f.type === 'date') {
+    control = `<input id="f-${escape(f.id)}" type="date" data-field="${escape(f.id)}"
+       value="${escape(value)}" ${unavailable?'disabled':''}/>`;
   } else {
     control = `<div class="input-unit"><input id="f-${escape(f.id)}" type="number" data-field="${escape(f.id)}"
        inputmode="decimal" step="${f.integer?'1':'any'}" ${f.min !== undefined ? `min="${f.min}"` : 'min="0"'}
@@ -265,6 +268,9 @@ function fieldMarkup(f) {
       `<option value="${escape(x)}" ${value === x ? 'selected' : ''}>${escape(x)}</option>`).join('')}</select>`;
   } else if (f.type === 'textarea') {
     control = `<textarea id="f-${f.id}" data-field="${f.id}" rows="3" placeholder="Sin registrar" ${unavailable ? 'disabled' : ''}>${escape(value)}</textarea>`;
+  } else if (f.type === 'date') {
+    control = `<input id="f-${f.id}" data-field="${f.id}" type="date"
+      value="${escape(value)}" ${unavailable?'disabled':''}/>`;
   } else {
     control = `<div class="input-unit"><input id="f-${f.id}" data-field="${f.id}" type="number" step="${f.integer ? '1' : 'any'}" min="${f.min ?? '0'}" ${f.max ? `max="${f.max}"` : ''}
       inputmode="decimal" value="${escape(value)}" placeholder="Sin registrar" ${unavailable ? 'disabled' : ''} />${f.unit ? `<span>${escape(f.unit)}</span>` : ''}</div>`;
@@ -475,6 +481,7 @@ function tools() {
     <div class="eyebrow">MOTOR CLÍNICO · FASE DE CÁLCULO</div><h1>Herramientas de evaluación</h1>
     <p>Estas clasificaciones utilizan los datos ya introducidos en la consulta. No generan diagnósticos ni recomendaciones terapéuticas.</p>
     ${banner()}
+    <p class="privacy-note">La fecha y unidad real de cada analítica deben verificarse antes de utilizarla para decidir. Una fecha no consignada no significa que el resultado sea actual.</p>
     <div class="calc-stack">${renalResultCard()}${fib4ResultCard()}</div>
     ${integratedCards()}
     ${pharmaLibrary()}
