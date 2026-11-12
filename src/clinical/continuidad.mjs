@@ -308,8 +308,11 @@ export function followUpFromHistory(history) {
     const subsequent=history.some((action,index)=>
       index>event.actionIndex && action.confirmed===true &&
       action.drugId===event.drugId && action.routeId===event.routeId &&
-      ['ajuste','interrupcion','reinicio','inicio'].includes(action.type) &&
-      parseISO(action.performedOn) && action.performedOn<=event.dueOn);
+      (event.drugId==='finerenona'
+        ? ['ajuste','interrupcion','reinicio','inicio'].includes(action.type)
+        : ['interrupcion','reinicio'].includes(action.type)) &&
+      parseISO(action.performedOn) &&
+      action.performedOn>=event.performedOn && action.performedOn<=event.dueOn);
     event.status=subsequent?'sustituido':'previsto';
     // Ninguna fecha se elimina: se conserva el historial documental de controles.
   }
