@@ -160,3 +160,11 @@ Se requiere para cada módulo:
 6. Política de revisión y actualización científica.
 
 **Control de cambios:** 0.1 — documento rector inicial. Pendiente de aprobación como especificación congelada.
+
+
+
+## Control del alcance original · 12/11/2026
+
+La equivalencia con seis consultas de GlucoGuía no reduce el alcance original: riesgo cardiovascular, HTA, dislipemia, obesidad, DM2, ERC, IC y MASLD, con estadificación CKM como requisito transversal. El estado vigente se consulta en [ALCANCE_ORIGINAL.json](ALCANCE_ORIGINAL.json); las secciones históricas anteriores se conservan como planificación, no como evidencia de implementación o validación.
+
+Se incorpora el primer SCORE2 para el grupo elegible 40–69 años en España y elección de circuito para exclusiones. CKM, HTA y dislipemia siguen pendientes. [Contrato de riesgo y auditoría](RIESGO_CV_SCORE2.md). No se ha finalizado el MVP.

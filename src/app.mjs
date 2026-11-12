@@ -1,3 +1,4 @@
+import {CV_FIELDS,evaluateCvRisk} from './clinical/riesgo-cv.mjs';
 import { SECTIONS, FIELDS, createDraft, setValue, setUnavailable, fieldState, sectionStats, totalStats, sectionForFocus } from './model.mjs';
 import { MODULES, MODULE_BY_ID, moduleFields, readMulti } from './consultas.mjs';
 import { SOURCES, evaluateRenal, evaluateFib4 } from './clinical/engine.mjs';
@@ -57,6 +58,8 @@ function home() {
     <div class="section-heading"><div><div class="eyebrow">SEIS CONSULTAS CLÍNICAS</div><h2>¿Qué necesitas valorar?</h2></div>
       <p>Consulta rápida con orientación preliminar de DM2; otros módulos aún pendientes de validación.</p>
     </div>
+    <section class="info-strip"><div><strong>Riesgo cardiovascular</strong><p>SCORE2 para el grupo elegible en España; selección de circuito cuando no procede.</p></div>
+      <button type="button" class="primary" data-action="cv-risk">Valorar riesgo cardiovascular →</button></section>
     <div class="module-grid">${MODULES.map(m =>
       `<button type="button" class="module-card" data-action="start-module" data-module="${escape(m.id)}">
       <span class="module-art" aria-hidden="true"><img src="./public/domain-${escape(m.domain)}.svg" alt="" /></span>
@@ -67,6 +70,22 @@ function home() {
       <p>Las seis consultas y la evaluación integral reutilizan la información disponible. Los datos permanecen en memoria y se pierden al recargar.</p></div>
       <button type="button" class="text-link" data-action="sources">Fuentes y limitaciones →</button></section>
   </div>`;
+}
+function cvRiskView(){
+ const r=evaluateCvRisk(draft);
+ const list=xs=>xs.length?`<ul>${xs.map(x=>`<li>${escape(x)}</li>`).join('')}</ul>`:'';
+ return `<div class="page"><div class="bread"><button type="button" data-action="home">Inicio</button><span>Riesgo cardiovascular</span></div>
+  <h1>Riesgo cardiovascular</h1>${banner()}
+  <section class="form-card"><h2>Elegibilidad y datos disponibles</h2><p>Los valores se comparten con la evaluación integral. No se solicita una prueba solo para completar la herramienta.</p>
+  <div class="field-grid">${CV_FIELDS.map(id=>moduleFieldMarkup(FIELDS[id])).join('')}</div>
+  <button type="button" class="primary" data-action="cv-risk-result">Ver evaluación de riesgo →</button></section>
+  ${current.cvVisible?`<section id="cv-result" class="dm2-result" aria-live="polite"><h2>Resultado y siguiente paso</h2>
+  ${r.percent!==null?`<p><strong>${escape(r.percent.toFixed(1))} % a 10 años</strong> · SCORE2, región de riesgo bajo (España). Resultado en revisión clínica.</p>`:'<p>No se emite un porcentaje con estos datos o en este circuito.</p>'}
+  ${r.alerts.length?`<div class="dm2-safety">${list(r.alerts)}</div>`:''}
+  ${r.missing.length?`<h3>Información necesaria</h3>${list(r.missing)}`:''}
+  ${list(r.steps)}<details><summary>Fuentes y límites</summary>${r.sources.map(x=>`<p><a href="${escape(x.url)}" target="_blank" rel="noopener noreferrer">${escape(x.title)}</a> · ${escape(x.locator)}</p>`).join('')}</details>
+  <p class="privacy-note">Sin prescripción ni clasificación CKM automática. Validación clínica independiente pendiente.</p></section>`:''}
+ </div>`;
 }
 function moduleFieldMarkup(f) {
   const unavailable = draft.unavailable.includes(f.id);
@@ -583,6 +602,9 @@ function summary() {
             ? escape(draft.values[f.id]) + (f.unit ? ' ' + escape(f.unit) : '') : statusLabel(state);
           return `<div><dt>${escape(f.label)}</dt><dd class="${state}">${content}</dd></div>`;
         }).join('')}</dl></section>`).join('')}</div>
+    <section class="calc-card"><h2>Riesgo cardiovascular</h2>
+      <p>${evaluateCvRisk(draft).percent===null?'Sin porcentaje disponible: revisar elegibilidad, circuito y datos.':'SCORE2: '+escape(evaluateCvRisk(draft).percent.toFixed(1))+' % a 10 años; pendiente de revisión clínica.'}</p>
+      <button type="button" class="text-link" data-action="cv-risk">Ver evaluación y fuentes →</button></section>
     <div class="calc-stack">${renalResultCard()}${fib4ResultCard()}</div>
     ${verificationPanel()}
     ${integratedCards()}
@@ -741,6 +763,9 @@ function tools() {
     <p>Estas clasificaciones utilizan los datos ya introducidos en la consulta. No generan diagnósticos ni recomendaciones terapéuticas.</p>
     ${banner()}
     <p class="privacy-note">La fecha y unidad real de cada analítica deben verificarse antes de utilizarla para decidir. Una fecha no consignada no significa que el resultado sea actual.</p>
+    <section class="calc-card"><h2>Riesgo cardiovascular</h2>
+      <p>${evaluateCvRisk(draft).percent===null?'Sin porcentaje disponible: revisar elegibilidad, circuito y datos.':'SCORE2: '+escape(evaluateCvRisk(draft).percent.toFixed(1))+' % a 10 años; pendiente de revisión clínica.'}</p>
+      <button type="button" class="text-link" data-action="cv-risk">Ver evaluación y fuentes →</button></section>
     <div class="calc-stack">${renalResultCard()}${fib4ResultCard()}</div>
     ${verificationPanel()}
     ${integratedCards()}
@@ -794,7 +819,7 @@ function sources() {
   <section class="sources-card"><h2>Privacidad en esta versión</h2><p>Los valores permanecen exclusivamente en memoria durante la sesión abierta: no se usan cookies, almacenamiento local ni servicios remotos. Al recargar se pierden los datos.</p></section></div>`;
 }
 function render() {
-  const contents = current.page === 'home' ? home() : current.page === 'module' ? moduleView() : current.page === 'evaluation' ? evaluation()
+  const contents = current.page === 'home' ? home() : current.page === 'cv-risk' ? cvRiskView() : current.page === 'module' ? moduleView() : current.page === 'evaluation' ? evaluation()
     : current.page === 'summary' ? summary() : current.page === 'tools' ? tools() : current.page === 'drug' ? drugView() : current.page === 'followup' ? followupPage() : sources();
   app.innerHTML = header() + '<main id="main-content">' + contents + '</main>' + nav() +
     '<footer class="footer">CaHReMe · Identidad Atlántico · Prototipo no validado para uso asistencial</footer>';
@@ -808,7 +833,7 @@ function start(focus) {
 }
 app.addEventListener('input', event => {
   const el = event.target.closest('[data-field]');
-  if (!el || !['evaluation','module','drug'].includes(current.page)) return;
+  if (!el || !['evaluation','module','drug','cv-risk'].includes(current.page)) return;
   const id=el.dataset.field;
   if (el.type === 'checkbox') {
     const checked=[...document.querySelectorAll('input[data-field="'+id+'"]:checked')].map(e=>e.value);
@@ -820,6 +845,7 @@ app.addEventListener('input', event => {
     // Refrescar tras seleccionar «ninguna» para garantizar exclusividad.
     if (selected.length !== checked.length) return render();
   } else draft=setValue(draft,id,el.value);
+  if(current.cvVisible){current.cvVisible=false;document.getElementById('cv-result')?.remove();}
   if(current.renalVisible){
     current.renalVisible=false;
     document.getElementById('renal-result')?.remove();
@@ -843,7 +869,7 @@ app.addEventListener('input', event => {
   }
   const counter=document.getElementById('section-count');
   if (!counter) return;
-  const fields=current.page==='module'?moduleFields(current.module,current.mode):current.page==='drug'?currentContinuityFields():SECTIONS[current.step].fields.map(f=>f.id);
+  const fields=current.page==='cv-risk'?CV_FIELDS:current.page==='module'?moduleFields(current.module,current.mode):current.page==='drug'?currentContinuityFields():SECTIONS[current.step].fields.map(f=>f.id);
   const n=fields.filter(key=>fieldState(draft,key)==='registrado').length;
   counter.textContent=current.page==='module'?n+' de '+fields.length+' registrados':n+' registrados';
 });
@@ -851,6 +877,8 @@ app.addEventListener('click', event => {
   const btn = event.target.closest('button[data-action]');
   if (!btn) return;
   const action = btn.dataset.action;
+  if(action==='cv-risk'){current.cvVisible=false;return navigate('cv-risk');}
+  if(action==='cv-risk-result'){if(current.page!=='cv-risk')return;current.cvVisible=true;return render();}
   if (action === 'renal-result') {
     if(current.page!=='module'||current.module!=='erc'||!['quick','detail'].includes(current.mode))return;
     current.renalVisible=true;return render();

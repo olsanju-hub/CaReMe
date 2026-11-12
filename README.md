@@ -249,3 +249,12 @@ Se reauditaron los límites de ARM conforme a ESC 2026 y CIMA de finerenona. El 
 - Barreras de ámbito, doble bloqueo, hipotensión sintomática, LRA, potasio y cronología. Alertas visibles en el resultado renal general.
 - **361/361 pruebas locales y sintaxis superadas**. UI comprobada con DOM simulado; QA real móvil pendiente.
 - [Reglas y auditoría](docs/ERC_KDIGO_2024.md). Sin selección por producto ni prescripción; PR continúa en borrador.
+
+
+## Alcance original y riesgo cardiovascular · 12/11/2026
+
+- Matriz auditable de las ocho áreas originales y requisitos transversales: [ALCANCE_ORIGINAL.json](docs/ALCANCE_ORIGINAL.json). La paridad con GlucoGuía no reemplaza este alcance.
+- Primer SCORE2 40–69 años, región baja España, con controles de elegibilidad, datos compartidos y cálculo original desde parámetros publicados. Reproduce el ejemplo externo publicado: 5,9 % hombre / 4,2 % mujer.
+- Acceso desde inicio, herramientas y resumen; circuito explícito cuando corresponde revisar diabetes, ERC, enfermedad establecida u otra exclusión. No se extrapola a SCORE2-OP o Diabetes.
+- **421 pruebas locales superadas y sintaxis correcta**. QA visual real y revisión clínica independiente pendientes. Sin prescripción ni estadio CKM automático.
+- [Fuentes y auditoría](docs/RIESGO_CV_SCORE2.md). PR en borrador; no fusionar como producto clínicamente validado.

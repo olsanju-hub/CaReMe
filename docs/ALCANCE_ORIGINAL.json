@@ -1,0 +1,108 @@
+{
+  "schema": "cahreme-original-scope-v1",
+  "reviewed_on": "2026-11-12",
+  "baseline_commit": "d3c539bbf88d14179579861de5f4d4fb81217820",
+  "acceptance": "Implementación no equivale a validación clínica; ningún bloque está aprobado para uso asistencial.",
+  "areas": [
+    {
+      "id": "riesgo_cv",
+      "status": "partial",
+      "evidence": "src/clinical/riesgo-cv.mjs; SCORE2 40–69 España y elección de circuito",
+      "pending": "SCORE2-OP, SCORE2-Diabetes, CKD Add-On, validación independiente"
+    },
+    {
+      "id": "hta",
+      "status": "missing",
+      "evidence": "Captura de PA y alertas; no algoritmo propio",
+      "pending": "Confirmación diagnóstica, objetivos, tratamiento y seguimiento"
+    },
+    {
+      "id": "dislipemia",
+      "status": "missing",
+      "evidence": "Captura de lípidos y exclusión SCORE2 con perfiles marcados",
+      "pending": "Objetivos, tratamiento por principio activo y escalada"
+    },
+    {
+      "id": "obesidad",
+      "status": "partial",
+      "evidence": "Formulario y candidatos/fichas de incretinas",
+      "pending": "Recorrido completo, hábitos, sarcopenia, reevaluación y cirugía"
+    },
+    {
+      "id": "dm2",
+      "status": "partial",
+      "evidence": "dm2-rapida.mjs, dm2-detallada.mjs, insulinizacion.mjs",
+      "pending": "Decisiones y titulación por producto/formulación y validación"
+    },
+    {
+      "id": "erc",
+      "status": "partial",
+      "evidence": "engine.mjs, renal.mjs y monitorización IECA/ARA-II",
+      "pending": "KFRE, historial de actuaciones RAAS y ruta farmacológica completa"
+    },
+    {
+      "id": "ic",
+      "status": "partial",
+      "evidence": "insuficiencia-cardiaca.mjs",
+      "pending": "Revalidación clínica/fuentes, titulación por producto y QA real"
+    },
+    {
+      "id": "masld",
+      "status": "partial",
+      "evidence": "FIB-4 calculado en engine.mjs",
+      "pending": "FIB-4 informado, elastografía y circuito de derivación"
+    }
+  ],
+  "cross_cutting": [
+    {
+      "id": "ckm",
+      "status": "missing",
+      "pending": "Contrato de estadificación con guía vigente; no inferir estadio desde SCORE2"
+    },
+    {
+      "id": "evaluacion_integral",
+      "status": "partial",
+      "pending": "Síntesis completa de todos los dominios"
+    },
+    {
+      "id": "motor_terapeutico",
+      "status": "partial",
+      "pending": "Selección individual completa, ajustes y CIMA de todo el alcance"
+    },
+    {
+      "id": "seguimiento",
+      "status": "partial",
+      "pending": "Objetivos y controles de todos los dominios; exportación no identificativa"
+    },
+    {
+      "id": "pwa",
+      "status": "partial",
+      "pending": "Instalación/offline real, accesibilidad e icono definitivo"
+    },
+    {
+      "id": "evidencia",
+      "status": "partial",
+      "pending": "Matriz completa de reglas, fuentes y conflictos; revisión independiente"
+    },
+    {
+      "id": "publicacion",
+      "status": "missing",
+      "pending": "GitHub Pages, versiones y política de cambios científicos"
+    }
+  ],
+  "release_gate": {
+    "clinical_review": "pending",
+    "device_qa": "pending",
+    "draft_pr": true,
+    "full_mvp": false
+  },
+  "next": [
+    "Contrato CKM actualizado",
+    "SCORE2-OP/Diabetes/CKD Add-On con casos de referencia",
+    "Algoritmo HTA",
+    "Algoritmo dislipemia",
+    "MASLD y obesidad",
+    "Plan integral y validación",
+    "Publicación versionada"
+  ]
+}

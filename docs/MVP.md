@@ -161,3 +161,9 @@ Se ha auditado y reforzado la primera orientación de `src/clinical/insuficienci
 ## Revisión específica de ARM en IC (12/11/2026)
 
 La consulta IC ya diferencia las condiciones de valoración de un ARM genérico de la **indicación CIMA de finerenona para FEVI ≥40**, con TFGe ≥25, K ≤5,0 y revisión de contraindicaciones. No extrapola las dosis/umbrales de ERC-DM2 ni registra tratamiento administrado. Pruebas de frontera añadidas; detalles en [IC_ESC_2026.md](IC_ESC_2026.md). No existe validación clínica independiente.
+
+
+
+## Recuperación del alcance original y primer SCORE2 · 12/11/2026
+
+La [matriz de alcance original](ALCANCE_ORIGINAL.json) complementa la equivalencia GlucoGuía. Se añade cálculo SCORE2 para elegibles 40–69 años en España, con exclusiones y acceso desde inicio, herramientas y resumen. Los seis módulos originales se mantienen. CKM y algoritmos propios de HTA/dislipemia continúan pendientes; no se declara un MVP completo. [Auditoría](RIESGO_CV_SCORE2.md).

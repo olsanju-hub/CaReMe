@@ -45,6 +45,11 @@ export const MODULES = [
 ];
 export const MODULE_BY_ID = Object.fromEntries(MODULES.map(m => [m.id, m]));
 export const EXTRA_FIELDS = [
+  {id:'cv_sexo_modelo',label:'Sexo utilizado por la ecuación SCORE2',type:'select',options:['Hombre','Mujer']},
+  {id:'cv_region',label:'Calibración regional confirmada',type:'select',options:['España · región ESC de riesgo bajo','Otra región / no confirmada']},
+  {id:'cv_hfamiliar',label:'Hipercolesterolemia familiar conocida o sospechada',type:'select',options:['Sí','No','No valorada']},
+  {id:'cv_sintomas',label:'Síntomas actuales que requieren valoración urgente (dolor torácico, disnea grave o déficit neurológico)',type:'select',options:['Sí','No','No valorados']},
+  {id:'fecha_lipidos',label:'Fecha del perfil lipídico',type:'date'},
   {id:'ras_evento',label:'Situación del IECA/ARA-II actual',type:'select',options:['Inicio administrado','Aumento de dosis administrado','Sin cambio reciente','No confirmado']},
   {id:'ras_evento_confirmado',label:'Inicio o aumento confirmado como realmente administrado',type:'select',options:['Sí','No','No valorado']},
   {id:'fecha_ras_evento',label:'Fecha efectiva del inicio o aumento de IECA/ARA-II',type:'date'},
