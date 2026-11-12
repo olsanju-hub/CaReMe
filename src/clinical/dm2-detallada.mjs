@@ -77,6 +77,8 @@ export function evaluateDm2Detail(draft){
                           (glucose!==null&&glucose>=300)||
                           symptoms==='Poliuria, polidipsia o pérdida de peso';
  const unstable=acute==='Enfermedad aguda grave'||acute==='Cirugía mayor o ayuno prolongado';
+ const noCurrentDrugs=medList?.length===1&&medList[0]==='Sin tratamiento farmacológico';
+ const dosesOk=doses==='Sí'||(noCurrentDrugs&&doses==='No procede: sin tratamiento');
  const missing=[],checks=[],alerts=[],nextSteps=[],alternatives=[];
  const add=(id,title,reason,conditions,sources)=>alternatives.push(card(id,title,reason,conditions,sources));
  const needed=(id,label)=>{if(val(draft,id)===null)missing.push(label)};
@@ -96,7 +98,7 @@ export function evaluateDm2Detail(draft){
  if(hba1c!==null&&!measured)checks.push('Confirmar fecha de HbA1c; un valor sin fecha no acredita vigencia.');
  if(val(draft,'alergias_revisadas')!=='Sí')
    checks.push('Verificar alergias e intolerancias antes de valorar medicamentos.');
- if(doses!=='Sí')checks.push('Reconciliar dosis y pauta real de los medicamentos; no considerar optimizado el tratamiento.');
+ if(!dosesOk)checks.push('Reconciliar dosis y pauta real de los medicamentos; no considerar optimizado el tratamiento.');
  if(verifiedMeds!=='Sí')checks.push('Confirmar principios activos, adherencia, dosis y tratamiento verdaderamente administrado.');
  if(adherence==='Dificultades o dosis omitidas')
    checks.push('Investigar barreras de adherencia antes de añadir una clase farmacológica.');
@@ -163,7 +165,8 @@ export function evaluateDm2Detail(draft){
    symptoms===null||symptoms==='No valorados'||
    hypogly===null||hypogly==='No valoradas'||
    adherence===null||adherence==='No valorada'||
-   verifiedMeds!=='Sí'||doses!=='Sí'||medList===null||
+   verifiedMeds!=='Sí'||!dosesOk||medList===null||
+   adherence==='Dificultades o dosis omitidas'||
    (egfr===null && (meds.has('Metformina')||meds.has('iSGLT2')));
  const state=(keto||suspectedHypoglycemia||severeHyperglycemia||unstable)
    ?'seguridad_prioritaria'
@@ -180,7 +183,9 @@ export function evaluateDm2Detail(draft){
    nextSteps.push('Conciliar diagnóstico, objetivo individual, mediciones, procedencia y tratamiento antes de una nueva decisión.');
  }else if(state==='datos_insuficientes'){
    situation='No hay información validada suficiente para interpretar el objetivo y proponer modificaciones.';
-   nextSteps.push('Completar HbA1c/objetivo y confirmar adherencia, hipoglucemias, dosis, síntomas y seguridad.');
+   nextSteps.push(adherence==='Dificultades o dosis omitidas'
+     ?'Resolver problemas de adherencia y comprobar la pauta antes de atribuir fracaso o proponer intensificación.'
+     :'Completar HbA1c/objetivo y confirmar adherencia, hipoglucemias, dosis, síntomas y seguridad.');
  }else if(comparison){
    if(comparison.state==='en_objetivo'){
      situation='HbA1c por debajo del límite individual acordado.';
@@ -212,6 +217,7 @@ export function evaluateDm2Detail(draft){
          'Con IC/ERC puede existir beneficio pronóstico independiente de HbA1c.',
          ['Verificar principio activo y ficha CIMA, TFGe, estado agudo y adherencia.'],
          ['ADA-2026-9','ADA-2026-11']);
+     else if(egfr===null)checks.push('Antes de valorar un iSGLT2 por IC/ERC, disponer de TFGe fiable y revisar estado de volumen.');
      else add('DM2-DETAIL-SGLT2-REVIEW','Revisar opción iSGLT2 con beneficio cardiorrenal',
        'En IC/ ERC documentada, considerar moléculas con evidencia aunque HbA1c esté dentro del objetivo.',
        ['Verificar indicación concreta, TFGe, cetosis/enfermedad aguda y ficha técnica; no aplicar un mismo límite renal a todas las moléculas.'],
@@ -265,7 +271,7 @@ export function evaluateDm2Detail(draft){
       :'Objetivo o HbA1c no evaluables; no aplicar un objetivo universal.'
   },
   medicationSummary:{classes:medications,count,verified:verifiedMeds==='Sí',
-    dosesConfirmed:doses==='Sí',adherence},
+    dosesConfirmed:dosesOk,adherence},
   nextSteps:uniq(nextSteps),alerts:uniq([...alerts,...discrepancies,
     ...audit.critical.map(x=>x.title)]),
   missing:uniq(missing),checks:uniq(checks),alternatives,
