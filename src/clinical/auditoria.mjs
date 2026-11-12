@@ -26,7 +26,12 @@ export const AUDIT_RULES=Object.freeze({
   CLINICAL_FIELD_INVALID:'Campo clínico no válido para el cálculo',
   SEVERE_GLYCEMIA_REVIEW:'Glucemia muy elevada: revisar seguridad y descartar crisis',
   SEVERE_HYPOGLYCEMIA_REVIEW:'Hipoglucemias graves o recurrentes: revisar pauta antes de intensificar',
-  PREGNANCY_DIABETES_PATHWAY:'Gestación: utilizar circuito específico de diabetes y embarazo'
+  PREGNANCY_DIABETES_PATHWAY:'Gestación: utilizar circuito específico de diabetes y embarazo',
+  HF_RED_FLAGS:'IC: signos de alarma cardiorrespiratorios en el formulario',
+  HF_DECOMPENSATION:'IC: descompensación o inestabilidad activa',
+  HF_EF_CONFLICT:'IC: grupo ESC 2026 discordante con FEVI medida',
+  HF_CRITICAL_POTASSIUM:'IC: potasio elevado con posible riesgo inmediato',
+  HF_HYPOTENSION:'IC: PAS baja con necesidad de valoración'
 });
 function item(id,severity,title,detail,fields) {
   return {id,severity,title,detail,fields,requiresReview:true};
@@ -64,6 +69,41 @@ export function auditCrossDomain(draft) {
       'DM2 y embarazo: circuito clínico específico',
       'El algoritmo general de tratamiento de adultos no gestantes no debe seleccionar fármacos para gestación.',
       ['dm2','embarazo']));
+  // Barreras de IC aplicadas a TODAS las vistas y fichas farmacológicas.
+  // Interpretar la alarma declarada incluso cuando la combinación de opciones
+  // invalida el campo; no confundir dato inválido con ausencia de riesgo.
+  const hfAlarmRaw=draft?.values?.ic_alarma;
+  const hfAlarms=hfAlarmRaw?readMulti(String(hfAlarmRaw)):[];
+  const hfPositive=hfAlarms.filter(x=>x!=='Sin señales de alarma tras valoración');
+  const hfNegative=hfAlarms.includes('Sin señales de alarma tras valoración');
+  if(hfPositive.length)
+    out.push(item('HF_RED_FLAGS','critical','Signos de alarma de insuficiencia cardíaca',
+      'Constan posibles signos cardiorrespiratorios agudos: '+hfPositive.join('; ')+
+      '. Valorar de forma prioritaria estabilidad, ECG, oxigenación y destino asistencial.',
+      ['ic_alarma','ic_estabilidad','congestion']));
+  if(hfNegative&&hfPositive.length)
+    out.push(item('HF_ALARMS_CONFLICT','critical','Alarmas de IC contradictorias',
+      'Se marcaron simultáneamente ausencia y presencia de signos de alarma. Conservar la alerta hasta reconciliar el dato.',
+      ['ic_alarma']));
+  if(yes('ic_descompensada')||VALUE(draft,'ic_estabilidad')==='Inestabilidad o descompensación sospechada')
+    out.push(item('HF_DECOMPENSATION','critical','Descompensación de IC o inestabilidad declarada',
+      'No utilizar la optimización crónica hasta valorar situación aguda y necesidad de atención urgente.',
+      ['ic_descompensada','ic_estabilidad']));
+  const ef=NUMBER(draft,'fevi'),efGroup=VALUE(draft,'ic_fevigrupo');
+  if(ef!==null&&((efGroup==='Reducida · FEVI <50 %'&&ef>=50)||
+      (efGroup==='Preservada · FEVI ≥50 %'&&ef<50)))
+    out.push(item('HF_EF_CONFLICT','critical','Grupo FEVI incompatible con medición',
+      'El grupo ESC 2026 elegido no coincide con la FEVI aportada. Confirmar informe antes de clasificar.',
+      ['fevi','ic_fevigrupo']));
+  const potassiumHF=NUMBER(draft,'potasio'),pasHF=NUMBER(draft,'pas');
+  if(yes('ic')&&potassiumHF!==null&&potassiumHF>=6)
+    out.push(item('HF_CRITICAL_POTASSIUM','critical','Potasio elevado en IC',
+      'Potasio ≥6 mmol/L: confirmar valor, ECG y clínica; valorar atención urgente según contexto. No titular tratamiento crónico.',
+      ['ic','potasio','fecha_potasio']));
+  if(yes('ic')&&pasHF!==null&&pasHF<90)
+    out.push(item('HF_HYPOTENSION','critical','Presión sistólica baja en IC',
+      'PAS <90 mmHg: valorar perfusión y síntomas, y revisar seguridad antes de titular tratamientos.',
+      ['ic','pas','ic_estabilidad']));
   const acuteFlags=['cetoacidosis_sospecha','ic_descompensada','lra_sospecha',
     'acidosis_metabolica','deshidratacion_gi','pancreatitis_sospecha'];
   if(VALUE(draft,'situacion_aguda')==='Estable sin proceso agudo grave'&&
@@ -96,7 +136,8 @@ export function auditCrossDomain(draft) {
     'fecha_ast','fecha_alt','fecha_plaquetas']){
     if(FIELDS[id]&&fieldState(draft,id)==='revisar') {
       const isDate=id.startsWith('fecha_');
-      out.push(item('CLINICAL_FIELD_INVALID_'+id,isDate?'critical':'warning',
+      out.push(item('CLINICAL_FIELD_INVALID_'+id,
+        isDate||(id==='fevi'&&yes('ic'))?'critical':'warning',
         'Dato no válido: '+FIELDS[id].label,
         'La entrada no cumple el formato o rango previsto; no utilizarla como cero ni como medición verificada.',
         [id]));
