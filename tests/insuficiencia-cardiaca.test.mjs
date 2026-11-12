@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {createDraft,setValue} from '../src/model.mjs';
 import {classifyHf2026,evaluateHeartFailure,HF_SOURCES} from '../src/clinical/insuficiencia-cardiaca.mjs';
 import {integratePatient} from '../src/clinical/integracion.mjs';
+import {auditCrossDomain} from '../src/clinical/auditoria.mjs';
 const draft=(data={})=>Object.entries(data).reduce((s,[k,x])=>
  setValue(s,k,Array.isArray(x)?JSON.stringify(x):String(x)),createDraft());
 const base={
@@ -182,6 +183,39 @@ test('LRA o embarazo obligan a priorizar seguridad antes del tratamiento crónic
   assert.equal(x.state,'seguridad_prioritaria');
   assert.equal(x.options.length,0);
  }
+});
+test('TFGe 19 retiene iSGLT2; 20 permite revisión diferenciando moléculas',()=>{
+ const low=run({tfge:'19'});
+ assert.ok(!has(low,'HF-SGLT2-REVIEW'));
+ assert.ok(low.checks.some(t=>t.includes('TFGe <20')));
+ const at20=run({tfge:'20'});
+ assert.ok(has(at20,'HF-SGLT2-REVIEW'));
+ assert.ok(at20.options.find(o=>o.id==='HF-SGLT2-REVIEW').checks.some(t=>t.includes('dapagliflozina')));
+});
+test('PAS 95 retiene nuevos RAAS y betabloqueante',()=>{
+ const x=run({pas:'95'});
+ assert.ok(!has(x,'HF-RAAS-REVIEW'));
+ assert.ok(!has(x,'HF-BB-REVIEW'));
+ assert.ok(x.checks.some(t=>t.includes('PA o potasio')));
+});
+test('potasio 5,5 impide nuevos ARM y RAAS sin ordenar suspensión',()=>{
+ const x=run({potasio:'5.5'});
+ assert.ok(!has(x,'HF-MRA-REVIEW'));
+ assert.ok(!has(x,'HF-RAAS-REVIEW'));
+ assert.equal(x.actionPerformed,false);
+});
+test('doble bloqueo IECA más ARNI retiene también candidatos integrales',()=>{
+ const d=draft({...base,farmacos_clases:['IECA','INRA/ARNI']});
+ assert.ok(auditCrossDomain(d).critical.some(t=>t.id==='RAAS_DOUBLE_BLOCKADE'));
+ assert.equal(integratePatient(d).options.length,0);
+ assert.equal(evaluateHeartFailure(d,'detail').options.length,0);
+});
+test('fuente de Entresto CIMA vinculada a nueva revisión RAAS',()=>{
+ const x=run();
+ assert.ok(x.sourceIds.includes('CIMA-SACUBITRIL-VALSARTAN'));
+ assert.ok(x.options.some(o=>o.id==='HF-RAAS-REVIEW'));
+ assert.ok(x.options.find(o=>o.id==='HF-RAAS-REVIEW').refs.includes('CIMA-SACUBITRIL-VALSARTAN'));
+ assert.equal(x.prescription,null);
 });
 test('vincula CIMA a moléculas y conserva contrato no prescriptivo',()=>{
  const x=run();
