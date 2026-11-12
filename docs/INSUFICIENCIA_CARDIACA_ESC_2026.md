@@ -60,3 +60,15 @@ El bloqueo de candidatos **no** significa retirar medicación actual ni diagnost
 **Pendiente:** revisión clínica independiente; validación de diagnóstico y fenotipo por datos objetivos reales; verificación de fichas AEMPS de tratamientos adicionales (betabloqueantes, ARNI y ARM esteroideos) antes de habilitar decisiones de molécula; plan operativo de seguimiento y derivación; revisión móvil, accesibilidad y evaluación regulatoria.
 
 **Fusión/despliegue:** PR #4 permanece en borrador. No se habilita prescripción ni uso asistencial.
+
+## Auditoría adicional de indicación de ARM y ficha CIMA (12/11/2026)
+
+Se verificó de nuevo [ESC 2026, tabla 5](https://academic.oup.com/eurheartj/article/47/38/5346/8766302) y la [ficha CIMA actual de Kerendia](https://cima.aemps.es/cima/dochtml/ft/1211616002/FT_1211616002.html). La guía ESC 2026 sitúa los ARM entre los tratamientos fundamentales de IC sintomática y advierte de mayor riesgo con **K ≥5,0 mmol/L** o deterioro de función renal. CIMA mantiene una **indicación particular** para finerenona en IC crónica sintomática con **FEVI ≥40 %**, **TFGe ≥25 ml/min/1,73 m²** y **K ≤5,0 mmol/L** para valorar inicio. La condición de seguridad **no es intercambiable** con espironolactona/eplerenona, ni convierte 40 % en umbral de clasificación ESC.
+
+**Cambio implementado:** el motor muestra una única opción genérica de revisión de ARM cuando TFGe ≥30 y K <5,0. Si no procede esa vía genérica, permite **solo una alternativa diferenciada de finerenona** con FEVI ≥40, TFGe ≥25, K ≤5,0 y confirmación negativa de Addison, uso de inhibidores potentes CYP3A4 y hepatopatía grave. Los campos desconocidos impiden mostrar este candidato. Una declaración de ARM existente impide sugerir otro inicio. Se conservan los límites por ficha y no se emiten dosis.
+
+La tarjeta diferenciada enlaza directamente a la **revisión CIMA de finerenona para IC**. La ficha obliga a revisar potasio y TFGe a las **4 semanas** de inicio, reinicio o modificación real de dosis; el sistema no crea una cita ni presupone que esa actuación se realizó. Para K exactamente 5,0 se explicita la cautela y comprobación del laboratorio.
+
+**Casos añadidos** en `tests/ic-finerenona-esc2026.test.mjs`: FEVI 39,9/40/45, TFGe 24,99/25/30, K 4,99/5,0/5,01, contraindicación por Addison/CYP3A4, ausencia de dato, ARM preexistente, IC descompensada y potasio ≥6. No se sustituye la necesidad de revisión clínica por pasar esas pruebas.
+
+Se mantienen pendientes la selección por producto, revisión farmacológica independiente y validación de casos clínicos externos.
