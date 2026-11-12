@@ -6,7 +6,7 @@
 import {fieldState} from '../model.mjs';
 import {readMulti} from '../consultas.mjs';
 import {auditCrossDomain} from './auditoria.mjs';
-import {evaluateDm2Quick,DM2_QUICK_SOURCES} from './dm2-rapida.mjs';
+import {DM2_QUICK_SOURCES} from './dm2-rapida.mjs';
 
 export const DM2_DETAIL_SOURCES=Object.freeze({
  ...DM2_QUICK_SOURCES,
@@ -128,8 +128,7 @@ export function evaluateDm2Detail(draft){
      discrepancies.push('La consulta rápida declara HbA1c en objetivo, pero la HbA1c iguala/supera el límite numérico acordado.');
    if(quickControl.startsWith('Fuera del objetivo')&&comparison.state==='en_objetivo')
      discrepancies.push('La consulta rápida declara fuera de objetivo, pero la HbA1c es inferior al límite individual acordado.');
-   if(quickControl.startsWith('HbA1c ≥8,5')&&comparison.state==='en_objetivo')
-     discrepancies.push('La consulta rápida señala intensificación por HbA1c, pero según el objetivo individual numérico está dentro de objetivo.');
+   // El corte docente 8,5 % no reemplaza al objetivo individual, por lo que no produce contradicción por sí solo.
  }
  if(quickControl==='Objetivo no establecido'&&goal!==null)
    discrepancies.push('La consulta rápida marca objetivo no establecido y en detalle consta un límite numérico; reconciliar la declaración.');
@@ -143,9 +142,15 @@ export function evaluateDm2Detail(draft){
    alerts.push('Dos terapias basadas en GLP-1: identificar si existe una transición y evitar solapamientos.');
  if(meds.has('Metformina')&&egfr!==null&&egfr<30)
    alerts.push('Metformina registrada con TFGe <30: revisar contraindicación en CIMA; no efectuar suspensión automática.');
+ const quickPriorities=multi(draft,'dm_prioridad')||[];
+ if(quickPriorities.includes('Insuficiencia cardíaca')&&val(draft,'ic')!=='Sí')
+   checks.push('IC seleccionada como condicionante rápido: confirmar el diagnóstico de insuficiencia cardíaca en la ficha.');
+ if(quickPriorities.includes('Enfermedad renal crónica')&&
+    !(val(draft,'erc')==='Sí'&&val(draft,'persistencia')==='Sí'))
+   checks.push('ERC seleccionada como condicionante rápido: confirmar diagnóstico y cronicidad antes de atribuir indicación cardiorrenal.');
  if(meds.has('Pioglitazona')&&val(draft,'ic')==='Sí')
    alerts.push('Pioglitazona en insuficiencia cardíaca conocida: revisar contraindicación/seguridad específica.');
- if(meds.has('Saxagliptina')&&val(draft,'ic')==='Sí')
+ if(medList?.includes('Saxagliptina')&&val(draft,'ic')==='Sí')
    alerts.push('Saxagliptina con insuficiencia cardíaca: revisar perfil de seguridad y alternativas.');
  if((meds.has('Insulina')||meds.has('Sulfonilurea')||meds.has('Repaglinida'))&&
     (hypogly==='Leves'||suspectedHypoglycemia))
