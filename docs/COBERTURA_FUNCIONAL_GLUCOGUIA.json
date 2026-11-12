@@ -63,8 +63,8 @@
       "quick_clinical_result": "partial",
       "detailed_decision": "partial",
       "priority": "P1",
-      "gap": "Consulta rápida y detallada con FEVI ESC 2026 (<50/≥50 con evidencia), congestión, datos de seguridad y conciliación; fechas de FEVI/TFGe/K obligatorias para candidatos, K>5,5 y duplicidad RAAS auditados. Falta validación clínica independiente, selección individual por producto y QA real en móvil.",
-      "note": "Primera implementación y auditoría transversal: src/clinical/insuficiencia-cardiaca.mjs, tests/insuficiencia-cardiaca-seguridad.test.mjs, docs/INSUFICIENCIA_CARDIACA_ESC_2026.md. Sin prescripción."
+      "gap": "Consulta rápida y detallada ESC 2026 (<50/≥50 con evidencia), congestión y conciliación con fechas; distingue ARM genérico de vía CIMA finerenona (FEVI ≥40, TFGe ≥25, K ≤5) y contraindicaciones. No existe validación clínica independiente, titulación por producto ni QA real en móvil.",
+      "note": "Motor src/clinical/insuficiencia-cardiaca.mjs, auditoría transversal y pruebas de umbral (tests/ic-finerenona-esc2026.test.mjs). Finerenona: indicación CIMA diferente del fenotipo ESC. Sin prescripción."
     },
     {
       "id": "erc",
@@ -232,6 +232,11 @@
       "id": "hf_2026_provenance_and_safety",
       "status": "partial",
       "evidence": "Motor IC por fenotipo ESC 2026, barreras fechas/RAAS/K, y tests/insuficiencia-cardiaca-seguridad.test.mjs; sin validación externa"
+    },
+    {
+      "id": "hf_mra_by_indication",
+      "status": "partial",
+      "evidence": "src/clinical/insuficiencia-cardiaca.mjs, tests/ic-finerenona-esc2026.test.mjs; consulta de CIMA por indicación; sin dosis personalizadas ni validación independiente"
     }
   ],
   "blockers": [
