@@ -72,11 +72,16 @@ export function auditCrossDomain(draft) {
     out.push(item('POTASSIUM_CONFLICT','warning','Revisar coherencia del potasio',
       'La ficha indica potasio normal y estable, pero el valor obliga a comprobar el rango de referencia y contexto. El rango utilizado aquí (3,5–5,0 mmol/L) es solo un control de coherencia, no diagnóstico.',
       ['potasio','potasio_normal']));
-  for(const id of ['edad','tfge','cac','potasio','ast','alt','plaquetas','imc','fevi']){
-    if(FIELDS[id]&&fieldState(draft,id)==='revisar')
-      out.push(item('CLINICAL_FIELD_INVALID_'+id,'warning','Dato no válido: '+FIELDS[id].label,
+  for(const id of ['edad','tfge','cac','potasio','ast','alt','plaquetas','imc','fevi',
+    'fecha_evaluacion','fecha_tfge','fecha_cac','fecha_potasio',
+    'fecha_ast','fecha_alt','fecha_plaquetas']){
+    if(FIELDS[id]&&fieldState(draft,id)==='revisar') {
+      const isDate=id.startsWith('fecha_');
+      out.push(item('CLINICAL_FIELD_INVALID_'+id,isDate?'critical':'warning',
+        'Dato no válido: '+FIELDS[id].label,
         'La entrada no cumple el formato o rango previsto; no utilizarla como cero ni como medición verificada.',
         [id]));
+    }
   }
   const critical=out.filter(f=>f.severity==='critical');
   return {provenance,
