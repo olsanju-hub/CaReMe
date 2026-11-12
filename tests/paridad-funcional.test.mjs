@@ -62,6 +62,18 @@ test('la matriz refleja CAC corregido, DM2 rápida parcial y paridad completa a�
  assert.equal(audit.release_gate.verified_full_parity,false);
  assert.ok(audit.blockers.some(x=>x.status==='open'));
 });
+test('insulinización tiene tres rutas con salida parcial y no declara paridad clínica final',()=>{
+ const insulin=audit.modules.find(x=>x.id==='insulina');
+ assert.equal(insulin.quick_clinical_result,'partial');
+ assert.equal(insulin.detailed_decision,'partial');
+ assert.match(insulin.gap,/titulación/);
+ assert.equal(audit.release_gate.verified_full_parity,false);
+ const fields=moduleFields('insulina','detail');
+ for(const f of ['insulina_esquema','insulina_ayunas_objetivo',
+   'insulina_posprandial','insulina_motivo_simplificacion']){
+  assert.ok(fields.includes(f),'Falta '+f);
+ }
+});
 test('la matriz identifica expresamente las limitaciones del clasificador renal',()=>{
  const risk=audit.blockers.find(x=>x.id==='CAC_UNIT_ABSENT_ASSUMED_MG_G');
  assert.match(risk.finding,/unidad_cac/);
