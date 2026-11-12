@@ -1,10 +1,11 @@
+import {evaluateMasld} from './clinical/masld.mjs';
 import {LIPID_FIELDS,evaluateDyslipidemia} from './clinical/dislipemia.mjs';
 import {HTA_FIELDS,evaluateHypertension} from './clinical/hta.mjs';
 import {CKM_FIELDS,evaluateCkm} from './clinical/ckm.mjs';
 import {CV_FIELDS,OP_FIELDS,evaluateCvRisk} from './clinical/riesgo-cv.mjs';
 import { SECTIONS, FIELDS, createDraft, setValue, setUnavailable, fieldState, sectionStats, totalStats, sectionForFocus } from './model.mjs';
 import { MODULES, MODULE_BY_ID, moduleFields, readMulti } from './consultas.mjs';
-import { SOURCES, evaluateRenal, evaluateFib4 } from './clinical/engine.mjs';
+import { SOURCES, evaluateRenal } from './clinical/engine.mjs';
 import { integratePatient, INTEGRATION_SOURCES } from './clinical/integracion.mjs';
 import { DRUGS, getDrug, getDrugRoute, reviewDrug } from './clinical/farmacologia.mjs';
 import { reviewFinerenoneContinuation, reviewEmpagliflozinContinuation, confirmedAction, followUpFromHistory } from './clinical/continuidad.mjs';
@@ -247,30 +248,23 @@ function renalResultCard() {
   </section>`;
 }
 function fib4ResultCard() {
-  const x=evaluateFib4(draft);
-  const displayed=x.status==='calculated' ? x.value.toFixed(2) : '—';
-  const interpretations={
-    lower_probability:'Bajo el umbral de cribado',
-    additional_assessment:'Requiere evaluación adicional',
-    higher_probability:'Probabilidad aumentada de fibrosis avanzada',
-    context_missing:'Contexto por completar',
-    age_limited:'Validez limitada por edad',
-    acute:'No interpretar durante enfermedad aguda',
-    not_evaluable:'No evaluable'
-  };
-  const reported=x.reported.state==='ok'
-    ? '<p class="calc-reported">Índice informado por otra fuente: '+escape(String(x.reported.value))+
-      ' (no sustituye al cálculo ni se interpreta automáticamente).</p>' : '';
-  const missing=x.missing.length ? '<p class="clinical-missing">Faltan o deben revisarse: '+
-    x.missing.map(k=>escape(FIELDS[k]?.label||k)).join(' · ')+'</p>' : '';
-  return `<section class="calc-card" aria-label="Cálculo FIB-4">
-    <div class="calc-top"><div><span class="eyebrow">EASL-EASD-EASO 2024 · ÍNDICE NO INVASIVO</span><h3>FIB-4</h3></div>
-      <span class="calc-type">${escape(x.status)}</span></div>
-    <div class="fib-figure"><strong>${displayed}</strong><span>${escape(interpretations[x.interpretation])}</span></div>
-    <p>${escape(x.note)}</p>${missing}${reported}
-    <p class="calc-limits">Fórmula: edad × AST / (plaquetas × √ALT). En edades &gt;65 se utiliza umbral inferior ajustado de 2,0; por debajo de 35 años su precisión es limitada. No confirma MASLD ni fibrosis.</p>
-    <a href="${SOURCES.easl2024.url}" target="_blank" rel="noopener noreferrer">Fuente: EASL-EASD-EASO 2024, figura 2 ↗</a>
-  </section>`;
+ const r=evaluateMasld(draft);
+ const list=xs=>xs.length?`<ul>${xs.map(x=>`<li>${escape(x)}</li>`).join('')}</ul>`:'';
+ const bands={bajo:'Por debajo del umbral de cribado',intermedio:'Zona de evaluación adicional',alto:'Probabilidad aumentada: valorar derivación'};
+ return `<section id="masld-result" class="calc-card" aria-live="polite"><div class="eyebrow">MASLD · EASL-EASD-EASO 2024</div>
+ <h2>Fibrosis hepática y derivación</h2>
+ ${r.alerts.length?`<div class="dm2-safety"><h3>Prioridad clínica</h3>${list(r.alerts)}</div>`:''}
+ ${r.missing.length?`<h3>Información necesaria</h3>${list(r.missing)}`:''}
+ ${r.fib4?`<h3>FIB-4 utilizado: ${escape(r.fib4.value.toFixed(2))}</h3><p>${escape(r.fib4.origin)} · ${escape(r.fib4.date)}. ${escape(bands[r.fib4.band]||'Sin interpretación automática en este contexto.')}</p>
+ <p>Umbral inferior: ${escape(r.fib4.lowCutoff)} para la edad actual. La decisión usa el valor completo, sin redondearlo a dos decimales.</p>`:'<p>No se utiliza un FIB-4 sin procedencia suficiente. El cálculo requiere analítica fechada en la revisión detallada.</p>'}
+ ${r.elastography?`<h3>Rigidez hepática: ${escape(r.elastography.value)} kPa</h3><p>${escape(r.elastography.method||'Método sin confirmar')}. ${r.elastography.valid?'Informe VCTE revisado.':'Resultado pendiente de verificar: no se aplican umbrales de VCTE a otro método.'}</p>`:''}
+ <h3>Siguiente paso</h3>${list(r.steps)}
+ ${r.referral.length?`<h3>Valoración especializada</h3>${list(r.referral.map(x=>x.text))}`:''}
+ <h3>Comprobaciones</h3>${list(r.checks)}
+ <h3>Seguimiento</h3><p>${r.followUp?escape(r.followUp.text):'Individualizar tras completar la evaluación; sin calendario rutinario automático.'}</p>
+ <details><summary>Fuentes y límites</summary>${r.sources.map(x=>`<p><a href="${escape(x.url)}" target="_blank" rel="noopener noreferrer">${escape(x.title)}</a> · ${escape(x.locator)}</p>`).join('')}
+ <p>Fórmula: edad × AST / (plaquetas × √ALT). Umbral inferior 1,3 hasta 65 años; 2,0 por encima de 65. Por debajo de 35 años la precisión es limitada. No confirma MASLD, MASH o cirrosis.</p></details>
+ <p class="privacy-note">La derivación propuesta no se considera enviada. Sin prescripción ni indicación automática de tratamiento específico para MASH. Revisión clínica independiente pendiente.</p></section>`;
 }
 function calculatorsForModule(id) {
   if(id==='erc') return renalResultCard();
@@ -578,7 +572,9 @@ function consultationReview(module) {
     ${module.id==='ic'?heartFailureResult('detail'):''}
     ${module.id==='erc'?kidneyResult('detail'):''}
     ${integratedCards(({dm2:'DM2',ic:'IC',erc:'Renal',obesidad:'Metabólico',hepatico:'Hepático',insulina:'DM2'})[module.id])}
-    ${module.id==='erc'
+    ${module.id==='hepatico'
+      ? '<p class="clinical-lock">Hepático: primer circuito de FIB-4, VCTE y derivación implementado; revisión clínica pendiente.</p>'
+      :module.id==='erc'
       ? '<p class="clinical-lock">ERC: primera orientación renal implementada. Validación clínica pendiente.</p>'
       :module.id==='ic'
       ? '<p class="clinical-lock">IC: orientación por fenotipo ESC 2026 y congestión implementada. No se prescriben tratamientos ni se establece diagnóstico automáticamente.</p>'
@@ -613,12 +609,17 @@ function moduleView() {
       <div class="form-title"><div><h2>${mode==='quick'?'Datos esenciales':'Datos clínicos detallados'}</h2>
         <p>La información se comparte con los demás módulos y la evaluación integral.</p></div>
         <span class="count-pill" id="section-count">${completed} de ${fields.length} registrados</span></div>
-      <div class="field-grid">${fields.map(id=>moduleFieldMarkup(FIELDS[id])).join('')}</div>
+      <div class="field-grid">${m.id==='hepatico'&&mode==='quick'?fields.filter(id=>!['elastografia','masld_elasto_metodo','masld_fecha_elasto','masld_elasto_calidad','masld_elasto_confusores'].includes(id)).map(id=>moduleFieldMarkup(FIELDS[id])).join(''):fields.map(id=>moduleFieldMarkup(FIELDS[id])).join('')}</div>
+      ${m.id==='hepatico'&&mode==='quick'?`<details><summary>Elastografía disponible (opcional)</summary><div class="field-grid">${['elastografia','masld_elasto_metodo','masld_fecha_elasto','masld_elasto_calidad','masld_elasto_confusores'].map(id=>moduleFieldMarkup(FIELDS[id])).join('')}</div></details>`:''}
       <div class="wizard-actions">
         <button type="button" class="ghost" data-action="module-mode" data-mode="${mode==='quick'?'detail':'quick'}">${mode==='quick'?'Revisión detallada':'Consulta rápida'}</button>
         <button type="button" class="primary" data-action="module-mode" data-mode="review">Ver resumen de datos →</button>
       </div>
     </section>`}
+    ${m.id==='hepatico' && (mode==='quick'||mode==='detail')?`<div class="dm2-result-trigger">
+      <button class="primary" type="button" data-action="masld-result">Ver evaluación de fibrosis y derivación →</button>
+      <p>FIB-4 con procedencia y elastografía según método. Sin diagnóstico automático.</p>
+    </div>${current.masldVisible?fib4ResultCard():''}`:''}
     ${m.id==='erc' && (mode==='quick'||mode==='detail')?`<div class="dm2-result-trigger">
       <button class="primary" type="button" data-action="renal-result">Ver orientación renal →</button>
       <p>Cronicidad, seguridad y derivación. Sin prescripción.</p>
@@ -639,7 +640,7 @@ function moduleView() {
       <button class="primary" type="button" data-action="dm2-result">Ver orientación clínica rápida →</button>
       <p>El resultado se genera para revisión. No prescribe ni confirma diagnósticos.</p>
     </div>${current.dm2ResultVisible?dm2RapidResult():''}`:''}
-    <div class="module-note"><strong>Documentación:</strong> las orientaciones de DM2, insulinización e IC son preliminares; ERC tiene una primera orientación; obesidad, hígado y validación clínica siguen pendientes.</div>
+    <div class="module-note"><strong>Documentación:</strong> las orientaciones de DM2, insulinización e IC son preliminares; ERC tiene una primera orientación; hígado dispone de evaluación secuencial; obesidad y validación clínica siguen pendientes.</div>
     <p class="privacy-note">No introduzcas identificadores del paciente. Los datos no se guardan después de cerrar o recargar.</p>
   </div>`;
 }
@@ -960,6 +961,7 @@ app.addEventListener('input', event => {
     // Refrescar tras seleccionar «ninguna» para garantizar exclusividad.
     if (selected.length !== checked.length) return render();
   } else draft=setValue(draft,id,el.value);
+  if(current.masldVisible){current.masldVisible=false;document.getElementById('masld-result')?.remove();}
   if(current.lipidVisible){current.lipidVisible=false;document.getElementById('lipid-result')?.remove();}
   if(current.htaVisible){current.htaVisible=false;document.getElementById('hta-result')?.remove();}
   if(current.ckmVisible){current.ckmVisible=false;document.getElementById('ckm-result')?.remove();}
@@ -1003,6 +1005,10 @@ app.addEventListener('click', event => {
   if(action==='ckm-result'){if(current.page!=='ckm')return;current.ckmVisible=true;return render();}
   if(action==='cv-risk'){current.cvVisible=false;return navigate('cv-risk');}
   if(action==='cv-risk-result'){if(current.page!=='cv-risk')return;current.cvVisible=true;return render();}
+  if(action==='masld-result'){
+    if(current.page!=='module'||current.module!=='hepatico'||!['quick','detail'].includes(current.mode))return;
+    current.masldVisible=true;return render();
+  }
   if (action === 'renal-result') {
     if(current.page!=='module'||current.module!=='erc'||!['quick','detail'].includes(current.mode))return;
     current.renalVisible=true;return render();
@@ -1063,7 +1069,7 @@ app.addEventListener('click', event => {
   }
   if (action === 'start-module') {
     if (!MODULE_BY_ID[btn.dataset.module]) return;
-    current.renalVisible=false; current.module=btn.dataset.module; current.mode='quick'; current.dm2ResultVisible=false; current.dm2DetailedVisible=false; current.insulinVisible=false; current.icVisible=false; return navigate('module');
+    current.masldVisible=false; current.renalVisible=false; current.module=btn.dataset.module; current.mode='quick'; current.dm2ResultVisible=false; current.dm2DetailedVisible=false; current.insulinVisible=false; current.icVisible=false; return navigate('module');
   }
   if (action === 'module-mode') {
     if (!['quick','detail','review'].includes(btn.dataset.mode)) return;

@@ -187,3 +187,8 @@ Se añade evaluación propia de PA/HTA con confirmación por método, patrones d
 ## Primer circuito de dislipemia · 12/11/2026
 
 Se implementa un recorrido de objetivos, revisión de tratamiento y seguimiento desde actuaciones confirmadas. No prescribe dosis individuales ni completa todos los escenarios de dislipemia. [Contrato y auditoría](DISLIPEMIA_ESC_EAS_2025.md). La matriz original cambia dislipemia de ausente a parcial. Pruebas automatizadas e interfaz simulada: 671 superadas; revisión clínica y QA real pendientes. Próximos dominios a ampliar: MASLD y obesidad; continúan pendientes las rutas farmacológicas específicas.
+
+
+## MASLD: evaluación secuencial · 12/11/2026
+
+La consulta hepática usa FIB-4 informado con procedencia o cálculo fechado y revisa VCTE antes de orientar seguimiento/derivación. Cierra la brecha técnica de índice informado, sin acreditar paridad clínica completa. [Contrato y límites](MASLD_EASL_2024.md). Verificación local: 759 pruebas y sintaxis correctas; interfaz simulada, validación clínica y QA móvil real pendientes. Siguiente dominio a ampliar: obesidad.

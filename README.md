@@ -296,3 +296,12 @@ Se reauditaron los límites de ARM conforme a ESC 2026 y CIMA de finerenona. El 
 - Seguimiento orientativo solo tras cambio confirmado y fechado; perfil previo al cambio no provoca nueva escalada. Accesos en inicio, herramientas y resumen.
 - **671/671 pruebas locales y sintaxis superadas**, con interfaz simulada. Sin prueba real de iPhone ni validación clínica independiente.
 - [Contrato, fuentes y auditoría](docs/DISLIPEMIA_ESC_EAS_2025.md). Alcance original: dislipemia parcial; prescripción completa y MVP pendientes. PR en borrador.
+
+
+## Primer circuito secuencial de MASLD · 12/11/2026
+
+- FIB-4 informado con procedencia o calculado desde analítica fechada; selección explícita y detección de discrepancias. Cambiar los datos de origen invalida la confirmación externa.
+- VCTE interpretada solo con método/fecha/calidad revisados; no se extrapolan sus umbrales a otras elastografías. Rutas de evaluación adicional y valoración especializada, sin confirmar cirrosis o MASH.
+- Señales de alarma hepática integradas en seguridad transversal. Reevaluación orientativa sin crear cita ni dar por enviada una derivación.
+- **759/759 pruebas locales y sintaxis superadas**, con interfaz simulada; pendientes revisión clínica y QA real móvil. Seis consultas conservadas.
+- [Contrato, fuentes y auditoría](docs/MASLD_EASL_2024.md). MASLD parcial; vía técnica de FIB-4 informado resuelta. PR en borrador.

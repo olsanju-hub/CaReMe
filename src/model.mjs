@@ -116,10 +116,20 @@ const opSnapshot=draft=>JSON.stringify({
 export function externalOpAssociationValid(draft){
  return draft.values.cv_op_confirmado==='Sí'&&typeof draft.opAssociation==='string'&&draft.opAssociation===opSnapshot(draft);
 }
+const fib4AssociationFields=['edad','fib4_informado','masld_fecha_fib4','masld_fuente_fib4'];
+const fib4Snapshot=draft=>JSON.stringify(fib4AssociationFields.map(id=>[id,draft.values[id]??'',draft.unavailable.includes(id)]));
+export function externalFib4AssociationValid(draft){
+ return draft.values.masld_fib4_confirmado==='Sí'&&typeof draft.fib4Association==='string'&&draft.fib4Association===fib4Snapshot(draft);
+}
 export function setValue(draft,id,value){
  if(!FIELDS[id])throw new Error('Campo inexistente');
  const changed=draft.values[id]!==String(value)||draft.unavailable.includes(id);
  const next={...draft,values:{...draft.values,[id]:String(value)},unavailable:draft.unavailable.filter(x=>x!==id)};
+ if(id==='masld_fib4_confirmado'){
+  if(String(value)==='Sí')next.fib4Association=fib4Snapshot(next);else delete next.fib4Association;
+ }else if(changed&&fib4AssociationFields.includes(id)&&draft.values.masld_fib4_confirmado==='Sí'){
+  next.values.masld_fib4_confirmado='No';delete next.fib4Association;
+ }
  if(id==='cv_op_confirmado'){
   if(String(value)==='Sí')next.opAssociation=opSnapshot(next);
   else delete next.opAssociation;
@@ -134,6 +144,10 @@ export function setUnavailable(draft,id,yes){
  if(yes)unavailable.add(id);else unavailable.delete(id);
  const values={...draft.values};if(yes)delete values[id];
  const next={...draft,values,unavailable:[...unavailable]};
+ if(draft.unavailable.includes(id)!==yes&&(fib4AssociationFields.includes(id)||id==='masld_fib4_confirmado')){
+  if(id!=='masld_fib4_confirmado'&&draft.values.masld_fib4_confirmado==='Sí')next.values.masld_fib4_confirmado='No';
+  delete next.fib4Association;
+ }
  if(draft.unavailable.includes(id)!==yes&&draft.values.cv_op_confirmado==='Sí'){
   if(id!=='cv_op_confirmado')next.values.cv_op_confirmado='No';
   delete next.opAssociation;

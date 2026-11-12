@@ -156,3 +156,9 @@ No se considera paridad clínica completa: faltan validación externa de casos, 
 El módulo dirigido de IC con fenotipos de **ESC 2026**, congestión y propuestas no prescriptivas se ha auditado tras su primera implementación. Ahora se requiere consignar fechas de FEVI, TFGe y potasio antes de generar candidatos; se controlan hiperpotasemia >5,5 mmol/L y posibles asociaciones RAAS incompatibles de manera transversal. Las propuestas mantienen trazabilidad, pero **no** validan por sí solas adecuación del tratamiento al caso.
 
 [Auditoría de IC](INSUFICIENCIA_CARDIACA_ESC_2026.md). Paridad clínica completa y revisión en móvil pendientes.
+
+
+
+## Actualización MASLD · 12/11/2026
+
+El hallazgo histórico `REPORTED_FIB4_NOT_USED` queda resuelto técnicamente por `evaluateMasld`, con procedencia y confirmación asociada al borrador. Se añaden evaluación VCTE por método/calidad y rutas de valoración especializada. La matriz conserva MASLD y paridad clínica como parciales: no acredita validación externa ni QA móvil. [Contrato y auditoría posterior](MASLD_EASL_2024.md). La calculadora descriptiva anterior conserva su contrato; el resultado dirigido utiliza el nuevo motor.

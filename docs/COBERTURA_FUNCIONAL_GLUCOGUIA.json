@@ -124,7 +124,8 @@
       "quick_clinical_result": "partial",
       "detailed_decision": "partial",
       "priority": "P1",
-      "gap": "Calculated FIB-4 exists; externally reported FIB-4 not used for decision, elastography and referral transitions missing."
+      "gap": "Primer circuito propio de FIB-4 informado/calculado con procedencia, VCTE según método/calidad y derivación. Faltan validación clínica, pruebas móviles reales, alternativas ELF/SWE/MRE automatizadas y tratamiento específico de MASH.",
+      "note": "src/clinical/masld.mjs; rápida, detallada y resumen. No diagnóstico automático ni paridad clínica demostrada."
     },
     {
       "id": "insulina",
@@ -248,6 +249,11 @@
       "id": "renal_ras_monitoring",
       "status": "partial",
       "evidence": "evaluateRenalTreatment, tests/renal-tratamiento.test.mjs y renal-ui.test.mjs; sin dosis o administración automática."
+    },
+    {
+      "id": "masld_sequential_result",
+      "status": "partial",
+      "evidence": "src/clinical/masld.mjs; FIB-4 externo/calculado, VCTE verificada y derivación; validación clínica/QA real pendientes."
     }
   ],
   "blockers": [
@@ -267,7 +273,12 @@
       "priority": "P1",
       "owner_area": "src/clinical/engine.mjs",
       "finding": "fib4_informado is parsed but reported.value is not used by decision/status; quick hepatic route cannot evaluate entered FIB-4 alone.",
-      "status": "open"
+      "status": "resolved_in_branch",
+      "resolution": "evaluateMasld utiliza FIB-4 externo positivo, fechado, con fuente y confirmación asociada; se invalida al cambiar edad/datos de origen. El calculador descriptivo evaluateFib4 mantiene su contrato anterior.",
+      "tests": [
+        "tests/masld.test.mjs",
+        "tests/masld-ui.test.mjs"
+      ]
     },
     {
       "id": "NO_MODULE_SPECIFIC_RESULT",

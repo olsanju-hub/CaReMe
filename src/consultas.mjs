@@ -33,8 +33,8 @@ export const MODULES = [
   {
     id: 'hepatico', title: 'Enfermedad hepática metabólica', domain: 'hepatico',
     short: 'Esteatosis y valoración de fibrosis',
-    quick: ['edad','fib4_informado','hepatico_valoracion','elastografia'],
-    detail: ['edad','fecha_evaluacion','fecha_ast','fecha_alt','fecha_plaquetas','hepatica_grave','esteatosis','hepatico_valoracion','fib4_contexto','fib4_agudo','ast','alt','plaquetas','fib4_informado','elastografia','farmacos_clases','farmacos']
+    quick: ['edad', 'embarazo', 'fecha_evaluacion', 'fib4_agudo', 'masld_alarma', 'masld_cirrosis', 'fib4_contexto', 'hepatico_valoracion', 'masld_alcohol', 'masld_etiologia', 'masld_fib4_origen', 'fib4_informado', 'masld_fecha_fib4', 'masld_fuente_fib4', 'masld_fib4_confirmado', 'elastografia', 'masld_elasto_metodo', 'masld_fecha_elasto', 'masld_elasto_calidad', 'masld_elasto_confusores'],
+    detail: ['edad', 'embarazo', 'fecha_evaluacion', 'fib4_agudo', 'masld_alarma', 'masld_cirrosis', 'fib4_contexto', 'hepatico_valoracion', 'masld_alcohol', 'masld_etiologia', 'masld_fib4_origen', 'fib4_informado', 'masld_fecha_fib4', 'masld_fuente_fib4', 'masld_fib4_confirmado', 'elastografia', 'masld_elasto_metodo', 'masld_fecha_elasto', 'masld_elasto_calidad', 'masld_elasto_confusores', 'fecha_ast', 'fecha_alt', 'fecha_plaquetas', 'ast', 'alt', 'plaquetas', 'hepatica_grave', 'esteatosis', 'masld_enzimas_persistentes', 'dm2', 'imc', 'situacion_aguda', 'farmacos_clases', 'farmacos']
   },
   {
     id: 'insulina', title: 'Insulinización', domain: 'metabolico',
@@ -45,6 +45,20 @@ export const MODULES = [
 ];
 export const MODULE_BY_ID = Object.fromEntries(MODULES.map(m => [m.id, m]));
 export const EXTRA_FIELDS = [
+  {id:'masld_alarma',label:'Hematemesis/melenas, confusión nueva o ictericia con deterioro agudo',type:'select',options:['Sí','No','No valorado']},
+  {id:'masld_cirrosis',label:'Cirrosis conocida o sospecha de enfermedad hepática avanzada',type:'select',options:['Conocida','Sospechada','No tras valoración','No valorada']},
+  {id:'masld_alcohol',label:'Consumo y patrón de alcohol revisados para etiología hepática',type:'select',options:['Revisados','Pendientes']},
+  {id:'masld_etiologia',label:'Contexto etiológico tras revisión de alcohol y otras causas',type:'select',options:['Compatible con evaluación MASLD','MetALD, alcohol u otra etiología predominante','No aclarado']},
+  {id:'masld_fib4_origen',label:'FIB-4 que se utilizará en esta evaluación',type:'select',options:['Informado por fuente externa','Calculado desde analítica','No seleccionado']},
+  {id:'masld_fecha_fib4',label:'Fecha del FIB-4 informado',type:'date'},
+  {id:'masld_fuente_fib4',label:'Procedencia del FIB-4 informado (sin datos identificativos)',type:'textarea'},
+  {id:'masld_fib4_confirmado',label:'FIB-4 externo y correspondencia con paciente/edad actual revisados',type:'select',options:['Sí','No','No valorado']},
+  {id:'masld_elasto_metodo',label:'Método del resultado de rigidez hepática',type:'select',options:['VCTE / FibroScan','2D-SWE u otra ecográfica','Elastografía por resonancia','No consta']},
+  {id:'masld_fecha_elasto',label:'Fecha del resultado de elastografía',type:'date'},
+  {id:'masld_elasto_calidad',label:'Calidad técnica y condiciones de adquisición revisadas en informe',type:'select',options:['Válidas para interpretación','No válidas','No revisadas']},
+  {id:'masld_elasto_confusores',label:'Congestión, colestasis u otros confusores de rigidez valorados',type:'select',options:['Sin confusores relevantes tras revisión','Presentes o sospechados','No valorados']},
+  {id:'masld_enzimas_persistentes',label:'Elevación persistente de enzimas hepáticas',type:'select',options:['Sí','No','No valorada']},
+
   {id:'lip_ascvd',label:'Enfermedad aterosclerótica documentada (coronaria, ictus aterotrombótico o EAP)',type:'select',options:['Sí','No','No valorada']},
   {id:'lip_fecha_ascvd',label:'Fecha del documento de enfermedad aterosclerótica',type:'date'},
   {id:'lip_riesgo',label:'Categoría de riesgo lipídico revisada clínicamente',type:'select',options:['Bajo','Moderado','Alto','Muy alto','No confirmado']},
@@ -269,7 +283,7 @@ export const EXTRA_FIELDS = [
   { id:'fib4_agudo',label:'¿Enfermedad aguda o descompensación actual?',type:'select',
     options:['No','Sí','No valorado'] },
   { id:'hepatico_valoracion',label:'Evaluación de otras causas',type:'select',
-    options:['Esteatosis documentada y otras causas evaluadas','Valoración incompleta o pendiente','Desconocido'] },
+    options:['Esteatosis documentada y otras causas evaluadas','Otras causas evaluadas; esteatosis no confirmada','Valoración incompleta o pendiente','Desconocido'] },
   { id:'elastografia',label:'Elastografía hepática',type:'number',min:0,unit:'kPa' },
   {id:'insulina_esquema',label:'Esquema de insulina realmente administrado',type:'select',
     options:['Sin insulina','Solo basal','Basal y prandial','Premezclas','Otro esquema','No confirmado']},

@@ -49,8 +49,8 @@
     {
       "id": "masld",
       "status": "partial",
-      "evidence": "FIB-4 calculado en engine.mjs",
-      "pending": "FIB-4 informado, elastografía y circuito de derivación"
+      "evidence": "src/clinical/masld.mjs: FIB-4 informado o calculado con procedencia, VCTE verificada por método/calidad y evaluación secuencial con derivación",
+      "pending": "Validación clínica/QA móvil, ELF/SWE/MRE automatizados y selección farmacológica específica de MASH"
     }
   ],
   "cross_cutting": [
@@ -101,7 +101,7 @@
     "Cálculo interno SCORE2-OP pendiente de parámetros primarios; variantes restantes",
     "Completar dislipemia por producto y escenarios específicos",
     "Completar HTA por producto y derivación",
-    "MASLD y obesidad",
+    "Completar obesidad y escenarios hepáticos específicos",
     "Plan integral y validación",
     "Publicación versionada"
   ]

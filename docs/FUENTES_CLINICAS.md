@@ -122,3 +122,8 @@ Se verifica la guía oficial ESC 2024 para el primer circuito dirigido. [Reglas,
 ## Dislipemia: revisión 12/11/2026
 
 Se incorporan ESC/EAS 2025 (tabla 3, umbrales y modificadores), secciones conservadas ESC/EAS 2019 y CIMA 69534/80213/77541. Las categorías lipídicas 2025 no son los cortes por edad de prevención 2021. Unidades de Lp(a) y CrCl tienen tratamiento separado, sin conversiones implícitas. [Matriz de reglas, fuentes primarias y límites](DISLIPEMIA_ESC_EAS_2025.md). Titulación individual, cobertura farmacológica exhaustiva y validación clínica permanecen pendientes.
+
+
+## MASLD: evaluación secuencial revisada el 12/11/2026
+
+EASL-EASD-EASO 2024, figura 2 (J Hepatol p.501) y tabla 6 verificadas en el PDF primario oficial. Se mantiene el umbral ajustado en >65 años; no se mezclan los cortes de otras guías ni métodos de elastografía. [Reglas, fuentes y salvaguardas](MASLD_EASL_2024.md). La nueva implementación no diagnostica MASH ni selecciona un fármaco específico.

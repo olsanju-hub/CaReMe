@@ -15,6 +15,7 @@ const NUMBER=(draft,id)=>{
   const v=VALUE(draft,id);return v===null?null:Number(v);
 };
 export const AUDIT_RULES=Object.freeze({
+  MASLD_ACUTE_REVIEW:'Alarma hepática: valoración aguda prioritaria',
   LIPID_ACUTE_REVIEW:'Síntomas que exigen valoración aguda en dislipemia',
   LIPID_TG_SEVERE:'TG >880 mg/dL: priorizar evaluación',
   BP_SEVERE_REVIEW:'PA ≥180 sistólica o ≥110 diastólica: valorar daño agudo',
@@ -49,6 +50,8 @@ export function auditCrossDomain(draft) {
   const provenance=auditProvenance(draft);
   const out=[...provenance.findings];
   const yes=id=>VALUE(draft,id)==='Sí';
+  if(yes('masld_alarma'))out.push(item('MASLD_ACUTE_REVIEW','critical','Señales de alarma en evaluación hepática',
+    'Sangrado digestivo, confusión nueva o ictericia con deterioro agudo: valoración urgente antes de decisiones crónicas.', ['masld_alarma']));
   if(VALUE(draft,'lip_alarma')==='Sí')
     out.push(item('LIPID_ACUTE_REVIEW','critical','Síntomas de alarma en revisión de lípidos',
       'Dolor abdominal intenso con vómitos o debilidad intensa/orina oscura: priorizar valoración clínica antes de decisiones crónicas.', ['lip_alarma']));
