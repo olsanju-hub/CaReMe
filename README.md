@@ -153,3 +153,11 @@ Incluye entrada integral o dirigida, captura por secciones, distinción entre ca
 No inventar umbrales ni dosis. Verificar versiones de las guías, contraindicaciones y fichas CIMA-AEMPS. Separar lo recomendado de lo efectivamente ejecutado. Mantener registro de fuentes y pruebas. No copiar código o recursos protegidos de otras aplicaciones sin licencia. No incorporar datos personales reales a repositorio ni pruebas.
 
 **Marca:** El nombre de producto aprobado es CaHReMe. Su disponibilidad jurídica y posibles colisiones deben comprobarse antes de utilizarlo como marca comercial.
+
+## Tres bloques auditados — seguridad, datos y seguimiento (12/11/2026)
+
+- **Bloque 1:** auditoría transversal `src/clinical/auditoria.mjs`, detección de incoherencias clínicas y retención de candidatos farmacológicos hasta conciliar datos. **116 pruebas superadas**.
+- **Bloque 2:** procedencia de analíticas `src/clinical/proveniencia.mjs`, fechas ISO, CAC únicamente en mg/g para la clasificación A y exclusión de FIB-4 construido con determinaciones de fechas incompatibles. **126 pruebas superadas**.
+- **Bloque 3:** plan operativo **de verificación, no prescripción** `src/clinical/plan.mjs` y auditoría de continuidad/seguimiento. Los controles solo se vinculan a actuaciones realmente confirmadas. **139 pruebas superadas**.
+- Documentación de riesgos encontrados, reglas, comprobaciones posteriores y pendientes: [Auditorías de tres bloques](docs/AUDITORIAS_3_BLOQUES.md).
+- Las pruebas no validan por sí solas uso clínico ni sustituyen revisión de fichas CIMA, casos externos o evaluación de la interfaz en dispositivo real. El PR continúa **en borrador**, sin fusión ni despliegue.
