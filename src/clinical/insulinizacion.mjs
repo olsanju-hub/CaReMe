@@ -136,7 +136,10 @@ export function evaluateInsulinization(draft,mode='quick'){
   if(phase===INSULIN_PHASES.desintensificacion&&limited('insulina_fragilidad'))
    missing.push('Fragilidad y complejidad de autocuidado evaluadas.');
  }
- if(scheme==='No confirmado')checks.push('Reconciliar esquema: el tipo de insulina aún no está confirmado.');
+ if(scheme==='No confirmado'){
+   checks.push('Reconciliar esquema: el tipo de insulina aún no está confirmado.');
+   if(mode==='detail')missing.push('Confirmar esquema realmente administrado.');
+ }
  if(value(draft,'insulina_autocuidado')==='Requiere educación o apoyo')
    checks.push('Planificar entrenamiento para administración, conservación, autocontrol, hipoglucemia y apoyo al cuidador.');
  if(value(draft,'insulina_autocuidado')!=='Capacidad y apoyo adecuados confirmados')
@@ -187,12 +190,16 @@ export function evaluateInsulinization(draft,mode='quick'){
  if(dm1==='Sí'||dm2==='No')contradictions.push('TIPO_DIABETES_INCOMPATIBLE');
  const urgent=acute.keto||acute.hypo||acute.pregnant||
    number(draft,'glucemia_actual')>=300 && number(draft,'glucemia_actual')!==null;
- const clinicalPriority=urgent||acute.acute||
+ const clinicalPriority=urgent||acute.acute||nightHypo==='Sí'||
+   fastingStatus==='Por debajo del objetivo'||
    (a1c!==null&&a1c>10)||
    value(draft,'dm_sintomas')==='Poliuria, polidipsia o pérdida de peso';
  const blocked=audit.requiresResolution||contradictions.length>0;
  const requireDetailed=mode==='detail'&&(
    missing.length>0||classes===null||
+   scheme==='No confirmado'||
+   (phase===INSULIN_PHASES.intensificacion&&
+      (fastingStatus==='No valorado'||postmeal==='No valorado'))||
    value(draft,'medicacion_revisada')!=='Sí'||
    value(draft,'dm_adherencia')!=='Adecuada confirmada'||
    value(draft,'dm_dosis_confirmadas')!=='Sí'&&
@@ -207,10 +214,14 @@ export function evaluateInsulinization(draft,mode='quick'){
   nextSteps.push('Identificar si se trata de inicio, intensificación o simplificación, y completar antecedentes.');
  } else if(urgent){
   nextSteps.push('Evaluar inmediatamente la situación de seguridad y la necesidad de atención urgente; no utilizar la titulación rutinaria de esta pantalla.');
+ } else if(dm2!=='Sí'||dm1==='Sí'){
+  nextSteps.push('Confirmar tipo y diagnóstico de diabetes antes de aplicar una ruta de insulinización para DM2.');
  } else if(blocked){
   nextSteps.push('Reconciliar diagnóstico, fase, tratamiento y discrepancias antes de valorar cambios.');
  } else if(clinicalPriority){
   nextSteps.push('Valorar gravedad, síntomas y glucemias; decidir necesidad de intervención supervisada antes de una pauta ambulatoria.');
+  if(nightHypo==='Sí'||fastingStatus==='Por debajo del objetivo')
+    nextSteps.push('Revisar exceso de insulinización, alimentación y patrón de glucemias; no aumentar insulina basal.');
  } else if(phase===INSULIN_PHASES.inicio){
   nextSteps.push('Comprobar objetivo individual, síntomas, HbA1c, fármacos actuales y preferencias antes de elegir primer inyectable.');
   if(medicines.has('arGLP-1')||medicines.has('Agonista dual GIP/GLP-1'))
