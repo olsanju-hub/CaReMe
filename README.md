@@ -13,6 +13,16 @@ PWA independiente de apoyo a la decisión clínica en Atención Primaria en Espa
 
 CaHReMe cubre ya la **navegación y captura de datos** de seis consultas inspiradas en GlucoGuía y debe completar su **lógica clínica validada** (DM2, IC, ERC, sobrepeso/obesidad, enfermedad hepática metabólica e insulinización), **con consulta rápida, detalle y resultados equivalentes en funcionalidad**, ampliadas con evaluación integral, datos compartidos, recomendaciones clínicas trazables y seguimiento. **Los algoritmos específicos de decisión terapéutica y seguimiento siguen pendientes.** Véase [matriz de equivalencia y brechas](docs/MATRIZ_EQUIVALENCIA_GLUCOGUIA.md).
 
+## Insuficiencia cardíaca · clasificación y orientación ESC 2026 (12/11/2026)
+
+- **Nueva clasificación ESC 2026:** FEVI **<50 %** con clínica compatible = fenotipo IC-FEr; FEVI **≥50 %** precisa evidencia objetiva adicional para IC-FEp. La categoría independiente de FEVI 41–49 % corresponde a ESC 2021/2023 y ya no define una tercera vía en ESC 2026.
+- `src/clinical/insuficiencia-cardiaca.mjs` añade salidas rápida y detallada: situación, seguridad, congestión, tratamiento farmacológico existente, opciones de clase para revisar y seguimiento.
+- Para IC-FEr sintomática estable revisa ARNI/IECA (ARA-II si intolerancia), betabloqueante con evidencia, ARM e iSGLT2; para IC-FEp confirmada revisa iSGLT2 y ARM. Diurético de asa solo se revisa ante congestión y se distingue el ya utilizado.
+- Sin diagnóstico, evidencia de IC-FEp, estabilidad, valoración de alarmas, TFGe, potasio, PA o conciliación no se muestran inicios. Con alarma se prioriza evaluación aguda.
+- La indicación CIMA de finerenona en IC con **FEVI ≥40 %** **no cambia** la frontera fenotípica ESC 2026.
+- Pruebas: `tests/insuficiencia-cardiaca.test.mjs`, `tests/insuficiencia-cardiaca-ui.test.mjs`. [Guías, reglas y auditoría](docs/IC_ESC_2026.md).
+- Se conserva **sin prescripción**, y sin validación clínica o móvil real.
+
 ## Insulinización DM2 · tres circuitos preliminares (12/11/2026)
 
 - `src/clinical/insulinizacion.mjs` genera orientación **diferenciada** de inicio, intensificación y desintensificación.
