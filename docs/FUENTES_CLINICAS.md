@@ -83,3 +83,9 @@ El código fuente se mantiene en `src/clinical/engine.mjs`. La batería `tests/c
 4. Reglas terapéuticas individualizadas y verificación de cada medicamento en CIMA-AEMPS.
 
 **Prohibido en este estado:** extrapolar estas cifras a prescripciones, registrar actuaciones como realizadas o emitir un «bajo riesgo» global cardiometabólico sin una escala validada.
+
+## Verificación de contexto y datos (12/11/2026)
+
+KDIGO 2024 requiere acreditar cronicidad y evaluar TFGe y albuminuria en su contexto. El clasificador G/A de CaHReMe utiliza **CAC en mg/g** y evita clasificar cifras en mg/mmol sin una transformación explícita y revisada. La fecha de cada analítica puede registrarse; su ausencia no prueba actualidad. FIB-4 no combina automáticamente AST, ALT y plaquetas con fechas registradas incompatibles.
+
+Las discrepancias y controles de procedencia son reglas técnicas internas, no recomendaciones farmacológicas independientes. [Informe de los tres bloques auditados](AUDITORIAS_3_BLOQUES.md).
