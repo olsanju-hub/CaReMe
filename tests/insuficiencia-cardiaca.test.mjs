@@ -169,10 +169,11 @@ test('ausencia de FEVI numérica no permite escoger tratamiento por fenotipo',()
  assert.equal(x.state,'datos_insuficientes');
  assert.equal(x.options.length,0);
 });
-test('ausencia de IC sintomática no equivale a suspensión de tratamiento previo',()=>{
+test('ausencia de síntomas actuales obliga a confirmar estadio sin suspender tratamiento',()=>{
  const x=run({ic_sintomatica:'No'});
- assert.equal(x.state,'revision_pendiente');
+ assert.equal(x.state,'datos_insuficientes');
  assert.equal(x.options.length,0);
+ assert.ok(x.missing.some(t=>t.includes('síntomas previos')));
  assert.ok(x.checks.some(t=>t.includes('no retirar automáticamente')));
 });
 test('LRA o embarazo obligan a priorizar seguridad antes del tratamiento crónico',()=>{
