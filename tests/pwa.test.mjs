@@ -20,7 +20,7 @@ test('service worker solo cachea recursos estáticos', () => {
   assert.ok(!sw.includes('indexedDB'));
   assert.ok(!sw.includes('localStorage'));
   assert.ok(!sw.includes('postMessage('));
-  for (const asset of ['src/app.mjs','src/model.mjs','src/consultas.mjs','src/clinical/engine.mjs','src/clinical/integracion.mjs','src/clinical/farmacologia.mjs','src/clinical/continuidad.mjs','src/clinical/incretinas.mjs','src/clinical/basales.mjs','src/clinical/auditoria.mjs','src/clinical/proveniencia.mjs','src/clinical/plan.mjs','src/clinical/dm2-rapida.mjs','src/clinical/dm2-detallada.mjs','src/clinical/insulinizacion.mjs','src/styles.css','public/icon-concept.svg']) {
+  for (const asset of ['src/app.mjs','src/model.mjs','src/consultas.mjs','src/clinical/engine.mjs','src/clinical/integracion.mjs','src/clinical/farmacologia.mjs','src/clinical/continuidad.mjs','src/clinical/incretinas.mjs','src/clinical/basales.mjs','src/clinical/auditoria.mjs','src/clinical/proveniencia.mjs','src/clinical/plan.mjs','src/clinical/dm2-rapida.mjs','src/clinical/dm2-detallada.mjs','src/clinical/insulinizacion.mjs','src/clinical/insuficiencia-cardiaca.mjs','src/styles.css','public/icon-concept.svg']) {
     assert.ok(sw.includes(asset));
   }
 });
