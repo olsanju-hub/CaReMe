@@ -150,3 +150,10 @@ Las referencias ADA/EASD 2026 y ADA 2026 prevalecen en el contrato clínico sobr
 `src/clinical/insuficiencia-cardiaca.mjs` incorpora FEVI <50 % (IC-FEr) y ≥50 % (IC-FEp si evidencia objetiva), condiciones de congestión y seguridad, con reconciliación de tratamiento existente y opciones de clase para revisión. La categoría intermedia 41–49 % de guías antiguas ya no debe mostrarse como fenotipo independiente.
 
 No asigna diagnóstico por FEVI aislada, no administra diuréticos y no calcula dosis. CIMA finerenona FEVI ≥40 % es una **indicación de producto**, distinta de la definición fenotípica ESC. [Documentación clínica y pruebas](IC_ESC_2026.md).
+
+
+## IC dirigida · FEVI, congestión y seguridad con ESC 2026 (12/11/2026)
+
+Se ha auditado y reforzado la primera orientación de `src/clinical/insuficiencia-cardiaca.mjs`. Se diferencia FEVI <50 % y ≥50 % con evidencia objetiva, congestión, estabilidad y terapia fundacional. Se requieren fechas de FEVI/TFGe/K antes de revisar opciones; un registro antiguo o sin fecha no se asume actual. Hiperpotasemia significativa y duplicidad RAAS se integran en las barreras comunes de todos los motores y fichas.
+
+[Fuentes y especificación](INSUFICIENCIA_CARDIACA_ESC_2026.md). No hay prescripciones, ajustes de diuréticos o actuaciones ejecutadas por el prototipo.
