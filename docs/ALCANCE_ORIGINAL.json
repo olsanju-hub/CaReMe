@@ -25,8 +25,8 @@
     {
       "id": "obesidad",
       "status": "partial",
-      "evidence": "Formulario y candidatos/fichas de incretinas",
-      "pending": "Recorrido completo, hábitos, sarcopenia, reevaluación y cirugía"
+      "evidence": "src/clinical/obesidad.mjs: recorrido rápido/detallado, antropometría, objetivos, hábitos, riesgo muscular, revisión CIMA, seguimiento confirmado y valoración bariátrica",
+      "pending": "Validación clínica y QA real; titulación individual y catálogo completo de fármacos, estadificación EOSS y escenarios específicos"
     },
     {
       "id": "dm2",
@@ -101,7 +101,7 @@
     "Cálculo interno SCORE2-OP pendiente de parámetros primarios; variantes restantes",
     "Completar dislipemia por producto y escenarios específicos",
     "Completar HTA por producto y derivación",
-    "Completar obesidad y escenarios hepáticos específicos",
+    "Integrar objetivos y seguimiento de todos los dominios; cerrar validación",
     "Plan integral y validación",
     "Publicación versionada"
   ]

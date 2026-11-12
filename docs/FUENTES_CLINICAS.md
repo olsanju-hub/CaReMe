@@ -127,3 +127,8 @@ Se incorporan ESC/EAS 2025 (tabla 3, umbrales y modificadores), secciones conser
 ## MASLD: evaluación secuencial revisada el 12/11/2026
 
 EASL-EASD-EASO 2024, figura 2 (J Hepatol p.501) y tabla 6 verificadas en el PDF primario oficial. Se mantiene el umbral ajustado en >65 años; no se mezclan los cortes de otras guías ni métodos de elastografía. [Reglas, fuentes y salvaguardas](MASLD_EASL_2024.md). La nueva implementación no diagnostica MASH ni selecciona un fármaco específico.
+
+
+## Obesidad · revisión12/11/2026
+
+Se verifican GIRO2.0 (abril2025), EASO2024, criterios ASMBS/IFSO2022 y CIMA vigente de Wegovy subcutáneo/Mounjaro. Los marcos clínicos no se intercambian con indicación o acceso quirúrgico local. El algoritmo redGDPS2025 aporta únicamente el intervalo de reevaluación; no se copian sus dosis/financiación. La guía redGDPS2026 se localizó anunciada, sin PDF íntegro verificado: no se le atribuyen reglas nuevas. [Fuentes primarias, reglas y límites](OBESIDAD_GIRO_CIMA.md).

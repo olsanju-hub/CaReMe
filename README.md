@@ -305,3 +305,12 @@ Se reauditaron los límites de ARM conforme a ESC 2026 y CIMA de finerenona. El 
 - Señales de alarma hepática integradas en seguridad transversal. Reevaluación orientativa sin crear cita ni dar por enviada una derivación.
 - **759/759 pruebas locales y sintaxis superadas**, con interfaz simulada; pendientes revisión clínica y QA real móvil. Seis consultas conservadas.
 - [Contrato, fuentes y auditoría](docs/MASLD_EASL_2024.md). MASLD parcial; vía técnica de FIB-4 informado resuelta. PR en borrador.
+
+
+## Recorrido funcional de obesidad · 12/11/2026
+
+- Evaluación rápida y detallada con antropometría, complicaciones y objetivos de salud acordados. Hábitos adaptados y evaluación de riesgo muscular, sin déficit calórico o proteína/kg automáticos.
+- Evolución desde basal documentado, revisión de tratamiento por producto y valoración multidisciplinar/bariátrica con criterios diferenciados. Sin diagnóstico ni pauta individual.
+- Seguimiento trimestral solo desde plan realmente iniciado y confirmado; sin cita ni derivación supuestamente enviada. La integración evita candidatos de peso contradictorios con los condicionantes nutricionales registrados.
+- **853/853 pruebas locales y sintaxis superadas**; interfaz con DOM simulado. Revisión clínica y QA real móvil pendientes.
+- [Contrato, fuentes y auditoría](docs/OBESIDAD_GIRO_CIMA.md). Las seis consultas ya disponen de una primera salida propia; cobertura clínica completa y MVP pendientes. PR en borrador.

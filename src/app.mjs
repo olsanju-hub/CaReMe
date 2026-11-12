@@ -1,3 +1,4 @@
+import {evaluateObesity} from './clinical/obesidad.mjs';
 import {evaluateMasld} from './clinical/masld.mjs';
 import {LIPID_FIELDS,evaluateDyslipidemia} from './clinical/dislipemia.mjs';
 import {HTA_FIELDS,evaluateHypertension} from './clinical/hta.mjs';
@@ -80,6 +81,40 @@ function home() {
       <p>Las seis consultas y la evaluación integral reutilizan la información disponible. Los datos permanecen en memoria y se pierden al recargar.</p></div>
       <button type="button" class="text-link" data-action="sources">Fuentes y limitaciones →</button></section>
   </div>`;
+}
+function obesityResult(mode='detail'){
+ const r=evaluateObesity(draft,mode);
+ const list=xs=>xs.length?`<ul>${xs.map(x=>`<li>${escape(x)}</li>`).join('')}</ul>`:'';
+ return `<section id="obesity-result" class="dm2-result" aria-live="polite"><div class="eyebrow">OBESIDAD · GIRO2025 / CIMA</div><h2>Plan de peso, función y seguimiento</h2>
+ ${r.alerts.length?`<div class="dm2-safety"><h3>Prioridad clínica</h3>${list(r.alerts)}</div>`:''}
+ ${r.missing.length?`<h3>Información necesaria</h3>${list(r.missing)}`:''}
+ ${r.anthropometry?`<h3>Antropometría disponible</h3><p>IMC ${escape(r.anthropometry.bmi.toFixed(2))} kg/m² · ${escape(r.anthropometry.origin)}. Categoría descriptiva: ${escape(r.anthropometry.category.replaceAll('_',' '))}.</p>
+ ${r.anthropometry.waistHeightRatio!==null?`<p>Cintura/talla: ${escape(r.anthropometry.waistHeightRatio.toFixed(2))}.</p>`:''}`:''}
+ <h3>Siguiente paso</h3>${list(r.steps)}
+ ${r.goal?`<h3>Objetivo acordado</h3><p>${escape(r.goal.type)}${r.goal.percent!==null?`: ${escape(r.goal.percent)} % respecto al basal (${escape(r.goal.weightKg.toFixed(1))} kg de referencia).`:'.'}</p>`:''}
+ ${r.response?`<h3>Evolución respecto al basal documentado</h3><p>Pérdida: ${escape(r.response.lossKg.toFixed(1))} kg (${escape(r.response.lossPercent.toFixed(1))} %). Una cifra negativa indica ganancia. No demuestra por sí sola respuesta a un fármaco.</p>`:''}
+ ${r.lifestyle.length?`<h3>Intervención adaptada</h3>${list(r.lifestyle.map(x=>x.text))}`:''}
+ ${r.options.length?`<h3>Opciones farmacológicas para revisión</h3>${list(r.options.map(x=>x.title))}`:''}
+ ${r.productReviews.length?`<details><summary>Comprobaciones por producto</summary>${r.productReviews.map(x=>`<h4>${escape(x.labelRoute)}</h4>${list([...x.blocked,...x.missing,...x.checks])}`).join('')}</details>`:''}
+ ${r.referral.length?`<h3>Valoración especializada</h3>${list(r.referral.map(x=>x.text))}`:''}
+ <h3>Comprobaciones</h3>${list(r.checks)}
+ <h3>Seguimiento</h3><p>${r.followUp?`Revisión orientativa: ${escape(r.followUp.dueOn)}. ${r.followUp.status==='plazo_superado'?'Plazo superado: revisar contactos/controles ya realizados. ':''}${escape(r.followUp.text)}`:'Acordar revisión tras completar la evaluación. Una propuesta no se considera iniciada.'}</p>
+ <details><summary>Fichas de referencia · sin pauta individual</summary><button type="button" class="text-link" data-action="open-drug" data-drug-id="semaglutida_wegovy_sc" data-route-id="peso">Semaglutida subcutánea para peso: ficha CIMA →</button>
+ <button type="button" class="text-link" data-action="open-drug" data-drug-id="tirzepatida" data-route-id="peso">Tirzepatida para peso: ficha CIMA →</button><p>Las fichas se consultan para revisión; no determinan elegibilidad ni financiación. Otros productos requieren revisión individual.</p></details>
+ <details><summary>Fuentes</summary>${r.sources.map(x=>`<p><a href="${escape(x.url)}" target="_blank" rel="noopener noreferrer">${escape(x.title)}</a> · ${escape(x.locator)}</p>`).join('')}</details>
+ <p class="privacy-note">Sin diagnóstico, prescripción ni autorización quirúrgica automáticos. No se crea cita ni se envía derivación. Validación clínica independiente pendiente.</p></section>`;
+}
+function obesityFieldsMarkup(fields,mode){
+ if(mode==='quick')return fields.map(id=>moduleFieldMarkup(FIELDS[id])).join('');
+ const basic=MODULE_BY_ID.obesidad.quick;
+ const habits=['cintura','ob_complicacion_grave','ob_secundaria','ob_adaptacion_muscular','ob_alimentacion','ob_actividad','ob_limitacion_ejercicio','ob_sueno_psicosocial','ob_respuesta_previa'];
+ const goals=['ob_peso_basal','ob_fecha_basal','ob_basal_confirmado','ob_objetivo','ob_objetivo_porcentaje','ob_objetivo_salud','ob_plan_estado','ob_plan_confirmado','ob_fecha_plan'];
+ const rest=fields.filter(id=>![...basic,...habits,...goals].includes(id));
+ return basic.map(id=>moduleFieldMarkup(FIELDS[id])).join('')+[[habits,'Hábitos y preservación muscular'],[goals,'Objetivos, evolución y plan confirmado'],[rest,'Tratamiento y seguridad por producto']].map(([ids,title])=>`<details><summary>${title}</summary><div class="field-grid">${ids.map(id=>moduleFieldMarkup(FIELDS[id])).join('')}</div></details>`).join('');
+}
+function obesitySummaryCard(){
+ const r=evaluateObesity(draft,'quick');
+ return `<section class="calc-card"><h2>Obesidad y función</h2><p>${r.alerts.length?'Existen alertas para valoración.':r.anthropometry?'IMC disponible: '+escape(r.anthropometry.bmi.toFixed(2))+'; revisar complicaciones y plan individual.':'Completar antropometría y evaluación de complicaciones.'}</p><button class="text-link" type="button" data-action="start-module" data-module="obesidad">Ver recorrido de obesidad →</button></section>`;
 }
 function lipidResult(){
  const r=evaluateDyslipidemia(draft);
@@ -571,8 +606,11 @@ function consultationReview(module) {
     ${module.id==='insulina'?insulinResult('detail'):''}
     ${module.id==='ic'?heartFailureResult('detail'):''}
     ${module.id==='erc'?kidneyResult('detail'):''}
+    ${module.id==='obesidad'?obesityResult('detail'):''}
     ${integratedCards(({dm2:'DM2',ic:'IC',erc:'Renal',obesidad:'Metabólico',hepatico:'Hepático',insulina:'DM2'})[module.id])}
-    ${module.id==='hepatico'
+    ${module.id==='obesidad'
+      ? '<p class="clinical-lock">Obesidad: recorrido de objetivos, hábitos, revisión farmacológica y derivación implementado; revisión clínica pendiente.</p>'
+      :module.id==='hepatico'
       ? '<p class="clinical-lock">Hepático: primer circuito de FIB-4, VCTE y derivación implementado; revisión clínica pendiente.</p>'
       :module.id==='erc'
       ? '<p class="clinical-lock">ERC: primera orientación renal implementada. Validación clínica pendiente.</p>'
@@ -609,13 +647,14 @@ function moduleView() {
       <div class="form-title"><div><h2>${mode==='quick'?'Datos esenciales':'Datos clínicos detallados'}</h2>
         <p>La información se comparte con los demás módulos y la evaluación integral.</p></div>
         <span class="count-pill" id="section-count">${completed} de ${fields.length} registrados</span></div>
-      <div class="field-grid">${m.id==='hepatico'&&mode==='quick'?fields.filter(id=>!['elastografia','masld_elasto_metodo','masld_fecha_elasto','masld_elasto_calidad','masld_elasto_confusores'].includes(id)).map(id=>moduleFieldMarkup(FIELDS[id])).join(''):fields.map(id=>moduleFieldMarkup(FIELDS[id])).join('')}</div>
+      <div class="field-grid">${m.id==='obesidad'?obesityFieldsMarkup(fields,mode):m.id==='hepatico'&&mode==='quick'?fields.filter(id=>!['elastografia','masld_elasto_metodo','masld_fecha_elasto','masld_elasto_calidad','masld_elasto_confusores'].includes(id)).map(id=>moduleFieldMarkup(FIELDS[id])).join(''):fields.map(id=>moduleFieldMarkup(FIELDS[id])).join('')}</div>
       ${m.id==='hepatico'&&mode==='quick'?`<details><summary>Elastografía disponible (opcional)</summary><div class="field-grid">${['elastografia','masld_elasto_metodo','masld_fecha_elasto','masld_elasto_calidad','masld_elasto_confusores'].map(id=>moduleFieldMarkup(FIELDS[id])).join('')}</div></details>`:''}
       <div class="wizard-actions">
         <button type="button" class="ghost" data-action="module-mode" data-mode="${mode==='quick'?'detail':'quick'}">${mode==='quick'?'Revisión detallada':'Consulta rápida'}</button>
         <button type="button" class="primary" data-action="module-mode" data-mode="review">Ver resumen de datos →</button>
       </div>
     </section>`}
+    ${m.id==='obesidad' && (mode==='quick'||mode==='detail')?`<div class="dm2-result-trigger"><button type="button" class="primary" data-action="obesity-result">Ver plan de obesidad y seguimiento →</button><p>Objetivos acordados y revisión de tratamiento; sin prescripción.</p></div>${current.obesityVisible?obesityResult(mode):''}`:''}
     ${m.id==='hepatico' && (mode==='quick'||mode==='detail')?`<div class="dm2-result-trigger">
       <button class="primary" type="button" data-action="masld-result">Ver evaluación de fibrosis y derivación →</button>
       <p>FIB-4 con procedencia y elastografía según método. Sin diagnóstico automático.</p>
@@ -640,7 +679,7 @@ function moduleView() {
       <button class="primary" type="button" data-action="dm2-result">Ver orientación clínica rápida →</button>
       <p>El resultado se genera para revisión. No prescribe ni confirma diagnósticos.</p>
     </div>${current.dm2ResultVisible?dm2RapidResult():''}`:''}
-    <div class="module-note"><strong>Documentación:</strong> las orientaciones de DM2, insulinización e IC son preliminares; ERC tiene una primera orientación; hígado dispone de evaluación secuencial; obesidad y validación clínica siguen pendientes.</div>
+    <div class="module-note"><strong>Documentación:</strong> las orientaciones de DM2, insulinización e IC son preliminares; ERC tiene una primera orientación; hígado dispone de evaluación secuencial; obesidad dispone de recorrido dirigido. La validación clínica sigue pendiente.</div>
     <p class="privacy-note">No introduzcas identificadores del paciente. Los datos no se guardan después de cerrar o recargar.</p>
   </div>`;
 }
@@ -712,6 +751,7 @@ function summary() {
             ? escape(draft.values[f.id]) + (f.unit ? ' ' + escape(f.unit) : '') : statusLabel(state);
           return `<div><dt>${escape(f.label)}</dt><dd class="${state}">${content}</dd></div>`;
         }).join('')}</dl></section>`).join('')}</div>
+    ${obesitySummaryCard()}
     ${lipidSummaryCard()}
     ${htaSummaryCard()}
     ${ckmSummaryCard()}
@@ -876,6 +916,7 @@ function tools() {
     <p>Estas clasificaciones utilizan los datos ya introducidos en la consulta. No generan diagnósticos ni recomendaciones terapéuticas.</p>
     ${banner()}
     <p class="privacy-note">La fecha y unidad real de cada analítica deben verificarse antes de utilizarla para decidir. Una fecha no consignada no significa que el resultado sea actual.</p>
+    ${obesitySummaryCard()}
     ${lipidSummaryCard()}
     ${htaSummaryCard()}
     ${ckmSummaryCard()}
@@ -904,8 +945,8 @@ function tools() {
       </div>
       ${['obesidad'].map(id=>{
         const m=MODULE_BY_ID[id];
-        return `<div class="tool-card"><span class="tag">Algoritmo pendiente</span>
-          <h2>${escape(m.title)}</h2><p>La consulta rápida y detallada ya está disponible; los resultados clínicos necesitan especificación y revisión.</p>
+        return `<div class="tool-card"><span class="tag">GIRO2025 · revisión profesional</span>
+          <h2>${escape(m.title)}</h2><p>Evaluación de complicaciones, objetivos y hábitos, con revisión farmacológica y derivación. Validación clínica pendiente.</p>
           <button type="button" class="text-link" data-action="start-module" data-module="${escape(m.id)}">Abrir consulta →</button>
         </div>`;
       }).join('')}
@@ -961,6 +1002,7 @@ app.addEventListener('input', event => {
     // Refrescar tras seleccionar «ninguna» para garantizar exclusividad.
     if (selected.length !== checked.length) return render();
   } else draft=setValue(draft,id,el.value);
+  if(current.obesityVisible){current.obesityVisible=false;document.getElementById('obesity-result')?.remove();}
   if(current.masldVisible){current.masldVisible=false;document.getElementById('masld-result')?.remove();}
   if(current.lipidVisible){current.lipidVisible=false;document.getElementById('lipid-result')?.remove();}
   if(current.htaVisible){current.htaVisible=false;document.getElementById('hta-result')?.remove();}
@@ -1005,6 +1047,10 @@ app.addEventListener('click', event => {
   if(action==='ckm-result'){if(current.page!=='ckm')return;current.ckmVisible=true;return render();}
   if(action==='cv-risk'){current.cvVisible=false;return navigate('cv-risk');}
   if(action==='cv-risk-result'){if(current.page!=='cv-risk')return;current.cvVisible=true;return render();}
+  if(action==='obesity-result'){
+    if(current.page!=='module'||current.module!=='obesidad'||!['quick','detail'].includes(current.mode))return;
+    current.obesityVisible=true;return render();
+  }
   if(action==='masld-result'){
     if(current.page!=='module'||current.module!=='hepatico'||!['quick','detail'].includes(current.mode))return;
     current.masldVisible=true;return render();
@@ -1069,7 +1115,7 @@ app.addEventListener('click', event => {
   }
   if (action === 'start-module') {
     if (!MODULE_BY_ID[btn.dataset.module]) return;
-    current.masldVisible=false; current.renalVisible=false; current.module=btn.dataset.module; current.mode='quick'; current.dm2ResultVisible=false; current.dm2DetailedVisible=false; current.insulinVisible=false; current.icVisible=false; return navigate('module');
+    current.obesityVisible=false; current.masldVisible=false; current.renalVisible=false; current.module=btn.dataset.module; current.mode='quick'; current.dm2ResultVisible=false; current.dm2DetailedVisible=false; current.insulinVisible=false; current.icVisible=false; return navigate('module');
   }
   if (action === 'module-mode') {
     if (!['quick','detail','review'].includes(btn.dataset.mode)) return;

@@ -162,3 +162,8 @@ El módulo dirigido de IC con fenotipos de **ESC 2026**, congestión y propuesta
 ## Actualización MASLD · 12/11/2026
 
 El hallazgo histórico `REPORTED_FIB4_NOT_USED` queda resuelto técnicamente por `evaluateMasld`, con procedencia y confirmación asociada al borrador. Se añaden evaluación VCTE por método/calidad y rutas de valoración especializada. La matriz conserva MASLD y paridad clínica como parciales: no acredita validación externa ni QA móvil. [Contrato y auditoría posterior](MASLD_EASL_2024.md). La calculadora descriptiva anterior conserva su contrato; el resultado dirigido utiliza el nuevo motor.
+
+
+## Actualización del bloque de obesidad · 12/11/2026
+
+Se incorpora salida propia rápida/detallada y resumen para obesidad: objetivos e intervención adaptada, evolución y revisión de tratamiento/derivación. Las seis consultas originales tienen primera salida clínica para revisión. `NO_MODULE_SPECIFIC_RESULT` continúa parcialmente resuelto porque no se ha demostrado paridad clínica completa ni QA real por módulo. [Contrato y auditoría](OBESIDAD_GIRO_CIMA.md).

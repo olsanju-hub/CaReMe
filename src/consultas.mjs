@@ -27,8 +27,8 @@ export const MODULES = [
   {
     id: 'obesidad', title: 'Sobrepeso y obesidad', domain: 'metabolico',
     short: 'Adiposidad y comorbilidades',
-    quick: ['imc','dm2','obesidad_perfil'],
-    detail: ['peso','talla','imc','imc_inicio','comorbilidad_peso_confirmada','cintura','dm2','pancreatitis_sospecha','pancreatitis_previa','deshidratacion_gi','gastroparesia_grave','comorbilidades','farmacos_clases','farmacos','medicacion_revisada','alergias','alergias_revisadas']
+    quick: ['edad', 'embarazo', 'ob_lactancia', 'fecha_evaluacion', 'peso', 'talla', 'imc', 'ob_fecha_medidas', 'dm2', 'comorbilidad_peso_confirmada', 'obesidad_perfil', 'ob_acuerdo', 'ob_complicaciones_revisadas', 'ob_perdida_involuntaria', 'ob_edema', 'ob_tca', 'ob_musculo', 'ob_farmaco_actual'],
+    detail: ['edad', 'embarazo', 'ob_lactancia', 'fecha_evaluacion', 'peso', 'talla', 'imc', 'ob_fecha_medidas', 'dm2', 'comorbilidad_peso_confirmada', 'obesidad_perfil', 'ob_acuerdo', 'ob_complicaciones_revisadas', 'ob_perdida_involuntaria', 'ob_edema', 'ob_tca', 'ob_musculo', 'ob_farmaco_actual', 'cintura', 'ob_complicacion_grave', 'ob_secundaria', 'ob_adaptacion_muscular', 'ob_alimentacion', 'ob_actividad', 'ob_limitacion_ejercicio', 'ob_sueno_psicosocial', 'ob_respuesta_previa', 'ob_adherencia', 'ob_tolerancia', 'ob_peso_basal', 'ob_fecha_basal', 'ob_basal_confirmado', 'ob_objetivo', 'ob_objetivo_porcentaje', 'ob_objetivo_salud', 'ob_plan_estado', 'ob_plan_confirmado', 'ob_fecha_plan', 'embarazo_planificado', 'pancreatitis_sospecha', 'pancreatitis_previa', 'deshidratacion_gi', 'gastroparesia_grave', 'vision_subita', 'retinopatia_dm', 'hepatica_grave', 'dm1', 'tfge', 'fecha_tfge', 'situacion_aguda', 'comorbilidades', 'farmacos_clases', 'farmacos', 'medicacion_revisada', 'alergias', 'alergias_revisadas', 'imc_inicio']
   },
   {
     id: 'hepatico', title: 'Enfermedad hepática metabólica', domain: 'hepatico',
@@ -45,6 +45,35 @@ export const MODULES = [
 ];
 export const MODULE_BY_ID = Object.fromEntries(MODULES.map(m => [m.id, m]));
 export const EXTRA_FIELDS = [
+  {id:'ob_fecha_medidas',label:'Fecha de peso/IMC actuales',type:'date'},
+  {id:'ob_acuerdo',label:'Abordaje del peso acordado con la persona',type:'select',options:['Sí','No','No explorado']},
+  {id:'ob_complicaciones_revisadas',label:'Complicaciones y repercusión funcional revisadas',type:'select',options:['Sí','No','No valoradas']},
+  {id:'ob_complicacion_grave',label:'Complicación grave que puede beneficiarse de pérdida de peso',type:'select',options:['Sí','No','No valorada']},
+  {id:'ob_secundaria',label:'Sospecha de causa secundaria o sindrómica',type:'select',options:['Sí','No','No valorada']},
+  {id:'ob_perdida_involuntaria',label:'Pérdida de peso involuntaria o riesgo de desnutrición',type:'select',options:['Sí','No','No valorada']},
+  {id:'ob_edema',label:'Edema/ascitis que dificulta interpretar peso y respuesta',type:'select',options:['Sí','No','No valorado']},
+  {id:'ob_tca',label:'Sospecha de trastorno de la conducta alimentaria',type:'select',options:['Sí','No','No valorado']},
+  {id:'ob_musculo',label:'Riesgo o sospecha de sarcopenia/fragilidad funcional',type:'select',options:['Sí','No tras valoración','No valorado']},
+  {id:'ob_adaptacion_muscular',label:'Plan de preservación muscular y nutrición individualizados',type:'select',options:['Acordado y adaptado','Pendiente']},
+  {id:'ob_alimentacion',label:'Patrón alimentario y barreras revisados',type:'select',options:['Sí','No','No valorado']},
+  {id:'ob_actividad',label:'Actividad y capacidad para ejercicio revisadas',type:'select',options:['Sí','No','No valorado']},
+  {id:'ob_limitacion_ejercicio',label:'Limitación que exige adaptar el ejercicio',type:'select',options:['Sí','No','No valorada']},
+  {id:'ob_sueno_psicosocial',label:'Sueño y barreras psicosociales revisados',type:'select',options:['Sí','No','No valorados']},
+  {id:'ob_respuesta_previa',label:'Respuesta a intervención nutricional/conductual previa',type:'select',options:['No realizada','Objetivos no alcanzados o reganancia','Respuesta adecuada','No valorada']},
+  {id:'ob_farmaco_actual',label:'Tratamiento farmacológico realmente usado para peso',type:'select',options:['Ninguno','Wegovy subcutáneo','Tirzepatida','Otro tratamiento','No conciliado']},
+  {id:'ob_adherencia',label:'Adherencia y dosis actuales verificadas',type:'select',options:['Sí','No','No valoradas']},
+  {id:'ob_tolerancia',label:'Tolerancia al tratamiento actual revisada',type:'select',options:['Adecuada','Problemas de tolerancia','No valorada']},
+  {id:'ob_lactancia',label:'Lactancia actual para revisión de tratamiento del peso',type:'select',options:['Sí','No','No procede','No valorada']},
+  {id:'ob_peso_basal',label:'Peso basal documentado del plan de peso',type:'number',min:0,unit:'kg'},
+  {id:'ob_fecha_basal',label:'Fecha del peso basal del plan',type:'date'},
+  {id:'ob_basal_confirmado',label:'Peso basal y correspondencia con el plan confirmados',type:'select',options:['Sí','No','No valorado']},
+  {id:'ob_objetivo',label:'Objetivo acordado del plan',type:'select',options:['Reducción ponderal','Mantenimiento y función','No acordado']},
+  {id:'ob_objetivo_porcentaje',label:'Reducción porcentual acordada respecto al basal',type:'number',min:0,max:99,unit:'%'},
+  {id:'ob_objetivo_salud',label:'Objetivo de salud/función individual (sin identificadores)',type:'textarea'},
+  {id:'ob_plan_estado',label:'Estado real del plan de intervención',type:'select',options:['Propuesto, no iniciado','Acordado e iniciado','No confirmado']},
+  {id:'ob_plan_confirmado',label:'Inicio real del plan confirmado por el profesional',type:'select',options:['Sí','No','No valorado']},
+  {id:'ob_fecha_plan',label:'Fecha efectiva de inicio del plan confirmado',type:'date'},
+
   {id:'masld_alarma',label:'Hematemesis/melenas, confusión nueva o ictericia con deterioro agudo',type:'select',options:['Sí','No','No valorado']},
   {id:'masld_cirrosis',label:'Cirrosis conocida o sospecha de enfermedad hepática avanzada',type:'select',options:['Conocida','Sospechada','No tras valoración','No valorada']},
   {id:'masld_alcohol',label:'Consumo y patrón de alcohol revisados para etiología hepática',type:'select',options:['Revisados','Pendientes']},

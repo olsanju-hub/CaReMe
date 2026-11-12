@@ -104,7 +104,8 @@
       "quick_clinical_result": "partial",
       "detailed_decision": "partial",
       "priority": "P1",
-      "gap": "Weight-drug candidate exists; structured lifestyle, sarcopenia, reevaluation and surgery referral pathways absent."
+      "gap": "Recorrido rápido/detallado con hábitos, función muscular, objetivos documentados, respuesta ponderal y revisión de fármacos CIMA; valoración especializada y cirugía con criterios diferenciados. Pendientes validación clínica, titulación individual, catálogo completo y QA móvil real.",
+      "note": "src/clinical/obesidad.mjs; no diagnóstico, prescripción ni autorización quirúrgica automáticos."
     },
     {
       "id": "hepatico",
@@ -254,6 +255,11 @@
       "id": "masld_sequential_result",
       "status": "partial",
       "evidence": "src/clinical/masld.mjs; FIB-4 externo/calculado, VCTE verificada y derivación; validación clínica/QA real pendientes."
+    },
+    {
+      "id": "obesity_directed_result",
+      "status": "partial",
+      "evidence": "src/clinical/obesidad.mjs y tests/obesidad*.test.mjs; hábitos, objetivos, músculo y valoración bariátrica con seguimiento desde plan confirmado."
     }
   ],
   "blockers": [
@@ -286,7 +292,7 @@
       "owner_area": "src/app.mjs consultationReview",
       "finding": "Directed module shows capture summary and clinical-lock, not equivalent quick/detailed decision flow.",
       "status": "partially_resolved",
-      "resolution": "DM2, insulinización, IC y primera salida renal implementadas parcialmente. Siguen pendientes hígado, obesidad y validación por módulo."
+      "resolution": "Las seis consultas dirigidas ya tienen primera salida propia, incluida MASLD y obesidad. La paridad clínica completa y validación por módulo no han sido demostradas; se mantiene parcialmente resuelto."
     },
     {
       "id": "MANIFEST_DESCRIPTION_STALE",

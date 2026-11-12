@@ -192,3 +192,8 @@ Se implementa un recorrido de objetivos, revisión de tratamiento y seguimiento 
 ## MASLD: evaluación secuencial · 12/11/2026
 
 La consulta hepática usa FIB-4 informado con procedencia o cálculo fechado y revisa VCTE antes de orientar seguimiento/derivación. Cierra la brecha técnica de índice informado, sin acreditar paridad clínica completa. [Contrato y límites](MASLD_EASL_2024.md). Verificación local: 759 pruebas y sintaxis correctas; interfaz simulada, validación clínica y QA móvil real pendientes. Siguiente dominio a ampliar: obesidad.
+
+
+## Obesidad: recorrido funcional · 12/11/2026
+
+Se completan para revisión las rutas de hábitos, objetivos, riesgo muscular, evolución y valoración bariátrica del bloque de obesidad. Reutiliza barreras CIMA por producto y mantiene seguimiento desde un plan iniciado/confirmado. [Contrato y auditoría](OBESIDAD_GIRO_CIMA.md). Verificación local:853 pruebas y sintaxis superadas; no sustituye validación clínica o QA real. El siguiente trabajo transversal es integrar objetivos/seguimiento entre dominios y completar validación; no se declara MVP cerrado.

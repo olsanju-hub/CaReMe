@@ -300,6 +300,11 @@ export function integratePatient(draft) {
         'No se propone iniciar un segundo medicamento. Identificar molécula, indicación, tolerancia y objetivos antes de cambios.',
         [...security,'Confirmar principio activo, formulación y última dosis.'],
         weightSources,['Metabólico']));
+    } else if(['ob_tca','ob_perdida_involuntaria','ob_edema','ob_secundaria'].some(id=>value(draft,id)==='Sí') ||
+      (value(draft,'ob_musculo')==='Sí'&&value(draft,'ob_adaptacion_muscular')!=='Acordado y adaptado')) {
+      add(card('WEIGHT-SPECIAL-REVIEW','context','Completar evaluación específica antes de intensificar el plan de peso',
+        'Constan condicionantes nutricionales, etiológicos o funcionales que requieren un plan individual; no se genera candidato de inicio para peso.',
+        ['Revisar el recorrido dirigido de obesidad y preservar función/estado nutricional.'],weightSources,['Metabólico']));
     } else if(unsafeAcute || ketoWarning) {
       add(card('WEIGHT-ACUTE-DEFER','context','Posponer valoración farmacológica de peso durante proceso agudo',
         'Priorizar la situación clínica aguda antes de valorar intensificación de tratamiento crónico del peso.',
@@ -424,3 +429,4 @@ export function integratePatient(draft) {
     sources: INTEGRATION_SOURCES
   };
 }
+
