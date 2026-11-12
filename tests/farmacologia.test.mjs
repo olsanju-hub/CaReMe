@@ -13,8 +13,8 @@ const base={
   dm1:'No', cyp3a4_fuerte:'No',addison:'No',hepatica_grave:'No',embarazo:'No procede',
   alergias_revisadas:'Sí',medicacion_revisada:'Sí',farmacos_clases:['Metformina']
 };
-test('cinco productos con fichas CIMA diferenciadas por indicación',()=>{
-  assert.deepEqual(Object.keys(DRUGS),['empagliflozina','finerenona','semaglutida_ozempic','semaglutida_wegovy_sc','tirzepatida']);
+test('siete productos con fichas CIMA diferenciadas por indicación',()=>{
+  assert.deepEqual(Object.keys(DRUGS),['empagliflozina','finerenona','semaglutida_ozempic','semaglutida_wegovy_sc','tirzepatida','metformina','dapagliflozina']);
   assert.equal(getDrug('empagliflozina').routes.length,3);
   assert.equal(getDrug('finerenona').routes.length,2);
   for(const d of Object.values(DRUGS)) {
