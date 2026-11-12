@@ -64,7 +64,7 @@ export function gfrCategory(number) {
 }
 export function albuminuriaCategory(number) {
   if (typeof number !== 'number' || !Number.isFinite(number) || number < 0) return null;
-  return number < 30 ? 'A1' : number < 300 ? 'A2' : 'A3';
+  return number < 30 ? 'A1' : number <= 300 ? 'A2' : 'A3';
 }
 export function evaluateRenal(draft) {
   const { values = {}, unavailable = [] } = draft || {};
