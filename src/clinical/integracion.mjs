@@ -13,6 +13,7 @@
 import { fieldState } from '../model.mjs';
 import { readMulti } from '../consultas.mjs';
 import { evaluateRenal, evaluateFib4 } from './engine.mjs';
+import { auditCrossDomain } from './auditoria.mjs';
 
 export const INTEGRATION_SOURCES = Object.freeze({
   kdigo: {
@@ -388,9 +389,29 @@ export function integratePatient(draft) {
       ['KDIGO-2024-CKD','ADA-2026-9'],['General']));
   }
 
+  // Puerta de seguridad transversal: las incoherencias críticas no deben
+  // convivir con tarjetas de candidata de inicio, aunque una rama aislada encaje.
+  const audit=auditCrossDomain(draft);
+  for(const finding of audit.findings) {
+    add(card('AUDIT-'+finding.id, finding.severity==='critical'?'alert':'context',
+      finding.title,finding.detail,
+      ['Corregir o confirmar: '+finding.fields.join(', ')+'.'],
+      ['KDIGO-2024-CKD'],['General','DM2','Renal','Cardiovascular','Hepático','Metabólico']));
+  }
+  if(audit.requiresResolution) {
+    for(const proposal of options.splice(0)) {
+      context.push(card('ON-HOLD-'+proposal.id,'context',
+        'Candidato retenido: '+proposal.title,
+        'El motor ha detectado incoherencias clínicas críticas. Esta opción se retiene hasta su conciliación; no debe interpretarse como indicación.',
+        audit.critical.map(f=>'Resolver '+f.title.toLowerCase()+'.'),
+        proposal.sources,proposal.domains));
+    }
+  }
+
   return {
-    status:'review_only',
-    message:'Opciones para revisión profesional. Ninguna tarjeta autoriza prescripción, suspensión o diagnóstico.',
+    audit,
+    status:audit.requiresResolution?'incoherencias_criticas':'review_only',
+    message:audit.requiresResolution?audit.summary:'Opciones para revisión profesional. Ninguna tarjeta autoriza prescripción, suspensión o diagnóstico.',
     evaluated: {dm2,hf,ckd:ckddiagnosed,ckdChronic:chronic,cvd,obesity,hepatic:steatosis||liverKnown},
     renal:{gfr:renal.categories.gfr, albuminuria:renal.categories.albuminuria},
     fib4:{value:hepatic.value, interpretation:hepatic.interpretation},
