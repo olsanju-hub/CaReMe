@@ -64,6 +64,13 @@ test('FIB-4 no debe calcularse a partir de AST ALT plaquetas de distintas fechas
  assert.equal(evaluateFib4(equal).status,'calculated');
  assert.equal(evaluateFib4(equal).value,2.2);
 });
+test('dos fechas hepáticas incompatibles bloquean FIB-4 aunque falte fecha de plaquetas',()=>{
+ const d=draft({edad:'55',ast:'40',alt:'25',plaquetas:'200',
+  fecha_ast:'2026-11-10',fecha_alt:'2026-11-08'});
+ assert.equal(evaluateFib4(d).status,'not_comparable');
+ assert.equal(evaluateFib4(d).value,null);
+ assert.ok(auditProvenance(d).findings.some(x=>x.id==='FIB4_DIFFERENT_DATES'));
+});
 test('fecha hepática posterior a evaluación bloquea índice aun con las tres fechas iguales',()=>{
  const d=draft({edad:55,ast:40,alt:25,plaquetas:200,
   fecha_evaluacion:'2026-11-12',fecha_ast:'2026-11-13',
