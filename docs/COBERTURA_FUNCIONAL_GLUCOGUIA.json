@@ -63,8 +63,8 @@
       "quick_clinical_result": "partial",
       "detailed_decision": "partial",
       "priority": "P1",
-      "gap": "IC rápida y detallada tienen orientación original ESC 2026 basada en FEVI <50 o ≥50 con evidencia, congestión, tratamiento actual, TFGe/K y señales de alarma; falta verificación independiente, diagnóstico completo, titulación específica y QA real.",
-      "note": "src/clinical/insuficiencia-cardiaca.mjs y tests de IC. La clasificación anterior ≤40/41–49/≥50 es histórica; CIMA finerenona FEVI≥40 es una indicación de producto, no fenotipo."
+      "gap": "Consulta rápida y detallada con FEVI ESC 2026 (<50/≥50 con evidencia), congestión, datos de seguridad y conciliación; fechas de FEVI/TFGe/K obligatorias para candidatos, K>5,5 y duplicidad RAAS auditados. Falta validación clínica independiente, selección individual por producto y QA real en móvil.",
+      "note": "Primera implementación y auditoría transversal: src/clinical/insuficiencia-cardiaca.mjs, tests/insuficiencia-cardiaca-seguridad.test.mjs, docs/INSUFICIENCIA_CARDIACA_ESC_2026.md. Sin prescripción."
     },
     {
       "id": "erc",
@@ -227,6 +227,11 @@
       "id": "hf_esc2026_directed_result",
       "status": "partial",
       "evidence": "src/clinical/insuficiencia-cardiaca.mjs, src/app.mjs, tests/insuficiencia-cardiaca.test.mjs, docs/IC_ESC_2026.md"
+    },
+    {
+      "id": "hf_2026_provenance_and_safety",
+      "status": "partial",
+      "evidence": "Motor IC por fenotipo ESC 2026, barreras fechas/RAAS/K, y tests/insuficiencia-cardiaca-seguridad.test.mjs; sin validación externa"
     }
   ],
   "blockers": [
