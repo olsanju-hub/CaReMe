@@ -53,6 +53,15 @@ test('la matriz reconoce el bloqueo P0 de unidad de CAC y la brecha de FIB-4 inf
  assert.equal(r.value,null);
  assert.equal(r.status,'missing');
 });
+test('la matriz refleja CAC corregido, DM2 rápida parcial y paridad completa aún pendiente',()=>{
+ const cac=audit.blockers.find(x=>x.id==='CAC_UNIT_ABSENT_ASSUMED_MG_G');
+ const dm=audit.modules.find(x=>x.id==='dm2');
+ assert.equal(cac.status,'resolved_in_branch');
+ assert.equal(dm.quick_clinical_result,'partial');
+ assert.equal(dm.detailed_decision,'partial');
+ assert.equal(audit.release_gate.verified_full_parity,false);
+ assert.ok(audit.blockers.some(x=>x.status==='open'));
+});
 test('la matriz identifica expresamente las limitaciones del clasificador renal',()=>{
  const risk=audit.blockers.find(x=>x.id==='CAC_UNIT_ABSENT_ASSUMED_MG_G');
  assert.match(risk.finding,/unidad_cac/);
