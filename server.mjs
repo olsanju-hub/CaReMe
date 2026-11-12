@@ -4,7 +4,7 @@ import { resolve, extname } from 'node:path';
 
 const root = resolve('.');
 const allow = new Set([
-  'index.html', 'src/styles.css', 'src/app.mjs', 'src/model.mjs', 'src/consultas.mjs', 'src/clinical/engine.mjs', 'src/clinical/integracion.mjs', 'src/clinical/farmacologia.mjs', 'src/clinical/continuidad.mjs', 'src/clinical/incretinas.mjs', 'src/clinical/basales.mjs', 'src/clinical/auditoria.mjs', 'src/clinical/proveniencia.mjs', 'src/clinical/plan.mjs', 'src/clinical/dm2-rapida.mjs',
+  'index.html', 'src/styles.css', 'src/app.mjs', 'src/model.mjs', 'src/consultas.mjs', 'src/clinical/engine.mjs', 'src/clinical/integracion.mjs', 'src/clinical/farmacologia.mjs', 'src/clinical/continuidad.mjs', 'src/clinical/incretinas.mjs', 'src/clinical/basales.mjs', 'src/clinical/auditoria.mjs', 'src/clinical/proveniencia.mjs', 'src/clinical/plan.mjs', 'src/clinical/dm2-rapida.mjs', 'src/clinical/dm2-detallada.mjs',
   'manifest.webmanifest', 'service-worker.js',
   'public/icon-concept.svg', 'public/domain-cardiovascular.svg',
   'public/domain-renal.svg', 'public/domain-hepatico.svg',
