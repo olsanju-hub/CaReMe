@@ -7,7 +7,7 @@ const draft=(values={})=>Object.entries(values).reduce((d,[id,v])=>
   setValue(d,id,Array.isArray(v)?JSON.stringify(v):String(v)),createDraft());
 
 const base={
-  edad: '65', tfge:'55', potasio:'4.5', cac:'120', dm2:'Sí',
+  edad: '65', tfge:'55', potasio:'4.5', cac:'120',unidad_cac:'mg/g', dm2:'Sí',
   ic:'Sí',ic_sintomatica:'Sí',fevi:'50',erc:'Sí',persistencia:'Sí',
   situacion_aguda:'Estable sin proceso agudo grave',cetoacidosis_sospecha:'No',
   dm1:'No', cyp3a4_fuerte:'No',addison:'No',hepatica_grave:'No',embarazo:'No procede',
@@ -108,7 +108,7 @@ test('no se infieren contraindicaciones negativas ni potasio/TFGe normales con d
   const emp=reviewDrug(draft({edad:65,dm2:'Sí'}),'empagliflozina','dm2');
   assert.equal(emp.state,'datos_insuficientes');
   assert.ok(emp.checks.some(s=>s.includes('tipo 1')));
-  const fin=reviewDrug(draft({edad:65,dm2:'Sí',erc:'Sí',persistencia:'Sí',cac:'100'}),'finerenona','erc_dm2');
+  const fin=reviewDrug(draft({edad:65,dm2:'Sí',erc:'Sí',persistencia:'Sí',cac:'100',unidad_cac:'mg/g'}),'finerenona','erc_dm2');
   assert.equal(fin.state,'datos_insuficientes');
   assert.ok(fin.missing.some(s=>s.includes('Potasio')));
   assert.ok(fin.missing.some(s=>s.includes('TFGe')));
