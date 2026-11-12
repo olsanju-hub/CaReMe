@@ -13,13 +13,23 @@ PWA independiente de apoyo a la decisión clínica en Atención Primaria en Espa
 
 CaHReMe cubre ya la **navegación y captura de datos** de seis consultas inspiradas en GlucoGuía y debe completar su **lógica clínica validada** (DM2, IC, ERC, sobrepeso/obesidad, enfermedad hepática metabólica e insulinización), **con consulta rápida, detalle y resultados equivalentes en funcionalidad**, ampliadas con evaluación integral, datos compartidos, recomendaciones clínicas trazables y seguimiento. **Los algoritmos específicos de decisión terapéutica y seguimiento siguen pendientes.** Véase [matriz de equivalencia y brechas](docs/MATRIZ_EQUIVALENCIA_GLUCOGUIA.md).
 
+## DM2 detallada · objetivo individual, conciliación y seguridad (12/11/2026)
+
+- `src/clinical/dm2-detallada.mjs` calcula la diferencia entre la HbA1c aportada y **un límite numérico individual confirmado por el médico**; 8,5 % no se utiliza como objetivo universal.
+- La captura incluye fiabilidad/fecha de HbA1c, glucemia actual, hipoglucemias, adherencia, dosis realmente verificadas, edad y contexto de embarazo.
+- La conducta estructura situación, siguientes pasos, clases ya utilizadas, alternativas para revisar, alertas, seguimiento y fuentes redGDPS/ADA/CIMA. **No crea dosis ni recetas**.
+- Se retienen propuestas por HbA1c no interpretable, datos contradictorios, hipoglucemias graves, glucemia ≥300 mg/dL, embarazo, LRA o duplicidades no conciliadas. Seguridad transversal compartida con los módulos rápido e integral.
+- `tests/dm2-detallada.test.mjs`, `tests/dm2-detallada-ui.test.mjs`, `tests/dm2-transversal.test.mjs` prueban metas, límites, medicación, seguridad y navegación.
+- [Contrato clínico y limitaciones](docs/DM2_DETALLADA_ADA_REDGDPS_2026.md).
+- **Cobertura DM2:** ambas rutas tienen salida técnica preliminar; la paridad clínica completa y la revisión independiente siguen pendientes.
+
 ## Corrección de unidad renal y primera orientación rápida DM2 (12/11/2026)
 
 - **CAC con unidad confirmada obligatoria:** `evaluateRenal()` exige `mg/g`, no convierte silenciosamente `mg/mmol`, y el motor de integración evita utilizar CAC no validado. Si se introduce un CAC sin unidad, las opciones terapéuticas relacionadas se retienen mediante auditoría.
 - **KDIGO, tabla 3 (S137):** A2 **30–300 mg/g**, A3 **>300 mg/g**. Se conserva el límite exacto de la guía: **300 permanece en A2**; las pruebas cubren 299,99/300/300,01.
 - **DM2 rápida:** `src/clinical/dm2-rapida.mjs` produce situación clínica, próximos pasos, opciones por clase, alertas, datos a comprobar, reevaluación y fuentes redGDPS/ADA 2026. Se accede mediante «Ver orientación clínica rápida» o el resumen del módulo.
 - La consulta rápida distingue HbA1c **8,5 % como nivel de intensidad** del **objetivo individual**; síntomas, sospecha de CAD e hiperglucemia muy elevada se evalúan antes que un tratamiento crónico. No inventa medicamentos ausentes ni confirma acciones.
-- La **revisión detallada DM2 continúa pendiente**; el motor rápido no convierte ninguna opción en prescripción ni valida uso asistencial.
+- La **revisión detallada DM2 ya dispone de una primera implementación**, pero el motor rápido no convierte ninguna opción en prescripción ni valida uso asistencial.
 - [Documentación clínica, alcance y escenarios](docs/DM2_RAPIDA_REDGDPS_2026.md). Tests `tests/dm2-rapida.test.mjs`, `tests/dm2-rapida-ui.test.mjs`, `tests/cac-unidad.test.mjs`.
 
 ## Auditoría funcional contra GlucoGuía 1.6 · 12/11/2026
