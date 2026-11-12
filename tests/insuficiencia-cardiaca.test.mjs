@@ -71,6 +71,21 @@ test('congestión presente permite revisar diurético de asa sin pauta ni dosis'
  const eu=run({congestion:'Ausentes'});
  assert.ok(!has(eu,'HF-DIURETIC-REVIEW'));
 });
+test('diurético de asa ya registrado se revisa como existente sin duplicar inicio',()=>{
+ const x=run({congestion:'Presentes',
+   farmacos_clases:['Diurético de asa','Betabloqueante']});
+ assert.equal(x.state,'revision_pendiente');
+ assert.ok(has(x,'HF-DIURETIC-EXISTING'));
+ assert.ok(!has(x,'HF-DIURETIC-REVIEW'));
+});
+test('FEVI aislada no establece diagnóstico de IC independientemente de la clasificación',()=>{
+ const low=classifyHf2026(40);
+ const high=classifyHf2026(50,'Confirmada por evaluación especializada');
+ assert.equal(low.established,false);
+ assert.equal(high.established,false);
+ assert.equal(low.requiresClinicalDiagnosis,true);
+ assert.equal(high.requiresClinicalDiagnosis,true);
+});
 test('IC descompensada retiene farmacoterapia crónica y prioriza valoración',()=>{
  const x=run({ic_descompensada:'Sí',situacion_aguda:'Enfermedad aguda grave'});
  assert.equal(x.state,'seguridad_prioritaria');
