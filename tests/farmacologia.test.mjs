@@ -13,13 +13,13 @@ const base={
   dm1:'No', cyp3a4_fuerte:'No',addison:'No',hepatica_grave:'No',embarazo:'No procede',
   alergias_revisadas:'Sí',medicacion_revisada:'Sí',farmacos_clases:['Metformina']
 };
-test('fichas CIMA específicas y tres vs dos indicaciones',()=>{
-  assert.deepEqual(Object.keys(DRUGS),['empagliflozina','finerenona']);
+test('cinco productos con fichas CIMA diferenciadas por indicación',()=>{
+  assert.deepEqual(Object.keys(DRUGS),['empagliflozina','finerenona','semaglutida_ozempic','semaglutida_wegovy_sc','tirzepatida']);
   assert.equal(getDrug('empagliflozina').routes.length,3);
   assert.equal(getDrug('finerenona').routes.length,2);
   for(const d of Object.values(DRUGS)) {
     assert.ok(d.source.url.startsWith('https://cima.aemps.es/cima/'));
-    assert.equal(d.source.reviewed,'2026-11-11');
+    assert.ok(['2026-11-11','2026-11-12'].includes(d.source.reviewed));
   }
   assert.equal(getDrug('invalid'),null);
   assert.equal(getDrugRoute('finerenona','invalid'),null);
