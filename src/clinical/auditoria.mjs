@@ -32,7 +32,9 @@ export const AUDIT_RULES=Object.freeze({
   HF_DECOMPENSATION:'IC: descompensación o inestabilidad activa',
   HF_EF_CONFLICT:'IC: grupo ESC 2026 discordante con FEVI medida',
   HF_CRITICAL_POTASSIUM:'IC: potasio elevado con posible riesgo inmediato',
-  HF_HYPOTENSION:'IC: PAS baja con necesidad de valoración'
+  HF_HYPOTENSION:'IC: PAS baja con necesidad de valoración',
+  HF_POTASSIUM_REVIEW:'IC: potasio >5,5 y <6,0 mmol/L requiere revisión',
+  HF_RAAS_DUPLICATION:'Incompatibilidad de clases IECA/ARA-II/ARNI declaradas'
 });
 function item(id,severity,title,detail,fields) {
   return {id,severity,title,detail,fields,requiresReview:true};
@@ -105,6 +107,16 @@ export function auditCrossDomain(draft) {
     out.push(item('HF_HYPOTENSION','critical','Presión sistólica baja en IC',
       'PAS <90 mmHg: valorar perfusión y síntomas, y revisar seguridad antes de titular tratamientos.',
       ['ic','pas','ic_estabilidad']));
+  if(yes('ic')&&potassiumHF!==null&&potassiumHF>5.5&&potassiumHF<6)
+    out.push(item('HF_POTASSIUM_REVIEW','critical','Potasio elevado en IC: revisar medicación',
+      'K >5,5 mmol/L: confirmar el resultado, ECG/contexto y tratamiento concomitante. Retener nuevos candidatos mientras se evalúa, sin etiquetar automáticamente urgencia vital.',
+      ['ic','potasio','fecha_potasio','farmacos_clases']));
+  const currentClasses=VALUE(draft,'farmacos_clases');
+  const declaredClasses=currentClasses===null?[]:readMulti(currentClasses);
+  if(['IECA','ARA-II','INRA/ARNI'].filter(x=>declaredClasses.includes(x)).length>=2)
+    out.push(item('HF_RAAS_DUPLICATION','critical','Posible asociación de bloqueantes RAAS incompatible',
+      'Se han declarado varias clases IECA/ARA-II/ARNI. Confirmar si es transición, error de medicación o tratamiento simultáneo antes de modificar cualquier otra pauta.',
+      ['farmacos_clases','farmacos','medicacion_revisada']));
   const acuteFlags=['cetoacidosis_sospecha','ic_descompensada','lra_sospecha',
     'acidosis_metabolica','deshidratacion_gi','pancreatitis_sospecha'];
   if(VALUE(draft,'situacion_aguda')==='Estable sin proceso agudo grave'&&
