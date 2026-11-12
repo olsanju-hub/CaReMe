@@ -270,6 +270,8 @@ export function confirmedAction(history, action) {
     throw new Error('Es necesaria confirmación explícita de la actuación realizada');
   if(!getDrugRoute(action.drugId,action.routeId))
     throw new Error('Principio activo o indicación desconocidos');
+  if(!['finerenona','empagliflozina'].includes(action.drugId))
+    throw new Error('Seguimiento automatizado aún no definido para este producto');
   if(!ACTIONS.has(action.type)) throw new Error('Actuación no admitida');
   if(!parseISO(action.performedOn)) throw new Error('Fecha de realización no válida');
   const allowed=action.drugId==='finerenona'?[10,20,40]:[10,25];
