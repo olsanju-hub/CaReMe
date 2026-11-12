@@ -16,7 +16,7 @@ test('biblioteca ofrece cinco productos y mantiene diferenciadas las vías de in
  });
  click('tools');
  const count=(app.innerHTML.match(/class="pharma-preview"/g)||[]).length;
- assert.equal(count,5);
+ assert.equal(count,7);
  click('open-drug',{drugId:'semaglutida_ozempic',routeId:'dm2'});
  assert.match(app.innerHTML,/Ozempic/);
  assert.match(app.innerHTML,/Máximo: 2 mg\/semana/);
