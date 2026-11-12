@@ -1,9 +1,9 @@
 // Solo cachea recursos estáticos: nunca guarda información introducida en formularios.
 // El símbolo SVG incluido es provisional; el icono aprobado en la conversación aún debe subirse.
-const CACHE = 'cahreme-shell-v0-12';
+const CACHE = 'cahreme-shell-v0-13';
 const ASSETS = [
   './', './index.html', './manifest.webmanifest',
-  './src/app.mjs', './src/model.mjs', './src/consultas.mjs', './src/clinical/engine.mjs', './src/clinical/integracion.mjs', './src/clinical/farmacologia.mjs', './src/clinical/continuidad.mjs', './src/clinical/incretinas.mjs', './src/clinical/basales.mjs', './src/clinical/auditoria.mjs', './src/clinical/proveniencia.mjs', './src/clinical/plan.mjs', './src/styles.css',
+  './src/app.mjs', './src/model.mjs', './src/consultas.mjs', './src/clinical/engine.mjs', './src/clinical/integracion.mjs', './src/clinical/farmacologia.mjs', './src/clinical/continuidad.mjs', './src/clinical/incretinas.mjs', './src/clinical/basales.mjs', './src/clinical/auditoria.mjs', './src/clinical/proveniencia.mjs', './src/clinical/plan.mjs', './src/clinical/dm2-rapida.mjs', './src/styles.css',
   './public/icon-concept.svg', './public/domain-cardiovascular.svg',
   './public/domain-renal.svg', './public/domain-hepatico.svg',
   './public/domain-metabolico.svg'
@@ -25,7 +25,7 @@ self.addEventListener('fetch', event => {
   const basePath = new URL(self.registration.scope).pathname;
   const relative = url.pathname.startsWith(basePath) ? url.pathname.slice(basePath.length) : null;
   if (relative === null || !['', 'index.html', 'manifest.webmanifest', 'src/app.mjs', 'src/model.mjs',
-    'src/styles.css', 'src/consultas.mjs', 'src/clinical/engine.mjs', 'src/clinical/integracion.mjs', 'src/clinical/farmacologia.mjs', 'src/clinical/continuidad.mjs', 'src/clinical/incretinas.mjs', 'src/clinical/basales.mjs', 'src/clinical/auditoria.mjs', 'src/clinical/proveniencia.mjs', 'src/clinical/plan.mjs', 'public/icon-concept.svg', 'public/domain-cardiovascular.svg',
+    'src/styles.css', 'src/consultas.mjs', 'src/clinical/engine.mjs', 'src/clinical/integracion.mjs', 'src/clinical/farmacologia.mjs', 'src/clinical/continuidad.mjs', 'src/clinical/incretinas.mjs', 'src/clinical/basales.mjs', 'src/clinical/auditoria.mjs', 'src/clinical/proveniencia.mjs', 'src/clinical/plan.mjs', 'src/clinical/dm2-rapida.mjs', 'public/icon-concept.svg', 'public/domain-cardiovascular.svg',
     'public/domain-renal.svg', 'public/domain-hepatico.svg', 'public/domain-metabolico.svg'].includes(relative)) return;
   event.respondWith(caches.match(request, { ignoreSearch: true }).then(cached => cached || fetch(request)));
 });
