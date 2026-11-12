@@ -70,6 +70,7 @@ test('tratamiento interrumpido no genera titulación ni reinicio automático',()
   assert.equal(x.ruleId,'FIN-RESTART-CONTEXT');
   assert.equal(x.patientDose,null);
   assert.equal(x.actionPerformed,false);
+  assert.equal(reviewFinerenoneContinuation(ck({fin_estado:'Interrumpido',potasio:'5.1'}),'erc_dm2').ruleId,'FIN-RESTART-K-BLOCK');
 });
 test('empagliflozina: alto riesgo agudo y cetoacidosis tienen prioridad',()=>{
   assert.equal(reviewEmpagliflozinContinuation(er({cetoacidosis_sospecha:'Sí'}),'ic').ruleId,'EMP-DKA');
@@ -78,7 +79,8 @@ test('empagliflozina: alto riesgo agudo y cetoacidosis tienen prioridad',()=>{
 });
 test('empagliflozina: no reinicio sin cetonas y estabilidad, ni tras CAD no resuelta',()=>{
   const base={emp_estado:'Interrumpido',emp_cetonas:'Normales',emp_estable:'Sí',
-    situacion_aguda:'Estable sin proceso agudo grave',cetoacidosis_sospecha:'No'};
+    situacion_aguda:'Estable sin proceso agudo grave',cetoacidosis_sospecha:'No',emp_dka_previa:'No'};
+  assert.equal(reviewEmpagliflozinContinuation(er({...base,emp_dka_previa:''}),'erc').ruleId,'EMP-DKA-HISTORY-UNKNOWN');
   assert.equal(reviewEmpagliflozinContinuation(er({...base,emp_cetonas:'Elevadas'}),'erc').ruleId,'EMP-RESTART-UNCONFIRMED');
   assert.equal(reviewEmpagliflozinContinuation(er({...base,emp_estable:'No'}),'erc').ruleId,'EMP-RESTART-UNCONFIRMED');
   assert.equal(reviewEmpagliflozinContinuation(er({...base,emp_dka_previa:'Sí',emp_factor_resuelto:'No'}),'erc').ruleId,'EMP-PRIOR-DKA');
