@@ -17,6 +17,7 @@ export function auditProvenance(draft) {
   const findings=[];
   const asOf=get(draft,'fecha_evaluacion');
   const fields=[
+    ['hba1c','fecha_hba1c','HbA1c'],
     ['tfge','fecha_tfge','TFGe'],
     ['cac','fecha_cac','CAC'],
     ['potasio','fecha_potasio','potasio'],
