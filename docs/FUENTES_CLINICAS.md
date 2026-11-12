@@ -101,3 +101,8 @@ La nueva ruta se fundamenta en consenso ADA/EASD 2026, ADA 2026 secciones 6, 9 y
 ## Insuficiencia cardíaca ESC 2026 (12/11/2026)
 
 La guía ESC 2026 (publicada 28/08/2026) reemplaza la clasificación ESC 2021/2023 de FEVI ≤40/41–49/≥50 por dos fenotipos: <50 y ≥50 con evidencia de IC-FEp. La valoración dirigida incluye congestión, clase farmacológica, seguridad renal/potasio y signos de alarma, con referencias CIMA separadas de las indicaciones de guía. [Especificación con enlaces primarios](IC_ESC_2026.md).
+
+
+## IC ESC 2026 · verificación del 12/11/2026
+
+Se utiliza la [ESC 2026](https://www.escardio.org/guidelines/clinical-practice-guidelines/all-esc-practice-guidelines/heart-failure), publicada 28/08/2026, como guía principal en sustitución del esquema de tres grupos de FEVI de 2021/2023. IC-FEr: **FEVI <50 %**; IC-FEp: **FEVI ≥50 %** con evidencia clínica y cardíaca objetiva. En IC sintomática estable, la guía recomienda iSGLT2 y ARM por fenotipo/indicación; para IC-FEr estable también ARNI/IECA y betabloqueantes, con comprobación de seguridad. Los diuréticos de asa se individualizan por congestión. Los productos se verifican por separado en CIMA. [Contrato completo](INSUFICIENCIA_CARDIACA_ESC_2026.md).
