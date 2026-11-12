@@ -13,6 +13,17 @@ PWA independiente de apoyo a la decisión clínica en Atención Primaria en Espa
 
 CaHReMe cubre ya la **navegación y captura de datos** de seis consultas inspiradas en GlucoGuía y debe completar su **lógica clínica validada** (DM2, IC, ERC, sobrepeso/obesidad, enfermedad hepática metabólica e insulinización), **con consulta rápida, detalle y resultados equivalentes en funcionalidad**, ampliadas con evaluación integral, datos compartidos, recomendaciones clínicas trazables y seguimiento. **Los algoritmos específicos de decisión terapéutica y seguimiento siguen pendientes.** Véase [matriz de equivalencia y brechas](docs/MATRIZ_EQUIVALENCIA_GLUCOGUIA.md).
 
+## Metformina y dapagliflozina · seguridad renal y condiciones de uso
+
+- Fichas CIMA independientes en `src/clinical/basales.mjs`: **metformina de liberación inmediata** (DM2) y **dapagliflozina / Forxiga** (DM2, IC crónica sintomática, ERC).
+- Metformina: **máximo diario de ficha según TFGe** (≥60: 3.000 mg, 45–<60: 2.000 mg, 30–<45: 1.000 mg; <30 contraindicada), sin calcular una dosis individual.
+- Metformina: revisiones ante acidosis, hipoxia, enfermedad aguda, insuficiencia hepática, contraste yodado y cirugía con anestesia.
+- Dapagliflozina: **10 mg/día** en las tres vías adultas, inicio no recomendado con TFGe <25; advertencia de que la TFGe <45 reduce efecto hipoglucemiante en DM2. La ficha indica **inicio 5 mg en hepatopatía grave**, bajo revisión.
+- Las tarjetas de iSGLT2 abren **Jardiance y Forxiga por separado**, con aviso de que un corte de clase KDIGO no sustituye el umbral CIMA individual.
+- Pruebas de umbrales, situaciones agudas y navegación: `tests/basales.test.mjs`, `tests/basales-ui.test.mjs`.
+- [Matriz de metformina y dapagliflozina en CIMA](docs/METFORMINA_DAPAGLIFLOZINA_CIMA.md).
+- Sin nuevas reglas de calendario automático para estos productos, sin prescripción ni ajustes ejecutados.
+
 ## Incretinas · revisión CIMA por producto e indicación
 
 - Se incorporaron **Ozempic subcutáneo (semaglutida · DM2)**, **Wegovy subcutáneo (semaglutida · control del peso)** y **Mounjaro (tirzepatida · DM2 o control del peso)** como tres fichas independientes.
