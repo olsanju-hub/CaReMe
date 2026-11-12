@@ -8,6 +8,7 @@ import { buildVerificationPlan } from './clinical/plan.mjs';
 import { evaluateDm2Quick } from './clinical/dm2-rapida.mjs';
 import { evaluateDm2Detail } from './clinical/dm2-detallada.mjs';
 import { evaluateInsulinization } from './clinical/insulinizacion.mjs';
+import { evaluateHeartFailure } from './clinical/insuficiencia-cardiaca.mjs';
 
 let draft = createDraft();
 let confirmedHistory = [];
@@ -360,6 +361,44 @@ function insulinResult(mode) {
     La aplicación no registra una prescripción, modificación ni administración de insulina.</p>
   </section>`;
 }
+function heartFailureResult(mode){
+  const r=evaluateHeartFailure(draft,mode);
+  const labels={
+    revision_pendiente:'Orientación para revisión',
+    datos_insuficientes:'Información clínica pendiente',
+    seguridad_prioritaria:'Evaluación prioritaria de seguridad',
+    revisar_coherencia:'Reconciliar datos contradictorios'
+  };
+  const list=entries=>entries.length
+    ?`<ul>${entries.map(x=>`<li>${escape(x)}</li>`).join('')}</ul>`
+    :'<p>No se han identificado elementos en esta sección.</p>';
+  return `<section id="ic-result" class="dm2-result ic-result" aria-live="polite">
+    <div class="eyebrow">INSUFICIENCIA CARDÍACA · ESC 2026 · SIN PRESCRIPCIÓN</div>
+    <h2>Valoración por fenotipo y congestión</h2>
+    <strong class="dm2-status ${escape(r.state)}">${escape(labels[r.state]||'Revisión')}</strong>
+    <div class="dm2-detail-metrics">
+      <div><small>Fenotipo según datos aportados</small><strong>${escape(r.phenotype.label)}</strong></div>
+      <div><small>Situación</small><strong>${escape(r.situation)}</strong></div>
+    </div>
+    ${r.alerts.length?`<div class="dm2-safety"><h3>Alertas y discrepancias</h3>${list(r.alerts)}</div>`:''}
+    ${r.missing.length?`<div class="dm2-missing"><h3>Datos clínicos necesarios</h3>${list(r.missing)}</div>`:''}
+    <h3>Conducta para revisión profesional</h3>${list(r.steps)}
+    <h3>Clases y actuaciones a considerar</h3>
+    ${r.options.length?`<div class="dm2-options">${r.options.map(x=>
+       `<article><h4>${escape(x.title)}</h4><p>${escape(x.reason)}</p>
+        <strong>Antes de decidir</strong>${list(x.checks)}</article>`).join('')}</div>`
+      :'<p>Sin candidatos de inicio: completar diagnóstico, estabilidad y seguridad antes de valorar tratamientos.</p>'}
+    <h3>Comprobaciones</h3>${list(r.checks)}
+    <h3>Reevaluación</h3><p>${escape(r.followUp)}</p>
+    <details class="dm2-sources"><summary>Fuentes ESC y fichas CIMA</summary><ul>
+      ${Object.values(r.sources).map(x=>`<li><a href="${escape(x.url)}"
+        target="_blank" rel="noopener noreferrer">${escape(x.name)}</a>
+        <small> · ${escape(x.detail)}</small></li>`).join('')}
+    </ul></details>
+    <p class="privacy-note">La FEVI aislada no diagnostica IC. El motor no prescribe,
+      suspende ni modifica dosis. Revisión clínica externa pendiente.</p>
+  </section>`;
+}
 function consultationReview(module) {
   const fields = [...new Set([...module.quick,...module.detail])];
   const missing = fields.filter(id => fieldState(draft,id) === 'sin_registrar');
@@ -379,8 +418,11 @@ function consultationReview(module) {
     ${calculatorsForModule(module.id)}
     ${module.id==='dm2'?dm2RapidResult()+dm2DetailedResult():''}
     ${module.id==='insulina'?insulinResult('detail'):''}
+    ${module.id==='ic'?heartFailureResult('detail'):''}
     ${integratedCards(({dm2:'DM2',ic:'IC',erc:'Renal',obesidad:'Metabólico',hepatico:'Hepático',insulina:'DM2'})[module.id])}
-    ${module.id==='insulina'
+    ${module.id==='ic'
+      ? '<p class="clinical-lock">IC: orientación por fenotipo ESC 2026 y congestión implementada. No se prescriben tratamientos ni se establece diagnóstico automáticamente.</p>'
+      :module.id==='insulina'
       ? '<p class="clinical-lock">Insulinización: tres rutas de orientación y seguridad implementadas. La revisión clínica externa, dosis por producto y validación funcional permanecen pendientes.</p>'
       :module.id==='dm2'
       ? '<p class="clinical-lock">DM2: orientación rápida y primera interpretación detallada implementadas. La validación clínica formal y selección por principio activo siguen pendientes.</p>'
@@ -417,6 +459,10 @@ function moduleView() {
         <button type="button" class="primary" data-action="module-mode" data-mode="review">Ver resumen de datos →</button>
       </div>
     </section>`}
+    ${m.id==='ic' && (mode==='quick'||mode==='detail')?`<div class="dm2-result-trigger">
+      <button class="primary" type="button" data-action="ic-result">Ver orientación de insuficiencia cardíaca →</button>
+      <p>FEVI y congestión según ESC 2026. Sin prescripción.</p>
+    </div>${current.icVisible?heartFailureResult(mode):''}`:''}
     ${m.id==='insulina' && (mode==='quick'||mode==='detail')?`<div class="dm2-result-trigger">
       <button class="primary" type="button" data-action="insulin-result">Ver orientación de insulinización →</button>
       <p>Inicio, intensificación o desintensificación. No prescribe ni modifica dosis.</p>
@@ -429,7 +475,7 @@ function moduleView() {
       <button class="primary" type="button" data-action="dm2-result">Ver orientación clínica rápida →</button>
       <p>El resultado se genera para revisión. No prescribe ni confirma diagnósticos.</p>
     </div>${current.dm2ResultVisible?dm2RapidResult():''}`:''}
-    <div class="module-note"><strong>Documentación:</strong> las orientaciones de DM2 e insulinización son preliminares; los demás módulos y la validación clínica siguen pendientes.</div>
+    <div class="module-note"><strong>Documentación:</strong> las orientaciones de DM2, insulinización e IC son preliminares; ERC, obesidad e hígado y la validación clínica siguen pendientes.</div>
     <p class="privacy-note">No introduzcas identificadores del paciente. Los datos no se guardan después de cerrar o recargar.</p>
   </div>`;
 }
@@ -730,6 +776,11 @@ app.addEventListener('input', event => {
     // Refrescar tras seleccionar «ninguna» para garantizar exclusividad.
     if (selected.length !== checked.length) return render();
   } else draft=setValue(draft,id,el.value);
+  if(current.icVisible){
+    current.icVisible=false;
+    const previous=document.getElementById('ic-result');
+    if(previous&&typeof previous.remove==='function')previous.remove();
+  }
   if(current.insulinVisible){
     current.insulinVisible=false;
     const previous=document.getElementById('insulin-result');
@@ -752,6 +803,11 @@ app.addEventListener('click', event => {
   const btn = event.target.closest('button[data-action]');
   if (!btn) return;
   const action = btn.dataset.action;
+  if (action === 'ic-result') {
+    if(current.page!=='module'||current.module!=='ic'||
+      !['quick','detail'].includes(current.mode))return;
+    current.icVisible=true;return render();
+  }
   if (action === 'insulin-result') {
     if(current.page!=='module'||current.module!=='insulina'||
       !['quick','detail'].includes(current.mode))return;
@@ -803,7 +859,7 @@ app.addEventListener('click', event => {
   }
   if (action === 'start-module') {
     if (!MODULE_BY_ID[btn.dataset.module]) return;
-    current.module=btn.dataset.module; current.mode='quick'; current.dm2ResultVisible=false; current.dm2DetailedVisible=false; current.insulinVisible=false; return navigate('module');
+    current.module=btn.dataset.module; current.mode='quick'; current.dm2ResultVisible=false; current.dm2DetailedVisible=false; current.insulinVisible=false; current.icVisible=false; return navigate('module');
   }
   if (action === 'module-mode') {
     if (!['quick','detail','review'].includes(btn.dataset.mode)) return;
