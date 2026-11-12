@@ -69,8 +69,8 @@ export function albuminuriaCategory(number) {
 export function evaluateRenal(draft) {
   const { values = {}, unavailable = [] } = draft || {};
   const assessedOn = values.fecha_evaluacion;
-  const dateAfter = id => typeof assessedOn==='string' && /^\\d{4}-/.test(assessedOn) &&
-    typeof values[id]==='string' && /^\\d{4}-/.test(values[id]) && values[id]>assessedOn;
+  const dateAfter = id => typeof assessedOn==='string' && /^\d{4}-/.test(assessedOn) &&
+    typeof values[id]==='string' && /^\d{4}-/.test(values[id]) && values[id]>assessedOn;
   const egfrValue = input(values, unavailable, 'tfge', { positive: true });
   const acrValue = input(values, unavailable, 'cac', { nonNegative: true });
   const egfr = dateAfter('fecha_tfge') ? {state:'invalid',value:null} : egfrValue;
