@@ -240,3 +240,12 @@ Se reauditaron los límites de ARM conforme a ESC 2026 y CIMA de finerenona. El 
 - Seguimiento anual mínimo solo ante ERC con datos completos y estabilidad documentada. Sin calendario automático ni cambios terapéuticos.
 - **319/319 pruebas locales y sintaxis superadas**. Pruebas de interfaz con DOM simulado: no equivalen a revisión visual ni prueba iPhone.
 - [Informe de continuidad y límites](docs/ERC_KDIGO_2024.md). Paridad clínica todavía parcial; PR en borrador, sin fusionar.
+
+## Revisión renal de IECA/ARA-II actual · 12/11/2026
+
+- Inicio/aumento realmente administrado, confirmado y fechado, separado de propuestas.
+- Ventana orientativa PA/creatinina/K de 2–4 semanas desde el cambio efectivo, con detección de controles pendientes y plazo superado; sin cita ni orden automática.
+- Variación de creatinina con referencia previa fechada: >30 % genera revisión, nunca suspensión o ajuste automático. Se diferencia la medición dentro/fuera de cuatro semanas.
+- Barreras de ámbito, doble bloqueo, hipotensión sintomática, LRA, potasio y cronología. Alertas visibles en el resultado renal general.
+- **361/361 pruebas locales y sintaxis superadas**. UI comprobada con DOM simulado; QA real móvil pendiente.
+- [Reglas y auditoría](docs/ERC_KDIGO_2024.md). Sin selección por producto ni prescripción; PR continúa en borrador.

@@ -84,8 +84,8 @@
       "quick_clinical_result": "partial",
       "detailed_decision": "partial",
       "priority": "P1",
-      "gap": "Primera orientación dirigida KDIGO 2024: cronicidad, LRA, potasio, seguimiento condicionado y criterios parciales de Nefrología. Faltan riesgo KFRE calculado, evolución longitudinal, ruta RAAS y titulación por producto, validación clínica independiente y QA móvil.",
-      "note": "src/clinical/renal.mjs; tests/renal.test.mjs y renal-ui.test.mjs. Sin diagnóstico, cambios de dosis ni cita automática."
+      "gap": "Primera orientación renal y revisión de IECA/ARA-II ya administrado con cronología y controles PA/creatinina/K (KDIGO 2024). Pendientes KFRE, evolución longitudinal completa, historial RAAS y decisiones por producto/dosis, validación clínica y QA móvil.",
+      "note": "src/clinical/renal.mjs: evaluateKidney y evaluateRenalTreatment. Ventana orientativa solo tras cambio confirmado; no es cita ni prescripción."
     },
     {
       "id": "obesidad",
@@ -243,6 +243,11 @@
       "id": "kidney_directed_result",
       "status": "partial",
       "evidence": "src/clinical/renal.mjs; rápida, detallada y resumen renal; KDIGO 2024, sin paridad completa."
+    },
+    {
+      "id": "renal_ras_monitoring",
+      "status": "partial",
+      "evidence": "evaluateRenalTreatment, tests/renal-tratamiento.test.mjs y renal-ui.test.mjs; sin dosis o administración automática."
     }
   ],
   "blockers": [

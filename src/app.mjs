@@ -416,6 +416,14 @@ function kidneyResult(mode){
     <h3>Valoración por Nefrología</h3>${r.referral.length?list(r.referral.map(x=>x.text)):'<p>Sin criterio automático mostrado; esto no descarta necesidad de derivación.</p>'}
     <h3>Comprobaciones</h3>${list(r.checks)}
     <h3>Seguimiento</h3><p>${escape(r.followUp)}</p>
+    <section class="renal-treatment" aria-label="Revisión de IECA o ARA-II">
+      <h3>IECA/ARA-II actual: controles tras cambios confirmados</h3>
+      ${r.treatment.alerts.length?`<div class="dm2-safety">${list(r.treatment.alerts)}</div>`:''}
+      ${r.treatment.missing.length?list(r.treatment.missing):''}
+      ${list(r.treatment.checks)}
+      ${r.treatment.creatinineChange?`<p>Variación de creatinina respecto a la referencia previa: <strong>${escape(r.treatment.creatinineChange.percent.toFixed(1))} %</strong>. No implica un cambio de dosis.</p>`:''}
+      ${r.treatment.window?`<p>Ventana orientativa: <strong>${escape(r.treatment.window.from)} a ${escape(r.treatment.window.to)}</strong>. ${r.treatment.window.status==='plazo_superado'?'Plazo superado: revisar controles pendientes.':'Individualizar según función renal y potasio.'} No se ha creado ninguna cita.</p>`:''}
+    </section>
     <details><summary>Fuente y reglas</summary>${r.sources.map(x=>`<p><a href="${escape(x.url)}" target="_blank" rel="noopener noreferrer">${escape(x.title)}</a> · ${escape(x.locator)}</p>`).join('')}</details>
     <p class="privacy-note">Sin diagnóstico ni cambios de medicación automáticos. Revisión clínica independiente pendiente.</p>
   </section>`;

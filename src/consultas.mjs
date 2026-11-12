@@ -22,7 +22,7 @@ export const MODULES = [
     id: 'erc', title: 'Enfermedad renal crónica', domain: 'renal',
     short: 'Función renal, albuminuria y persistencia',
     quick: ['tfge','cac','unidad_cac','persistencia','lra_sospecha','potasio','situacion_aguda'],
-    detail: ['edad','embarazo','erc_contexto','erc','erc_hematuria','erc_cac_persistente','fecha_evaluacion','tfge','fecha_tfge','cac','unidad_cac','fecha_cac','persistencia','lra_sospecha','contraste_yodado','potasio','fecha_potasio','potasio_normal','ras_optimizado','cyp3a4_fuerte','addison','creatinina','situacion_aguda','cetoacidosis_sospecha','farmacos_clases','farmacos','medicacion_revisada','alergias','alergias_revisadas']
+    detail: ['edad','embarazo','erc_contexto','erc','erc_hematuria','erc_cac_persistente','fecha_evaluacion','tfge','fecha_tfge','cac','unidad_cac','fecha_cac','persistencia','lra_sospecha','contraste_yodado','potasio','fecha_potasio','potasio_normal','ras_optimizado','ras_evento','ras_evento_confirmado','fecha_ras_evento','creatinina_basal_ras','fecha_creatinina_basal_ras','fecha_creatinina','pas','fecha_pas','ras_hipotension','cyp3a4_fuerte','addison','creatinina','situacion_aguda','cetoacidosis_sospecha','farmacos_clases','farmacos','medicacion_revisada','alergias','alergias_revisadas']
   },
   {
     id: 'obesidad', title: 'Sobrepeso y obesidad', domain: 'metabolico',
@@ -45,6 +45,14 @@ export const MODULES = [
 ];
 export const MODULE_BY_ID = Object.fromEntries(MODULES.map(m => [m.id, m]));
 export const EXTRA_FIELDS = [
+  {id:'ras_evento',label:'Situación del IECA/ARA-II actual',type:'select',options:['Inicio administrado','Aumento de dosis administrado','Sin cambio reciente','No confirmado']},
+  {id:'ras_evento_confirmado',label:'Inicio o aumento confirmado como realmente administrado',type:'select',options:['Sí','No','No valorado']},
+  {id:'fecha_ras_evento',label:'Fecha efectiva del inicio o aumento de IECA/ARA-II',type:'date'},
+  {id:'creatinina_basal_ras',label:'Creatinina previa al inicio o aumento',type:'number',min:0,unit:'mg/dL'},
+  {id:'fecha_creatinina_basal_ras',label:'Fecha de creatinina previa al cambio',type:'date'},
+  {id:'fecha_creatinina',label:'Fecha de creatinina actual',type:'date'},
+  {id:'fecha_pas',label:'Fecha de presión arterial actual',type:'date'},
+  {id:'ras_hipotension',label:'Hipotensión sintomática actual',type:'select',options:['Sí','No','No valorada']},
   {id:'erc_contexto',label:'Contexto renal',type:'select',options:['Adulto sin diálisis ni trasplante','Diálisis','Trasplante renal','No valorado']},
   {id:'erc_hematuria',label:'Hematuria persistente documentada',type:'select',options:['Sí','No','No valorada']},
   {id:'erc_cac_persistente',label:'CAC actual confirmado en muestras repetidas',type:'select',options:['Sí','No','No consta']},

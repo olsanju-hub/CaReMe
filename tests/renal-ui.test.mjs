@@ -16,6 +16,18 @@ test('consulta renal rápida y detallada accesible, conserva datos e invalida re
  click('module-mode',{mode:'detail'});assert.match(root.innerHTML,/Contexto renal/);assert.match(root.innerHTML,/Hematuria persistente/);
  assert.match(root.innerHTML,/value="29"/);
  click('renal-result');assert.match(root.innerHTML,/TFGe &lt;30/);
+ assert.match(root.innerHTML,/IECA\/ARA-II actual/);
+ for(const [id,value] of Object.entries({
+  edad:'60',embarazo:'No procede',erc_contexto:'Adulto sin diálisis ni trasplante',
+  farmacos_clases:'["IECA"]',farmacos:'Enalapril 10 mg al día',medicacion_revisada:'Sí',
+  ras_evento:'Inicio administrado',ras_evento_confirmado:'Sí',fecha_ras_evento:'2026-10-20',
+  fecha_evaluacion:'2026-11-12',situacion_aguda:'Estable sin proceso agudo grave',
+  lra_sospecha:'No',ras_hipotension:'No',potasio:'4.5',fecha_potasio:'2026-11-05',
+  creatinina_basal_ras:'1',fecha_creatinina_basal_ras:'2026-10-19'
+ }))set(id,value);
+ click('renal-result');assert.match(root.innerHTML,/2026-11-03 a 2026-11-17/);
+ set('ras_evento_confirmado','No');click('renal-result');
+ assert.doesNotMatch(root.innerHTML,/2026-11-03 a 2026-11-17/);
  click('module-mode',{mode:'review'});assert.match(root.innerHTML,/Seguridad, seguimiento y derivación renal/);
  click('start-module',{module:'dm2'});assert.doesNotMatch(root.innerHTML,/id="renal-result"/);
 });

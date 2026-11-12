@@ -44,3 +44,29 @@ No se han realizado pruebas visuales reales ni revisión en iPhone. La caché es
 - Validación clínica independiente de todos los módulos, verificación individual de fuentes previas y QA visual móvil.
 
 PR en borrador sin fusión. Sin paridad funcional completa ni aprobación asistencial.
+
+## Incremento: revisión de IECA/ARA-II administrado
+
+### Auditoría previa
+
+La base cb709c0c reproduce 319 pruebas. Las clases IECA/ARA-II y el campo de optimización ya existían, pero no distinguían un cambio propuesto de un inicio/aumento administrado ni permitían comparar creatinina con una referencia fechada previa.
+
+### Reglas y límites
+
+KDIGO 2024 PP 3.6.2–7, verificados en esta revisión: comprobar PA, creatinina y K en 2–4 semanas tras inicio o aumento, individualizando controles más precoces; revisar aumentos de creatinina >30 % en las primeras cuatro semanas y evitar suspensiones automáticas por TFGe <30 o hiperpotasemia aislada.
+
+La nueva función `evaluateRenalTreatment` opera sobre una única actuación vigente declarada, confirmada expresamente como administrada. No mantiene un historial de cambios RAAS ni registra una nueva administración. Se requiere clase IECA/ARA-II actual, conciliación con principio activo/dosis en texto y contexto adulto estable. No selecciona molécula, dosis, escalada ni suspensión; no extrapola a ARNI.
+
+La ventana de 14–28 días se calcula desde la fecha efectiva confirmada y se presenta como referencia, sin crear cita, recordatorio u orden de analítica. Si pasó, no se reinicia desde hoy. No se genera ventana cuando la actuación no está confirmada, hay fechas incompatibles o existe una alerta de seguridad. La fecha basal debe ser anterior o coincidente con el cambio; se debe verificar clínicamente su idoneidad, sin asumir un plazo universal de vigencia.
+
+Los tres controles deben tener valor positivo y fecha posterior o coincidente con el cambio y no posterior a la evaluación. Controles previos no cierran seguimiento; controles tempranos tampoco cierran automáticamente la revisión de 2–4 semanas. Un dato desconocido o no disponible no equivale a un resultado normal.
+
+La variación de creatinina se calcula solo con referencia válida y orden temporal compatible. El umbral es estrictamente >30 %, con tolerancia aritmética de 1e-9 puntos porcentuales para ruido de coma flotante. Una subida fuera de cuatro semanas sigue provocando revisión, sin atribución causal automática al IECA/ARA-II. Un aumento ≤30 % tampoco acredita seguridad global.
+
+Doble bloqueo, contexto especial, hipotensión sintomática, LRA o hiperpotasemia impiden el calendario rutinario. Las alertas del panel se elevan a la salida renal general. Un cambio pendiente de revisión evita presentar solo el control anual de ERC estable.
+
+### Auditoría posterior
+
+361/361 pruebas locales superadas y sintaxis correcta: 42 casos nuevos y recorrido de interfaz renal ampliado con DOM simulado. Cubren fronteras temporales y de creatinina, fechas futuras, valor cero o no disponible, confirmación de actuación, ámbito, doble bloqueo y controles tempranos. No se han hecho pruebas visuales reales ni en iPhone.
+
+Siguen pendientes la revalidación clínica independiente, seguimiento histórico de actuaciones RAAS, interpretación por producto y dosis, y cierre de los demás módulos. Esta revisión no revalida todas las fuentes clínicas previas de la aplicación.
