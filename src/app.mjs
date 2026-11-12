@@ -5,6 +5,7 @@ import { integratePatient, INTEGRATION_SOURCES } from './clinical/integracion.mj
 import { DRUGS, getDrug, getDrugRoute, reviewDrug } from './clinical/farmacologia.mjs';
 import { reviewFinerenoneContinuation, reviewEmpagliflozinContinuation, confirmedAction, followUpFromHistory } from './clinical/continuidad.mjs';
 import { buildVerificationPlan } from './clinical/plan.mjs';
+import { evaluateDm2Quick } from './clinical/dm2-rapida.mjs';
 
 let draft = createDraft();
 let confirmedHistory = [];
@@ -229,6 +230,41 @@ function integratedCards(focus = null) {
     <p class="integration-disclaimer">La documentación clínica, las dosis y la idoneidad del principio activo deben verificarse en su ficha CIMA-AEMPS. Las actuaciones reales solo se registrarán con confirmación profesional.</p>
   </section>`;
 }
+function dm2RapidResult() {
+  const r=evaluateDm2Quick(draft);
+  const state={
+    datos_insuficientes:'Faltan criterios esenciales',
+    seguridad_prioritaria:'Prioridad de seguridad',
+    revisar_coherencia:'Revisar datos contradictorios',
+    revision_pendiente:'Orientación para revisión'
+  }[r.state]||'Revisión necesaria';
+  const li=items=>items.length?
+    `<ul>${items.map(x=>`<li>${escape(x)}</li>`).join('')}</ul>`
+    :'<p>No se han generado entradas en esta sección.</p>';
+  return `<section id="dm2-rapid-result" class="dm2-result" aria-live="polite">
+    <div class="eyebrow">DM2 · REDGDPS / ADA 2026 · SIN PRESCRIPCIÓN</div>
+    <h2>Orientación rápida según el caso</h2>
+    <strong class="dm2-status ${escape(r.state)}">${escape(state)}</strong>
+    <h3>Situación clínica</h3><p>${escape(r.situation)}</p>
+    ${r.missing.length?`<div class="dm2-missing"><h3>Datos esenciales pendientes</h3>${li(r.missing)}</div>`:''}
+    ${r.safety.length?`<div class="dm2-safety"><h3>Alertas y discrepancias</h3>${li(r.safety)}</div>`:''}
+    <h3>Siguiente paso para revisar</h3>${li(r.nextSteps)}
+    <h3>Clases farmacológicas y opciones</h3>
+    ${r.options.length?`<div class="dm2-options">${r.options.map(x=>`<article>
+       <h4>${escape(x.title)}</h4><p>${escape(x.reason)}</p>
+       <strong>Comprobaciones antes de decidir:</strong>${li(x.checks)}
+    </article>`).join('')}</div>`
+     :'<p>No se ofrecen candidatos de inicio con los datos actuales; completar o revisar la evaluación.</p>'}
+    <h3>Datos por contrastar</h3>${li(r.checks)}
+    <h3>Reevaluación</h3><p>${escape(r.followUp)}</p>
+    <details class="dm2-sources"><summary>Fuentes verificadas para esta orientación</summary>
+      <ul>${r.sourceIds.map(id=>Object.values(r.sources).find(x=>x.id===id)).filter(Boolean).map(x=>
+        `<li><a target="_blank" rel="noopener noreferrer" href="${escape(x.url)}">${escape(x.name)}</a>
+        <small> · ${escape(x.detail)}</small></li>`).join('')}</ul>
+    </details>
+    <p class="privacy-note">${escape(r.scope)} Ninguna alternativa es una prescripción realizada.</p>
+  </section>`;
+}
 function consultationReview(module) {
   const fields = [...new Set([...module.quick,...module.detail])];
   const missing = fields.filter(id => fieldState(draft,id) === 'sin_registrar');
@@ -246,11 +282,14 @@ function consultationReview(module) {
         <strong class="${state}">${escape(value)}</strong></div>`;
     }).join('')}</div>
     ${calculatorsForModule(module.id)}
+    ${module.id==='dm2'?dm2RapidResult():''}
     ${integratedCards(({dm2:'DM2',ic:'IC',erc:'Renal',obesidad:'Metabólico',hepatico:'Hepático',insulina:'DM2'})[module.id])}
-    <div class="clinical-lock"><strong>Motor terapéutico pendiente de validación</strong>
+    ${module.id==='dm2'
+      ? '<p class="clinical-lock">DM2: orientación rápida implementada; revisión detallada terapéutica y validación clínica formal pendientes.</p>'
+      : `<div class="clinical-lock"><strong>Motor terapéutico pendiente de validación</strong>
       <p>${missing.length} datos sin registrar y ${invalid.length} entradas por revisar.
        Aquí aparecerán situación, siguiente paso, alternativas, seguridad, seguimiento y fuentes,
-       solo cuando cada regla esté verificada y probada.</p></div>
+       solo cuando cada regla esté verificada y probada.</p></div>`}
     <div class="wizard-actions"><button type="button" class="ghost" data-action="module-mode" data-mode="quick">Volver a consulta</button>
       <button class="primary" type="button" data-action="summary">Ver ficha integral →</button></div>
   </div>`;
@@ -280,7 +319,11 @@ function moduleView() {
         <button type="button" class="primary" data-action="module-mode" data-mode="review">Ver resumen de datos →</button>
       </div>
     </section>`}
-    <div class="module-note"><strong>Documentación:</strong> matriz de equivalencia y reglas pendientes de verificación en fuentes actuales.</div>
+    ${m.id==='dm2' && mode==='quick'?`<div class="dm2-result-trigger">
+      <button class="primary" type="button" data-action="dm2-result">Ver orientación clínica rápida →</button>
+      <p>El resultado se genera para revisión. No prescribe ni confirma diagnósticos.</p>
+    </div>${current.dm2ResultVisible?dm2RapidResult():''}`:''}
+    <div class="module-note"><strong>Documentación:</strong> las recomendaciones rápidas de DM2 son provisionales; otras consultas siguen sin salida clínica validada.</div>
     <p class="privacy-note">No introduzcas identificadores del paciente. Los datos no se guardan después de cerrar o recargar.</p>
   </div>`;
 }
@@ -516,7 +559,7 @@ function tools() {
     ${pharmaLibrary()}
     <div class="followup-link"><button type="button" class="ghost" data-action="followup">Historial y calendario de controles →</button></div>
     <div class="tool-grid">
-      ${['dm2','ic','obesidad','insulina'].map(id=>{
+      ${['ic','obesidad','insulina'].map(id=>{
         const m=MODULE_BY_ID[id];
         return `<div class="tool-card"><span class="tag">Algoritmo pendiente</span>
           <h2>${escape(m.title)}</h2><p>La consulta rápida y detallada ya está disponible; los resultados clínicos necesitan especificación y revisión.</p>
@@ -567,6 +610,11 @@ app.addEventListener('input', event => {
     // Refrescar tras seleccionar «ninguna» para garantizar exclusividad.
     if (selected.length !== checked.length) return render();
   } else draft=setValue(draft,id,el.value);
+  if(current.page==='module' && current.module==='dm2' && current.mode==='quick') {
+    current.dm2ResultVisible=false;
+    const oldResult=document.getElementById('dm2-rapid-result');
+    if(oldResult && typeof oldResult.remove==='function')oldResult.remove();
+  }
   const counter=document.getElementById('section-count');
   if (!counter) return;
   const fields=current.page==='module'?moduleFields(current.module,current.mode):current.page==='drug'?currentContinuityFields():SECTIONS[current.step].fields.map(f=>f.id);
@@ -577,6 +625,11 @@ app.addEventListener('click', event => {
   const btn = event.target.closest('button[data-action]');
   if (!btn) return;
   const action = btn.dataset.action;
+  if (action === 'dm2-result') {
+    if(current.page!=='module'||current.module!=='dm2'||current.mode!=='quick')return;
+    current.dm2ResultVisible=true;
+    return render();
+  }
   if (action === 'refresh') return render();
   if (action === 'followup') { followupError=''; return navigate('followup'); }
   if (action === 'confirm-med-action') {
