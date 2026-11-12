@@ -61,6 +61,12 @@ Se añadieron dos monografías CIMA-AEMPS: **empagliflozina** (DM2, IC y ERC) y 
 
 [Fuentes y especificación CIMA](FARMACOLOGIA_CIMA.md). Pendientes: medicamentos restantes, decisiones de monitorización/ajustes y validación clínica completa.
 
+## Continuidad y seguimiento sin prescripción (bloque parcial B.4)
+
+El motor `src/clinical/continuidad.mjs` revisa tratamientos **ya existentes**, con tablas CIMA de finerenona según indicación, condiciones de interrupción/reinicio de empagliflozina y registro en memoria de actuaciones **confirmadas**. Solo estas actuaciones generan fechas de control. No hay prescripción automática, recordatorios ni persistencia.
+
+Fuente y límites: [Continuidad y seguimiento](CONTINUIDAD_Y_SEGUIMIENTO.md). Pendiente validación médica de casos y calendario, otros principios activos, interacciones completas y revisión de la interfaz en dispositivo real.
+
 ## Iteración C — conducta y seguimiento
 
 | Código | Función | Condición de aceptación |
