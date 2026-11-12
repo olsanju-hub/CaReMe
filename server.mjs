@@ -4,7 +4,7 @@ import { resolve, extname } from 'node:path';
 
 const root = resolve('.');
 const allow = new Set([
-  'index.html', 'src/styles.css', 'src/app.mjs', 'src/model.mjs', 'src/consultas.mjs', 'src/clinical/engine.mjs', 'src/clinical/integracion.mjs', 'src/clinical/farmacologia.mjs',
+  'index.html', 'src/styles.css', 'src/app.mjs', 'src/model.mjs', 'src/consultas.mjs', 'src/clinical/engine.mjs', 'src/clinical/integracion.mjs', 'src/clinical/farmacologia.mjs', 'src/clinical/continuidad.mjs',
   'manifest.webmanifest', 'service-worker.js',
   'public/icon-concept.svg', 'public/domain-cardiovascular.svg',
   'public/domain-renal.svg', 'public/domain-hepatico.svg',
