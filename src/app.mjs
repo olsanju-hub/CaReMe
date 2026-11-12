@@ -358,6 +358,9 @@ function followupPage() {
         <select id="action-type"><option value="inicio">Inicio</option><option value="reinicio">Reinicio</option>
         <option value="ajuste">Modificación de dosis</option><option value="interrupcion">Interrupción</option></select></div>
         <div><label for="action-date">Fecha efectiva</label><input id="action-date" type="date" required /></div>
+        <div><label for="action-dose">Dosis realmente administrada tras esta actuación (mg/día)</label>
+          <select id="action-dose"><option value="">Seleccionar (no procede si interrupción)</option>
+          ${(current.drug==='finerenona'?[10,20,40]:[10,25]).map(n=>`<option value="${n}">${n} mg/día</option>`).join('')}</select></div>
       </div>
       <label class="confirm-check"><input type="checkbox" id="action-confirm" />
         Confirmo que esta actuación realmente se realizó. No es una recomendación de la aplicación.</label>
@@ -365,7 +368,7 @@ function followupPage() {
       <button type="button" class="primary" data-action="confirm-med-action">Registrar actuación confirmada</button>
     </section>
     <section class="drug-card"><h2>Registro de esta indicación</h2>
-      ${last.length ? `<ul class="history-list">${last.map(x=>`<li><strong>${escape(x.performedOn)}</strong> · ${escape(actionName[x.type])} · confirmado</li>`).join('')}</ul>`
+      ${last.length ? `<ul class="history-list">${last.map(x=>`<li><strong>${escape(x.performedOn)}</strong> · ${escape(actionName[x.type])} ${x.doseMg===null?'': '· '+escape(x.doseMg)+' mg/día'} · confirmado</li>`).join('')}</ul>`
        : '<p>No hay actuaciones confirmadas en esta sesión.</p>'}
     </section>
     <section class="drug-card"><h2>Controles vinculados a actuaciones confirmadas</h2>
@@ -504,6 +507,7 @@ app.addEventListener('click', event => {
   if (action === 'confirm-med-action') {
     const type=document.getElementById('action-type')?.value;
     const performedOn=document.getElementById('action-date')?.value;
+    const doseMg=document.getElementById('action-dose')?.value;
     const checked=document.getElementById('action-confirm')?.checked === true;
     const today=new Date();
     const localToday=[today.getFullYear(),String(today.getMonth()+1).padStart(2,'0'),
@@ -515,7 +519,7 @@ app.addEventListener('click', event => {
     if(!confirm('¿Confirmas que la actuación se realizó realmente? No se está emitiendo una prescripción.')) return;
     try {
       confirmedHistory=confirmedAction(confirmedHistory,{
-        drugId:current.drug,routeId:current.route,type,performedOn,confirmedByClinician:true
+        drugId:current.drug,routeId:current.route,type,performedOn,doseMg,confirmedByClinician:true
       });
       followupError='';
     } catch(e) { followupError=e?.message||'No se ha registrado la actuación'; }
