@@ -60,6 +60,23 @@ export function reviewFinerenoneContinuation(draft, routeId) {
       [...missing.filter(x=>x!=='Dosis de finerenona realmente administrada.'),'Documentar motivo y fecha de interrupción.'],
       ['Comprobar interacciones, función renal, potasio y estabilidad antes de reconsiderar reinicio.']);
   }
+  if(status==='En tratamiento' && potassium!==null &&
+     ((routeId==='erc_dm2' && potassium>5.5) || (routeId==='ic_fevi40' && potassium>=6)))
+    return answer('finerenona',routeId,'FIN-POTASSIUM-PRIORITY','alerta',
+      'Potasio alto durante finerenona: revisión prioritaria',
+      'La ficha indica interrupción con este potasio según la indicación. Requiere evaluación profesional inmediata, incluso si faltan otros datos.',
+      missing,['Confirmar la medicación y valorar la hiperpotasemia; no se registra suspensión automática.']);
+  if(status==='En tratamiento' && egfr!==null && egfr<15)
+    return answer('finerenona',routeId,'FIN-ESKD','alerta',
+      'TFGe <15: revisar interrupción conforme a ficha técnica',
+      'La ficha indica interrumpir finerenona en enfermedad renal terminal (TFGe <15).',
+      missing,['Confirmar evolución renal, potasio y situación clínica.']);
+  if(status==='En tratamiento' && routeId==='ic_fevi40' &&
+     potassium!==null && potassium>=5.5 && potassium<6 && dose===null)
+    return answer('finerenona',routeId,'FIN-HF-K55-UNKNOWN-DOSE','precaucion',
+      'Potasio ≥5,5: falta dosis para aplicar tabla cardíaca',
+      'Según la dosis actual, la tabla 4 indica reducción o interrupción; no se puede seleccionar la rama sin confirmar la dosis.',
+      missing, ['Revisar potasio y situación clínica sin demorar la valoración.']);
   if(missing.length) return answer('finerenona',routeId,'FIN-INCOMPLETE','datos_insuficientes',
     'No evaluable', 'Faltan datos esenciales para revisar la continuación del tratamiento.',
     missing);
