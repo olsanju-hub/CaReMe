@@ -6,7 +6,7 @@ export const MODULES = [
     id: 'dm2', title: 'Diabetes tipo 2', domain: 'metabolico',
     short: 'Control glucémico y tratamiento', 
     quick: ['dm_prioridad','dm_control'],
-    detail: ['dm2','hba1c','fecha_hba1c','dm_objetivo','dm_objetivo_valor','dm_hba1c_fiable','dm_hipoglucemias','dm_adherencia','dm_dosis_confirmadas','glucemia_actual','dm1','acidosis_metabolica','hipoxia_tisular','ic_descompensada','insuficiencia_hepatica','lra_sospecha','contraste_yodado','cirugia_anestesia','tfge','imc','retinopatia_dm','vision_subita','pancreatitis_sospecha','pancreatitis_previa','dm_sintomas','comorbilidades','situacion_aguda','cetoacidosis_sospecha','farmacos_clases','farmacos','medicacion_revisada','alergias','alergias_revisadas']
+    detail: ['dm2','edad','embarazo','fecha_evaluacion','hba1c','fecha_hba1c','dm_objetivo','dm_objetivo_valor','dm_hba1c_fiable','dm_hipoglucemias','dm_adherencia','dm_dosis_confirmadas','glucemia_actual','dm1','acidosis_metabolica','hipoxia_tisular','ic_descompensada','insuficiencia_hepatica','lra_sospecha','contraste_yodado','cirugia_anestesia','tfge','imc','retinopatia_dm','vision_subita','pancreatitis_sospecha','pancreatitis_previa','dm_sintomas','comorbilidades','situacion_aguda','cetoacidosis_sospecha','farmacos_clases','farmacos','medicacion_revisada','alergias','alergias_revisadas']
   },
   {
     id: 'ic', title: 'Insuficiencia cardíaca', domain: 'cardiovascular',
