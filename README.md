@@ -13,6 +13,17 @@ PWA independiente de apoyo a la decisión clínica en Atención Primaria en Espa
 
 CaHReMe cubre ya la **navegación y captura de datos** de seis consultas inspiradas en GlucoGuía y debe completar su **lógica clínica validada** (DM2, IC, ERC, sobrepeso/obesidad, enfermedad hepática metabólica e insulinización), **con consulta rápida, detalle y resultados equivalentes en funcionalidad**, ampliadas con evaluación integral, datos compartidos, recomendaciones clínicas trazables y seguimiento. **Los algoritmos específicos de decisión terapéutica y seguimiento siguen pendientes.** Véase [matriz de equivalencia y brechas](docs/MATRIZ_EQUIVALENCIA_GLUCOGUIA.md).
 
+## Bloque de continuidad y seguimiento condicionado a actuaciones confirmadas
+
+- `src/clinical/continuidad.mjs`: referencias de **continuidad y titulación** para finerenona por indicación ERC-DM2 (CIMA tabla 2) e IC FEVI ≥40 % (tabla 4), con límites de K y evolución de TFGe. No prescribe ni ajusta.
+- Empagliflozina: seguridad en enfermedad aguda/cetoacidosis, condiciones de reevaluación del reinicio y opción documental DM2 de 25 mg cuando corresponde.
+- Ficha de cada molécula incorpora formulario de **tratamiento actual, dosis real y resultados clínicos**, así como resultado de continuidad que no modifica pautas.
+- El médico puede registrar **inicio, reinicio, ajuste o interrupción realmente efectuados**, con confirmación explícita, fecha y dosis efectiva. Las actuaciones se conservan **solo en memoria**.
+- El calendario muestra control de K/TFGe **a las 4 semanas de acciones confirmadas de finerenona** y revisión de función renal **al menos anual** tras inicio/reinicio confirmado de empagliflozina; la periodicidad puede cambiar por riesgo clínico.
+- Las fechas previas se marcan sustituidas cuando otro ajuste/interrupción confirmados cambia la situación; el historial no se borra.
+- Referencia y tests: [Continuidad y seguimiento](docs/CONTINUIDAD_Y_SEGUIMIENTO.md), `tests/continuidad.test.mjs`.
+- **No existe envío de recordatorios**, integración con agenda, prescripción ni aprobación de uso asistencial.
+
 ## Primer bloque de verificación farmacológica (CIMA-AEMPS)
 
 - Se ha añadido `src/clinical/farmacologia.mjs`, con fichas **por principio activo y por indicación**, basadas en CIMA-AEMPS, para **empagliflozina** y **finerenona**.
@@ -111,7 +122,7 @@ Incluye entrada integral o dirigida, captura por secciones, distinción entre ca
 | --- | --- |
 | Documentación inicial | Borrador v0.1 disponible para revisión |
 | Evidencia y especificaciones clínicas | KDIGO/ADA/EASL/ESC + CIMA empagliflozina y finerenona por indicación; validación clínica pendiente |
-| Motor de evaluación y recomendaciones | G/A, FIB-4, candidatos multiorgánicos y monografías CIMA no prescriptivas; prescripciones pendientes |
+| Motor de evaluación y recomendaciones | G/A, FIB-4, integración, fichas CIMA y continuidad no prescriptiva; evaluación médica y prescripción pendientes |
 | Interfaz y PWA | Prototipo en rama de revisión; manifiesto PWA y caché estática implementados; validación visual e instalación pendientes |
 | Icono final exportado | Pendiente |
 | Pruebas y validación clínica | Pendiente |
