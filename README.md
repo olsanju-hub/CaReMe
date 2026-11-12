@@ -13,6 +13,16 @@ PWA independiente de apoyo a la decisión clínica en Atención Primaria en Espa
 
 CaHReMe cubre ya la **navegación y captura de datos** de seis consultas inspiradas en GlucoGuía y debe completar su **lógica clínica validada** (DM2, IC, ERC, sobrepeso/obesidad, enfermedad hepática metabólica e insulinización), **con consulta rápida, detalle y resultados equivalentes en funcionalidad**, ampliadas con evaluación integral, datos compartidos, recomendaciones clínicas trazables y seguimiento. **Los algoritmos específicos de decisión terapéutica y seguimiento siguen pendientes.** Véase [matriz de equivalencia y brechas](docs/MATRIZ_EQUIVALENCIA_GLUCOGUIA.md).
 
+## Insulinización DM2 · tres circuitos preliminares (12/11/2026)
+
+- `src/clinical/insulinizacion.mjs` genera orientación **diferenciada** de inicio, intensificación y desintensificación.
+- Entrada rápida: fase y condicionantes. Detallada: esquema real, dosis basal declarada, glucemias de ayunas frente al objetivo, patrón posprandial, hipoglucemia, tratamiento conciliado, autocuidado y motivo de simplificación.
+- Salida: situación y seguridad, siguientes pasos, opciones para revisión, comprobaciones, seguimiento y guías **ADA/EASD 2026**, ADA 2026, redGDPS insulinización 2022 y CIMA de producto.
+- Distingue HbA1c en objetivo frente a falta de control, ayunas altas frente a hiperglucemia posprandial, y **no incrementa basal** con ayunas bajas o hipoglucemias nocturnas.
+- En fragilidad, riesgo de hipoglucemia y carga terapéutica, orienta a revisar simplificación sin ejecutar ningún descenso de dosis.
+- Se conserva como referencia documental el rango ADA basal de 0,1–0,2 U/kg/día, **sin calcular una pauta para el paciente, ni registrarla como iniciada**.
+- [Fuentes, condiciones y riesgos de insulinización](docs/INSULINIZACION_ADA_EASD_2026.md) y pruebas `tests/insulinizacion.test.mjs`, `tests/insulinizacion-ui.test.mjs`.
+
 ## DM2 detallada · objetivo individual, conciliación y seguridad (12/11/2026)
 
 - `src/clinical/dm2-detallada.mjs` calcula la diferencia entre la HbA1c aportada y **un límite numérico individual confirmado por el médico**; 8,5 % no se utiliza como objetivo universal.
