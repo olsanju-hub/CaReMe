@@ -63,3 +63,11 @@ Fuente y pruebas: [Farmacología CIMA](FARMACOLOGIA_CIMA.md). La aplicación no 
 La pantalla de farmacología permite consultar continuidad por **indicación y dosis actual**. El historial de actuaciones no se alimenta del motor de recomendaciones: requiere confirmación del médico, fecha efectiva y dosis administrada (salvo interrupción). Solo las actuaciones confirmadas generan controles programables. Las fechas sustituidas por un cambio posterior permanecen en el historial con estado «sustituido». Al borrar una evaluación, se borra también el historial temporal.
 
 Fuente, reglas y límites: [Continuidad y seguimiento](CONTINUIDAD_Y_SEGUIMIENTO.md).
+
+## Verificación previa a una decisión y procedencia analítica
+
+En las rutas integral y dirigidas se pueden registrar fechas de evaluación/analíticas. El CAC solo se categoriza automáticamente en **mg/g**; las cifras expresadas en otras unidades requieren conversión y validación fuera del motor vigente. FIB-4 no se construye con determinaciones fechadas de modo incompatible. La falta de fecha no se interpreta como actualidad.
+
+Las contradicciones críticas se muestran como alertas y **retienen** las opciones farmacológicas; no eliminan una alerta aguda ya identificada. El plan de verificación reúne los datos a revisar, las opciones aún no ejecutadas y los controles que derivan de actuaciones **expresamente confirmadas**. No registra automáticamente acciones ni sincroniza citas.
+
+Cobertura de pruebas y pendientes: [AUDITORIAS_3_BLOQUES.md](AUDITORIAS_3_BLOQUES.md).
