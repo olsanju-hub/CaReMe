@@ -2,7 +2,7 @@
 
 **Evaluación cardiorrenal-hepatometabólica — prototipo con cálculos y revisión multiorgánica, sin prescripción.**
 
-**Repositorio:** `olsanju-hub/CaReMe` · **Nombre visual:** CaHReMe (de trabajo)
+**Repositorio:** `olsanju-hub/CaReMe` · **Nombre de la aplicación:** CaHReMe
 
 ## Propósito
 PWA independiente de apoyo a la decisión clínica en Atención Primaria en España. Evaluación integrada de los dominios **cardiovascular, renal, hepático y metabólico**, sin reducir la app a diabetes mellitus.
@@ -131,4 +131,4 @@ Incluye entrada integral o dirigida, captura por secciones, distinción entre ca
 ## Criterios de calidad
 No inventar umbrales ni dosis. Verificar versiones de las guías, contraindicaciones y fichas CIMA-AEMPS. Separar lo recomendado de lo efectivamente ejecutado. Mantener registro de fuentes y pruebas. No copiar código o recursos protegidos de otras aplicaciones sin licencia. No incorporar datos personales reales a repositorio ni pruebas.
 
-**Marca:** CaHReMe es un nombre de trabajo; su disponibilidad jurídica y posibles colisiones deben comprobarse antes de publicarlo como marca.
+**Marca:** El nombre de producto aprobado es CaHReMe. Su disponibilidad jurídica y posibles colisiones deben comprobarse antes de utilizarlo como marca comercial.
