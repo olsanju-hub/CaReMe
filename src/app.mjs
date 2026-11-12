@@ -184,13 +184,13 @@ function verificationPanel() {
     <h2>Plan de verificación clínica</h2>
     <p>${escape(plan.summary)}. Las comprobaciones no se registran como realizadas por aparecer aquí.</p>
     ${plan.heldCandidates?`<p class="verification-hold">Se han retenido ${plan.heldCandidates} opciones hasta corregir las incoherencias clínicas.</p>`:''}
-    ${plan.checks.length?`<div class="verification-list">${plan.checks.slice(0,12).map(item=>`
+    ${plan.checks.length?`<div class="verification-list">${plan.checks.map(item=>`
       <article class="verification-item ${escape(item.priority)}">
         <span class="verification-kind">${escape(priorities[item.priority]||'Revisar')}</span>
         <h3>${escape(item.title)}</h3><p>${escape(item.detail)}</p>
         ${item.fields.length?`<small>Campos: ${item.fields.map(id=>escape(FIELDS[id]?.label||id)).join(' · ')}</small>`:''}
       </article>`).join('')}</div>
-      ${plan.checks.length>12?`<p>Hay ${plan.checks.length-12} comprobaciones adicionales en el motor; revisar el resto de datos y fuentes.</p>`:''}`
+
       :'<p>Sin comprobaciones pendientes detectadas por las reglas implementadas; esto no valida la historia ni equivale a alta clínica.</p>'}
     <h3>Controles derivados de actuaciones confirmadas</h3>
     ${followup.length?`<div class="verification-followup">${followup.map(x=>`
