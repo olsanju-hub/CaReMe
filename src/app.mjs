@@ -146,7 +146,7 @@ function pharmaLink(card) {
   if(card.id==='FIN-HF-LABEL') info={drug:'finerenona',route:'ic_fevi40'};
   else if(card.id.startsWith('NSMRA-')) info={drug:'finerenona',route:'erc_dm2'};
   else if(card.id.startsWith('SGLT2-')) info={drug:'empagliflozina',route:draft.values.ic==='Sí'?'ic':draft.values.erc==='Sí'?'erc':'dm2'};
-  if(card.id==='GLP-REVIEW'||card.id==='GLP-EXISTING')
+  if(['GLP-REVIEW','GLP-EXISTING','WEIGHT-REVIEW','WEIGHT-EXISTING'].includes(card.id))
     return `<div class="incretin-links">${[
       ['semaglutida_ozempic','dm2','Ozempic · DM2'],
       ['semaglutida_wegovy_sc','peso','Wegovy inyectable · peso'],
