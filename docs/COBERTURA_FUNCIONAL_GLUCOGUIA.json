@@ -41,10 +41,11 @@
         "medications"
       ],
       "capture": "implemented",
-      "quick_clinical_result": "missing",
+      "quick_clinical_result": "partial",
       "detailed_decision": "partial",
       "priority": "P0",
-      "gap": "No complete result by glycemic branch, HbA1c 8.5% symptomatic status, number of treatment classes and objective; general multiorgan candidates are not module parity."
+      "gap": "Consulta rápida con orientación clínica inicial implementada en src/clinical/dm2-rapida.mjs; pendiente revisión detallada, selección por molécula y validación clínica completa.",
+      "note": "Salida rápida con ramas de HbA1c/objetivo, síntomas, comorbilidades y fármacos. No equivale aún a paridad final."
     },
     {
       "id": "ic",
@@ -204,6 +205,11 @@
       "id": "clinical_safety_audit",
       "status": "implemented",
       "evidence": "src/clinical/auditoria.mjs and src/clinical/plan.mjs; independent addition"
+    },
+    {
+      "id": "dm2_quick_clinical_result",
+      "status": "partial",
+      "evidence": "src/clinical/dm2-rapida.mjs, UI en src/app.mjs, tests/dm2-rapida.test.mjs; no equivale a paridad del módulo detallado"
     }
   ],
   "blockers": [
@@ -211,25 +217,35 @@
       "id": "CAC_UNIT_ABSENT_ASSUMED_MG_G",
       "priority": "P0",
       "owner_area": "src/clinical/engine.mjs and src/clinical/proveniencia.mjs",
-      "finding": "Renal engine accepts CAC when unidad_cac is missing; source description implies missing unit is not validated. Restrict downstream interpretation until unit is explicit."
+      "finding": "Renal engine accepts CAC when unidad_cac is missing; source description implies missing unit is not validated. Restrict downstream interpretation until unit is explicit.",
+      "status": "resolved_in_branch",
+      "resolution": "src/clinical/engine.mjs exige mg/g explícito para clasificar; src/clinical/proveniencia.mjs marca CAC_UNIT_MISSING como crítico y src/clinical/integracion.mjs usa solo CAC validado.",
+      "tests": [
+        "tests/cac-unidad.test.mjs"
+      ]
     },
     {
       "id": "REPORTED_FIB4_NOT_USED",
       "priority": "P1",
       "owner_area": "src/clinical/engine.mjs",
-      "finding": "fib4_informado is parsed but reported.value is not used by decision/status; quick hepatic route cannot evaluate entered FIB-4 alone."
+      "finding": "fib4_informado is parsed but reported.value is not used by decision/status; quick hepatic route cannot evaluate entered FIB-4 alone.",
+      "status": "open"
     },
     {
       "id": "NO_MODULE_SPECIFIC_RESULT",
       "priority": "P0",
       "owner_area": "src/app.mjs consultationReview",
-      "finding": "Directed module shows capture summary and clinical-lock, not equivalent quick/detailed decision flow."
+      "finding": "Directed module shows capture summary and clinical-lock, not equivalent quick/detailed decision flow.",
+      "status": "partially_resolved",
+      "resolution": "DM2 quick tiene orientación específica; siguen sin paridad detallada DM2 y los otros cinco módulos."
     },
     {
       "id": "MANIFEST_DESCRIPTION_STALE",
       "priority": "P2",
       "owner_area": "manifest.webmanifest",
-      "finding": "Manifest still describes 'sin cálculos', although renal G/A and FIB-4 are implemented."
+      "finding": "Manifest still describes 'sin cálculos', although renal G/A and FIB-4 are implemented.",
+      "status": "resolved_in_branch",
+      "resolution": "manifest.webmanifest actualizado para reconocer categorías G/A, FIB-4 y DM2 rápida."
     }
   ],
   "release_gate": {
@@ -238,5 +254,6 @@
     "mobile_qa": "pending",
     "keep_pr_draft": true,
     "no_prescription": true
-  }
+  },
+  "updated_on": "2026-11-12"
 }
