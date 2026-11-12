@@ -128,7 +128,7 @@ export function evaluateFib4(draft) {
   const missing = Object.entries(parts).filter(([,v])=>v.state !== 'ok').map(([k])=>k);
   const invalid = Object.values(parts).some(v=>v.state==='invalid');
   const dates=['fecha_ast','fecha_alt','fecha_plaquetas'].map(id=>values[id]).filter(Boolean);
-  const dateMismatch=dates.length===3 && new Set(dates).size>1;
+  const dateMismatch=dates.length>=2 && new Set(dates).size>1;
   const assessedOn=values.fecha_evaluacion;
   const futureDate=assessedOn && dates.some(date=>date>assessedOn);
   const unmergeableDates=dateMismatch || futureDate;
