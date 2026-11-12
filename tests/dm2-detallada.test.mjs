@@ -75,7 +75,7 @@ test('hipoglucemias graves o recurrentes tienen prioridad aunque HbA1c parezca f
  const x=review({hba1c:'6.6',dm_hipoglucemias:'Graves o recurrentes',
    farmacos_clases:['Insulina','Sulfonilurea']});
  assert.equal(x.state,'seguridad_prioritaria');
- assert.ok(x.alerts.some(s=>s.includes('hipoglucemias graves')));
+ assert.ok(x.alerts.some(s=>/hipoglucemias graves/i.test(s)));
  assert.equal(x.alternatives.length,0);
 });
 test('glucemia ≥300 marca valoración prioritaria; 299 no sustituye a clínica',()=>{
@@ -136,8 +136,8 @@ test('sin tratamiento confirmado permite declarar dosis no aplicables, sin inven
 });
 test('IC/ERC sin TFGe confirmada no ofrece inicio de iSGLT2',()=>{
  const x=review({ic:'Sí',tfge:''});
- assert.equal(x.state,'revision_pendiente');
- assert.ok(x.checks.some(s=>s.includes('TFGe fiable')));
+ assert.equal(x.state,'datos_insuficientes');
+ assert.ok(x.checks.some(s=>s.includes('TFGe contrastada')));
  assert.ok(!x.alternatives.some(o=>o.id==='DM2-DETAIL-SGLT2-REVIEW'));
 });
 test('metformina con TFGe 29.9 emite alerta; no recomienda iniciarla',()=>{
