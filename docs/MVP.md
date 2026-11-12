@@ -67,6 +67,14 @@ El motor `src/clinical/continuidad.mjs` revisa tratamientos **ya existentes**, c
 
 Fuente y límites: [Continuidad y seguimiento](CONTINUIDAD_Y_SEGUIMIENTO.md). Pendiente validación médica de casos y calendario, otros principios activos, interacciones completas y revisión de la interfaz en dispositivo real.
 
+## Incretinas por formulación/indicación (bloque 2026-11-12)
+
+Se añadieron Ozempic (semaglutida para DM2), Wegovy **inyectable** (semaglutida para control del peso) y Mounjaro (tirzepatida para DM2/peso). Sus referencias de dosis, limitaciones renales y riesgos relevantes proceden de fichas CIMA individualizadas. La semaglutida oral de Wegovy está fuera de este módulo.
+
+La evaluación multiorgánica permite considerar el tratamiento del peso **sin DM2** cuando hay un perfil de IMC documentado, siempre como candidato de revisión. No se generan prescripciones, elegibilidad definitiva ni financiación automática.
+
+[INCRETINAS_CIMA.md](INCRETINAS_CIMA.md) · código `src/clinical/incretinas.mjs`.
+
 ## Iteración C — conducta y seguimiento
 
 | Código | Función | Condición de aceptación |
