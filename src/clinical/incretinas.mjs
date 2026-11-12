@@ -159,6 +159,8 @@ export function reviewIncretinDrug(draft,drugId,routeId) {
     if(drugId==='semaglutida_ozempic' && egfr!==null && egfr<15)
       checks.push('Enfermedad renal terminal: experiencia con Ozempic limitada; no imponer ajuste renal inventado.');
     if(drugId==='semaglutida_wegovy_sc') {
+      if(egfr===null)
+        missing.push('TFGe necesaria para revisar la exclusión renal de Wegovy inyectable.');
       if(egfr!==null&&egfr<30)
         blocked.push('Wegovy inyectable: no recomendado con TFGe <30 según la ficha de esta presentación.');
       if(val(draft,'hepatica_grave')==='Sí')
@@ -178,6 +180,8 @@ export function reviewIncretinDrug(draft,drugId,routeId) {
       checks.push('Insuficiencia hepática grave: experiencia con tirzepatida limitada.');
   }
   if(routeId==='dm2') {
+    if(val(draft,'dm1')==='Sí')
+      blocked.push('La vía terapéutica de DM2 no debe confundirse con tratamiento de diabetes tipo 1.');
     if(val(draft,'dm2')==='No')
       blocked.push('No consta DM2: esta indicación no corresponde al caso declarado.');
     else if(val(draft,'dm2')!=='Sí')
