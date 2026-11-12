@@ -70,7 +70,8 @@ test('navegación rápida / detallada / resumen conserva los datos capturados', 
   click('module-mode',{mode:'detail'});
   assert.ok(root.innerHTML.includes('value="8.1"'), 'dato de HbA1c no compartido');
   click('module-mode',{mode:'review'});
-  assert.ok(root.innerHTML.includes('Motor terapéutico pendiente de validación'));
+  assert.ok(root.innerHTML.includes('INSULINIZACIÓN DM2'));
+  assert.ok(root.innerHTML.includes('Información necesaria'));
   click('home');
   assert.ok(root.innerHTML.includes('Continuar evaluación integral'));
   click('new');
