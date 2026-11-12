@@ -1,5 +1,5 @@
 import {CKM_FIELDS,evaluateCkm} from './clinical/ckm.mjs';
-import {CV_FIELDS,evaluateCvRisk} from './clinical/riesgo-cv.mjs';
+import {CV_FIELDS,OP_FIELDS,evaluateCvRisk} from './clinical/riesgo-cv.mjs';
 import { SECTIONS, FIELDS, createDraft, setValue, setUnavailable, fieldState, sectionStats, totalStats, sectionForFocus } from './model.mjs';
 import { MODULES, MODULE_BY_ID, moduleFields, readMulti } from './consultas.mjs';
 import { SOURCES, evaluateRenal, evaluateFib4 } from './clinical/engine.mjs';
@@ -59,7 +59,7 @@ function home() {
     <div class="section-heading"><div><div class="eyebrow">SEIS CONSULTAS CLÍNICAS</div><h2>¿Qué necesitas valorar?</h2></div>
       <p>Consulta rápida con orientación preliminar de DM2; otros módulos aún pendientes de validación.</p>
     </div>
-    <section class="info-strip"><div><strong>Riesgo cardiovascular</strong><p>SCORE2 para el grupo elegible en España; selección de circuito cuando no procede.</p></div>
+    <section class="info-strip"><div><strong>Riesgo cardiovascular</strong><p>SCORE2 para el grupo elegible en España y registro documentado de SCORE2-OP externo.</p></div>
       <button type="button" class="primary" data-action="cv-risk">Valorar riesgo cardiovascular →</button></section>
     <section class="info-strip"><div><strong>Estadificación CKM</strong><p>Contexto cardiovascular, renal y metabólico con evidencia disponible.</p></div>
       <button type="button" class="primary" data-action="ckm">Valorar estadio CKM →</button></section>
@@ -110,9 +110,12 @@ function cvRiskView(){
   <h1>Riesgo cardiovascular</h1>${banner()}
   <section class="form-card"><h2>Elegibilidad y datos disponibles</h2><p>Los valores se comparten con la evaluación integral. No se solicita una prueba solo para completar la herramienta.</p>
   <div class="field-grid">${CV_FIELDS.map(id=>moduleFieldMarkup(FIELDS[id])).join('')}</div>
+  ${Number(draft.values.edad)>=70&&Number(draft.values.edad)<90?`<section><h2>SCORE2-OP calculado externamente</h2>
+   <p>Registra el resultado obtenido en <a href="https://www.heartscore.org/" target="_blank" rel="noopener noreferrer">HeartScore ESC</a> con los mismos datos. El cálculo no se envía ni se importa automáticamente.</p>
+   <div class="field-grid">${OP_FIELDS.map(id=>moduleFieldMarkup(FIELDS[id])).join('')}</div></section>`:''}
   <button type="button" class="primary" data-action="cv-risk-result">Ver evaluación de riesgo →</button></section>
   ${current.cvVisible?`<section id="cv-result" class="dm2-result" aria-live="polite"><h2>Resultado y siguiente paso</h2>
-  ${r.percent!==null?`<p><strong>${escape(r.percent.toFixed(1))} % a 10 años</strong> · SCORE2, región de riesgo bajo (España). Resultado en revisión clínica.</p>`:'<p>No se emite un porcentaje con estos datos o en este circuito.</p>'}
+  ${r.percent!==null?`<p><strong>${escape(r.percent.toFixed(1))} % a 10 años</strong> · SCORE2, región de riesgo bajo (España). Resultado en revisión clínica.</p>`:r.externalEstimate?`<p><strong>${escape(r.externalEstimate.percent.toFixed(1))} % a 10 años</strong> · SCORE2-OP externo de HeartScore, región baja España. Confirmado por el profesional; no calculado por CaHReMe.</p>`:'<p>No se emite un porcentaje con estos datos o en este circuito.</p>'}
   ${r.alerts.length?`<div class="dm2-safety">${list(r.alerts)}</div>`:''}
   ${r.missing.length?`<h3>Información necesaria</h3>${list(r.missing)}`:''}
   ${list(r.steps)}<details><summary>Fuentes y límites</summary>${r.sources.map(x=>`<p><a href="${escape(x.url)}" target="_blank" rel="noopener noreferrer">${escape(x.title)}</a> · ${escape(x.locator)}</p>`).join('')}</details>
@@ -636,7 +639,7 @@ function summary() {
         }).join('')}</dl></section>`).join('')}</div>
     ${ckmSummaryCard()}
     <section class="calc-card"><h2>Riesgo cardiovascular</h2>
-      <p>${evaluateCvRisk(draft).percent===null?'Sin porcentaje disponible: revisar elegibilidad, circuito y datos.':'SCORE2: '+escape(evaluateCvRisk(draft).percent.toFixed(1))+' % a 10 años; pendiente de revisión clínica.'}</p>
+      <p>${evaluateCvRisk(draft).externalEstimate?'SCORE2-OP externo documentado: revisar procedencia y contexto.':evaluateCvRisk(draft).percent===null?'Sin porcentaje disponible: revisar elegibilidad, circuito y datos.':'SCORE2: '+escape(evaluateCvRisk(draft).percent.toFixed(1))+' % a 10 años; pendiente de revisión clínica.'}</p>
       <button type="button" class="text-link" data-action="cv-risk">Ver evaluación y fuentes →</button></section>
     <div class="calc-stack">${renalResultCard()}${fib4ResultCard()}</div>
     ${verificationPanel()}
@@ -798,7 +801,7 @@ function tools() {
     <p class="privacy-note">La fecha y unidad real de cada analítica deben verificarse antes de utilizarla para decidir. Una fecha no consignada no significa que el resultado sea actual.</p>
     ${ckmSummaryCard()}
     <section class="calc-card"><h2>Riesgo cardiovascular</h2>
-      <p>${evaluateCvRisk(draft).percent===null?'Sin porcentaje disponible: revisar elegibilidad, circuito y datos.':'SCORE2: '+escape(evaluateCvRisk(draft).percent.toFixed(1))+' % a 10 años; pendiente de revisión clínica.'}</p>
+      <p>${evaluateCvRisk(draft).externalEstimate?'SCORE2-OP externo documentado: revisar procedencia y contexto.':evaluateCvRisk(draft).percent===null?'Sin porcentaje disponible: revisar elegibilidad, circuito y datos.':'SCORE2: '+escape(evaluateCvRisk(draft).percent.toFixed(1))+' % a 10 años; pendiente de revisión clínica.'}</p>
       <button type="button" class="text-link" data-action="cv-risk">Ver evaluación y fuentes →</button></section>
     <div class="calc-stack">${renalResultCard()}${fib4ResultCard()}</div>
     ${verificationPanel()}

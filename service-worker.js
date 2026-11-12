@@ -1,6 +1,6 @@
 // Solo cachea recursos estáticos: nunca guarda información introducida en formularios.
 // El símbolo SVG incluido es provisional; el icono aprobado en la conversación aún debe subirse.
-const CACHE = 'cahreme-shell-v0-20';
+const CACHE = 'cahreme-shell-v0-21';
 const ASSETS = [
   './', './index.html', './manifest.webmanifest',
   './src/app.mjs', './src/model.mjs', './src/consultas.mjs', './src/clinical/ckm.mjs', './src/clinical/riesgo-cv.mjs', './src/clinical/renal.mjs', './src/clinical/engine.mjs', './src/clinical/integracion.mjs', './src/clinical/farmacologia.mjs', './src/clinical/continuidad.mjs', './src/clinical/incretinas.mjs', './src/clinical/basales.mjs', './src/clinical/auditoria.mjs', './src/clinical/proveniencia.mjs', './src/clinical/plan.mjs', './src/clinical/dm2-rapida.mjs', './src/clinical/dm2-detallada.mjs', './src/clinical/insulinizacion.mjs', './src/clinical/insuficiencia-cardiaca.mjs', './src/styles.css',

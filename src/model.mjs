@@ -107,17 +107,38 @@ export const SECTIONS = [
 ];
 export const FIELDS = { ...Object.fromEntries(SECTIONS.flatMap(s => s.fields.map(f => [f.id, f]))), ...EXTRA_BY_ID };
 export function createDraft() { return { values: {}, unavailable: [] }; }
-export function setValue(draft, id, value) {
-  if (!FIELDS[id]) throw new Error('Campo inexistente');
-  return { values: { ...draft.values, [id]: String(value) }, unavailable: draft.unavailable.filter(x => x !== id) };
+// Asociación en memoria de una estimación externa con la ficha de esta sesión.
+// No es identificación del paciente, firma clínica ni validación del cálculo ajeno.
+const opSnapshot=draft=>JSON.stringify({
+ values:Object.fromEntries(Object.keys(draft.values).filter(id=>id!=='cv_op_confirmado').sort().map(id=>[id,draft.values[id]])),
+ unavailable:[...draft.unavailable].sort()
+});
+export function externalOpAssociationValid(draft){
+ return draft.values.cv_op_confirmado==='Sí'&&typeof draft.opAssociation==='string'&&draft.opAssociation===opSnapshot(draft);
 }
-export function setUnavailable(draft, id, yes) {
-  if (!FIELDS[id]) throw new Error('Campo inexistente');
-  const unavailable = new Set(draft.unavailable);
-  if (yes) unavailable.add(id); else unavailable.delete(id);
-  const values = { ...draft.values };
-  if (yes) delete values[id];
-  return { values, unavailable: [...unavailable] };
+export function setValue(draft,id,value){
+ if(!FIELDS[id])throw new Error('Campo inexistente');
+ const changed=draft.values[id]!==String(value)||draft.unavailable.includes(id);
+ const next={...draft,values:{...draft.values,[id]:String(value)},unavailable:draft.unavailable.filter(x=>x!==id)};
+ if(id==='cv_op_confirmado'){
+  if(String(value)==='Sí')next.opAssociation=opSnapshot(next);
+  else delete next.opAssociation;
+ }else if(changed&&draft.values.cv_op_confirmado==='Sí'){
+  next.values.cv_op_confirmado='No';delete next.opAssociation;
+ }
+ return next;
+}
+export function setUnavailable(draft,id,yes){
+ if(!FIELDS[id])throw new Error('Campo inexistente');
+ const unavailable=new Set(draft.unavailable);
+ if(yes)unavailable.add(id);else unavailable.delete(id);
+ const values={...draft.values};if(yes)delete values[id];
+ const next={...draft,values,unavailable:[...unavailable]};
+ if(draft.unavailable.includes(id)!==yes&&draft.values.cv_op_confirmado==='Sí'){
+  if(id!=='cv_op_confirmado')next.values.cv_op_confirmado='No';
+  delete next.opAssociation;
+ }
+ return next;
 }
 export function fieldState(draft, id) {
   const f = FIELDS[id];
@@ -163,3 +184,4 @@ export function sectionForFocus(focus) {
   const index = SECTIONS.findIndex(s => s.id === focus);
   return index < 0 ? 0 : index;
 }
+

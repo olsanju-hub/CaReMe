@@ -172,3 +172,8 @@ La [matriz de alcance original](ALCANCE_ORIGINAL.json) complementa la equivalenc
 ## Primera clasificación CKM · 12/11/2026
 
 Se implementa `evaluateCkm` con estado final para revisión o mínimo respaldado por datos cuando la evaluación es incompleta. Acceso compartido desde inicio, herramientas y resumen. [Contrato CKM](CKM_2026.md). El requisito CKM pasa de ausente a parcial en la matriz original; siguen pendientes validación y cierre de las otras áreas.
+
+
+## SCORE2-OP externo · 12/11/2026
+
+Existe una vía de registro de estimación externa HeartScore con procedencia, revisión y asociación a la ficha actual. No equivale a cálculo interno OP ni cierra su requisito. [Límites y pruebas](SCORE2_OP_EXTERNO.md).

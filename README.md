@@ -268,3 +268,12 @@ Se reauditaron los límites de ARM conforme a ESC 2026 y CIMA de finerenona. El 
 - Accesos en inicio, herramientas y resumen; seis consultas previas conservadas. PREVENT no se calcula aquí; solo puede declararse un equivalente externo verificado por el profesional.
 - **492/492 pruebas locales y sintaxis superadas.** UI con DOM simulado; revisión clínica independiente y QA móvil pendientes.
 - [Contrato, fuentes y auditoría](docs/CKM_2026.md). La matriz original marca CKM parcial; no se declara MVP completo. Mantener PR en borrador.
+
+
+## SCORE2-OP: vía externa documentada · 12/11/2026
+
+- Registro de SCORE2-OP a diez años obtenido en HeartScore para 70–89 años, sujeto a exclusiones y revisión de contexto. **No es cálculo OP local**, que continúa pendiente de verificar el suplemento primario completo.
+- Fuente, fecha, región, porcentaje y confirmación de correspondencia con la ficha. Se distingue `externalEstimate` de `percent` calculado internamente.
+- Cambiar datos o disponibilidad invalida la confirmación; asociación de la ficha solo en memoria. Sin transmisión automática de datos a HeartScore.
+- **521/521 pruebas locales y sintaxis superadas**. Casos de transcripción e interfaz simulada; no validación numérica de la fórmula OP ni QA real móvil.
+- [Auditoría y límites](docs/SCORE2_OP_EXTERNO.md). PR en borrador; pendiente motor OP interno, variantes restantes y revisión clínica.

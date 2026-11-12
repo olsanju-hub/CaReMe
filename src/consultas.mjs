@@ -45,6 +45,11 @@ export const MODULES = [
 ];
 export const MODULE_BY_ID = Object.fromEntries(MODULES.map(m => [m.id, m]));
 export const EXTRA_FIELDS = [
+  {id:'cv_op_porcentaje',label:'SCORE2-OP externo a 10 años (HeartScore)',type:'number',min:0,max:100,unit:'%'},
+  {id:'cv_op_fecha',label:'Fecha del cálculo externo SCORE2-OP',type:'date'},
+  {id:'cv_op_fuente',label:'Fuente y modelo del resultado externo',type:'select',options:['HeartScore ESC · SCORE2-OP a 10 años','Otro modelo o fuente no confirmada']},
+  {id:'cv_op_contexto',label:'Aplicabilidad de SCORE2-OP y contexto geriátrico',type:'select',options:['Revisados por el profesional','Pendiente de revisar']},
+  {id:'cv_op_confirmado',label:'Confirmo que el cálculo externo corresponde a los datos y paciente de esta sesión',type:'select',options:['Sí','No','No valorado']},
   {id:'ckm_evaluacion_confirmada',label:'Datos de estadificación CKM revisados clínicamente',type:'select',options:['Sí','No','No valorado']},
   {id:'ckm_cvd',label:'Enfermedad cardiovascular clínica (coronaria, IC, ictus, EAP o FA)',type:'select',options:['Confirmada','No identificada tras revisión','No valorada']},
   {id:'ckm_subclinica',label:'Aterosclerosis subclínica o pre-IC',type:'select',options:['Confirmada por evaluación clínica/especializada','No identificada en evaluación disponible','No valorada']},

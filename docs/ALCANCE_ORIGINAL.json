@@ -7,8 +7,8 @@
     {
       "id": "riesgo_cv",
       "status": "partial",
-      "evidence": "src/clinical/riesgo-cv.mjs; SCORE2 40–69 España y elección de circuito",
-      "pending": "SCORE2-OP, SCORE2-Diabetes, CKD Add-On, validación independiente"
+      "evidence": "SCORE2 local 40–69 España; elección de circuito y registro SCORE2-OP externo 70–89 con procedencia/asociación",
+      "pending": "Cálculo interno SCORE2-OP: parámetros primarios pendientes de verificación; SCORE2-Diabetes, CKD Add-On y validación independiente"
     },
     {
       "id": "hta",

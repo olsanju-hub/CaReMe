@@ -2,11 +2,13 @@
  * Implementación matemática propia; región baja. No es SCORE2-OP ni Diabetes.
  * El resultado no se convierte en objetivo lipídico, pauta o estadio CKM.
  */
-import {FIELDS,fieldState} from '../model.mjs';
+import {FIELDS,fieldState,externalOpAssociationValid} from '../model.mjs';
 import {auditCrossDomain} from './auditoria.mjs';
 export const CV_FIELDS=['edad','cv_sexo_modelo','cv_region','tabaco','ecv','ic','dm1','dm2','erc',
  'embarazo','cv_hfamiliar','cv_sintomas','pas','pad','fecha_pas','colesterol_total','hdl','ldl','fecha_lipidos','fecha_evaluacion'];
+export const OP_FIELDS=['cv_op_porcentaje','cv_op_fecha','cv_op_fuente','cv_op_contexto','cv_op_confirmado'];
 export const CV_SOURCES=[
+ {title:'SCORE2-OP: publicación original',url:'https://doi.org/10.1093/eurheartj/ehab312',locator:'Modelo para personas mayores; material suplementario pendiente de verificación completa para cálculo local'},
  {title:'SCORE2: coeficientes y recalibración publicados por los autores',url:'https://academic.oup.com/eurheartj/article/43/3/241/6433491',locator:'Tabla 1; DOI 10.1093/eurheartj/ehab761'},
  {title:'ESC: SCORE2 y SCORE2-OP',url:'https://www.escardio.org/guidelines/practice-tools/cvd-prevention-toolbox/score2-and-score2-op-calculators/',locator:'Poblaciones por edad'},
  {title:'HeartScore: regiones de riesgo',url:'https://www.heartscore.org/en_GB/heartscore-europe-risk-regions',locator:'España: región baja'},
@@ -29,8 +31,8 @@ export function computeScore2Low({age,sex,smoker,sbp,totalMmol,hdlMmol}){
  return -Math.expm1(-Math.exp(calibrated))*100;
 }
 export function evaluateCvRisk(draft){
- const missing=[],alerts=[],steps=[];let route='datos_insuficientes',percent=null;
- const result=()=>({route,percent,missing:[...new Set(missing)],alerts:[...new Set(alerts)],steps,sources:CV_SOURCES,
+ const missing=[],alerts=[],steps=[];let route='datos_insuficientes',percent=null,externalEstimate=null;
+ const result=()=>({route,percent,externalEstimate,missing:[...new Set(missing)],alerts:[...new Set(alerts)],steps,sources:CV_SOURCES,
   model:percent===null?null:'SCORE2',region:percent===null?null:'Europa: riesgo bajo (España)',
   horizonYears:percent===null?null:10,ckmStage:null,patientDose:null,prescription:null,actionPerformed:false});
  const age=number(draft,'edad'),sbp=number(draft,'pas'),dbp=number(draft,'pad');
@@ -62,8 +64,8 @@ export function evaluateCvRisk(draft){
  if(get(draft,'dm2')==='Sí'){
   route='score2_diabetes_pendiente';steps.push('Valorar SCORE2-Diabetes en su población elegible y daño de órgano. No se calcula sustituyéndolo por SCORE2 general.');return result();
  }
- if(age!==null&&(age<40||age>=70)){
-  route=age>=70?'score2_op_pendiente':'fuera_de_edad';steps.push(age>=70?'Corresponde revisar SCORE2-OP y su aplicabilidad. No se extrapola la fórmula de 40–69 años.':'SCORE2 no proporciona una estimación validada de 10 años en esta edad. Valorar factores individuales.');return result();
+ if(age!==null&&(age<40||age>=90)){
+  route='fuera_de_edad';steps.push('No se extrapolan SCORE2 de 40–69 años ni el circuito SCORE2-OP de 70–89 años fuera de esas edades.');return result();
  }
  for(const id of CV_FIELDS)if(get(draft,id)===null)missing.push('Completar '+FIELDS[id].label+'.');
  for(const id of ['ecv','ic','dm1','dm2','erc'])if(get(draft,id)!=='No')missing.push('Confirmar ausencia de '+FIELDS[id].label+'.');
@@ -78,6 +80,25 @@ export function evaluateCvRisk(draft){
  if(age===null||sbp===null||dbp===null||tc===null||hdl===null||ldl===null||hdl>=tc||ldl>tc||
   sbp<90||sbp>=180||dbp<=0||dbp>=sbp||tc<100||tc>310||hdl<20||hdl>100){
   route='revisar_coherencia';alerts.push('Valores incompatibles o fuera de los límites operativos de este primer cálculo: revisar medición y contexto.');return result();
+ }
+ if(age>=70){
+  route='score2_op_pendiente';
+  steps.push('Corresponde revisar SCORE2-OP. CaHReMe no genera aquí un porcentaje interno: permite documentar una estimación de HeartScore con procedencia y asociación explícita a los datos de esta sesión.');
+  for(const id of OP_FIELDS)if(get(draft,id)===null)missing.push('Completar '+FIELDS[id].label+'.');
+  if(get(draft,'cv_op_fuente')!=='HeartScore ESC · SCORE2-OP a 10 años')missing.push('Confirmar fuente HeartScore, modelo SCORE2-OP y horizonte de 10 años.');
+  if(get(draft,'cv_op_contexto')!=='Revisados por el profesional')missing.push('Revisar aplicabilidad, fragilidad, preferencias y contexto clínico de la persona mayor.');
+  if(!externalOpAssociationValid(draft))missing.push('Confirmar de nuevo la correspondencia del cálculo externo tras cualquier edición de la ficha.');
+  const calculatedOn=get(draft,'cv_op_fecha'),entered=number(draft,'cv_op_porcentaje');
+  if(calculatedOn&&(calculatedOn>asOf||calculatedOn<get(draft,'fecha_pas')||calculatedOn<get(draft,'fecha_lipidos'))){
+   route='revisar_coherencia';alerts.push('La fecha del cálculo externo es incompatible con la evaluación o con las mediciones registradas.');return result();
+  }
+  if(entered===null||entered<0||entered>100)missing.push('Porcentaje externo válido entre 0 y 100.');
+  if(missing.length)return result();
+  externalEstimate={model:'SCORE2-OP',percent:entered,horizonYears:10,source:'HeartScore ESC',
+   region:'Europa: riesgo bajo (España)',calculatedOn,origin:'externo_confirmado_por_profesional',internallyCalculated:false};
+  route='estimacion_externa_documentada';
+  steps.push('Resultado externo transcrito, no recalculado ni validado numéricamente por CaHReMe. No implica una pauta, estadio CKM ni autorización terapéutica.');
+  return result();
  }
  percent=computeScore2Low({age,sex:get(draft,'cv_sexo_modelo'),smoker:get(draft,'tabaco')==='Actual',sbp,totalMmol:tc/38.67,hdlMmol:hdl/38.67});
  route=percent===null?'revisar_coherencia':'calculado_en_revision';

@@ -44,3 +44,8 @@ Caso externo de referencia publicado: 50 años, fumador actual, PAS 140 mmHg, CT
 - Revalidación de fuentes previas de todos los módulos, revisión clínica independiente y QA real.
 
 La PR permanece en borrador. No se declara MVP completo ni aprobación asistencial.
+
+
+## Incremento posterior: registro externo SCORE2-OP
+
+Se incorpora una vía explícita de transcripción de HeartScore, con procedencia y asociación a los datos de sesión. No se ha habilitado la fórmula OP interna: los parámetros suplementarios completos no pudieron verificarse en fuentes primarias accesibles. [Auditoría y estado](SCORE2_OP_EXTERNO.md). El SCORE2 local anterior y sus pruebas se conservan.
