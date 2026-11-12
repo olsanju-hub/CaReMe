@@ -144,3 +144,9 @@ Las alarmas declaradas de glucemia ≥300 mg/dL, hipoglucemias graves y embarazo
 Se incorporó `src/clinical/insulinizacion.mjs` y panel de revisión con tres recorridos. Las situaciones de ayunas controladas con hiperglucemia posprandial evitan una escalada automática de basal. Se priorizan los riesgos de hipoglucemia y se exige motivo/medicación real para orientar desintensificación.
 
 Las referencias ADA/EASD 2026 y ADA 2026 prevalecen en el contrato clínico sobre la referencia redGDPS insulinización 2022 si son incompatibles. Los datos y resultados siguen en memoria, sin prescripción ni calendario de insulinización. [Documentación clínica](INSULINIZACION_ADA_EASD_2026.md).
+
+## Insuficiencia cardíaca · revisión ESC 2026 (12/11/2026)
+
+`src/clinical/insuficiencia-cardiaca.mjs` incorpora FEVI <50 % (IC-FEr) y ≥50 % (IC-FEp si evidencia objetiva), condiciones de congestión y seguridad, con reconciliación de tratamiento existente y opciones de clase para revisión. La categoría intermedia 41–49 % de guías antiguas ya no debe mostrarse como fenotipo independiente.
+
+No asigna diagnóstico por FEVI aislada, no administra diuréticos y no calcula dosis. CIMA finerenona FEVI ≥40 % es una **indicación de producto**, distinta de la definición fenotípica ESC. [Documentación clínica y pruebas](IC_ESC_2026.md).
