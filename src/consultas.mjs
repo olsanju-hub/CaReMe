@@ -6,7 +6,7 @@ export const MODULES = [
     id: 'dm2', title: 'Diabetes tipo 2', domain: 'metabolico',
     short: 'Control glucémico y tratamiento', 
     quick: ['dm_prioridad','dm_control'],
-    detail: ['hba1c','dm_objetivo','dm1','acidosis_metabolica','hipoxia_tisular','ic_descompensada','insuficiencia_hepatica','lra_sospecha','contraste_yodado','cirugia_anestesia','tfge','imc','retinopatia_dm','vision_subita','pancreatitis_sospecha','pancreatitis_previa','dm_sintomas','comorbilidades','situacion_aguda','cetoacidosis_sospecha','farmacos_clases','farmacos','medicacion_revisada','alergias','alergias_revisadas']
+    detail: ['dm2','hba1c','fecha_hba1c','dm_objetivo','dm_objetivo_valor','dm_hba1c_fiable','dm_hipoglucemias','dm_adherencia','dm_dosis_confirmadas','glucemia_actual','dm1','acidosis_metabolica','hipoxia_tisular','ic_descompensada','insuficiencia_hepatica','lra_sospecha','contraste_yodado','cirugia_anestesia','tfge','imc','retinopatia_dm','vision_subita','pancreatitis_sospecha','pancreatitis_previa','dm_sintomas','comorbilidades','situacion_aguda','cetoacidosis_sospecha','farmacos_clases','farmacos','medicacion_revisada','alergias','alergias_revisadas']
   },
   {
     id: 'ic', title: 'Insuficiencia cardíaca', domain: 'cardiovascular',
@@ -41,6 +41,17 @@ export const MODULES = [
 ];
 export const MODULE_BY_ID = Object.fromEntries(MODULES.map(m => [m.id, m]));
 export const EXTRA_FIELDS = [
+  {id:'fecha_hba1c',label:'Fecha de HbA1c',type:'date'},
+  {id:'dm_objetivo_valor',label:'Límite superior de HbA1c acordado (objetivo inferior a)',type:'number',min:4,max:12,unit:'%'},
+  {id:'dm_hba1c_fiable',label:'¿Es interpretable la HbA1c para esta decisión?',type:'select',
+    options:['Fiable tras comprobación','Posible interferencia o discordancia','No valorada']},
+  {id:'dm_hipoglucemias',label:'Hipoglucemias recientes',type:'select',
+    options:['No referidas','Leves','Graves o recurrentes','No valoradas']},
+  {id:'dm_adherencia',label:'Adherencia real al tratamiento',type:'select',
+    options:['Adecuada confirmada','Dificultades o dosis omitidas','No valorada']},
+  {id:'dm_dosis_confirmadas',label:'Dosis y pauta de medicación actual verificadas',type:'select',
+    options:['Sí','No','No valorado']},
+  {id:'glucemia_actual',label:'Glucemia actual (si disponible)',type:'number',min:0,unit:'mg/dL'},
   { id:'fecha_evaluacion',label:'Fecha de evaluación clínica',type:'date' },
   { id:'fecha_tfge',label:'Fecha de TFGe',type:'date' },
   { id:'fecha_cac',label:'Fecha de cociente albúmina/creatinina',type:'date' },
