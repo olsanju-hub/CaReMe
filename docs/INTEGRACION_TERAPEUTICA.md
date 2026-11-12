@@ -96,3 +96,9 @@ La batería automatizada contempla multicomorbilidad, TFGe por debajo de 20, TFG
 **Pendientes antes de activar una recomendación concreta:** confirmar actualizaciones científicas, crear fichas farmacológicas independientes por principio activo, parametrizar dosis/ajustes/contraindicaciones desde CIMA-AEMPS, pruebas con casos clínicos externos, segunda revisión médica y revisión de alcance regulatorio como software de apoyo clínico.
 
 **Ninguna salida de esta fase debe utilizarse como prescripción asistencial.**
+
+## 7. Control del peso sin DM2 y fichas incretínicas (12/11/2026)
+
+El motor añade `WEIGHT-REVIEW` cuando el IMC aportado es ≥30 o ≥27 y <30 con comorbilidad asociada al peso confirmada, incluso sin DM2, siempre como revisión de alternativas y no como autorización automática. Se activa `WEIGHT-EXISTING` si ya consta una terapia incretínica y `WEIGHT-ACUTE-DEFER` si hay proceso agudo. No se confunde la coexistencia de MASLD con una indicación hepática dirigida.
+
+CIMA por producto: [INCRETINAS_CIMA.md](INCRETINAS_CIMA.md). Falta una comparación individual completa de seguridad, financiación e interacciones; no generar prescripciones ni pautas de escalada automáticas.
