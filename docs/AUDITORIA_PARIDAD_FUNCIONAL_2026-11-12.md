@@ -129,3 +129,9 @@ No fusionar el PR #4 ni etiquetar CaHReMe como lista para uso asistencial. Mante
 **Paridad actualizada:** 6/6 módulos conservan captura, **DM2 rápida tiene ahora una primera salida clínica no prescriptiva**, pero **0/6 módulos acreditan todavía la paridad clínica completa rápida+detallada**. Quedan pendientes el detalle DM2, los otros recorridos completos y la revisión de navegador real.
 
 Véase [DM2 rápida y corrección del CAC](DM2_RAPIDA_REDGDPS_2026.md) y el [inventario actualizado](COBERTURA_FUNCIONAL_GLUCOGUIA.json).
+
+## 10. Nueva implementación de consulta DM2 detallada (12/11/2026)
+
+La matriz histórica y las brechas descritas en el análisis inicial son una fotografía del estado anterior. Ahora **DM2 rápida y detallada cuentan con una primera salida funcional**, incluyendo objetivo individual numérico, conciliación de dosis y adherencia, alertas, candidatos condicionales y seguimiento orientativo. `src/clinical/dm2-detallada.mjs` y [documentación](DM2_DETALLADA_ADA_REDGDPS_2026.md).
+
+Las barreras globales de glucemia ≥300 mg/dL, hipoglucemias graves y embarazo se han unificado con el motor integrado. **Paridad clínica completa de DM2 aún no demostrada**: faltan revisión científica independiente, validación por escenarios reales, selección por producto con financiación y prueba manual en navegador móvil. Los otros cinco módulos conservan su propia lista de pendientes.
