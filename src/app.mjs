@@ -4,6 +4,7 @@ import { SOURCES, evaluateRenal, evaluateFib4 } from './clinical/engine.mjs';
 import { integratePatient, INTEGRATION_SOURCES } from './clinical/integracion.mjs';
 import { DRUGS, getDrug, getDrugRoute, reviewDrug } from './clinical/farmacologia.mjs';
 import { reviewFinerenoneContinuation, reviewEmpagliflozinContinuation, confirmedAction, followUpFromHistory } from './clinical/continuidad.mjs';
+import { buildVerificationPlan } from './clinical/plan.mjs';
 
 let draft = createDraft();
 let confirmedHistory = [];
@@ -174,6 +175,32 @@ function pharmaLink(card) {
   return `<button type="button" class="text-link" data-action="open-drug"
     data-drug-id="${info.drug}" data-route-id="${info.route}">Consultar ficha CIMA específica →</button>`;
 }
+function verificationPanel() {
+  const plan=buildVerificationPlan(draft,confirmedHistory);
+  const priorities={seguridad:'Revisión prioritaria',completar:'Dato o conciliación pendiente'};
+  const followup=plan.followup.filter(x=>x.status!=='sustituido');
+  return `<section class="verification-panel" aria-label="Plan de verificación documental">
+    <div class="eyebrow">CONTROL DE CALIDAD · SIN PRESCRIPCIÓN</div>
+    <h2>Plan de verificación clínica</h2>
+    <p>${escape(plan.summary)}. Las comprobaciones no se registran como realizadas por aparecer aquí.</p>
+    ${plan.heldCandidates?`<p class="verification-hold">Se han retenido ${plan.heldCandidates} opciones hasta corregir las incoherencias clínicas.</p>`:''}
+    ${plan.checks.length?`<div class="verification-list">${plan.checks.slice(0,12).map(item=>`
+      <article class="verification-item ${escape(item.priority)}">
+        <span class="verification-kind">${escape(priorities[item.priority]||'Revisar')}</span>
+        <h3>${escape(item.title)}</h3><p>${escape(item.detail)}</p>
+        ${item.fields.length?`<small>Campos: ${item.fields.map(id=>escape(FIELDS[id]?.label||id)).join(' · ')}</small>`:''}
+      </article>`).join('')}</div>
+      ${plan.checks.length>12?`<p>Hay ${plan.checks.length-12} comprobaciones adicionales en el motor; revisar el resto de datos y fuentes.</p>`:''}`
+      :'<p>Sin comprobaciones pendientes detectadas por las reglas implementadas; esto no valida la historia ni equivale a alta clínica.</p>'}
+    <h3>Controles derivados de actuaciones confirmadas</h3>
+    ${followup.length?`<div class="verification-followup">${followup.map(x=>`
+      <p><strong>${x.dueOn?escape(x.dueOn):'Fecha a individualizar'}</strong> ·
+      ${escape(x.drugId)} — ${escape(x.description)}.</p>`).join('')}</div>`
+      :'<p>No se han generado controles nuevos: no hay actuaciones confirmadas que los activen.</p>'}
+    <p class="integration-disclaimer">Opciones terapéuticas identificadas: ${plan.candidates.length}.
+      Son propuestas para revisión, no tratamientos iniciados. Actuaciones registradas: ${plan.confirmedActions}.</p>
+  </section>`;
+}
 function integratedCards(focus = null) {
   const result=integratePatient(draft);
   const match=(card)=>!focus || card.domains.includes(focus) ||
@@ -327,6 +354,7 @@ function summary() {
           return `<div><dt>${escape(f.label)}</dt><dd class="${state}">${content}</dd></div>`;
         }).join('')}</dl></section>`).join('')}</div>
     <div class="calc-stack">${renalResultCard()}${fib4ResultCard()}</div>
+    ${verificationPanel()}
     ${integratedCards()}
     <div class="clinical-lock"><strong>Prescripción automática desactivada</strong>
       <p>Las categorías renales y el FIB-4 son indicadores descriptivos. No confirman diagnósticos ni generan tratamientos, ni descartan enfermedad por sí solos.</p></div>
@@ -335,8 +363,9 @@ function summary() {
 }
 function currentContinuityFields() {
   return current.drug==='finerenona'
-    ? ['fin_estado','fin_dosis_actual','potasio','tfge','fin_tfge_previa', ...(current.route==='ic_fevi40'?['fin_tfge_inicio']:[])]
-    : ['emp_estado','emp_dosis_actual','tfge','situacion_aguda','cetoacidosis_sospecha',
+    ? ['fecha_evaluacion','fin_estado','fin_dosis_actual','potasio','fecha_potasio','tfge','fecha_tfge','fin_tfge_previa',
+      ...(current.route==='ic_fevi40'?['fin_tfge_inicio']:[])]
+    : ['fecha_evaluacion','emp_estado','emp_dosis_actual','tfge','fecha_tfge','situacion_aguda','cetoacidosis_sospecha',
        'emp_cetonas','emp_estable','emp_dka_previa','emp_factor_resuelto',
        ...(current.route==='dm2'?['emp_control_insuficiente','emp_tolerancia']:[])];
 }
@@ -483,6 +512,7 @@ function tools() {
     ${banner()}
     <p class="privacy-note">La fecha y unidad real de cada analítica deben verificarse antes de utilizarla para decidir. Una fecha no consignada no significa que el resultado sea actual.</p>
     <div class="calc-stack">${renalResultCard()}${fib4ResultCard()}</div>
+    ${verificationPanel()}
     ${integratedCards()}
     ${pharmaLibrary()}
     <div class="followup-link"><button type="button" class="ghost" data-action="followup">Historial y calendario de controles →</button></div>
