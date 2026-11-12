@@ -8,7 +8,7 @@ function draft(values={}){
     Array.isArray(v)?JSON.stringify(v):String(v)),createDraft());
 }
 const baseline={
-  dm2:'Sí',ic:'Sí',erc:'Sí',persistencia:'Sí',tfge:'54',cac:'155',
+  dm2:'Sí',ic:'Sí',erc:'Sí',persistencia:'Sí',tfge:'54',cac:'155',unidad_cac:'mg/g',
   situacion_aguda:'Estable sin proceso agudo grave',cetoacidosis_sospecha:'No',
   farmacos_clases:['Metformina'],medicacion_revisada:'Sí',
   alergias_revisadas:'Sí',potasio_normal:'Sí',ras_optimizado:'Sí',potasio:'4.2'
@@ -24,7 +24,7 @@ test('integración DM2+IC+ERC: opciones multiorgánicas, ninguna prescripción',
   assert.ok(!('dose' in x.options[0]));
 });
 test('ERC no confirmada no genera indicación renal de iSGLT2',()=>{
-  const x=integratePatient(draft({dm2:'Sí',erc:'Sí',persistencia:'No consta',tfge:'70',cac:'120'}));
+  const x=integratePatient(draft({dm2:'Sí',erc:'Sí',persistencia:'No consta',tfge:'70',cac:'120',unidad_cac:'mg/g'}));
   assert.ok(has(x.context,'CKD-CHRONICITY'));
   assert.ok(!has(x.options,'SGLT2-REVIEW'));
 });
@@ -125,7 +125,7 @@ test('selección de ARM no esteroideo requiere revisión aunque se cumplan umbra
   assert.ok(card.checks.some(s=>s.includes('IECA/ARA-II')));
 });
 test('si no se conocen alergias y conciliación, persisten barreras',()=>{
-  const x=integratePatient(draft({dm2:'Sí',erc:'Sí',persistencia:'Sí',tfge:'56',cac:'120'}));
+  const x=integratePatient(draft({dm2:'Sí',erc:'Sí',persistencia:'Sí',tfge:'56',cac:'120',unidad_cac:'mg/g'}));
   const card=x.options.find(x=>x.id==='SGLT2-REVIEW');
   assert.ok(card);
   assert.ok(card.checks.some(s=>s.includes('alergias')));
