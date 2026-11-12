@@ -1,7 +1,7 @@
 {
   "name": "CaHReMe — Evaluación cardiorrenal-hepatometabólica",
   "short_name": "CaHReMe",
-  "description": "Prototipo de captura clínica sin cálculos ni recomendaciones asistenciales.",
+  "description": "Prototipo CaHReMe de evaluación cardiorrenal-hepatometabólica: categorías G/A, FIB-4 y orientación DM2 en revisión; sin prescripción.",
   "id": "./",
   "start_url": "./",
   "scope": "./",
@@ -9,7 +9,10 @@
   "background_color": "#F3F7F8",
   "theme_color": "#173347",
   "lang": "es",
-  "categories": ["medical", "health"],
+  "categories": [
+    "medical",
+    "health"
+  ],
   "icons": [
     {
       "src": "./public/icon-concept.svg",
