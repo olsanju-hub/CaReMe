@@ -50,7 +50,7 @@ export const EXTRA_FIELDS = [
   {id:'dm_adherencia',label:'Adherencia real al tratamiento',type:'select',
     options:['Adecuada confirmada','Dificultades o dosis omitidas','No valorada']},
   {id:'dm_dosis_confirmadas',label:'Dosis y pauta de medicación actual verificadas',type:'select',
-    options:['Sí','No','No valorado']},
+    options:['Sí','No','No procede: sin tratamiento','No valorado']},
   {id:'glucemia_actual',label:'Glucemia actual (si disponible)',type:'number',min:0,unit:'mg/dL'},
   { id:'fecha_evaluacion',label:'Fecha de evaluación clínica',type:'date' },
   { id:'fecha_tfge',label:'Fecha de TFGe',type:'date' },
