@@ -56,6 +56,7 @@ export function compareIndividualGoal(hba1c,upperLimit){
 export function evaluateDm2Detail(draft){
  const audit=auditCrossDomain(draft);
  const dm2=val(draft,'dm2'),dm1=val(draft,'dm1');
+ const age=num(draft,'edad'),pregnancy=val(draft,'embarazo');
  const hba1c=num(draft,'hba1c'),goal=num(draft,'dm_objetivo_valor');
  const measured=val(draft,'fecha_hba1c'),assessed=val(draft,'fecha_evaluacion');
  const reliable=val(draft,'dm_hba1c_fiable');
@@ -77,12 +78,15 @@ export function evaluateDm2Detail(draft){
                           (glucose!==null&&glucose>=300)||
                           symptoms==='Poliuria, polidipsia o pérdida de peso';
  const unstable=acute==='Enfermedad aguda grave'||acute==='Cirugía mayor o ayuno prolongado';
+ const acuteIssue=val(draft,'lra_sospecha')==='Sí'||val(draft,'hipoxia_tisular')==='Sí'||
+   val(draft,'deshidratacion_gi')==='Sí';
  const noCurrentDrugs=medList?.length===1&&medList[0]==='Sin tratamiento farmacológico';
  const dosesOk=doses==='Sí'||(noCurrentDrugs&&doses==='No procede: sin tratamiento');
  const missing=[],checks=[],alerts=[],nextSteps=[],alternatives=[];
  const add=(id,title,reason,conditions,sources)=>alternatives.push(card(id,title,reason,conditions,sources));
  const needed=(id,label)=>{if(val(draft,id)===null)missing.push(label)};
  needed('dm2','Confirmar diagnóstico previo de DM2.');
+ needed('edad','Confirmar edad adulta.');
  needed('hba1c','Aportar HbA1c cuantitativa.');
  needed('dm_objetivo_valor','Indicar límite numérico del objetivo individual de HbA1c.');
  needed('dm_hba1c_fiable','Evaluar si la HbA1c puede interpretarse.');
@@ -92,7 +96,8 @@ export function evaluateDm2Detail(draft){
  needed('dm_dosis_confirmadas','Confirmar dosis y pautas actuales.');
  needed('medicacion_revisada','Conciliar tratamiento actual.');
  if(medList===null)missing.push('Registrar clases actuales o ausencia de tratamiento.');
- if(dm1===null)checks.push('Verificar que no se trata de DM1 u otra diabetes.');
+ if(dm1===null||dm1==='No valorado')checks.push('Verificar que no se trata de DM1 u otra diabetes.');
+ if(pregnancy===null||pregnancy==='No valorado')checks.push('Confirmar embarazo actual o que no procede, antes de valorar medicación.');
  if(egfr===null)checks.push('Se necesita TFGe contrastada para evaluar restricciones por producto.');
  if(egfr!==null&&!val(draft,'fecha_tfge'))checks.push('Confirmar fecha y estabilidad de la TFGe.');
  if(hba1c!==null&&!measured)checks.push('Confirmar fecha de HbA1c; un valor sin fecha no acredita vigencia.');
@@ -108,11 +113,13 @@ export function evaluateDm2Detail(draft){
  if(hypogly==='No valoradas')checks.push('Valorar hipoglucemias; el silencio del formulario no equivale a ausencia.');
  if(dm2==='No'||dm1==='Sí')
    alerts.push('Esta ruta no corresponde a DM2 confirmada; revisar clasificación diagnóstica.');
+ if(pregnancy==='Sí')alerts.push('Embarazo: no aplicar la selección general de medicamentos para DM2 no gestacional; requiere ruta clínica específica.');
  if(keto)
    alerts.push('Sospecha de cetoacidosis/acidosis metabólica: evaluación clínica urgente, glucemia, cetonemia y equilibrio ácido-base.');
  if(severeHyperglycemia&&!keto)
    alerts.push('Hiperglucemia importante o síntomas: valorar gravedad, glucemia actual, hidratación y cetonas; considerar evaluación de insulinización según el caso.');
  if(unstable)alerts.push('Enfermedad aguda/ayuno: priorizar situación clínica, suspensiones temporales necesarias y seguridad.');
+ if(acuteIssue)alerts.push('Lesión renal aguda, hipoxia o deshidratación declaradas: evaluar el proceso y seguridad de fármacos antes de intensificar.');
  if(suspectedHypoglycemia)
    alerts.push('Hipoglucemias graves o recurrentes: revisar de forma prioritaria insulina, sulfonilureas y glinidas, objetivo y capacidad de autocuidado.');
  const measurementInvalid=['hba1c','dm_objetivo_valor','glucemia_actual','fecha_hba1c']
@@ -124,7 +131,23 @@ export function evaluateDm2Detail(draft){
    !measurementInvalid&&!(measured&&assessed&&measured>assessed);
  const comparison=comparable?compareIndividualGoal(hba1c,goal):null;
  const quickControl=val(draft,'dm_control');
+ const categoricalGoal=val(draft,'dm_objetivo');
+ const categoricalLimit={
+   'Inferior a 6,5 %':6.5,'Hasta 7 %':7,
+   'Inferior a 7,5 %':7.5,'Inferior a 8 %':8
+ }[categoricalGoal];
+ if(categoricalLimit!==undefined&&goal!==null&&
+     Math.abs(categoricalLimit-goal)>0.05)
+   discrepancies.push('El objetivo categórico no coincide con el límite numérico: reconciliar ambos antes de valorar intensidad.');
+ if(categoricalGoal==='Pendiente de individualizar'&&goal!==null)
+   discrepancies.push('Se declara objetivo pendiente y simultáneamente un límite numérico acordado.');
  const discrepancies=[];
+ if(quickControl&&hba1c!==null){
+   if(quickControl.startsWith('Fuera del objetivo · HbA1c inferior')&&hba1c>=8.5)
+     discrepancies.push('Tramo rápido HbA1c <8,5% incompatible con el resultado aportado.');
+   if(quickControl.startsWith('HbA1c ≥8,5')&&hba1c<8.5)
+     discrepancies.push('Tramo rápido HbA1c ≥8,5% incompatible con el resultado aportado.');
+ }
  if(quickControl&&comparison){
    if(quickControl==='En el objetivo individual'&&comparison.state!=='en_objetivo')
      discrepancies.push('La consulta rápida declara HbA1c en objetivo, pero la HbA1c iguala/supera el límite numérico acordado.');
@@ -157,10 +180,17 @@ export function evaluateDm2Detail(draft){
  if((meds.has('Insulina')||meds.has('Sulfonilurea')||meds.has('Repaglinida'))&&
     (hypogly==='Leves'||suspectedHypoglycemia))
    alerts.push('El tratamiento actual incluye clases con riesgo de hipoglucemia: revisar pauta y medidas de prevención.');
- const acutePriority=keto||unstable||severeHyperglycemia||suspectedHypoglycemia;
- const incoherent=dm2==='No'||dm1==='Sí'||measurementInvalid||
+ const duplication=(meds.has('iDPP-4')&&
+   (meds.has('arGLP-1')||meds.has('Agonista dual GIP/GLP-1')))||
+   (meds.has('arGLP-1')&&meds.has('Agonista dual GIP/GLP-1'))||
+   (meds.has('Sulfonilurea')&&meds.has('Repaglinida'));
+ const unsafeMetformin=meds.has('Metformina')&&egfr!==null&&egfr<30;
+ const acutePriority=keto||unstable||acuteIssue||pregnancy==='Sí'||
+    unsafeMetformin||severeHyperglycemia||suspectedHypoglycemia;
+ const incoherent=dm2==='No'||dm1==='Sí'||measurementInvalid||duplication||
    audit.requiresResolution||discrepancies.length>0;
- const missingCritical=dm2!=='Sí'||hba1c===null||goal===null||
+ const missingCritical=dm2!=='Sí'||dm1!=='No'||age===null||
+   pregnancy===null||pregnancy==='No valorado'||hba1c===null||goal===null||
    reliable!=='Fiable tras comprobación'||
    symptoms===null||symptoms==='No valorados'||
    hypogly===null||hypogly==='No valoradas'||
@@ -168,7 +198,7 @@ export function evaluateDm2Detail(draft){
    verifiedMeds!=='Sí'||!dosesOk||medList===null||
    adherence==='Dificultades o dosis omitidas'||
    (egfr===null && (meds.has('Metformina')||meds.has('iSGLT2')));
- const state=(keto||suspectedHypoglycemia||severeHyperglycemia||unstable)
+ const state=(keto||suspectedHypoglycemia||severeHyperglycemia||unstable||acuteIssue||pregnancy==='Sí'||unsafeMetformin)
    ?'seguridad_prioritaria'
    :incoherent?'revisar_coherencia'
    :missingCritical?'datos_insuficientes'
@@ -176,7 +206,7 @@ export function evaluateDm2Detail(draft){
  const count=medications.length;
  let situation='Evaluación detallada no concluida.';
  if(state==='seguridad_prioritaria'){
-   situation='Prioridad de seguridad: resolver hiperglucemia importante, enfermedad aguda o hipoglucemias antes de intensificar.';
+   situation='Prioridad de seguridad: revisar la situación clínica o farmacológica antes de intensificar.';
    nextSteps.push('Valorar clínicamente gravedad y glucemia actual; revisar tratamiento administrado y medidas de seguridad según el problema.');
  }else if(state==='revisar_coherencia'){
    situation='Los datos presentan discordancias que impiden una recomendación farmacológica.';
