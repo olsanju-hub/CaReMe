@@ -43,7 +43,7 @@ Las fuentes respaldan las opciones por clase; **ninguna clase equivale a una aut
 | IC-FEr confirmada sin alarmas, laboratorios disponibles y tratamiento reconciliado | Evaluar cuatro clases fundamentales | Diferenciar clase ya administrada frente a candidato |
 | IC-FEp confirmada estable | Revisar iSGLT2 y ARM | No trasladar automáticamente RAAS/betabloqueantes como pilares por FEVI |
 | Potasio >5,5 mmol/L o ≥6 mmol/L | Priorización de seguridad; a ≥6 valorar ECG y atención urgente según situación | El punto de corte es una barrera operativa conservadora, no un algoritmo completo de hiperpotasemia |
-| K >5 o TFGe <30 | No ofrecer nuevo ARM desde este módulo | Criterios individuales dependen de fármaco, tolerancia y ficha |
+| K ≥5,0 o TFGe <30 para vía genérica | No mostrar candidato genérico de ARM esteroideo | Finerenona cuenta con **vía CIMA diferenciada**: FEVI ≥40, TFGe ≥25, K ≤5,0 y contraindicaciones comprobadas; no confundir ambas vías |
 | Doble declaración de IECA/ARA-II/ARNI | Conciliación | No duplicar tratamientos de RAAS |
 | Signos de hipoperfusión, hipoxemia, disnea intensa, dolor torácico sugestivo de isquemia, síncope o hipotensión sintomática | Seguridad prioritaria, evaluación de constantes/ECG/oxigenación y derivación según gravedad | No ejecutar modificaciones del tratamiento crónico |
 | FEVI fechada después de evaluación, fecha imposible o entradas invalidas | Bloqueo de coherencia | Repetir/confirmar medición y fecha |
@@ -75,3 +75,15 @@ La revisión de descompensación es prioritaria respecto a la optimización cró
 **Riesgos pendientes:** no hay calculadora de péptidos natriuréticos ni confirmación ecocardiográfica automática; no se verifica la etiología ni la FEVI recuperada, no se modelan dispositivos ni toda la farmacoterapia de IC, no se titulan dosis individuales, no se realiza seguimiento de peso domiciliario automatizado y falta validación en casos externos. Los cambios en criterios ESC 2026 exigen reauditar reglas heredadas de IC de las monografías de productos.
 
 **Liberación:** PR #4 en borrador; sin validación clínica, revisión móvil ni aprobación regulatoria.
+
+## Auditoría adicional de indicación de ARM y ficha CIMA (12/11/2026)
+
+Se verificó de nuevo [ESC 2026, tabla 5](https://academic.oup.com/eurheartj/article/47/38/5346/8766302) y la [ficha CIMA actual de Kerendia](https://cima.aemps.es/cima/dochtml/ft/1211616002/FT_1211616002.html). La guía ESC 2026 sitúa los ARM entre los tratamientos fundamentales de IC sintomática y advierte de mayor riesgo con **K ≥5,0 mmol/L** o deterioro de función renal. CIMA mantiene una **indicación particular** para finerenona en IC crónica sintomática con **FEVI ≥40 %**, **TFGe ≥25 ml/min/1,73 m²** y **K ≤5,0 mmol/L** para valorar inicio. La condición de seguridad **no es intercambiable** con espironolactona/eplerenona, ni convierte 40 % en umbral de clasificación ESC.
+
+**Cambio implementado:** el motor muestra una única opción genérica de revisión de ARM cuando TFGe ≥30 y K <5,0. Si no procede esa vía genérica, permite **solo una alternativa diferenciada de finerenona** con FEVI ≥40, TFGe ≥25, K ≤5,0 y confirmación negativa de Addison, uso de inhibidores potentes CYP3A4 y hepatopatía grave. Los campos desconocidos impiden mostrar este candidato. Una declaración de ARM existente impide sugerir otro inicio. Se conservan los límites por ficha y no se emiten dosis.
+
+La tarjeta diferenciada enlaza directamente a la **revisión CIMA de finerenona para IC**. La ficha obliga a revisar potasio y TFGe a las **4 semanas** de inicio, reinicio o modificación real de dosis; el sistema no crea una cita ni presupone que esa actuación se realizó. Para K exactamente 5,0 se explicita la cautela y comprobación del laboratorio.
+
+**Casos añadidos** en `tests/ic-finerenona-esc2026.test.mjs`: FEVI 39,9/40/45, TFGe 24,99/25/30, K 4,99/5,0/5,01, contraindicación por Addison/CYP3A4, ausencia de dato, ARM preexistente, IC descompensada y potasio ≥6. No se sustituye la necesidad de revisión clínica por pasar esas pruebas.
+
+Se mantienen pendientes la selección por producto, revisión farmacológica independiente y validación de casos clínicos externos.
