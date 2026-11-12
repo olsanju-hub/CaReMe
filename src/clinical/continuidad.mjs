@@ -7,6 +7,7 @@
  */
 import { fieldState } from '../model.mjs';
 import { getDrugRoute } from './farmacologia.mjs';
+import { auditCrossDomain } from './auditoria.mjs';
 
 export const CONTINUITY_SOURCES = Object.freeze({
   finerenona: {
@@ -36,7 +37,7 @@ const percentFall = (oldValue,newValue) =>
   typeof oldValue === 'number' && oldValue > 0 && typeof newValue === 'number'
     ? ((oldValue-newValue)/oldValue)*100 : null;
 
-export function reviewFinerenoneContinuation(draft, routeId) {
+function reviewFinerenoneContinuationUnverified(draft, routeId) {
   if(!['erc_dm2','ic_fevi40'].includes(routeId)) throw new Error('Indicación finerenona no válida');
   const doseRaw=get(draft,'fin_dosis_actual');
   const dose=doseRaw===null ? null:Number(doseRaw);
@@ -173,7 +174,7 @@ export function reviewFinerenoneContinuation(draft, routeId) {
         'Solo si TFGe inicial ≥60, K <5,0 y sin caída de TFGe >30 %, tras revisión profesional.');
 }
 
-export function reviewEmpagliflozinContinuation(draft, routeId) {
+function reviewEmpagliflozinContinuationUnverified(draft, routeId) {
   if(!['dm2','ic','erc'].includes(routeId)) throw new Error('Indicación empagliflozina no válida');
   const status=get(draft,'emp_estado');
   const doseRaw=get(draft,'emp_dosis_actual');
@@ -332,4 +333,32 @@ export function followUpFromHistory(history) {
     // Ninguna fecha se elimina: se conserva el historial documental de controles.
   }
   return events.map(({actionIndex,performedOn,...event})=>event);
+}
+
+/**
+ * Las tablas de CIMA nunca silencian una incoherencia transversal.
+ * Si ya existía alerta urgente se conserva; en otros casos se retiene
+ * la referencia de titulación hasta resolver fechas/unidades o conflictos.
+ */
+function continuitySafetyGate(draft,result) {
+  const audit=auditCrossDomain(draft);
+  if(!audit.requiresResolution)return {...result,audit};
+  const messages=audit.critical.map(x=>x.title);
+  if(result.state==='alerta')
+    return {...result,audit,cautions:[...result.cautions,
+      'Existen incoherencias críticas concomitantes: '+messages.join('; ')+'.']};
+  return {
+    ...result,state:'datos_insuficientes',ruleId:'AUDIT-CONTINUITY-HOLD',
+    title:'Continuidad retenida: revisar consistencia de los datos',
+    guidance:'No interpretar la pauta de referencia mientras existan incoherencias críticas en diagnóstico, unidades o fechas.',
+    missing:[...new Set([...result.missing,...messages])],
+    cautions:[...result.cautions,'La fuente CIMA original sigue disponible para revisión profesional.'],
+    patientDose:null,prescription:null,actionPerformed:false,audit
+  };
+}
+export function reviewFinerenoneContinuation(draft,routeId){
+  return continuitySafetyGate(draft,reviewFinerenoneContinuationUnverified(draft,routeId));
+}
+export function reviewEmpagliflozinContinuation(draft,routeId){
+  return continuitySafetyGate(draft,reviewEmpagliflozinContinuationUnverified(draft,routeId));
 }
