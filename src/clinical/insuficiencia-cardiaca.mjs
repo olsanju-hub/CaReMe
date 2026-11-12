@@ -39,11 +39,11 @@ const option=(id,title,reason,checks,refs)=>({
 export function classifyHf2026(fevi,evidence=null){
  if(typeof fevi!=='number'||!Number.isFinite(fevi)||fevi<0||fevi>100)
    return {code:'no_evaluable',label:'FEVI no evaluable',established:false};
- if(fevi<50)return {code:'reducida',label:'FEVI <50 %: fenotipo IC-FEr (ESC 2026) si hay IC clínica',
-   established:true};
+ if(fevi<50)return {code:'reducida',label:'FEVI <50 %: compatible con fenotipo IC-FEr (ESC 2026) si hay IC clínica',
+   established:false,requiresClinicalDiagnosis:true};
  if(evidence==='Confirmada por evaluación especializada')
-   return {code:'preservada',label:'FEVI ≥50 % con evidencia objetiva: fenotipo IC-FEp (ESC 2026)',
-     established:true};
+   return {code:'preservada',label:'FEVI ≥50 % con evidencia objetiva aportada: compatible con fenotipo IC-FEp (ESC 2026)',
+     established:false,requiresClinicalDiagnosis:true};
  return {code:'preservada_no_confirmada',
    label:'FEVI ≥50 % sin evidencia objetiva confirmada: IC-FEp no establecida',
    established:false};
@@ -197,7 +197,12 @@ export function evaluateHeartFailure(draft,mode='quick'){
     symptomatic==='Sí'&&effectivePhase&&
     (effectivePhase!=='preservada'||hfpEvidenceOk)){
    if(congestion==='Presentes'){
-    put('HF-DIURETIC-REVIEW','Revisar descongestión según volemia',
+    if(medication.has('Diurético de asa'))
+      put('HF-DIURETIC-EXISTING','Diurético de asa ya registrado: revisar respuesta',
+        'Consta tratamiento descongestivo: no asumir que está ausente ni duplicar automáticamente.',
+        ['Confirmar molécula, dosis realmente administrada, cambio de peso, PA, función renal y electrolitos.',
+         'Ajustar solo tras valorar volemia y seguridad individual.']);
+    else put('HF-DIURETIC-REVIEW','Revisar descongestión según volemia',
       'Los diuréticos de asa se individualizan según congestión y evolución clínica; no se asume necesidad si no hay signos.',
       ['Documentar peso, presión arterial, función renal, sodio/potasio y tratamiento diurético actual.',
        'Valorar evolución y revisión precoz de síntomas y balance de volumen.']);
