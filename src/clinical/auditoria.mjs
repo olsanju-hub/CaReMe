@@ -33,6 +33,7 @@ export const AUDIT_RULES=Object.freeze({
   HF_EF_CONFLICT:'IC: grupo ESC 2026 discordante con FEVI medida',
   HF_CRITICAL_POTASSIUM:'IC: potasio elevado con posible riesgo inmediato',
   HF_HYPOTENSION:'IC: PAS baja con necesidad de valoración',
+  RAAS_DOUBLE_BLOCKADE:'Combinación IECA/ARA-II/ARNI sin reconciliar',
   HF_POTASSIUM_REVIEW:'IC: potasio >5,5 y <6,0 mmol/L requiere revisión',
   HF_RAAS_DUPLICATION:'Incompatibilidad de clases IECA/ARA-II/ARNI declaradas'
 });
@@ -135,6 +136,14 @@ export function auditCrossDomain(draft) {
     out.push(item('MEDICATION_RECONCILIATION','critical','Reconciliar declaración de tratamientos',
       'Se indica ausencia de tratamiento y simultáneamente otros medicamentos o principios activos.',
       ['farmacos_clases','farmacos']));
+  if(list!==null){
+    const ras=['IECA','ARA-II','INRA/ARNI'].filter(x=>list.includes(x));
+    if(ras.length>1)
+      out.push(item('RAAS_DOUBLE_BLOCKADE','critical',
+        'Posible bloqueo dual o duplicidad del sistema renina-angiotensina',
+        'Constan varias clases IECA/ARA-II/ARNI a la vez: comprobar si son fármacos activos o una transición documentada. ARNI no debe coadministrarse con IECA ni ARA-II.',
+        ['farmacos_clases','farmacos','medicacion_revisada']));
+  }
   if(yes('medicacion_revisada') && list===null && text===null)
     out.push(item('MEDICATION_DETAILS','warning','Faltan detalles de conciliación farmacológica',
       'Se declara el tratamiento revisado, pero no se identifican clases, fármacos ni ausencia confirmada.',
