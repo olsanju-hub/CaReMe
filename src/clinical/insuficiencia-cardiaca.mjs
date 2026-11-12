@@ -244,13 +244,37 @@ export function evaluateHeartFailure(draft,mode='quick'){
        'No duplicar antagonistas mineralocorticoides; revisar principio activo, potasio, TFGe y tolerancia.',
        ['Diferenciar esteroideos de finerenona: los límites de uso y dosis son distintos.'],
        ['ESC-HF-2026','CIMA-FINERENONA']);
-   else if(potassium!==null&&potassium<=5&&egfr!==null&&egfr>=30)
-     put('HF-MRA-REVIEW','Revisar opción de ARM según fenotipo y función renal',
-       'ESC 2026 incluye ARM en terapia fundacional según fenotipo; la elección entre esteroideo/no esteroideo depende de indicación y ficha técnica.',
-       ['Verificar producto concreto, potasio, TFGe, interacciones e inicio autorizado.',
-        'No inferir que finerenona pueda sustituir automáticamente a espironolactona/eplerenona.'],
-       ['ESC-HF-2026','CIMA-FINERENONA']);
-   else checks.push('No ofrecer inicio rutinario de ARM sin comprobar límites renales y potasio de la molécula.');
+   else {
+     // ESC 2026 aconseja cautela desde K >=5,0 y eGFR <25.
+     // La FT CIMA de finerenona para IC sintomática FEVI >=40 permite
+     // inicio con K <=5,0 y eGFR >=25, con condiciones propias.
+     // Estas rutas son mutuamente excluyentes; ninguna genera una receta.
+     const steroidReview=potassium!==null&&potassium<5&&
+       egfr!==null&&egfr>=30;
+     const finerenoneRange=fevi!==null&&fevi>=40&&
+       potassium!==null&&potassium<=5&&egfr!==null&&egfr>=25;
+     const finerenoneSafety=v(draft,'cyp3a4_fuerte')==='No'&&
+       v(draft,'addison')==='No'&&v(draft,'hepatica_grave')==='No';
+     if(steroidReview)
+       put('HF-MRA-REVIEW','Revisar opción de ARM según fenotipo y función renal',
+         'ESC 2026 incluye ARM en terapia fundacional según fenotipo; la elección entre esteroideo/no esteroideo depende de indicación y ficha técnica.',
+         ['Verificar producto concreto, potasio, TFGe, interacciones e inicio autorizado.',
+          'No inferir que finerenona pueda sustituir automáticamente a espironolactona/eplerenona.'],
+         ['ESC-HF-2026','CIMA-FINERENONA']);
+     else if(finerenoneRange&&finerenoneSafety)
+       put('HF-FINERENONE-CIMA-REVIEW',
+         'Finerenona en IC con FEVI ≥40 %: revisión específica de ficha CIMA',
+         'Con TFGe 25–29 o potasio exactamente 5,0 mmol/L, no se extrapolan los límites de inicio de un ARM esteroideo: se muestra únicamente la indicación específica de finerenona para revisión.',
+         ['Confirmar IC crónica sintomática, FEVI ≥40 %, TFGe ≥25 y K ≤5,0 mmol/L; repetir potasio si es limítrofe.',
+          'Verificar alergias, embarazo, enfermedad de Addison, inhibidores potentes CYP3A4, hepatopatía y cualquier ARM concomitante.',
+          'CIMA exige controlar potasio y TFGe a las 4 semanas de iniciar o modificar finerenona. No indicar dosis ni inicio desde CaHReMe.'],
+         ['ESC-HF-2026','CIMA-FINERENONA']);
+     else {
+       checks.push('No ofrecer inicio rutinario de ARM sin comprobar límites renales y potasio de la molécula.');
+       if(finerenoneRange&&!finerenoneSafety)
+         checks.push('La ruta de finerenona exige confirmar ausencia de Addison, inhibidores potentes CYP3A4 y hepatopatía grave antes de considerar una alternativa.');
+     }
+   }
    if(effectivePhase==='reducida'){
      if(['IECA','ARA-II','INRA/ARNI'].some(cls=>medication.has(cls)))
        put('HF-RAAS-EXISTING','Revisar RAAS/ARNI existente y dosis tolerada',
