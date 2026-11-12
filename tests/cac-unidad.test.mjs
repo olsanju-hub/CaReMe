@@ -18,8 +18,8 @@ test('CAC sin unidad explícita queda no interpretable incluso si el número par
  assert.equal(integratePatient(v).options.length,0);
  assert.equal(reviewDrug(v,'finerenona','erc_dm2').state,'bloqueo');
 });
-test('CAC 30 y 299.99 corresponde a A2, 300 y 300.01 corresponde a A3 en KDIGO',()=>{
- const values=[[29.99,'A1'],[30,'A2'],[299.99,'A2'],[300,'A3'],[300.01,'A3']];
+test('CAC 30 a 300 corresponde a A2 y >300 corresponde a A3 en KDIGO',()=>{
+ const values=[[29.99,'A1'],[30,'A2'],[299.99,'A2'],[300,'A2'],[300.01,'A3']];
  for(const [n,a] of values){
   assert.equal(albuminuriaCategory(n),a);
   assert.equal(evaluateRenal(d({tfge:'65',cac:String(n),unidad_cac:'mg/g'}))
@@ -43,7 +43,7 @@ test('CAC ausente no produce alerta falsa de unidad ausente',()=>{
 test('la corrección de unidad restaura categoría pero no confirma diagnóstico de ERC',()=>{
  const v=d({tfge:'80',cac:'300',unidad_cac:'mg/g',persistencia:'No consta'});
  const renal=evaluateRenal(v);
- assert.equal(renal.categories.albuminuria,'A3');
+ assert.equal(renal.categories.albuminuria,'A2');
  assert.equal(renal.chronicConfirmed,false);
  assert.equal(renal.markerPresent,true);
  assert.match(renal.message,/No se ha documentado cronicidad/);
