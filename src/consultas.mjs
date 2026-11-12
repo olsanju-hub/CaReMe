@@ -148,7 +148,7 @@ export const EXTRA_FIELDS = [
   { id:'farmacos_clases', label:'Clases farmacológicas actuales', type:'multi',
     options:['Sin tratamiento farmacológico','Metformina','iSGLT2','arGLP-1','Agonista dual GIP/GLP-1',
       'iDPP-4','Sulfonilurea','Insulina','Pioglitazona','Saxagliptina','Repaglinida',
-      'IECA','ARA-II','INRA/ARNI','ARM','Betabloqueante'] },
+      'IECA','ARA-II','INRA/ARNI','ARM','Betabloqueante','Diurético de asa'] },
   { id:'dm_prioridad', label:'Condicionantes clínicos presentes', type:'multi',
     options:['Sin condicionante seleccionado','Enfermedad cardiovascular / riesgo elevado','Insuficiencia cardíaca',
       'Enfermedad renal crónica','Obesidad','Enfermedad hepática metabólica','Fragilidad'] },
