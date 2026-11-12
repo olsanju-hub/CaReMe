@@ -17,7 +17,15 @@ export const SECTIONS = [
     EXTRA_BY_ID.ic_descompensada,
     EXTRA_BY_ID.hipoxia_tisular
   ]},
-  { id: 'cardio', title: 'Cardiovascular', short: 'Cardio', intro: 'Constantes y perfil lipídico disponibles.', fields: [
+  { id: 'cardio', title: 'Cardiovascular', short: 'Cardio', intro: 'Constantes, FEVI y situación clínica.', fields: [
+    EXTRA_BY_ID.ic_fevigrupo,
+    EXTRA_BY_ID.fecha_fevi,
+    EXTRA_BY_ID.ic_evidencia_objetiva,
+    EXTRA_BY_ID.ic_estabilidad,
+    EXTRA_BY_ID.ic_alarma,
+    EXTRA_BY_ID.ic_fc,
+    EXTRA_BY_ID.congestion,
+    EXTRA_BY_ID.fevi,
     { id: 'pas', label: 'Presión arterial sistólica', unit: 'mmHg', type: 'number' },
     { id: 'pad', label: 'Presión arterial diastólica', unit: 'mmHg', type: 'number' },
     { id: 'colesterol_total', label: 'Colesterol total', unit: 'mg/dL', type: 'number' },
