@@ -60,10 +60,11 @@
         "medications"
       ],
       "capture": "implemented",
-      "quick_clinical_result": "missing",
+      "quick_clinical_result": "partial",
       "detailed_decision": "partial",
       "priority": "P1",
-      "gap": "No validated decision output by FEVI and congestion, no equivalent heart-failure pillar/diuretic review."
+      "gap": "IC rápida y detallada tienen orientación original ESC 2026 basada en FEVI <50 o ≥50 con evidencia, congestión, tratamiento actual, TFGe/K y señales de alarma; falta verificación independiente, diagnóstico completo, titulación específica y QA real.",
+      "note": "src/clinical/insuficiencia-cardiaca.mjs y tests de IC. La clasificación anterior ≤40/41–49/≥50 es histórica; CIMA finerenona FEVI≥40 es una indicación de producto, no fenotipo."
     },
     {
       "id": "erc",
@@ -221,6 +222,11 @@
       "id": "insulin_three_phase_result",
       "status": "partial",
       "evidence": "src/clinical/insulinizacion.mjs; src/app.mjs; tests/insulinizacion.test.mjs; tests/insulinizacion-ui.test.mjs"
+    },
+    {
+      "id": "hf_esc2026_directed_result",
+      "status": "partial",
+      "evidence": "src/clinical/insuficiencia-cardiaca.mjs, src/app.mjs, tests/insuficiencia-cardiaca.test.mjs, docs/IC_ESC_2026.md"
     }
   ],
   "blockers": [
