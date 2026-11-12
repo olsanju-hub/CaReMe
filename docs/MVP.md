@@ -75,6 +75,12 @@ La evaluación multiorgánica permite considerar el tratamiento del peso **sin D
 
 [INCRETINAS_CIMA.md](INCRETINAS_CIMA.md) · código `src/clinical/incretinas.mjs`.
 
+## Bloque farmacológico metformina y dapagliflozina (12/11/2026)
+
+Se sumaron **metformina** (liberación inmediata, DM2) y **dapagliflozina/Forxiga** (DM2, insuficiencia cardíaca, ERC) como fichas independientes en CIMA. El límite máximo diario documental de metformina está estratificado por TFGe, sin equivaler a una pauta individual; dapagliflozina distingue su umbral de inicio CIMA de las recomendaciones de clase. Se añaden barreras por contraste, cirugía, acidosis y situaciones agudas. No se habilitan prescripciones ni historial/calendario de continuidad para estos dos productos.
+
+[Metformina y dapagliflozina · CIMA](METFORMINA_DAPAGLIFLOZINA_CIMA.md).
+
 ## Iteración C — conducta y seguimiento
 
 | Código | Función | Condición de aceptación |
