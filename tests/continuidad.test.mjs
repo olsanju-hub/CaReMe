@@ -94,7 +94,7 @@ test('la app no registra acciones sin confirmación explícita ni fecha válida'
   const raw={drugId:'finerenona',routeId:'erc_dm2',type:'inicio',performedOn:'2026-11-12',doseMg:10};
   assert.throws(()=>confirmedAction([],raw),/confirmación explícita/);
   assert.throws(()=>confirmedAction([],{...raw,confirmedByClinician:true,performedOn:'2026-02-30'}),/Fecha/);
-  assert.throws(()=>confirmedAction([],{...raw,confirmedByClinician:true,routeId:'dm2'}),/Indicación/);
+  assert.throws(()=>confirmedAction([],{...raw,confirmedByClinician:true,routeId:'dm2'}),/indicación/i);
   const history=confirmedAction([],{...raw,confirmedByClinician:true});
   assert.equal(history.length,1); assert.equal(history[0].confirmed,true);
   assert.equal(history[0].doseMg,10);
