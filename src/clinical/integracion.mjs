@@ -16,6 +16,11 @@ import { evaluateRenal, evaluateFib4 } from './engine.mjs';
 import { auditCrossDomain } from './auditoria.mjs';
 
 export const INTEGRATION_SOURCES = Object.freeze({
+  internalAudit: {
+    id:'CAHREME-AUDIT-V1',short:'CaHReMe · auditoría interna',
+    section:'Validación transversal de consistencia, versión 1',
+    url:'https://github.com/olsanju-hub/CaReMe/blob/feat/prototipo-interfaz/docs/AUDITORIAS_3_BLOQUES.md'
+  },
   kdigo: {
     id:'KDIGO-2024-CKD', short:'KDIGO ERC 2024', section:'Rec. 3.7.1, 3.7.2, 3.8.1 y 3.9.1',
     url:'https://kdigo.org/wp-content/uploads/2024/03/KDIGO-2024-CKD-Guideline.pdf'
@@ -396,7 +401,7 @@ export function integratePatient(draft) {
     add(card('AUDIT-'+finding.id, finding.severity==='critical'?'alert':'context',
       finding.title,finding.detail,
       ['Corregir o confirmar: '+finding.fields.join(', ')+'.'],
-      ['KDIGO-2024-CKD'],['General','DM2','Renal','Cardiovascular','Hepático','Metabólico']));
+      ['CAHREME-AUDIT-V1'],['General','DM2','Renal','Cardiovascular','Hepático','Metabólico']));
   }
   if(audit.requiresResolution) {
     for(const proposal of options.splice(0)) {
