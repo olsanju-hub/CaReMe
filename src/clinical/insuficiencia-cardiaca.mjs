@@ -26,7 +26,10 @@ export const HF_SOURCES=Object.freeze({
   detail:'IC crónica sintomática; inicio no recomendado con TFGe <25 ml/min/1,73 m²'},
  cimaFin:{id:'CIMA-FINERENONA',name:'CIMA · Kerendia 10/20/40 mg',
   url:'https://cima.aemps.es/cima/dochtml/ft/1211616002/FT_1211616002.html',
-  detail:'Indicación de IC sintomática FEVI ≥40%, potasio y TFGe por presentación e indicación'}
+  detail:'Indicación de IC sintomática FEVI ≥40%, potasio y TFGe por presentación e indicación'},
+ cimaArni:{id:'CIMA-SACUBITRIL-VALSARTAN',name:'CIMA · Entresto 24/26 mg',
+  url:'https://cima.aemps.es/cima/dochtml/ft/1151058001/FT_1151058001.html',
+  detail:'IC sintomática con FEVI reducida, PAS ≥100, K ≤5,4 y transición de IECA ≥36 h'}
 });
 const v=(d,id)=>fieldState(d,id)==='registrado'?String(d.values[id]):null;
 const n=(d,id)=>{const x=v(d,id);return x===null?null:Number(x)};
@@ -71,7 +74,7 @@ export function evaluateHeartFailure(draft,mode='quick'){
  const evalDate=v(draft,'fecha_evaluacion'),efDate=v(draft,'fecha_fevi');
  const egfrDate=v(draft,'fecha_tfge'),potDate=v(draft,'fecha_potasio');
  const missing=[],alerts=[],checks=[],steps=[],options=[];
- const src=['ESC-HF-2026','ESC-HF-2026-ORIGINAL','CIMA-EMPAGLIFLOZINA','CIMA-DAPAGLIFLOZINA','CIMA-FINERENONA'];
+ const src=['ESC-HF-2026','ESC-HF-2026-ORIGINAL','CIMA-EMPAGLIFLOZINA','CIMA-DAPAGLIFLOZINA','CIMA-FINERENONA','CIMA-SACUBITRIL-VALSARTAN'];
  const put=(id,title,reason,requirements,refs=['ESC-HF-2026'])=>
    options.push(option(id,title,reason,requirements,refs));
  if(hf===null)missing.push('Confirmar antecedente de insuficiencia cardíaca.');
@@ -172,6 +175,7 @@ export function evaluateHeartFailure(draft,mode='quick'){
  const vitalUnknown=mode==='detail'&&
    (stability!=='Estable evaluado'||congestion===null||congestion==='No valorados');
  const safetyUnknown=mode==='detail'&&(
+   symptomatic===null||symptomatic==='No valorado'||symptomatic==='No'||
    fevi===null||egfr===null||potassium===null||sbp===null||
    flags===null||meds===null||!reconciled||!allergies||
    !efDate||!evalDate||!egfrDate||!potDate||
@@ -225,11 +229,14 @@ export function evaluateHeartFailure(draft,mode='quick'){
        'No sugerir inicio de un segundo iSGLT2; verificar molécula, indicación y tolerancia.',
        ['Revisar enfermedad aguda, cetosis, volemia y ficha técnica específica.'],
        ['ESC-HF-2026','CIMA-EMPAGLIFLOZINA','CIMA-DAPAGLIFLOZINA']);
-   else put('HF-SGLT2-REVIEW','Valorar iSGLT2 en IC sintomática',
-     'ESC 2026 recomienda dapagliflozina o empagliflozina en IC sintomática con independencia de FEVI.',
-     ['TFGe documentada y reciente; distinguir umbral de inicio por molécula.',
-      'Revisar diabetes tipo 1, riesgo de cetoacidosis, depleción de volumen y CIMA antes de elegir.'],
-     ['ESC-HF-2026','CIMA-EMPAGLIFLOZINA','CIMA-DAPAGLIFLOZINA']);
+   else if(egfr!==null&&egfr>=20)
+     put('HF-SGLT2-REVIEW','Valorar iSGLT2 en IC sintomática',
+       'ESC 2026 recomienda dapagliflozina o empagliflozina en IC sintomática con independencia de FEVI.',
+       ['Empagliflozina: no iniciar con TFGe <20; dapagliflozina: no iniciar con TFGe <25 (CIMA).',
+        'Con TFGe 20–24 no extrapolar indicación de empagliflozina a dapagliflozina.',
+        'Revisar diabetes tipo 1, cetoacidosis, depleción de volumen y ficha individual.'],
+       ['ESC-HF-2026','CIMA-EMPAGLIFLOZINA','CIMA-DAPAGLIFLOZINA']);
+   else checks.push('Con TFGe <20, no ofrecer nuevo iSGLT2 sin valoración especializada y revisión de ficha del producto.');
    if(medication.has('ARM'))
      put('HF-MRA-EXISTING','ARM ya registrado: comprobar cuál y seguridad',
        'No duplicar antagonistas mineralocorticoides; revisar principio activo, potasio, TFGe y tolerancia.',
@@ -247,15 +254,20 @@ export function evaluateHeartFailure(draft,mode='quick'){
        put('HF-RAAS-EXISTING','Revisar RAAS/ARNI existente y dosis tolerada',
          'Confirmar principio activo, indicación y tolerancia; evitar combinaciones dobles de RAAS.',
          ['Comprobar PAS, creatinina/TFGe, potasio e historia de angioedema.']);
-     else put('HF-RAAS-REVIEW','Revisar componente ARNI/IECA (ARA-II si intolerancia)',
-       'La terapia fundacional de IC-FEr ESC 2026 incluye modulación del sistema renina–angiotensina.',
-       ['Confirmar estabilidad, presión arterial, función renal, potasio e interacciones; verificar CIMA específica.',
-        'No iniciar ARNI o IECA automáticamente.']);
+     else if(sbp!==null&&sbp>=100&&potassium!==null&&potassium<=5.4)
+       put('HF-RAAS-REVIEW','Revisar componente ARNI/IECA (ARA-II si intolerancia)',
+         'La terapia fundacional de IC-FEr ESC 2026 incluye modulación del sistema renina–angiotensina.',
+         ['ARNI: no iniciar con PAS <100 ni potasio >5,4 (CIMA).',
+          'Revisar TFGe y antecedentes de angioedema; separar ≥36 h desde última dosis de IECA.',
+          'La selección final por medicamento y dosis requiere ficha CIMA y valoración clínica.'],
+         ['ESC-HF-2026','CIMA-SACUBITRIL-VALSARTAN']);
+     else checks.push('PA o potasio no permiten sugerir nueva terapia RAAS/ARNI de forma rutinaria; revisar seguridad y producto.');
      if(medication.has('Betabloqueante'))
        put('HF-BB-EXISTING','Betabloqueante ya registrado: comprobar indicación y tolerancia',
          'Revisar molécula con evidencia en IC, frecuencia cardíaca y estabilidad antes de valorar cambios.',
          ['Registrar FC, PAS, congestión y dosis actual; no titular durante descompensación.']);
-     else if(congestion==='Ausentes'&&heartRate!==null&&heartRate>=50)
+     else if(congestion==='Ausentes'&&heartRate!==null&&heartRate>=50&&
+             sbp!==null&&sbp>=100)
        put('HF-BB-REVIEW','Revisar betabloqueante de IC con evidencia',
          'Parte de la terapia fundacional de la IC-FEr; debe adecuarse a estabilidad y frecuencia cardíaca.',
          ['Confirmar ausencia de congestión inestable, bradicardia sintomática, bloqueo AV y contraindicaciones.']);
