@@ -259,9 +259,13 @@ export function confirmedAction(history, action) {
     throw new Error('Principio activo o indicación desconocidos');
   if(!ACTIONS.has(action.type)) throw new Error('Actuación no admitida');
   if(!parseISO(action.performedOn)) throw new Error('Fecha de realización no válida');
+  const allowed=action.drugId==='finerenona'?[10,20,40]:[10,25];
+  const dose=action.type==='interrupcion'?null:Number(action.doseMg);
+  if(action.type!=='interrupcion' && (!allowed.includes(dose) || action.doseMg===null || action.doseMg===undefined || action.doseMg===''))
+    throw new Error('Confirma la dosis realmente administrada para esta actuación');
   return [...history, Object.freeze({
     drugId:action.drugId,routeId:action.routeId,type:action.type,
-    performedOn:action.performedOn,confirmed:true
+    performedOn:action.performedOn,doseMg:dose,confirmed:true
   })];
 }
 export function followUpFromHistory(history) {
