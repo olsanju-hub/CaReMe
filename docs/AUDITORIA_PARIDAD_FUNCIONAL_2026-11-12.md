@@ -143,3 +143,9 @@ Las barreras globales de glucemia ≥300 mg/dL, hipoglucemias graves y embarazo 
 **Paridad funcional completa pendiente:** no se ha validado prescripción individualizada por formulación, titulación, conversiones de insulinas, dosis prandiales, temporalidad del seguimiento o QA móvil; las referencias de dosis no se ejecutan. Los algoritmos antiguos de redGDPS 2022 se contextualizan frente a ADA/EASD 2026.
 
 [Documento de insulinización](INSULINIZACION_ADA_EASD_2026.md).
+
+## 12. Actualización de insuficiencia cardíaca (12/11/2026)
+
+**Fotografía inicial superada:** se añadió una primera salida funcional en `src/clinical/insuficiencia-cardiaca.mjs` para consulta rápida/detallada, con FEVI, congestión, antecedentes, seguridad, medicamentos actuales y seguimiento. La clasificación utiliza **ESC 2026**, no el fenotipo intermedio histórico 41–49 %. La FEVI numérica no confirma por sí sola un diagnóstico, especialmente en la IC-FEp.
+
+No se considera paridad clínica completa: faltan validación externa de casos, etiología/subtipos, biomarcadores, dosificación individual por producto, seguimiento de alta y revisión visual móvil. [Contrato clínico y auditoría](IC_ESC_2026.md).
