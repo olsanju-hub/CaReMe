@@ -511,3 +511,10 @@ h2 { letter-spacing:-.025em }
  margin-bottom:8px;color:#4D7479}
 .dm2-detail-metrics strong{display:block;font-size:1.1rem;line-height:1.2;color:#173347}
 @media(max-width:680px){.dm2-detail-metrics{grid-template-columns:1fr}}
+
+/* Circuito de insulinización: orientaciones no prescriptivas por fase. */
+.insulin-result .dm2-detail-metrics{grid-template-columns:repeat(3,minmax(0,1fr))}
+.insulin-result .dm2-detail-metrics strong{font-size:.92rem;line-height:1.35}
+.insulin-result .dm2-safety{border-left:4px solid #C26D51}
+.insulin-result .dm2-options article{border-left:3px solid #138B8B}
+@media(max-width:680px){.insulin-result .dm2-detail-metrics{grid-template-columns:1fr}}
