@@ -145,7 +145,15 @@ function pharmaLink(card) {
   let info=null;
   if(card.id==='FIN-HF-LABEL') info={drug:'finerenona',route:'ic_fevi40'};
   else if(card.id.startsWith('NSMRA-')) info={drug:'finerenona',route:'erc_dm2'};
-  else if(card.id.startsWith('SGLT2-')) info={drug:'empagliflozina',route:draft.values.ic==='Sí'?'ic':draft.values.erc==='Sí'?'erc':'dm2'};
+  else if(card.id.startsWith('SGLT2-')) {
+    const route=draft.values.ic==='Sí'?'ic':draft.values.erc==='Sí'?'erc':'dm2';
+    return `<div class="incretin-links">${[
+      ['empagliflozina','Jardiance · empagliflozina'],
+      ['dapagliflozina','Forxiga · dapagliflozina']
+    ].map(([drug,label])=>`<button type="button" class="text-link" data-action="open-drug"
+      data-drug-id="${drug}" data-route-id="${route}">Consultar CIMA: ${label} →</button>`).join('')}</div>`;
+  }
+  else if(card.id.startsWith('MET-')) info={drug:'metformina',route:'dm2'};
   if(['GLP-REVIEW','GLP-EXISTING','WEIGHT-REVIEW','WEIGHT-EXISTING'].includes(card.id)) {
     const candidates=card.id.startsWith('WEIGHT-') ? [
       ['semaglutida_wegovy_sc','peso','Wegovy inyectable · peso'],
@@ -436,6 +444,11 @@ function drugView() {
       ${review.blocked.length ? `<div class="drug-warning"><strong>Bloqueos identificados</strong><ul>${items(review.blocked)}</ul></div>`:''}
       ${review.missing.length ? `<div class="drug-missing"><strong>Información obligatoria pendiente</strong><ul>${items(review.missing)}</ul></div>`:''}
       <div class="drug-checks"><strong>Verificaciones antes de prescribir</strong><ul>${items(review.checks)}</ul></div>
+      ${review.renalReference ? `<div class="drug-missing"><strong>Límite renal documental (no dosis individual)</strong>
+      <p>${review.renalReference.maxMgPerDay===null
+        ?'TFGe inferior a 30: ficha contraindica metformina.'
+        :'Máximo diario según la ficha: '+review.renalReference.maxMgPerDay.toLocaleString('es-ES')+' mg/día.'}</p>
+      </div>`:''}
     </section>
     <section class="drug-card">
       <div class="eyebrow">SOLO PAUTA DE FICHA TÉCNICA · NO DOSIS PERSONALIZADA</div>
