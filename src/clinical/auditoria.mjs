@@ -31,6 +31,7 @@ export const AUDIT_RULES=Object.freeze({
   HF_ALARMS_CONFLICT:'IC: selección simultánea de ausencia y presencia de alarmas',
   HF_DECOMPENSATION:'IC: descompensación o inestabilidad activa',
   HF_EF_CONFLICT:'IC: grupo ESC 2026 discordante con FEVI medida',
+  RENAL_CRITICAL_POTASSIUM:'Potasio ≥6 fuera del circuito de IC',
   HF_CRITICAL_POTASSIUM:'IC: potasio elevado con posible riesgo inmediato',
   HF_HYPOTENSION:'IC: PAS baja con necesidad de valoración',
   RAAS_DOUBLE_BLOCKADE:'Combinación IECA/ARA-II/ARNI sin reconciliar',
@@ -100,6 +101,9 @@ export function auditCrossDomain(draft) {
       'El grupo ESC 2026 elegido no coincide con la FEVI aportada. Confirmar informe antes de clasificar.',
       ['fevi','ic_fevigrupo']));
   const potassiumHF=NUMBER(draft,'potasio'),pasHF=NUMBER(draft,'pas');
+  if(!yes('ic')&&potassiumHF!==null&&potassiumHF>=6)
+    out.push(item('RENAL_CRITICAL_POTASSIUM','critical','Potasio elevado: valoración prioritaria',
+      'K ≥6 mmol/L: comprobar clínica y muestra; con K ≥6,5 actuar inmediatamente. Si hay enfermedad aguda o LRA, valorar en hospital. No ofrecer cambios crónicos antes de resolver seguridad (KDIGO 2024, tabla 28).',['potasio','lra_sospecha','situacion_aguda']));
   if(yes('ic')&&potassiumHF!==null&&potassiumHF>=6)
     out.push(item('HF_CRITICAL_POTASSIUM','critical','Potasio elevado en IC',
       'Potasio ≥6 mmol/L: confirmar valor, ECG y clínica; valorar atención urgente según contexto. No titular tratamiento crónico.',
@@ -175,3 +179,4 @@ export function auditCrossDomain(draft) {
         ? 'Existen comprobaciones de coherencia pendientes; no asumir que los datos sean definitivos.'
         : 'Sin incoherencias detectadas por estas reglas limitadas; no equivale a validar la historia clínica.'};
 }
+

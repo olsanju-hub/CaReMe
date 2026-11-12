@@ -84,7 +84,8 @@
       "quick_clinical_result": "partial",
       "detailed_decision": "partial",
       "priority": "P1",
-      "gap": "G/A and candidates exist; complete renal action pathway, potassium urgency, RAAS and follow-up cadence not equivalent."
+      "gap": "Primera orientación dirigida KDIGO 2024: cronicidad, LRA, potasio, seguimiento condicionado y criterios parciales de Nefrología. Faltan riesgo KFRE calculado, evolución longitudinal, ruta RAAS y titulación por producto, validación clínica independiente y QA móvil.",
+      "note": "src/clinical/renal.mjs; tests/renal.test.mjs y renal-ui.test.mjs. Sin diagnóstico, cambios de dosis ni cita automática."
     },
     {
       "id": "obesidad",
@@ -237,6 +238,11 @@
       "id": "hf_mra_by_indication",
       "status": "partial",
       "evidence": "src/clinical/insuficiencia-cardiaca.mjs, tests/ic-finerenona-esc2026.test.mjs; consulta de CIMA por indicación; sin dosis personalizadas ni validación independiente"
+    },
+    {
+      "id": "kidney_directed_result",
+      "status": "partial",
+      "evidence": "src/clinical/renal.mjs; rápida, detallada y resumen renal; KDIGO 2024, sin paridad completa."
     }
   ],
   "blockers": [
@@ -264,7 +270,7 @@
       "owner_area": "src/app.mjs consultationReview",
       "finding": "Directed module shows capture summary and clinical-lock, not equivalent quick/detailed decision flow.",
       "status": "partially_resolved",
-      "resolution": "DM2 rápida y detallada cuentan con salida; faltan los otros cinco módulos y validación clínica plena de DM2."
+      "resolution": "DM2, insulinización, IC y primera salida renal implementadas parcialmente. Siguen pendientes hígado, obesidad y validación por módulo."
     },
     {
       "id": "MANIFEST_DESCRIPTION_STALE",

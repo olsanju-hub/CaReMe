@@ -21,8 +21,8 @@ export const MODULES = [
   {
     id: 'erc', title: 'Enfermedad renal crónica', domain: 'renal',
     short: 'Función renal, albuminuria y persistencia',
-    quick: ['tfge','cac','unidad_cac','persistencia'],
-    detail: ['fecha_evaluacion','tfge','fecha_tfge','cac','unidad_cac','fecha_cac','persistencia','lra_sospecha','contraste_yodado','potasio','fecha_potasio','potasio_normal','ras_optimizado','cyp3a4_fuerte','addison','creatinina','situacion_aguda','cetoacidosis_sospecha','farmacos_clases','farmacos','medicacion_revisada','alergias','alergias_revisadas']
+    quick: ['tfge','cac','unidad_cac','persistencia','lra_sospecha','potasio','situacion_aguda'],
+    detail: ['edad','embarazo','erc_contexto','erc','erc_hematuria','erc_cac_persistente','fecha_evaluacion','tfge','fecha_tfge','cac','unidad_cac','fecha_cac','persistencia','lra_sospecha','contraste_yodado','potasio','fecha_potasio','potasio_normal','ras_optimizado','cyp3a4_fuerte','addison','creatinina','situacion_aguda','cetoacidosis_sospecha','farmacos_clases','farmacos','medicacion_revisada','alergias','alergias_revisadas']
   },
   {
     id: 'obesidad', title: 'Sobrepeso y obesidad', domain: 'metabolico',
@@ -45,6 +45,9 @@ export const MODULES = [
 ];
 export const MODULE_BY_ID = Object.fromEntries(MODULES.map(m => [m.id, m]));
 export const EXTRA_FIELDS = [
+  {id:'erc_contexto',label:'Contexto renal',type:'select',options:['Adulto sin diálisis ni trasplante','Diálisis','Trasplante renal','No valorado']},
+  {id:'erc_hematuria',label:'Hematuria persistente documentada',type:'select',options:['Sí','No','No valorada']},
+  {id:'erc_cac_persistente',label:'CAC actual confirmado en muestras repetidas',type:'select',options:['Sí','No','No consta']},
   {id:'fecha_hba1c',label:'Fecha de HbA1c',type:'date'},
   {id:'dm_objetivo_valor',label:'Límite superior de HbA1c acordado (objetivo inferior a)',type:'number',min:4,max:12,unit:'%'},
   {id:'dm_hba1c_fiable',label:'¿Es interpretable la HbA1c para esta decisión?',type:'select',
@@ -234,3 +237,4 @@ export function readMulti(raw) {
     return Array.isArray(values) && values.every(x => typeof x === 'string') ? values : [];
   } catch { return []; }
 }
+

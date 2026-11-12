@@ -8,6 +8,7 @@ import { buildVerificationPlan } from './clinical/plan.mjs';
 import { evaluateDm2Quick } from './clinical/dm2-rapida.mjs';
 import { evaluateDm2Detail } from './clinical/dm2-detallada.mjs';
 import { evaluateInsulinization } from './clinical/insulinizacion.mjs';
+import { evaluateKidney } from './clinical/renal.mjs';
 import { evaluateHeartFailure } from './clinical/insuficiencia-cardiaca.mjs';
 
 let draft = createDraft();
@@ -402,6 +403,23 @@ function heartFailureResult(mode){
       suspende ni modifica dosis. Revisión clínica externa pendiente.</p>
   </section>`;
 }
+function kidneyResult(mode){
+  const r=evaluateKidney(draft,mode);
+  const list=xs=>xs.length?`<ul>${xs.map(x=>`<li>${escape(x)}</li>`).join('')}</ul>`:'<p>Sin elementos registrados.</p>';
+  return `<section id="renal-result" class="dm2-result" aria-live="polite">
+    <div class="eyebrow">ERC · KDIGO 2024 · REVISIÓN PROFESIONAL</div>
+    <h2>Seguridad, seguimiento y derivación renal</h2>
+    <p>${escape(r.classification.message)}</p>
+    ${r.alerts.length?`<div class="dm2-safety"><h3>Prioridad de seguridad</h3>${list(r.alerts)}</div>`:''}
+    ${r.missing.length?`<div class="dm2-missing"><h3>Información pendiente</h3>${list(r.missing)}</div>`:''}
+    <h3>Próximos pasos</h3>${list(r.steps)}
+    <h3>Valoración por Nefrología</h3>${r.referral.length?list(r.referral.map(x=>x.text)):'<p>Sin criterio automático mostrado; esto no descarta necesidad de derivación.</p>'}
+    <h3>Comprobaciones</h3>${list(r.checks)}
+    <h3>Seguimiento</h3><p>${escape(r.followUp)}</p>
+    <details><summary>Fuente y reglas</summary>${r.sources.map(x=>`<p><a href="${escape(x.url)}" target="_blank" rel="noopener noreferrer">${escape(x.title)}</a> · ${escape(x.locator)}</p>`).join('')}</details>
+    <p class="privacy-note">Sin diagnóstico ni cambios de medicación automáticos. Revisión clínica independiente pendiente.</p>
+  </section>`;
+}
 function consultationReview(module) {
   const fields = [...new Set([...module.quick,...module.detail])];
   const missing = fields.filter(id => fieldState(draft,id) === 'sin_registrar');
@@ -422,8 +440,11 @@ function consultationReview(module) {
     ${module.id==='dm2'?dm2RapidResult()+dm2DetailedResult():''}
     ${module.id==='insulina'?insulinResult('detail'):''}
     ${module.id==='ic'?heartFailureResult('detail'):''}
+    ${module.id==='erc'?kidneyResult('detail'):''}
     ${integratedCards(({dm2:'DM2',ic:'IC',erc:'Renal',obesidad:'Metabólico',hepatico:'Hepático',insulina:'DM2'})[module.id])}
-    ${module.id==='ic'
+    ${module.id==='erc'
+      ? '<p class="clinical-lock">ERC: primera orientación renal implementada. Validación clínica pendiente.</p>'
+      :module.id==='ic'
       ? '<p class="clinical-lock">IC: orientación por fenotipo ESC 2026 y congestión implementada. No se prescriben tratamientos ni se establece diagnóstico automáticamente.</p>'
       :module.id==='insulina'
       ? '<p class="clinical-lock">Insulinización: tres rutas de orientación y seguridad implementadas. La revisión clínica externa, dosis por producto y validación funcional permanecen pendientes.</p>'
@@ -462,6 +483,10 @@ function moduleView() {
         <button type="button" class="primary" data-action="module-mode" data-mode="review">Ver resumen de datos →</button>
       </div>
     </section>`}
+    ${m.id==='erc' && (mode==='quick'||mode==='detail')?`<div class="dm2-result-trigger">
+      <button class="primary" type="button" data-action="renal-result">Ver orientación renal →</button>
+      <p>Cronicidad, seguridad y derivación. Sin prescripción.</p>
+    </div>${current.renalVisible?kidneyResult(mode):''}`:''}
     ${m.id==='ic' && (mode==='quick'||mode==='detail')?`<div class="dm2-result-trigger">
       <button class="primary" type="button" data-action="ic-result">Ver orientación de insuficiencia cardíaca →</button>
       <p>FEVI y congestión según ESC 2026. Sin prescripción.</p>
@@ -478,7 +503,7 @@ function moduleView() {
       <button class="primary" type="button" data-action="dm2-result">Ver orientación clínica rápida →</button>
       <p>El resultado se genera para revisión. No prescribe ni confirma diagnósticos.</p>
     </div>${current.dm2ResultVisible?dm2RapidResult():''}`:''}
-    <div class="module-note"><strong>Documentación:</strong> las orientaciones de DM2, insulinización e IC son preliminares; ERC, obesidad e hígado y la validación clínica siguen pendientes.</div>
+    <div class="module-note"><strong>Documentación:</strong> las orientaciones de DM2, insulinización e IC son preliminares; ERC tiene una primera orientación; obesidad, hígado y validación clínica siguen pendientes.</div>
     <p class="privacy-note">No introduzcas identificadores del paciente. Los datos no se guardan después de cerrar o recargar.</p>
   </div>`;
 }
@@ -787,6 +812,10 @@ app.addEventListener('input', event => {
     // Refrescar tras seleccionar «ninguna» para garantizar exclusividad.
     if (selected.length !== checked.length) return render();
   } else draft=setValue(draft,id,el.value);
+  if(current.renalVisible){
+    current.renalVisible=false;
+    document.getElementById('renal-result')?.remove();
+  }
   if(current.icVisible){
     current.icVisible=false;
     const previous=document.getElementById('ic-result');
@@ -814,6 +843,10 @@ app.addEventListener('click', event => {
   const btn = event.target.closest('button[data-action]');
   if (!btn) return;
   const action = btn.dataset.action;
+  if (action === 'renal-result') {
+    if(current.page!=='module'||current.module!=='erc'||!['quick','detail'].includes(current.mode))return;
+    current.renalVisible=true;return render();
+  }
   if (action === 'ic-result') {
     if(current.page!=='module'||current.module!=='ic'||
       !['quick','detail'].includes(current.mode))return;
@@ -870,7 +903,7 @@ app.addEventListener('click', event => {
   }
   if (action === 'start-module') {
     if (!MODULE_BY_ID[btn.dataset.module]) return;
-    current.module=btn.dataset.module; current.mode='quick'; current.dm2ResultVisible=false; current.dm2DetailedVisible=false; current.insulinVisible=false; current.icVisible=false; return navigate('module');
+    current.renalVisible=false; current.module=btn.dataset.module; current.mode='quick'; current.dm2ResultVisible=false; current.dm2DetailedVisible=false; current.insulinVisible=false; current.icVisible=false; return navigate('module');
   }
   if (action === 'module-mode') {
     if (!['quick','detail','review'].includes(btn.dataset.mode)) return;
@@ -905,3 +938,4 @@ if (typeof window !== 'undefined' && typeof navigator !== 'undefined' &&
     navigator.serviceWorker.register('./service-worker.js').catch(() => {});
   });
 }
+

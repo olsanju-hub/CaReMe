@@ -228,3 +228,15 @@ No inventar umbrales ni dosis. Verificar versiones de las guías, contraindicaci
 Se reauditaron los límites de ARM conforme a ESC 2026 y CIMA de finerenona. El circuito IC distingue una **revisión genérica** de ARM (TFGe ≥30 y K <5) de la **revisión específica de finerenona** en IC sintomática con FEVI ≥40, TFGe ≥25 y K ≤5, siempre con contraindicaciones registradas y sin duplicidad de ARM. En TFGe 25–29 o con K exactamente 5,0 solo puede aparecer la vía específica cuando conste seguridad suficiente. Se incluye enlace desde la tarjeta a la ficha CIMA por indicación y no se calculan dosis.
 
 [Auditoría de ESC 2026 y CIMA](docs/IC_ESC_2026.md) · pruebas `tests/ic-finerenona-esc2026.test.mjs`. Sigue pendiente la revisión clínica y farmacológica independiente.
+
+
+## Consulta renal dirigida y auditoría de continuidad · 12/11/2026
+
+- Baseline reproducida desde `cdfbc4f`: 288/288 pruebas; comprobación de sintaxis superada.
+- `src/clinical/renal.mjs`: rápida, detallada y resumen renal con seguridad, cronicidad, seguimiento condicionado y criterios parciales de Nefrología.
+- KDIGO 2024: PP 2.1.1–5, PP 2.2.1, figura 48 y tabla 28. No se incorpora el borrador KDIGO 2027.
+- Captura de ámbito renal, hematuria y repetición del CAC actual; no se infiere esta última de la cronicidad global.
+- Potasio ≥6 retiene candidatos multiorgánicos aunque no conste IC. K ≥6,5 exige valoración inmediata; K 6,0–6,4 distingue situación aguda de resultado inesperado en paciente clínicamente bien.
+- Seguimiento anual mínimo solo ante ERC con datos completos y estabilidad documentada. Sin calendario automático ni cambios terapéuticos.
+- **319/319 pruebas locales y sintaxis superadas**. Pruebas de interfaz con DOM simulado: no equivalen a revisión visual ni prueba iPhone.
+- [Informe de continuidad y límites](docs/ERC_KDIGO_2024.md). Paridad clínica todavía parcial; PR en borrador, sin fusionar.
