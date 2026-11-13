@@ -32,7 +32,9 @@ Base anterior: 925 pruebas Node. Tras la corrección: **957/957 superadas, cero 
 
 Archivos: `tests/auditoria-aguda-transversal.test.mjs` y `tests/seguimiento-seguridad-ui.test.mjs`. La prueba de calendario distingue una referencia activa con contexto suficiente de otra retenida. Ningún caso nuevo prescribe ni da por realizada una modificación farmacológica.
 
-Se añade a `qa/browser-audit.mjs` la reproducción en navegador de cetoacidosis sin diagnóstico y su calendario retenido. Resultado de la nueva ejecución Chromium/WebKit: pendiente de CI; no se atribuyen a este cambio las 152 comprobaciones superadas en la auditoría anterior.
+Se añade a `qa/browser-audit.mjs` la reproducción en navegador de cetoacidosis sin diagnóstico y su calendario retenido. Resultado comprobado en [GitHub Actions 43357982704](https://github.com/olsanju-hub/CaReMe/actions/runs/43357982704), commit `6eec09f7cf637a9d42bd5bf6ba87684e16b8ab6b`: **156/156 comprobaciones superadas, cero fallos**. Son 39 por perfil: Chromium escritorio 1280×900, Chromium móvil 390×844, WebKit móvil 390×844 y WebKit estrecho 320×740. Se ha revisado el recuento del registro de ejecución. Incluye el nuevo caso de cetoacidosis sin diagnóstico y calendario retenido, además de la cobertura de navegación/privacidad/offline anterior.
+
+La revisión final de la pantalla añade motivos de retención y aviso explícito de registros incompatibles, sin borrar la fecha de actuaciones válidas. Los 957 casos Node se han repetido tras estos ajustes. La caché v0-30 distribuye la versión actual.
 
 ## Brechas que permanecen
 
@@ -42,3 +44,7 @@ Se añade a `qa/browser-audit.mjs` la reproducción en navegador de cetoacidosis
 - Instalación y pruebas en iPhone físico; auditoría completa de accesibilidad.
 
 PR #4 en borrador, sin fusión ni publicación. Este informe no declara el MVP completo ni la paridad clínica con GlucoGuía.
+
+## Comprobación de la versión funcional final
+
+Commit `f94e9466be17109db09a33e3f85fc0f958f9ce20`: verificación Node y navegador superadas en [Actions 43358244818](https://github.com/olsanju-hub/CaReMe/actions/runs/43358244818) y [Actions 43358244764](https://github.com/olsanju-hub/CaReMe/actions/runs/43358244764), respectivamente. Se confirma de nuevo 957 pruebas Node y 156 comprobaciones Chromium/WebKit, sin fallos. Esta ejecución incluye los motivos visibles de retención y el aviso de registros históricos incompatibles.

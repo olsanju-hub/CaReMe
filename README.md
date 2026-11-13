@@ -6,7 +6,7 @@
 
 ## Auditoría de seguridad vigente · 13/11/2026
 
-[Auditoría transversal y seguimiento](docs/AUDITORIA_SEGURIDAD_2026-11-13.md): corregidos bloqueos de señales agudas y discrepancia del calendario. 957 pruebas Node superadas. La ejecución de navegador del cambio se registra en el informe; sigue pendiente validación clínica independiente.
+[Auditoría transversal y seguimiento](docs/AUDITORIA_SEGURIDAD_2026-11-13.md): corregidos bloqueos de señales agudas y discrepancia del calendario. 957 pruebas Node y 156 comprobaciones Chromium/WebKit superadas, sin fallos. Sigue pendiente validación clínica independiente.
 
 ## Auditoría de interfaz · 13/11/2026
 

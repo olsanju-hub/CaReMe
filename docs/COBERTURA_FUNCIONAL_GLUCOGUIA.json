@@ -314,15 +314,17 @@
     "mobile_qa": "pending",
     "keep_pr_draft": true,
     "no_prescription": true,
-    "browser_qa": "152_passed_0_failed"
+    "browser_qa": "156_passed_0_failed"
   },
   "updated_on": "2026-11-13",
   "safety_audit": {
     "date": "2026-11-13",
     "base_commit": "a9ac2d90d14488e272fcd5d6f5a7a27ae4d437ee",
     "node_tests_passed": 957,
-    "new_browser_run": "pending",
+    "new_browser_run": "43357982704",
     "report": "docs/AUDITORIA_SEGURIDAD_2026-11-13.md",
-    "independent_clinical_validation": "pending"
+    "independent_clinical_validation": "pending",
+    "browser_checks_passed": 156,
+    "browser_failures": 0
   }
 }
