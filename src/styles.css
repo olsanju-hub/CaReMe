@@ -538,3 +538,13 @@ h2 { letter-spacing:-.025em }
  .bottom-nav button { border:0; border-radius:11px; background:none; display:grid; place-content:center; gap:2px; padding:7px 3px; color:var(--muted); font-size:.72rem; }
  .bottom-nav button.active { background:#E6F3F2; color:#0B747A; }
 }
+
+/* Ajuste real de contenido: no ocultar desbordamientos de formularios. */
+.field-head { flex-wrap:wrap; }
+.field-head>label { flex:1 1 140px; min-width:0; overflow-wrap:anywhere; }
+.availability { max-width:100%; min-height:28px; padding:4px 0; white-space:normal; text-align:left; }
+.text-link,.quiet-link { max-width:100%; white-space:normal; overflow-wrap:anywhere; }
+.wizard-layout>* { min-width:0; }
+.step-list { max-width:100%; min-width:0; }
+.skip-link { position:fixed; z-index:100; top:8px; left:8px; transform:translateY(-160%); padding:10px 16px; color:var(--ink); background:#fff; border:2px solid var(--teal); border-radius:8px; }
+.skip-link:focus { transform:translateY(0); }

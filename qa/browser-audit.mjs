@@ -8,12 +8,17 @@ const root=fileURLToPath(new URL('../',import.meta.url));
 const output=new URL('../qa-results/',import.meta.url);
 await mkdir(output,{recursive:true});
 const port=Number(process.env.QA_PORT||4317),origin='http://localhost:'+port;
-const server=spawn(process.execPath,['server.mjs'],{cwd:root,env:{...process.env,PORT:String(port)},stdio:['ignore','pipe','pipe']});
-await new Promise((resolve,reject)=>{
- const timer=setTimeout(()=>reject(new Error('Servidor sin respuesta')),10000);
- server.stdout.on('data',data=>{if(String(data).includes('CaHReMe:')){clearTimeout(timer);resolve();}});
- server.on('error',reject);server.on('exit',code=>{clearTimeout(timer);if(code)reject(new Error('Servidor terminó: '+code));});
-});
+let server;
+async function startServer(){
+ server=spawn(process.execPath,['server.mjs'],{cwd:root,env:{...process.env,PORT:String(port)},stdio:['ignore','pipe','pipe']});
+ await new Promise((resolve,reject)=>{
+  const timer=setTimeout(()=>reject(new Error('Servidor sin respuesta')),10000);
+  server.stdout.on('data',data=>{if(String(data).includes('CaHReMe:')){clearTimeout(timer);resolve();}});
+  server.on('error',reject);server.on('exit',code=>{clearTimeout(timer);if(code)reject(new Error('Servidor terminó: '+code));});
+ });
+}
+async function stopServer(){if(server&&server.exitCode===null){await new Promise(resolve=>{server.once('exit',resolve);server.kill();});}}
+await startServer();
 const report={syntheticData:true,physicalDevice:false,profiles:[],cases:[]};
 const check=async(profile,name,fn)=>{try{await fn();report.cases.push({profile,name,status:'passed'});}catch(error){report.cases.push({profile,name,status:'failed',error:String(error.stack??error)});console.error(profile+' · '+name+': '+error.message);}};
 const profiles=[
@@ -27,7 +32,7 @@ try{
   let browser;
   await check(profile.id,'inicio de motor',async()=>{browser=await profile.engine.launch({headless:true});});
   if(!browser)continue;
-  report.profiles.push({id:profile.id,version:browser.version(),width:profile.width,height:profile.height});
+  report.profiles.push({id:profile.id,version:browser.version(),width:profile.width,height:profile.height,offlineMethod:profile.id.startsWith('webkit')?'origin_stopped':'origin_stopped_and_setOffline'});
   const context=await browser.newContext({viewport:{width:profile.width,height:profile.height},isMobile:profile.touch,hasTouch:profile.touch});
   const page=await context.newPage();page.setDefaultTimeout(5000);const errors=[],external=[];
   page.on('pageerror',error=>errors.push(error.message));
@@ -55,12 +60,16 @@ try{
     const overflow=[...document.querySelectorAll('main *,#app section *,#app article *')].filter(el=>{const b=el.getBoundingClientRect();return b.width&&b.right>innerWidth+1&&getComputedStyle(el).visibility!=='hidden';}).slice(0,5).map(el=>({tag:el.tagName,cls:el.className,text:el.textContent.slice(0,80)}));
     return {width:innerWidth,scrollWidth:document.documentElement.scrollWidth,duplicateIds:dup,missingLabels,brokenLabels,overflow};
    });
+   if(state.scrollWidth>state.width+1)await page.screenshot({path:fileURLToPath(new URL(profile.id+'-'+name+'-failure.png',output)),fullPage:false});
    assert.deepEqual(state.duplicateIds,[],JSON.stringify(state));assert.deepEqual(state.missingLabels,[],JSON.stringify(state));assert.deepEqual(state.brokenLabels,[],JSON.stringify(state));
    assert.ok(state.scrollWidth<=state.width+1,JSON.stringify(state));
    if(['home','summary','obesidad-detail'].includes(name))await page.screenshot({path:fileURLToPath(new URL(profile.id+'-'+name+'.png',output)),fullPage:name==='obesidad-detail'});
   };
   await check(profile.id,'carga',async()=>{await page.goto(origin);assert.equal(await page.locator('button.module-card').count(),6);});
   await check(profile.id,'home: estructura y anchura',()=>inspect('home'));
+  await check(profile.id,'teclado: salto al contenido y foco de navegación',async()=>{
+   await page.keyboard.press('Tab');assert.ok(await page.locator('.skip-link').evaluate(el=>document.activeElement===el));await page.keyboard.press('Enter');assert.ok(await page.locator('#main-content').evaluate(el=>document.activeElement===el));await module('dm2');assert.ok(await page.locator('#main-content').evaluate(el=>document.activeElement===el));
+  });
   for(const id of ['dm2','ic','erc','obesidad','hepatico','insulina'])for(const mode of ['quick','detail','review'])
    await check(profile.id,id+'-'+mode,async()=>{await module(id,mode);await inspect(id+'-'+mode);});
   for(const id of ['hta','lipids','ckm','cv-risk','tools','sources','evaluation'])
@@ -94,17 +103,26 @@ try{
   });
   await check(profile.id,'offline: recarga completa y módulos nuevos',async()=>{
    await page.reload();await page.waitForFunction(()=>!!navigator.serviceWorker.controller,{timeout:10000});
-   await context.setOffline(true);await page.reload({waitUntil:'load'});assert.equal(await page.locator('button.module-card').count(),6);
+   // WebKit setOffline rejects service-worker responses upstream (#42775).
+   // Stop the real origin for every engine; verify an uncached context cannot load it.
+   await stopServer();
+   try {
+    await assert.rejects(()=>fetch(origin));
+    const uncached=await browser.newContext(),negative=await uncached.newPage();
+    await assert.rejects(()=>negative.goto(origin,{timeout:5000}));await uncached.close();
+    if(!profile.id.startsWith('webkit'))await context.setOffline(true);
+    await page.reload({waitUntil:'load'});assert.equal(await page.locator('button.module-card').count(),6);
    for(const id of ['obesidad','hepatico']){await module(id,'detail');assert.ok(await page.locator('[data-action="'+(id==='obesidad'?'obesity-result':'masld-result')+'"]').isVisible());}
    await summary();assert.ok(await page.locator('#integrated-plan').isVisible());
    const urls=await page.evaluate(async()=>{const all=[];for(const key of await caches.keys())for(const request of await (await caches.open(key)).keys())all.push(request.url);return all;});
-   assert.ok(urls.some(url=>url.endsWith('/src/clinical/plan-integral.mjs')));assert.ok(urls.every(url=>!new URL(url).search));await context.setOffline(false);
+   assert.ok(urls.some(url=>url.endsWith('/src/clinical/plan-integral.mjs')));assert.ok(urls.every(url=>!new URL(url).search));
+   } finally {await context.setOffline(false);await startServer();}
   });
   await check(profile.id,'sin errores JavaScript',async()=>assert.deepEqual(errors,[]));
   await context.close();await browser.close();
  }
 }finally{
- server.kill();report.passed=report.cases.filter(x=>x.status==='passed').length;report.failed=report.cases.length-report.passed;
+ await stopServer();report.passed=report.cases.filter(x=>x.status==='passed').length;report.failed=report.cases.length-report.passed;
  await writeFile(new URL('report.json',output),JSON.stringify(report,null,2));
  console.log(JSON.stringify({profiles:report.profiles,passed:report.passed,failed:report.failed}));
  if(report.failed)process.exitCode=1;

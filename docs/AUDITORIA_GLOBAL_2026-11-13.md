@@ -19,3 +19,11 @@ La comprobación de IC se contrasta con [ESC2026, publicación primaria, secció
 - La ejecución de Chromium/WebKit y su resultado definitivo se consignarán después de revisar CI. No se afirman aún pruebas de navegador superadas.
 
 La automatización cubre navegación rápida/detallada/resumen, estructuras de formulario y anchuras de pantalla; añade estado compartido, invalidación y privacidad, con recarga offline. WebKit con viewport móvil no equivale a Safari en un iPhone físico. Instalación real en pantalla de inicio y revisión clínica independiente siguen pendientes.
+
+## Primera ejecución real de navegador
+
+Run43352245481, commit `d7d1fdedabdcecd2f1430c13097a28d3295a916e`:137 comprobaciones superadas y11 fallidas. Los fallos se distribuyen en9 vistas con desbordamiento a320px y2 recargas offline en WebKit usando `setOffline(true)`. Se descargaron y revisaron informe/capturas; no se presenta esta ejecución como superada.
+
+Se corrige el ajuste de etiquetas y del botón de disponibilidad, con enlaces que ahora pueden envolver su texto. Los contenedores de evaluación no expanden el documento más allá del viewport. Se añade salto al contenido y foco del área principal al navegar.
+
+El error observado en WebKit coincide con [Playwright#42775](https://github.com/microsoft/playwright/issues/42775), que describe el rechazo de respuestas de service worker durante su emulación offline. La siguiente ejecución detiene el servidor real en todos los perfiles, con un contexto nuevo sin caché como control negativo. Chromium conserva además la emulación de red desconectada. Esto comprueba disponibilidad sin origen, sin afirmar reproducción de todas las condiciones de red de un iPhone.

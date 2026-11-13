@@ -27,7 +27,7 @@ const escape = (value) => String(value ?? '').replace(/[&<>"']/g, c =>
 const counts = () => totalStats(draft);
 
 function banner() {
-  return '<div class="safety" role="note"><span class="safety-dot"></span><span>Prototipo en revisión: cálculos G/A y FIB-4, y propuestas multiorgánicas para revisión. Ningún resultado autoriza diagnóstico, prescripción o suspensión farmacológica.</span></div>';
+  return '<div class="safety" role="note"><span class="safety-dot"></span><span>Prototipo en revisión: evaluación clínica y seguimiento para valoración profesional. Ningún resultado autoriza diagnóstico, prescripción o suspensión farmacológica.</span></div>';
 }
 function header() {
   return `<header class="topbar"><div class="topbar-inner">
@@ -747,7 +747,7 @@ function summary() {
   const stats = counts();
   return `<div class="page summary"><div class="bread"><button data-action="home">Inicio</button><span>›</span><span>Resumen</span></div>
     <div class="summary-head"><div><div class="eyebrow">SÍNTESIS DE CAPTURA</div><h1>Datos de la evaluación</h1>
-    <p>Este es un resumen de datos introducidos, no una interpretación clínica.</p></div>
+    <p>Datos disponibles y resultados de los módulos evaluados, para revisión profesional.</p></div>
     <button class="ghost" type="button" data-action="new">Nueva evaluación</button></div>
     ${banner()}
     <div class="stats-grid"><div><strong>${stats.registrado}</strong><span>Registrados</span></div>
@@ -953,7 +953,7 @@ function tools() {
       </div>
       <div class="tool-card"><span class="tag">Insuficiencia cardíaca · ESC 2026</span>
         <h2>Insuficiencia cardíaca</h2>
-        <p>Fenotipo FEVI <50 % o ≥50 % con evidencia, congestión y clases farmacológicas para revisión. No diagnostica ni prescribe.</p>
+        <p>FEVI actual e historial, congestión y clases farmacológicas para revisión. No diagnostica ni prescribe.</p>
         <button type="button" class="text-link" data-action="start-module" data-module="ic">Abrir IC →</button>
       </div>
       ${['obesidad'].map(id=>{
@@ -991,10 +991,10 @@ function sources() {
 function render() {
   const contents = current.page === 'home' ? home() : current.page === 'lipids' ? lipidView() : current.page === 'hta' ? htaView() : current.page === 'ckm' ? ckmView() : current.page === 'cv-risk' ? cvRiskView() : current.page === 'module' ? moduleView() : current.page === 'evaluation' ? evaluation()
     : current.page === 'summary' ? summary() : current.page === 'tools' ? tools() : current.page === 'drug' ? drugView() : current.page === 'followup' ? followupPage() : sources();
-  app.innerHTML = header() + '<main id="main-content">' + contents + '</main>' + nav() +
+  app.innerHTML = '<a class="skip-link" href="#main-content">Saltar al contenido</a>' + header() + '<main id="main-content" tabindex="-1">' + contents + '</main>' + nav() +
     '<footer class="footer">CaHReMe · Identidad Atlántico · Prototipo no validado para uso asistencial</footer>';
 }
-function navigate(page) { current.page = page; render(); scrollTo({ top: 0, behavior: 'auto' }); }
+function navigate(page) { current.page = page; render(); scrollTo({ top: 0, behavior: 'auto' }); document.getElementById('main-content')?.focus?.({preventScroll:true}); }
 function start(focus) {
   current.module = null;
   current.focus = focus;

@@ -4,6 +4,10 @@
 
 **Repositorio:** `olsanju-hub/CaReMe` · **Nombre de la aplicación:** CaHReMe
 
+## Auditoría vigente · 13/11/2026
+
+[Hallazgos y comprobaciones](docs/AUDITORIA_GLOBAL_2026-11-13.md). Incluye corrección del historial de FEVI, navegación de ordenador/tablet y caché offline por ámbito. Las pruebas de navegador se ejecutan en GitHub Actions; su resultado y límites constan en el informe.
+
 ## Propósito
 PWA independiente de apoyo a la decisión clínica en Atención Primaria en España. Evaluación integrada de los dominios **cardiovascular, renal, hepático y metabólico**, sin reducir la app a diabetes mellitus.
 
@@ -11,7 +15,11 @@ PWA independiente de apoyo a la decisión clínica en Atención Primaria en Espa
 
 ## Requisito funcional de referencia
 
-CaHReMe cubre ya la **navegación y captura de datos** de seis consultas inspiradas en GlucoGuía y debe completar su **lógica clínica validada** (DM2, IC, ERC, sobrepeso/obesidad, enfermedad hepática metabólica e insulinización), **con consulta rápida, detalle y resultados equivalentes en funcionalidad**, ampliadas con evaluación integral, datos compartidos, recomendaciones clínicas trazables y seguimiento. **Los algoritmos específicos de decisión terapéutica y seguimiento siguen pendientes.** Véase [matriz de equivalencia y brechas](docs/MATRIZ_EQUIVALENCIA_GLUCOGUIA.md).
+CaHReMe cubre ya la **navegación y captura de datos** de seis consultas inspiradas en GlucoGuía y debe completar su **lógica clínica validada** (DM2, IC, ERC, sobrepeso/obesidad, enfermedad hepática metabólica e insulinización), **con consulta rápida, detalle y resultados equivalentes en funcionalidad**, ampliadas con evaluación integral, datos compartidos, recomendaciones clínicas trazables y seguimiento. Las seis consultas disponen de una primera salida propia para revisión y de un plan integral. Siguen pendientes validación clínica independiente, titulación por producto y QA real de dispositivo. Véase [matriz de equivalencia y brechas](docs/MATRIZ_EQUIVALENCIA_GLUCOGUIA.md).
+
+## Registro histórico de incrementos
+
+Los apartados siguientes conservan avances y cifras de pruebas de cada momento. Para el estado vigente prevalecen la matriz de alcance y la auditoría global más reciente.
 
 ## Insuficiencia cardíaca · clasificación y orientación ESC 2026 (12/11/2026)
 
