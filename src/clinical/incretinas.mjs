@@ -1,3 +1,4 @@
+import {SEQUENCE_MEDS} from '../sequence-fields.mjs';
 /**
  * CaHReMe — productos incretínicos inyectables, noviembre 2026.
  * CIMA-AEMPS: Ozempic, Wegovy SOLUCIÓN INYECTABLE y Mounjaro.
@@ -130,7 +131,14 @@ export function reviewIncretinDrug(draft,drugId,routeId) {
     checks.push('Reconciliar nombres, dosis y último día de las medicaciones actuales.');
   if(classes===null)checks.push('No se conocen las clases farmacológicas actuales.');
   else {
-    if(classes.includes('arGLP-1')||classes.includes('Agonista dual GIP/GLP-1'))
+    const productMap={ozempic:'semaglutida_ozempic',wegovy:'semaglutida_wegovy_sc',tirzepatida:'tirzepatida'};
+    const current=new Set();
+    for(const [key,value]of Object.entries(draft.values))if(key.startsWith('seq_actual_')&&val(draft,key)!==null){const selected=readMulti(value);for(const [med,product]of Object.entries(productMap))if(selected.includes(SEQUENCE_MEDS[med].label))current.add(product);}
+    if(val(draft,'ob_farmaco_actual')==='Wegovy subcutáneo')current.add('semaglutida_wegovy_sc');
+    if(val(draft,'ob_farmaco_actual')==='Tirzepatida')current.add('tirzepatida');
+    const sameProduct=val(draft,'tx_operacion')==='Escalada del mismo producto, sin interrupciones'&&current.size===1&&current.has(drugId)&&({ozempic:'semaglutida_ozempic',wegovy:'semaglutida_wegovy_sc',tirze_dm2:'tirzepatida',tirze_peso:'tirzepatida'})[val(draft,'tx_clave')]===drugId;
+    const foreignClass=classes.some(c=>['arGLP-1','Agonista dual GIP/GLP-1'].includes(c)&&c!==drug.className);
+    if((classes.includes('arGLP-1')||classes.includes('Agonista dual GIP/GLP-1'))&&(!sameProduct||foreignClass))
       blocked.push('Ya consta terapia incretínica: no proponer inicio adicional hasta identificar molécula y posible transición.');
     if(classes.includes('iDPP-4'))checks.push('Revisar uso simultáneo de iDPP-4 y terapia incretínica.');
     if(classes.includes('Insulina')||classes.includes('Sulfonilurea'))
@@ -210,3 +218,4 @@ export function reviewIncretinDrug(draft,drugId,routeId) {
     notice:'Posología documental de ficha CIMA; sin prescripción ni validación automática de elegibilidad.'
   };
 }
+

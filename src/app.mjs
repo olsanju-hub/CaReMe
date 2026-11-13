@@ -90,7 +90,7 @@ function therapySequenceView(id){
  const plan=evaluateTherapySequence(draft,id);
  if(!current.sequenceQuestions)current.sequenceQuestions=plan.missing.slice(0,4);
  const questions=current.sequenceQuestions;
- const registered=[...new Set(current.sequenceCaptured||[])].filter(k=>fieldState(draft,k)==='registrado'&&!questions.includes(k));
+ const registered=[...new Set([...(current.sequenceCaptured||[]),'lip_estatina','lip_ezetimiba','ob_farmaco_actual','farmacos_clases','dm_adherencia','lip_adherencia','ob_tolerancia'])].filter(k=>fieldState(draft,k)==='registrado'&&!questions.includes(k));
  const list=xs=>xs.length?`<ul>${xs.map(x=>`<li>${escape(x)}</li>`).join('')}</ul>`:'';
  const summary=registered.length?`<details class="sequence-data"><summary>Datos utilizados · editar</summary>${registered.map(k=>`<p><strong>${escape(FIELDS[k].label)}:</strong> ${escape(FIELDS[k].type==='multi'?readMulti(draft.values[k]).join(' · '):draft.values[k])} <button class="text-link" type="button" data-action="sequence-edit" data-field-id="${k}">Editar</button></p>`).join('')}</details>`:'';
  let body=`<section id="sequence-questions" class="form-card" tabindex="-1"><h2>Resolver el tratamiento</h2><p>Indica lo que toma y los datos del caso. La aplicación propone el siguiente paso y las condiciones para escalar.</p>${summary}${plan.blocks.length?`<div class="dm2-safety" role="alert"><h3>Prioridad clínica</h3>${list(plan.blocks)}</div>`:''}${questions.length?`<div class="field-grid">${questions.map(k=>k.startsWith('seq_actual_')?`<details class="current-medication"><summary>Medicamentos que toma actualmente</summary>${moduleFieldMarkup(FIELDS[k])}</details>`:moduleFieldMarkup(FIELDS[k])).join('')}</div>`:''}<button class="primary" type="button" data-action="sequence-continue">${questions.length?'Continuar':'Actualizar plan'}</button></section>`;
@@ -105,7 +105,7 @@ function therapySequenceView(id){
   if(current.flowDoseCalculator)body+=`<details open class="flow-calculator"><summary>Calculadora para esta pauta</summary>${inlineBody(clinicalCalculatorView())}</details>`;
  }
  if(current.flowInsulin&&id==='dm2')body+=insulinSequenceView();
- if(id==='dm2'&&!current.flowInsulin)body+='<details><summary>Paciente ya insulinizado: acceso al cálculo</summary><button class="ghost" type="button" data-action="flow-insulin">Inicio, ajuste o reducción de insulina</button></details>';
+ if(id==='dm2'&&!current.flowInsulin)body+='<button class="ghost" type="button" data-action="flow-insulin">Insulina: decidir inicio, ajuste o reducción</button>';
  return body;
 }
 function insulinSequenceView(){

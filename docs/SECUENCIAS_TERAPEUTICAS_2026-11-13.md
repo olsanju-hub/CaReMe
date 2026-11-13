@@ -30,7 +30,7 @@ Evaluación: pruebas de inicio, selección de acción por ayunas, patrón pospra
 
 Se sustituye el selector público `flow-treatment` por preguntas progresivas, plan, escaladas condicionadas y comprobación de la pauta propuesta. La operación de inicio/escalada y la intensidad inicial proceden del motor; no se solicitan de nuevo al médico. La revisión final farmacológica sigue siendo explícita y se invalida al cambiar datos. Los campos ya conocidos se reutilizan; un resumen permite editar cada dato. Insulina abre un panel propio para evitar controles duplicados. Hay desplazamiento al plan y a la pauta, para que el resultado no quede fuera de vista.
 
-Evaluación local: 1547 pruebas Node y sintaxis correctas. Auditoría de navegador de la interfaz nueva: pendiente de Actions. PWA incluye en caché los nuevos motores y el registro de captura, sin almacenar información clínica. Versión de caché v0-47.
+Evaluación local: 1555 pruebas Node y sintaxis correctas. Primera auditoría de navegador: 188/196 superadas. Dos regresiones repetidas en los cuatro perfiles: acceso a insulina plegado y bloqueo de inicio aplicado indebidamente a la escalada de una incretina ya identificada. Se corrigen sin retirar los bloqueos de duplicidad y se añaden regresiones de identidad de producto. Repetición final pendiente de Actions. PWA incluye en caché los nuevos motores y el registro de captura, sin almacenar información clínica. Versión de caché v0-48.
 
 ## Fuentes verificadas
 

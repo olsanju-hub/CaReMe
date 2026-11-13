@@ -20,7 +20,8 @@ export const SEQUENCE_SOURCES={
 };
 export function sequenceCurrent(d,id){
  if(!(SEQUENCE_GROUPS[id]||[]).length)return {raw:[],ids:[],none:false,classes:[]};
- const raw=multi(d,'seq_actual_'+id),ids=(SEQUENCE_GROUPS[id]||[]).filter(k=>raw.includes(SEQUENCE_MEDS[k].label));
+ const legacy=[];if(g(d,'lip_estatina')==='Atorvastatina')legacy.push('atorvastatina');if(g(d,'lip_estatina')==='Rosuvastatina')legacy.push('rosuvastatina');if(g(d,'lip_ezetimiba')==='Sí')legacy.push('ezetimiba');if(g(d,'ob_farmaco_actual')==='Wegovy subcutáneo')legacy.push('wegovy');if(g(d,'ob_farmaco_actual')==='Tirzepatida')legacy.push('tirzepatida');if(['Solo basal','Basal y prandial','Premezclas','Otro esquema'].includes(g(d,'insulina_esquema')))legacy.push('insulina');
+ const raw=multi(d,'seq_actual_'+id),ids=(SEQUENCE_GROUPS[id]||[]).filter(k=>raw.includes(SEQUENCE_MEDS[k].label)||legacy.includes(k));
  return {raw,ids,none:raw.includes('Sin tratamiento para esta patología'),classes:[...new Set(ids.map(k=>SEQUENCE_MEDS[k].className).filter(Boolean))]};
 }
 function classesForDose(d,id){
@@ -55,9 +56,9 @@ export function evaluateTherapySequence(d,id){
  if(actual.none&&actual.ids.length)r.blocks.push('No puede constar ausencia de tratamiento y medicamentos actuales simultáneamente.');
  const existingClasses=classesForDose(d,id);
  if(actual.none&&(SEQUENCE_GROUPS[id]||[]).some(k=>SEQUENCE_MEDS[k].className&&(multi(d,'farmacos_clases').includes(SEQUENCE_MEDS[k].className)||allCurrentIds.includes(k))))r.blocks.push('La ausencia de tratamiento contradice clases farmacológicas ya registradas. Conciliar la medicación.');
- for(const c of ['iSGLT2','Estatina','ARM'])if(actual.ids.filter(k=>SEQUENCE_MEDS[k].className===c).length>1)r.blocks.push('Posible duplicidad de '+c+': conciliar antes de modificar.');
- if(actual.ids.filter(k=>['arGLP-1','Agonista dual GIP/GLP-1'].includes(SEQUENCE_MEDS[k].className)).length>1)r.blocks.push('Varias incretinas registradas: no añadir ni escalar hasta conciliar.');
- if(actual.ids.filter(k=>['IECA','ARA-II','INRA/ARNI'].includes(SEQUENCE_MEDS[k].className)).length>1)r.blocks.push('Varios bloqueantes RAAS registrados: revisar combinación antes de modificar.');
+ for(const c of ['iSGLT2','Estatina','ARM'])if(allCurrentIds.filter(k=>SEQUENCE_MEDS[k].className===c).length>1)r.blocks.push('Posible duplicidad de '+c+': conciliar antes de modificar.');
+ if(allCurrentIds.filter(k=>['arGLP-1','Agonista dual GIP/GLP-1'].includes(SEQUENCE_MEDS[k].className)).length>1)r.blocks.push('Varias incretinas registradas: no añadir ni escalar hasta conciliar.');
+ if(allCurrentIds.filter(k=>['IECA','ARA-II','INRA/ARNI'].includes(SEQUENCE_MEDS[k].className)).length>1)r.blocks.push('Varios bloqueantes RAAS registrados: revisar combinación antes de modificar.');
  if(r.blocks.length){r.state='blocked';return r;}
  if(actual.ids.length)need('seq_adherencia','seq_tolerancia');
  if(actual.ids.some(k=>['otro','otro_sglt2','otra_incretina','otro_diuretico','otro_beta','otro_ara','ieca'].includes(k)))need('farmacos');
@@ -66,6 +67,7 @@ export function evaluateTherapySequence(d,id){
  const reducing=g(d,'seq_objetivo')==='Reducir o simplificar tratamiento';
  const adherent=g(d,'seq_adherencia')==='Dosis y adherencia confirmadas';
  const tolerated=g(d,'seq_tolerancia')==='Buena tolerancia';
+ if(id==='obesidad'&&g(d,'ob_tolerancia')==='Problemas de tolerancia'&&!reducing){r.state='review';hold('Revisar la tolerancia discordante','Constan problemas de tolerancia previos; conciliarlos antes de aumentar.');return r;}
  if(id==='dm2'&&g(d,'dm_adherencia')==='Dificultades o dosis omitidas'||id==='lipids'&&g(d,'lip_adherencia')==='Dudas o incumplimiento'){r.state='review';hold('Resolver la adherencia discordante','La dificultad de adherencia ya registrada tiene prioridad sobre una confirmación genérica posterior.');return r;}
  const add=(key,why,when='Ahora',extra={})=>{
   const blocks=reviewModuleTreatment({...d,values:{...d.values,farmacos_clases:JSON.stringify(existingClasses)}},key);
@@ -80,6 +82,8 @@ export function evaluateTherapySequence(d,id){
   if(ladder&&current!==null&&current>ladder.at(-1)){hold('Revisar dosis y presentación actuales','Dosis fuera de los escalones verificados de esta vía; no convertir ni aumentar automáticamente.');return;}
   if(ladder&&current!==null&&current===ladder.at(-1)){if(id==='dm2')step('insulin','Valorar insulina tras alcanzar la dosis máxima tolerada','No seguir aumentando la incretina; revisar glucemias y alternativas antes de insulinizar.');else hold('Reevaluar respuesta en dosis máxima','No aumentar por encima de la dosis máxima de esta vía; revisar objetivo, alternativas y posible valoración especializada.');return;}
   if(key==='bisoprolol'&&current>=10){step('maintain','Mantener bisoprolol en la dosis objetivo tolerada','No aumentar por encima de 10 mg/día por esta vía.');return;}
+  const weeks=n(d,'seq_semanas_'+med),minWeeks=ladder?4:med==='metformina'?2:med==='losartan'?6:['amlodipino','atorvastatina','rosuvastatina'].includes(med)?4:med==='bisoprolol'?(current<5?1:4):0;
+  if(weeks!==null&&weeks<minWeeks){step('maintain','Mantener el escalón hasta completar su intervalo mínimo',`Completar al menos ${minWeeks} semanas con la dosis actual y reevaluar tolerancia/respuesta antes de aumentar.`);return;}
   step('titrate','Ajustar '+SEQUENCE_MEDS[med].label,why,key,when,{operation:'escalate',currentMed:med});
  };
  if(actual.ids.length&&!adherent){r.state='review';hold('Resolver adherencia antes de intensificar','Confirmar la pauta realmente tomada y abordar dosis omitidas. No aumentar dosis para compensar incumplimiento.');return r;}
