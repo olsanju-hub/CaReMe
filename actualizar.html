@@ -7,9 +7,16 @@ button.addEventListener('click',async()=>{
  button.disabled=true;status.textContent='Actualizando…';
  try {
   const scope=new URL('./',location.href).href,prefix='cahreme-shell-'+encodeURIComponent(new URL(scope).pathname)+'-';
-  if('serviceWorker' in navigator){for(const reg of await navigator.serviceWorker.getRegistrations())if(reg.scope===scope)await reg.unregister();}
   for(const name of await caches.keys())if(name.startsWith(prefix)||/^cahreme-shell-v0-\d+$/.test(name))await caches.delete(name);
-  if('serviceWorker' in navigator){await navigator.serviceWorker.register('./service-worker.js',{scope:'./',updateViaCache:'none'});await navigator.serviceWorker.ready;}
+  if('serviceWorker' in navigator){
+   const reg=await navigator.serviceWorker.register('./service-worker.js?refresh='+Date.now(),{scope:'./',updateViaCache:'none'});
+   const worker=reg.installing??reg.waiting??reg.active;
+   if(!worker)throw new Error('Sin actualización activa');
+   if(worker.state!=='activated')await new Promise((resolve,reject)=>{
+    const changed=()=>{if(worker.state==='activated'){worker.removeEventListener('statechange',changed);resolve();}else if(worker.state==='redundant'){worker.removeEventListener('statechange',changed);reject(new Error('Instalación no completada'));}};
+    worker.addEventListener('statechange',changed);changed();
+   });
+  }
   location.replace(scope);
  }catch(error){status.textContent='No se ha podido actualizar. Comprueba la conexión y vuelve a intentarlo.';button.disabled=false;}
 });
