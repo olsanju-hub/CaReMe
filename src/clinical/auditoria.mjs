@@ -37,6 +37,7 @@ export const AUDIT_RULES=Object.freeze({
   MEDICATION_DETAILS:'Conciliación documentada sin clases o principios activos identificables',
   POTASSIUM_CONFLICT:'Potasio numérico no coherente con potasio declarado normal',
   CLINICAL_FIELD_INVALID:'Campo clínico no válido para el cálculo',
+  CURRENT_HYPOGLYCEMIA:'Glucemia actual <70 mg/dL: resolver hipoglucemia antes de pautar',
   SEVERE_GLYCEMIA_REVIEW:'Glucemia muy elevada: revisar seguridad y descartar crisis',
   SEVERE_HYPOGLYCEMIA_REVIEW:'Hipoglucemias graves o recurrentes: revisar pauta antes de intensificar',
   PREGNANCY_DIABETES_PATHWAY:'Gestación: utilizar circuito específico de diabetes y embarazo',
@@ -104,6 +105,8 @@ export function auditCrossDomain(draft) {
       'ERC figura como no conocida, pero se declara persistencia de marcadores analíticos compatibles; revisar diagnóstico y causa, sin deducirlos automáticamente.',
       ['erc','persistencia','tfge','cac']));
   const currentGlucose=NUMBER(draft,'glucemia_actual');
+  if(currentGlucose!==null&&currentGlucose<70)
+    out.push(item('CURRENT_HYPOGLYCEMIA','critical','Glucemia actual baja: valoración prioritaria','Resolver la hipoglucemia y revisar su causa antes de iniciar o intensificar tratamiento crónico.', ['glucemia_actual']));
   if(currentGlucose!==null&&currentGlucose>=300)
     out.push(item('SEVERE_GLYCEMIA_REVIEW','critical',
       'Glucemia actual elevada: valoración prioritaria',

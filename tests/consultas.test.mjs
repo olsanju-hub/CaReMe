@@ -57,7 +57,7 @@ test('navegación rápida / detallada / resumen conserva los datos capturados', 
   globalThis.scrollTo=()=>{};
   globalThis.confirm=()=>true;
   await import('../src/app.mjs');
-  assert.equal((root.innerHTML.match(/class="module-card"/g)||[]).length,6);
+  assert.equal((root.innerHTML.match(/class="module-card"/g)||[]).length,8);
   const click=(action,details={})=>handlers.click({
     target:{closest:()=>({dataset:{action,...details}})}
   });
@@ -73,8 +73,9 @@ test('navegación rápida / detallada / resumen conserva los datos capturados', 
   assert.ok(root.innerHTML.includes('INSULINIZACIÓN DM2'));
   assert.ok(root.innerHTML.includes('Información necesaria'));
   click('home');
-  assert.ok(root.innerHTML.includes('Continuar evaluación integral'));
+  assert.ok(root.innerHTML.includes('Borrar datos para otro paciente'));
   click('new');
-  assert.ok(root.innerHTML.includes('Nueva evaluación integral'));
-  assert.ok(!root.innerHTML.includes('Continuar evaluación integral'));
+  assert.ok(root.innerHTML.includes('Elige la patología'));
+  assert.ok(!root.innerHTML.includes('Borrar datos para otro paciente'));
 });
+

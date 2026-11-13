@@ -10,7 +10,7 @@ test('hígado rápido y detallado comparten datos; resultado se invalida al edit
  await import('../src/app.mjs');
  const click=(action,data={})=>handlers.click({target:{closest:()=>({dataset:{action,...data}})}});
  const set=(id,value)=>handlers.input({target:{closest:()=>({dataset:{field:id},value,type:'text'})}});
- assert.equal((root.innerHTML.match(/class="module-card"/g)||[]).length,6);
+ assert.equal((root.innerHTML.match(/class="module-card"/g)||[]).length,8);
  click('start-module',{module:'hepatico'});
  for(const id of moduleFields('hepatico','quick'))assert.equal((root.innerHTML.match(new RegExp('data-field-id="'+id+'"','g'))||[]).length,1,id+' una vez');
  assert.match(root.innerHTML,/Concretar tratamiento o seguimiento/);

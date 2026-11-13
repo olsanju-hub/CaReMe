@@ -113,6 +113,7 @@ export function evaluateTreatmentDose(d,key){
   if(['atorvastatina','rosuvastatina'].includes(key)&&get(d,'lip_estatina')&&get(d,'lip_estatina')!=='Ninguna')r.blocks.push('Estatina actual registrada: usar revisión de intensificación, no nuevo inicio.');
  }
  if(escalating&&(get(d,'tx_tolerancia')!=='Buena tolerancia y escalado indicado'))r.blocks.push('No escalar sin tolerancia, adherencia, continuidad y necesidad comprobadas.');
+ if(escalating&&(['atorvastatina','rosuvastatina','ezetimiba'].includes(key)&&get(d,'lip_adherencia')==='Dudas o incumplimiento'||['metformina','empa_dm2','dapa_dm2','ozempic','tirze_dm2'].includes(key)&&get(d,'dm_adherencia')==='Dificultades o dosis omitidas'))r.blocks.push('Resolver las dificultades de adherencia registradas antes de escalar.');
  if(r.blocks.length||r.missing.length)return r;
  const e=Number(d.values.tfge),dose=Number(d.values.tx_dosis_actual),weeks=Number(d.values.tx_semanas);
  let amount,frequency='cada 24 h',via='oral',detail='';

@@ -1,5 +1,7 @@
 # Flujo de consulta — CaHReMe
 
+Interfaz vigente: [Recorrido por patología](RECORRIDO_POR_PATOLOGIA_2026-11-13.md). El contenido siguiente conserva el diseño inicial y su evolución como registro histórico.
+
 Estado: **prototipo de captura, cálculo G/A y FIB-4, con opciones multiorgánicas no prescriptivas**. No validado para uso asistencial.
 
 ## Consultas de referencia añadidas (iteración A.2)
@@ -71,3 +73,4 @@ En las rutas integral y dirigidas se pueden registrar fechas de evaluación/anal
 Las contradicciones críticas se muestran como alertas y **retienen** las opciones farmacológicas; no eliminan una alerta aguda ya identificada. El plan de verificación reúne los datos a revisar, las opciones aún no ejecutadas y los controles que derivan de actuaciones **expresamente confirmadas**. No registra automáticamente acciones ni sincroniza citas.
 
 Cobertura de pruebas y pendientes: [AUDITORIAS_3_BLOQUES.md](AUDITORIAS_3_BLOQUES.md).
+

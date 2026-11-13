@@ -134,8 +134,9 @@ function invalidateDerived(next,id,changed){
  next.derivedMeasurements=derived;
 }
 export function setCalculatedMeasurement(draft,target,result,keys){
- if(!['tfge','imc','lip_aclaramiento'].includes(target)||!Number.isFinite(result)||result<=0)throw new Error('Medición calculada inválida');
+ if(!['tfge','imc','lip_aclaramiento','fib4_informado'].includes(target)||!Number.isFinite(result)||result<=0)throw new Error('Medición calculada inválida');
  let next=setValue(draft,target,String(result));
+ if(target==='fib4_informado'){next=setValue(next,'masld_fib4_origen','Calculado desde analítica');next=setValue(next,'masld_fib4_confirmado','No valorado');next=setValue(next,'masld_fecha_fib4','');next=setValue(next,'masld_fuente_fib4','');}
  if(target==='tfge')next=setValue(next,'fecha_tfge','');
  if(target==='lip_aclaramiento')next=setValue(next,'lip_fecha_aclaramiento','');
  if(next.values.tx_revision==='Indicación, contraindicaciones e interacciones revisadas')next=setValue(next,'tx_revision','Pendiente');

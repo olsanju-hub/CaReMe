@@ -19,7 +19,7 @@ export function calculateClinical(d,type){
  }else if(type==='fib4'){
   r.value=computeFib4(age,n(d,'ast'),n(d,'alt'),n(d,'plaquetas'));
   if(r.value===null){r.blocks.push('Edad adulta y valores positivos de AST, ALT y plaquetas; revisar unidades.');return r;}
-  r.formula=`${age} × ${n(d,'ast')} / (${n(d,'plaquetas')} × √${n(d,'alt')})`;r.unit='';
+  r.formula=`${age} × ${n(d,'ast')} / (${n(d,'plaquetas')} × √${n(d,'alt')})`;r.unit='';r.transferField='fib4_informado';
   r.interpretation=age<35?'Precisión limitada por debajo de 35 años.':`Banda ${classifyMasldFib4(r.value,age)}; no confirma fibrosis por sí sola.`;
   if(value(d,'fib4_agudo')==='Sí')r.interpretation='No interpretar el índice durante enfermedad aguda.';
   r.source='https://easlcampus.eu/sites/default/files/2024-08/EASL_CPGs_management_of_MASLD.pdf';

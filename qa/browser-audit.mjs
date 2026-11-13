@@ -39,8 +39,10 @@ try{
   page.on('dialog',dialog=>dialog.accept());
   page.on('request',request=>{if(!request.url().startsWith(origin+'/'))external.push(request.url());});
   const home=async()=>{await page.locator('button.brand[data-action="home"]').click();};
-  const module=async(id,mode='quick')=>{await home();await page.locator('button.module-card[data-module="'+id+'"]').click();if(mode!=='quick')await page.locator('[data-action="module-mode"][data-mode="'+mode+'"]').first().click();};
-  const action=async id=>{await home();await page.locator('[data-action="'+id+'"]:visible').first().click();};
+  const open=async id=>{await home();await page.locator('[data-action="open-pathology"][data-pathology="'+id+'"]').click();};
+  const stage=async n=>{await page.locator('.flow-progress [data-stage="'+n+'"]').click();};
+  const module=async(id,mode='quick')=>{await open(id==='insulina'?'dm2':id);await page.locator('.flow-reference summary').click();await page.locator('[data-action="flow-context"]').click();if(id==='insulina'){await page.locator('[data-action="start-module"][data-module="insulina"]').first().click();}if(mode!=='detail')await page.locator('[data-action="module-mode"][data-mode="'+mode+'"]').first().click();};
+  const action=async id=>{if(['cv-risk','ckm'].includes(id)){await open('cv-risk');await page.locator('[data-action="'+id+'"]').first().click();return;}await home();await page.locator('[data-action="'+id+'"]:visible').first().click();};
   const summary=async()=>{await module('dm2','review');await page.locator('[data-action="summary"]').first().click();};
   const fill=async values=>{
    for(const [id,value] of Object.entries(values)){
@@ -65,127 +67,29 @@ try{
    assert.ok(state.scrollWidth<=state.width+1,JSON.stringify(state));
    if(['home','summary','obesidad-detail'].includes(name))await page.screenshot({path:fileURLToPath(new URL(profile.id+'-'+name+'.png',output)),fullPage:name==='obesidad-detail'});
   };
-  await check(profile.id,'carga',async()=>{await page.goto(origin);assert.equal(await page.locator('button.module-card').count(),6);});
-  await check(profile.id,'home: estructura y anchura',()=>inspect('home'));
-  await check(profile.id,'teclado: salto al contenido y foco de navegación',async()=>{
-   await page.keyboard.press('Tab');assert.ok(await page.locator('.skip-link').evaluate(el=>document.activeElement===el));await page.keyboard.press('Enter');assert.ok(await page.locator('#main-content').evaluate(el=>document.activeElement===el));await module('dm2');assert.ok(await page.locator('#main-content').evaluate(el=>document.activeElement===el));
+
+  await check(profile.id,'inicio: ocho patologías sin niveles de consulta',async()=>{await page.goto(origin);assert.equal(await page.locator('[data-action="open-pathology"]').count(),8);assert.equal(await page.locator('.bottom-nav,.integral-access,.task-card').count(),0);await inspect('home');});
+  await check(profile.id,'teclado: acceso al contenido',async()=>{await page.keyboard.press('Tab');assert.ok(await page.locator('.skip-link').evaluate(el=>document.activeElement===el));await page.keyboard.press('Enter');assert.ok(await page.locator('#main-content').evaluate(el=>document.activeElement===el));});
+  for(const id of ['dm2','hta','lipids','obesidad','erc','ic','hepatico']){
+   await check(profile.id,id+': diagnóstico sin formulario extenso',async()=>{await open(id);assert.equal(await page.locator('main input,main select').count(),0);assert.equal(await page.locator('.module-tabs,.medication-list').count(),0);await inspect(id+'-diagnosis');});
+   await check(profile.id,id+': clasificación y cálculo contextual',async()=>{await stage(2);assert.ok(await page.locator('.form-card .module-field').count()<=4);await page.locator('[data-action="flow-classify"]').click();assert.ok(await page.locator('.brief-result').isVisible());await inspect(id+'-classification');});
+   await check(profile.id,id+': tratamiento directo sin catálogo de fichas',async()=>{await stage(1);await page.locator('[data-action="flow-stage"][data-stage="3"]').last().click();assert.equal(await page.locator('.flow-progress [aria-current="step"]').innerText(),'3. Tratamiento');assert.equal(await page.locator('.medication-list').count(),0);if(id!=='hepatico')assert.ok(await page.locator('#flow-treatment').isVisible());await inspect(id+'-treatment');});
+  }
+  await check(profile.id,'prevención: acceso a riesgo y CKM',async()=>{for(const id of ['cv-risk','ckm']){await action(id);await inspect(id);}});
+  const reset=async()=>{await home();if(await page.locator('[data-action="new"]').count())await page.locator('[data-action="new"]').click();};
+  await check(profile.id,'IMC integrado y transferencia explícita',async()=>{await reset();await open('obesidad');await stage(2);await page.locator('.flow-calculator summary').click();await fill({peso:'116',talla:'180'});await page.locator('[data-action="clinical-calculate"]').click();assert.match(await page.locator('#clinical-calc-result').innerText(),/35.80/);await page.locator('[data-action="use-calculation"]').click();assert.equal(await page.locator('.pathology-page').count(),1);assert.ok(Math.abs(Number(await page.locator('[data-field="imc"]').inputValue())-35.802469)<.00001);await page.locator('[data-action="flow-classify"]').click();assert.match(await page.locator('.brief-result').innerText(),/35.80/);await inspect('bmi-inline');});
+  await check(profile.id,'TFGe integrada con creatinina y unidades',async()=>{await reset();await open('erc');await stage(2);await page.locator('.flow-calculator summary').click();await fill({edad:'60',calc_sexo:'Hombre',calc_creatinina:'1',calc_creat_unidad:'mg/dL',calc_estabilidad:'Creatinina estable, sin embarazo ni diálisis'});await page.locator('[data-action="clinical-calculate"]').click();assert.match(await page.locator('#clinical-calc-result').innerText(),/86.16/);await page.locator('[data-action="use-calculation"]').click();assert.ok(Number(await page.locator('[data-field="tfge"]').inputValue())>86);await inspect('egfr-inline');});
+  await check(profile.id,'FIB4: cálculo integrado y perfil de riesgo sin ecografía',async()=>{await reset();await open('hepatico');await stage(2);await page.locator('.flow-calculator summary').click();await fill({edad:'60',ast:'30',alt:'25',plaquetas:'200'});await page.locator('[data-action="clinical-calculate"]').click();assert.match(await page.locator('#clinical-calc-result').innerText(),/1.80/);await page.locator('[data-action="use-calculation"]').click();await fill({hepatico_valoracion:'Otras causas evaluadas; esteatosis no confirmada',fib4_contexto:'Perfil de riesgo compatible con evaluación MASLD'});await page.locator('[data-action="flow-classify"]').click();assert.match(await page.locator('.brief-result').innerText(),/banda intermedia/);await inspect('fib4-inline');});
+  const choose=async(id,key)=>{await open(id);await stage(3);await page.locator('#flow-treatment').selectOption(key);};
+  const confirmed='Indicación, contraindicaciones e interacciones revisadas';
+  const initiation={tx_operacion:'Inicio sin fármaco/clase equivalentes',tx_contexto:'Adulto estable, sin embarazo ni lactancia'};
+  await check(profile.id,'HTA: pauta integrada e invalidación',async()=>{await reset();await choose('hta','losartan');await fill({...initiation,tfge:'60',potasio:'4.5',pas:'130',hta_conocida:'Sí',tx_revision:confirmed});await page.locator('[data-action="module-dose-result"]').click();assert.match(await page.locator('#module-dose-result').innerText(),/50 mg · cada 24 h/);await fill({potasio:'5.8'});assert.equal(await page.locator('#module-dose-result').count(),0);await page.locator('[data-action="module-dose-result"]').click();assert.equal(await page.locator('.dose-proposal').count(),0);await inspect('hta-dose-inline');});
+  await check(profile.id,'obesidad: inicio y escalada calculados en el mismo recorrido',async()=>{await reset();await open('obesidad');await stage(2);await fill({imc:'35',dm2:'No'});await stage(3);await page.locator('#flow-treatment').selectOption('wegovy');await fill({...initiation,tfge:'60',tx_revision:confirmed});await page.locator('[data-action="module-dose-result"]').click();assert.match(await page.locator('#module-dose-result').innerText(),/0.25 mg · una vez a la semana/);await fill({tx_operacion:'Escalada del mismo producto, sin interrupciones',tx_dosis_actual:'0.25',tx_semanas:'4',tx_tolerancia:'Buena tolerancia y escalado indicado',tx_revision:confirmed});await page.locator('[data-action="module-dose-result"]').click();assert.match(await page.locator('#module-dose-result').innerText(),/0.5 mg · una vez a la semana/);await inspect('weight-dose-inline');await page.screenshot({path:fileURLToPath(new URL(profile.id+'-weight-dose.png',output)),fullPage:true});});
+  await check(profile.id,'insulina integrada: inicio, ajuste, bolo y reducción',async()=>{await reset();await open('dm2');await stage(3);await page.locator('[data-action="flow-insulin"]').click();await fill({ins_calc_accion:'Iniciar basal',ins_calc_contexto:'Adulto con DM2 estable, sin gestación',ins_calc_producto:'Glargina U300 · Toujeo SoloStar',insulina_esquema:'Sin insulina',peso:'87',tfge:'60',ins_calc_hipo:'Sin episodios confirmados',ins_calc_revision:'Indicación, seguridad y educación revisadas'});await page.locator('[data-action="insulin-dose-result"]').click();assert.match(await page.locator('#insulin-dose-result').innerText(),/17 U al día/);await fill({peso:'90'});assert.equal(await page.locator('#insulin-dose-result').count(),0);await fill({ins_calc_revision:'Indicación, seguridad y educación revisadas'});await page.locator('[data-action="insulin-dose-result"]').click();assert.match(await page.locator('#insulin-dose-result').innerText(),/18 U al día/);
+   for(const [values,expected] of [[{ins_calc_accion:'Ajustar basal',insulina_esquema:'Solo basal',insulina_dosis_basal:'20',ins_calc_dias:'4',ins_calc_min:'80',ins_calc_max:'130',ins_calc_g1:'150',ins_calc_g2:'160',ins_calc_g3:'150'},/22 U al día/],[{ins_calc_accion:'Añadir bolo en una comida',ins_calc_patron:'Ayunas en objetivo y elevación posprandial repetida',ins_calc_glp1:'Ya utilizado o alternativa valorada y no adecuada',ins_calc_comida:'Comida',ins_calc_rapida:'Asparta U100 · NovoRapid FlexPen',ins_calc_bolo:'4 U',hba1c:'8.5'},/4 U en la comida/],[{ins_calc_accion:'Reducir basal',ins_calc_hipo:'Leve, resuelta y sin causa corregible identificada',ins_calc_causa:'Revisada: basal responsable, sin bolo ni causa corregible',ins_calc_reduccion:'10 %'},/18 U al día/]]){await fill({...values,ins_calc_revision:'Indicación, seguridad y educación revisadas'});await page.locator('[data-action="insulin-dose-result"]').click();assert.match(await page.locator('#insulin-dose-result').innerText(),expected);await inspect('insulin-inline');}
   });
-  for(const id of ['dm2','ic','erc','obesidad','hepatico','insulina'])for(const mode of ['quick','detail','review'])
-   await check(profile.id,id+'-'+mode,async()=>{await module(id,mode);await inspect(id+'-'+mode);});
-  for(const id of ['hta','lipids','ckm','cv-risk','tools','sources','evaluation'])
-   await check(profile.id,id+': estructura y anchura',async()=>{await action(id);await inspect(id);});
-  await check(profile.id,'summary: estructura y anchura',async()=>{await summary();assert.equal(await page.locator('#integrated-plan').count(),1);await inspect('summary');});
-  await check(profile.id,'datos compartidos e invalidación',async()=>{
-   await action('lipids');await fill({ldl:'130'});await page.locator('[data-action="lipid-result"]').click();assert.ok(await page.locator('#lipid-result').isVisible());
-   await fill({ldl:'125'});assert.equal(await page.locator('#lipid-result').count(),0);await action('cv-risk');await page.locator('[data-action="cv-expand"]').click();assert.equal(await page.locator('[data-field="ldl"]').inputValue(),'125');
-   await page.reload();await action('cv-risk');await page.locator('[data-action="cv-expand"]').click();assert.equal(await page.locator('[data-field="ldl"]').inputValue(),'');
-  });
-  await check(profile.id,'FIB-4 externo e invalidación de confirmación',async()=>{
-   await module('hepatico','detail');await fill({edad:'55',embarazo:'No procede',fecha_evaluacion:'2026-11-13',fib4_agudo:'No',masld_alarma:'No',masld_cirrosis:'No tras valoración',fib4_contexto:'Perfil de riesgo compatible con evaluación MASLD',hepatico_valoracion:'Esteatosis documentada y otras causas evaluadas',masld_alcohol:'Revisados',masld_etiologia:'Compatible con evaluación MASLD',masld_fib4_origen:'Informado por fuente externa',fib4_informado:'2.8',masld_fecha_fib4:'2026-11-10',masld_fuente_fib4:'Informe sintético QA',masld_fib4_confirmado:'Sí'});
-   await page.locator('[data-action="masld-result"]').click();assert.match(await page.locator('#masld-result').innerText(),/FIB-4 utilizado: 2.80/);
-   await fill({edad:'66'});assert.equal(await page.locator('#masld-result').count(),0);await page.locator('[data-action="masld-result"]').click();assert.doesNotMatch(await page.locator('#masld-result').innerText(),/FIB-4 utilizado: 2.80/);
-  });
-  await check(profile.id,'alarma prioritaria y borrado de sesión',async()=>{
-   await action('hta');await fill({pas:'180'});await summary();assert.match(await page.locator('#integrated-plan').innerText(),/Resolver primero las alertas/);
-   await page.locator('[data-action="new"]').first().click();await summary();assert.doesNotMatch(await page.locator('#integrated-plan').innerText(),/Resolver primero las alertas/);
-  });
-  await check(profile.id,'exclusividad de ausencia de fármacos',async()=>{
-   await module('erc','detail');await page.locator('details').evaluateAll(xs=>xs.forEach(x=>x.open=true));
-   const none=()=>page.locator('input[data-field="farmacos_clases"][value="Sin tratamiento farmacológico"]'),ace=()=>page.locator('input[data-field="farmacos_clases"][value="IECA"]');
-   await none().check();await ace().check();assert.equal(await none().isChecked(),false);assert.equal(await ace().isChecked(),true);await none().check();assert.equal(await ace().isChecked(),false);
-  });
-  await check(profile.id,'FEVI previa evita reclasificación automática',async()=>{
-   await module('ic','detail');await fill({ic:'Sí',edad:'60',embarazo:'No procede',fecha_evaluacion:'2026-11-13',fevi:'55',fecha_fevi:'2026-11-10',ic_fevigrupo:'Preservada · FEVI ≥50 %',ic_evidencia_objetiva:'Confirmada por evaluación especializada',ic_fevi_previa_reducida:'Sí',ic_sintomatica:'Sí',ic_estabilidad:'Estable evaluado',ic_alarma:['Sin señales de alarma tras valoración'],congestion:'Ausentes',ic_fc:'70',pas:'120',pad:'75',tfge:'70',fecha_tfge:'2026-11-10',potasio:'4.3',fecha_potasio:'2026-11-10',lra_sospecha:'No',ic_descompensada:'No',situacion_aguda:'Estable sin proceso agudo grave',medicacion_revisada:'Sí',alergias_revisadas:'Sí'});
-   await page.locator('[data-action="ic-result"]').click();assert.match(await page.locator('#ic-result').innerText(),/antecedente de FEVI <50/);assert.match(await page.locator('#ic-result').innerText(),/no indica retirar tratamiento previo/);
-  });
-  await check(profile.id,'cetoacidosis sin diagnóstico retiene el plan y calendario',async()=>{
-   await home();await page.locator('[data-action="new"]').first().click();
-   await module('erc','detail');await fill({cetoacidosis_sospecha:'Sí'});await summary();
-   assert.match(await page.locator('#integrated-plan').innerText(),/Resolver primero las alertas/);
-   await action('tools');await page.locator('[data-action="open-drug"][data-drug-id="finerenona"][data-route-id="erc_dm2"]').first().click();
-   await page.locator('[data-action="followup"]').click();await page.locator('#action-date').fill('2026-11-01');await page.locator('#action-dose').selectOption('20');await page.locator('#action-confirm').check();await page.locator('[data-action="confirm-med-action"]').click();
-   assert.match(await page.locator('main').innerText(),/Referencia retenida/);assert.match(await page.locator('main').innerText(),/2026-11-29/);
-   await home();await page.locator('[data-action="new"]').first().click();
-  });
-  await check(profile.id,'consulta breve y acceso directo a tratamiento',async()=>{
-   await home();
-   for(const [id,count] of [['obesidad',2],['hepatico',3]]){
-    await module(id);assert.equal(await page.locator('.form-card .module-field').count(),id==='obesidad'?3:count);
-   }
-   await module('obesidad');await page.locator('[data-action="obesity-result"]').click();assert.ok(await page.locator('#obesity-result').isVisible());assert.equal(await page.locator('.capture-details').count(),0);await page.locator('.brief-drugs summary').click();
-   await page.locator('.treatment-access [data-drug-id="tirzepatida"]').click();assert.match(await page.locator('main').innerText(),/DOSIS DE FICHA TÉCNICA/);assert.match(await page.locator('main').innerText(),/Datos esenciales incompletos/);
-   await home();
-  });
-  await check(profile.id,'calculadoras directas: IMC, FIB4, TFGe y aclaramiento con transferencia explícita',async()=>{
-   await home();if(await page.locator('[data-action="new"]').count())await page.locator('[data-action="new"]').first().click();
-   const calc=async kind=>{await action('tools');await page.locator('.calculator-menu [data-kind="'+kind+'"]').click();};
-   await calc('imc');await fill({peso:'100',talla:'200'});await page.locator('[data-action="clinical-calculate"]').click();assert.match(await page.locator('#clinical-calc-result').innerText(),/25.00/);await inspect('calculator-imc');await page.locator('[data-action="use-calculation"]').click();assert.equal(await page.locator('[data-field="imc"]').inputValue(),'25');
-   await calc('fib4');await fill({edad:'50',ast:'40',alt:'25',plaquetas:'200'});await page.locator('[data-action="clinical-calculate"]').click();assert.match(await page.locator('#clinical-calc-result').innerText(),/2.00/);await inspect('calculator-fib4');
-   await calc('tfge');await fill({edad:'40',calc_sexo:'Hombre',calc_creatinina:'0.9',calc_creat_unidad:'mg/dL',calc_estabilidad:'Creatinina estable, sin embarazo ni diálisis'});await page.locator('[data-action="clinical-calculate"]').click();assert.match(await page.locator('#clinical-calc-result').innerText(),/CKD|Categoría G/);await page.locator('[data-action="use-calculation"]').click();assert.ok(Number(await page.locator('[data-field="tfge"]').inputValue())>100);
-   await calc('tfge');await fill({calc_creatinina:'1.2'});assert.equal(await page.locator('#clinical-calc-result').count(),0);await page.locator('[data-action="clinical-calculate"]').click();await page.locator('[data-action="use-calculation"]').click();assert.ok(Number(await page.locator('[data-field="tfge"]').inputValue())<100);
-   await calc('crcl');await fill({edad:'68',calc_creatinina:'1',calc_peso_cg:'72',calc_peso_cg_revision:'Peso seleccionado apropiado tras revisión clínica'});await page.locator('[data-action="clinical-calculate"]').click();assert.match(await page.locator('#clinical-calc-result').innerText(),/72.00 mL\/min/);await inspect('calculator-crcl');
-   await home();await page.locator('[data-action="new"]').first().click();
-  });
-  await check(profile.id,'medicación visible en cada consulta, con indicación y sin fármaco ficticio para FIB4/CKM',async()=>{
-   for(const id of ['dm2','ic','erc','obesidad','hepatico','insulina']){await module(id);assert.ok(await page.locator('.module-medication').isVisible());if(['dm2','ic','erc','obesidad'].includes(id))assert.ok(await page.locator('.reference-dose').count()>0);await inspect('medication-'+id);}
-   for(const id of ['hta','lipids','ckm','cv-risk']){await action(id);assert.ok(await page.locator('.module-medication').isVisible());await inspect('medication-'+id);}
-   await module('ic');await fill({ic_fevigrupo:'Preservada · FEVI ≥50 %',congestion:'Ausentes'});assert.equal(await page.locator('[data-action="module-dose"][data-key="bisoprolol"]').count(),0);assert.equal(await page.locator('[data-action="module-dose"][data-key="furosemida"]').count(),0);
-   await home();await page.locator('[data-action="new"]').first().click();
-  });
-  await check(profile.id,'pautas de consulta: dosis HTA y escalado de peso con retención por datos nuevos',async()=>{
-   await action('hta');await fill({pas:'150',pad:'90',hta_conocida:'Sí',hta_tratamiento:'Sin tratamiento'});await page.locator('[data-action="module-dose"][data-key="losartan"]').click();
-   await fill({tx_operacion:'Inicio sin fármaco/clase equivalentes',tx_contexto:'Adulto estable, sin embarazo ni lactancia',tfge:'60',potasio:'4.5',tx_revision:'Indicación, contraindicaciones e interacciones revisadas'});await page.locator('[data-action="module-dose-result"]').click();assert.match(await page.locator('#module-dose-result').innerText(),/50 mg · cada 24 h/);await inspect('module-dose-hta');
-   await fill({tx_operacion:'Escalada del mismo producto, sin interrupciones',tx_dosis_actual:'50',tx_semanas:'6',tx_tolerancia:'Buena tolerancia y escalado indicado',tx_revision:'Indicación, contraindicaciones e interacciones revisadas'});await page.locator('[data-action="module-dose-result"]').click();assert.match(await page.locator('#module-dose-result').innerText(),/100 mg · cada 24 h/);
-   await fill({potasio:'5.3'});assert.equal(await page.locator('#module-dose-result').count(),0);await fill({tx_revision:'Indicación, contraindicaciones e interacciones revisadas'});await page.locator('[data-action="module-dose-result"]').click();assert.equal(await page.locator('#module-dose-result .dose-proposal').count(),0);
-   await home();await page.locator('[data-action="new"]').first().click();await module('ic');await fill({ic_fevigrupo:'Reducida · FEVI <50 %',congestion:'Ausentes'});await page.locator('[data-action="module-dose"][data-key="arni"]').click();
-   await fill({tx_operacion:'Inicio sin fármaco/clase equivalentes',tx_contexto:'Adulto estable, sin embarazo ni lactancia',tfge:'60',potasio:'4.5',pas:'130',fevi:'35',tx_raas:'Sin IECA/ARA-II previo',tx_raas_dosis:'No tratado o dosis bajas',tx_revision:'Indicación, contraindicaciones e interacciones revisadas'});await page.locator('[data-action="module-dose-result"]').click();assert.match(await page.locator('#module-dose-result').innerText(),/24\/26 mg · cada 12 h/);
-   await fill({tx_operacion:'Escalada del mismo producto, sin interrupciones',tx_dosis_arni:'24/26 mg',tx_semanas:'4',tx_tolerancia:'Buena tolerancia y escalado indicado',tx_revision:'Indicación, contraindicaciones e interacciones revisadas'});await page.locator('[data-action="module-dose-result"]').click();assert.match(await page.locator('#module-dose-result').innerText(),/49\/51 mg · cada 12 h/);await inspect('module-dose-arni');
-   await home();await page.locator('[data-action="new"]').first().click();await module('obesidad');await fill({imc:'35',dm2:'No',obesidad_perfil:['Ninguna seleccionada']});await page.locator('[data-action="module-dose"][data-key="wegovy"]').click();
-   await fill({tx_operacion:'Inicio sin fármaco/clase equivalentes',tx_contexto:'Adulto estable, sin embarazo ni lactancia',tfge:'60',tx_revision:'Indicación, contraindicaciones e interacciones revisadas'});await page.locator('[data-action="module-dose-result"]').click();assert.match(await page.locator('#module-dose-result').innerText(),/0.25 mg · una vez a la semana/);await inspect('module-dose-weight');
-   await fill({tx_operacion:'Escalada del mismo producto, sin interrupciones',tx_dosis_actual:'0.25',tx_semanas:'4',tx_tolerancia:'Buena tolerancia y escalado indicado',tx_revision:'Indicación, contraindicaciones e interacciones revisadas'});await page.locator('[data-action="module-dose-result"]').click();assert.match(await page.locator('#module-dose-result').innerText(),/0.5 mg · una vez a la semana/);await page.screenshot({path:fileURLToPath(new URL(profile.id+'-weight-dose.png',output)),fullPage:true});
-   await home();await page.locator('[data-action="new"]').first().click();
-  });
-  await check(profile.id,'calculadora de insulina: dosis real, revisión e invalidación',async()=>{
-   await home();if(await page.locator('[data-action="new"]').count())await page.locator('[data-action="new"]').first().click();await module('insulina');await page.locator('[data-action="insulin-dose"]').click();
-   await fill({ins_calc_accion:'Iniciar basal',ins_calc_contexto:'Adulto con DM2 estable, sin gestación',ins_calc_producto:'Glargina U300 · Toujeo SoloStar',insulina_esquema:'Sin insulina',peso:'87',tfge:'60',ins_calc_hipo:'Sin episodios confirmados',ins_calc_revision:'Indicación, seguridad y educación revisadas'});
-   await page.locator('[data-action="insulin-dose-result"]').click();assert.match(await page.locator('#insulin-dose-result').innerText(),/17 U al día/);assert.match(await page.locator('#insulin-dose-result').innerText(),/Toujeo/);await inspect('insulin-dose');
-   await page.screenshot({path:fileURLToPath(new URL(profile.id+'-insulin-dose.png',output)),fullPage:true});
-   await fill({peso:'90'});assert.equal(await page.locator('#insulin-dose-result').count(),0);await page.locator('[data-action="insulin-dose-result"]').click();assert.doesNotMatch(await page.locator('#insulin-dose-result').innerText(),/18 U al día/);
-   await fill({ins_calc_revision:'Indicación, seguridad y educación revisadas'});await page.locator('[data-action="insulin-dose-result"]').click();assert.match(await page.locator('#insulin-dose-result').innerText(),/18 U al día/);
-   await fill({ins_calc_accion:'Ajustar basal',insulina_esquema:'Solo basal',insulina_dosis_basal:'20',ins_calc_dias:'4',ins_calc_min:'80',ins_calc_max:'130',ins_calc_g1:'150',ins_calc_g2:'160',ins_calc_g3:'150',ins_calc_revision:'Indicación, seguridad y educación revisadas'});
-   await page.locator('[data-action="insulin-dose-result"]').click();assert.match(await page.locator('#insulin-dose-result').innerText(),/22 U al día/);await inspect('insulin-dose-adjust');
-   await fill({ins_calc_accion:'Añadir bolo en una comida',ins_calc_patron:'Ayunas en objetivo y elevación posprandial repetida',ins_calc_glp1:'Ya utilizado o alternativa valorada y no adecuada',ins_calc_comida:'Comida',ins_calc_rapida:'Asparta U100 · NovoRapid FlexPen',ins_calc_bolo:'4 U',hba1c:'8.5',ins_calc_revision:'Indicación, seguridad y educación revisadas'});
-   await page.locator('[data-action="insulin-dose-result"]').click();assert.match(await page.locator('#insulin-dose-result').innerText(),/4 U en la comida/);assert.match(await page.locator('#insulin-dose-result').innerText(),/NovoRapid/);await inspect('insulin-dose-bolus');
-   await fill({ins_calc_accion:'Reducir basal',ins_calc_hipo:'Leve, resuelta y sin causa corregible identificada',ins_calc_causa:'Revisada: basal responsable, sin bolo ni causa corregible',ins_calc_reduccion:'10 %',ins_calc_revision:'Indicación, seguridad y educación revisadas'});
-   await page.locator('[data-action="insulin-dose-result"]').click();assert.match(await page.locator('#insulin-dose-result').innerText(),/18 U al día/);await inspect('insulin-dose-reduce');
-   await home();await page.locator('[data-action="new"]').first().click();
-  });
-  await check(profile.id,'CKM dirigido: bloque breve, resultado mínimo y preguntas condicionales',async()=>{
-   await action('ckm');assert.equal(await page.locator('.form-card input,.form-card select').count(),6);
-   await fill({edad:'60',embarazo:'No procede',dm1:'No',fecha_evaluacion:'2026-11-13',situacion_aguda:'Estable sin proceso agudo grave',lra_sospecha:'No'});
-   await page.locator('[data-action="ckm-next"]').click();assert.equal(await page.locator('[data-field="ckm_fecha_cvd"]').count(),0);
-   await fill({ckm_cvd:'Confirmada'});assert.equal(await page.locator('[data-field="ckm_fecha_cvd"]').count(),1);await fill({ckm_fecha_cvd:'2026-11-10'});
-   await page.locator('[data-action="ckm-next"]').click();await fill({dm2:'Sí'});assert.match(await page.locator('#ckm-result').innerText(),/al menos estadio 4/);
-   assert.equal(await page.locator('[data-block="subclinica"]').count(),0);assert.ok(await page.locator('.form-card input,.form-card select').count()<=6);
-   await home();await page.locator('[data-action="new"]').first().click();
-  });
-  await check(profile.id,'menú por tareas y consultas rápidas con dos a cuatro criterios',async()=>{
-   await home();assert.equal(await page.locator('.module-grid button.module-card').count(),6);assert.equal(await page.locator('.module-grid button.task-card').count(),4);
-   assert.equal(await page.locator('[data-action="start"]:visible').count(),0);
-   for(const [id,count] of [['dm2',2],['ic',2],['erc',4],['obesidad',3],['hepatico',3],['insulina',2]]){
-    await module(id);assert.equal(await page.locator('.form-card .module-field').count(),count,id);
-   }
-   for(const id of ['hta','lipids']){await action(id);assert.equal(await page.locator('.form-card .module-field').count(),4,id);}
-   await action('cv-risk');assert.equal(await page.locator('.form-card .module-field').count(),5);
-  });
-  await check(profile.id,'dos criterios de IC entregan orientación sin historia completa',async()=>{
-   await module('ic');await fill({ic_fevigrupo:'Reducida · FEVI <50 %',congestion:'Ausentes'});
-   const result=await page.locator('#ic-result').innerText();assert.match(result,/betabloqueante/);assert.match(result,/no añadir diurético/);assert.equal(await page.locator('[data-field="fecha_potasio"]').count(),0);
-   await inspect('ic-brief-result');await page.screenshot({path:fileURLToPath(new URL(profile.id+'-ic-brief-result.png',output)),fullPage:false});
-   await home();await page.locator('[data-action="new"]').first().click();
-   await module('obesidad');await fill({imc:'32',dm2:'No',obesidad_perfil:['Ninguna seleccionada']});assert.match(await page.locator('#obesity-result').innerText(),/semaglutida subcutánea para peso o tirzepatida/);
-   await home();await page.locator('[data-action="new"]').first().click();
-  });
+  await check(profile.id,'alerta compartida y persistencia en otras patologías',async()=>{await reset();await module('dm2','detail');await fill({glucemia_actual:'55'});await open('hta');assert.match(await page.locator('[role="alert"]').innerText(),/Glucemia actual baja/);await stage(3);await page.locator('#flow-treatment').selectOption('amlodipino');await fill({...initiation,tx_revision:confirmed});await page.locator('[data-action="module-dose-result"]').click();assert.equal(await page.locator('.dose-proposal').count(),0);await reset();await open('hta');assert.equal(await page.locator('[role="alert"]').count(),0);});
+  await check(profile.id,'datos compartidos y privacidad al recargar',async()=>{await open('erc');await stage(2);await fill({tfge:'54'});await open('dm2');await stage(3);await page.locator('#flow-treatment').selectOption('metformina');assert.equal(await page.locator('[data-field="tfge"]').inputValue(),'54');await page.reload();await open('erc');await stage(2);assert.equal(await page.locator('[data-field="tfge"]').inputValue(),'');assert.deepEqual(await page.evaluate(()=>({local:Object.keys(localStorage),session:Object.keys(sessionStorage)})),{local:[],session:[]});assert.deepEqual(await context.cookies(),[]);assert.deepEqual(external,[]);});
   await check(profile.id,'actualización recupera una portada antigua en caché y conserva cachés ajenas',async()=>{
    await page.reload();await page.waitForFunction(()=>!!navigator.serviceWorker.controller);
    await page.evaluate(async()=>{
@@ -195,7 +99,7 @@ try{
    });
    await page.goto(origin+'/');assert.match(await page.locator('body').innerText(),/versión antigua de prueba/);
    await page.goto(origin+'/actualizar.html');await page.locator('#update').click();await page.waitForURL(origin+'/');
-   assert.equal(await page.locator('button.module-card').count(),6);assert.doesNotMatch(await page.locator('body').innerText(),/Prototipo en revisión|Ningún resultado autoriza/);
+   assert.equal(await page.locator('button.module-card').count(),8);assert.doesNotMatch(await page.locator('body').innerText(),/Prototipo en revisión|Ningún resultado autoriza/);
    assert.equal(await page.evaluate(async()=>!!await (await caches.open('otra-aplicacion-prueba')).match(location.origin+'/fixture.txt')),true);
    await page.evaluate(()=>caches.delete('otra-aplicacion-prueba'));
   });
@@ -212,9 +116,9 @@ try{
     const uncached=await browser.newContext(),negative=await uncached.newPage();
     await assert.rejects(()=>negative.goto(origin,{timeout:5000}));await uncached.close();
     if(!profile.id.startsWith('webkit'))await context.setOffline(true);
-    await page.reload({waitUntil:'load'});assert.equal(await page.locator('button.module-card').count(),6);
-   for(const id of ['obesidad','hepatico']){await module(id,'detail');assert.ok(await page.locator('[data-action="'+(id==='obesidad'?'obesity-result':'masld-result')+'"]').isVisible());}
-   await summary();assert.ok(await page.locator('#integrated-plan').isVisible());
+    await page.reload({waitUntil:'load'});assert.equal(await page.locator('button.module-card').count(),8);
+   for(const id of ['obesidad','hepatico']){await open(id);await stage(2);await page.locator('[data-action="flow-classify"]').click();assert.ok(await page.locator('.brief-result').isVisible());}
+   await open('dm2');await stage(3);assert.ok(await page.locator('[data-action="flow-insulin"]').isVisible());
    const urls=await page.evaluate(async()=>{const all=[];for(const key of await caches.keys())for(const request of await (await caches.open(key)).keys())all.push(request.url);return all;});
    assert.ok(urls.some(url=>url.endsWith('/src/clinical/plan-integral.mjs')));assert.ok(urls.every(url=>!new URL(url).search));
    } finally {await context.setOffline(false);await startServer();}

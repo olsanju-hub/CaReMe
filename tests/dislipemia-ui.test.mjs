@@ -10,7 +10,7 @@ test('dislipemia accesible, campos únicos, estado compartido y resultado invali
  await import('../src/app.mjs');
  const click=(action,data={})=>handlers.click({target:{closest:()=>({dataset:{action,...data}})}});
  const set=(id,value)=>handlers.input({target:{closest:()=>({dataset:{field:id},value,type:'text'})}});
- assert.equal((root.innerHTML.match(/class="module-card"/g)||[]).length,6);
+ assert.equal((root.innerHTML.match(/class="module-card"/g)||[]).length,8);
  click('lipids');assert.equal((root.innerHTML.match(/class="field module-field"/g)||[]).length,4);click('brief-advanced');assert.match(root.innerHTML,/Perfil lipídico disponible/);
  for(const id of LIPID_FIELDS)assert.equal((root.innerHTML.match(new RegExp('data-field-id="'+id+'"','g'))||[]).length,1,id+' una vez');
  set('trigliceridos','881');click('lipid-result');assert.match(root.innerHTML,/TG &gt;880/);

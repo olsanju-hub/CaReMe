@@ -9,7 +9,7 @@ test('acceso CV adicional conserva seis consultas, comparte datos e invalida res
  await import('../src/app.mjs');
  const click=(action,data={})=>handlers.click({target:{closest:()=>({dataset:{action,...data}})}});
  const set=(id,value)=>handlers.input({target:{closest:()=>({dataset:{field:id},value,type:'text'})}});
- assert.equal((root.innerHTML.match(/class="module-card"/g)||[]).length,6);
+ assert.equal((root.innerHTML.match(/class="module-card"/g)||[]).length,8);
  click('cv-risk');assert.match(root.innerHTML,/Elegibilidad y datos disponibles/);
  for(const [id,value] of Object.entries({edad:'50',cv_sexo_modelo:'Hombre',cv_region:'España · región ESC de riesgo bajo',
  tabaco:'Actual',ecv:'No',ic:'No',dm1:'No',dm2:'No',erc:'No',embarazo:'No procede',cv_hfamiliar:'No',cv_sintomas:'No',

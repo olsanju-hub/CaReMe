@@ -9,7 +9,7 @@ test('CKM: acceso, datos compartidos y resultado invalidado tras editar',async()
  await import('../src/app.mjs');
  const click=(action,data={})=>handlers.click({target:{closest:()=>({dataset:{action,...data}})}});
  const set=(id,value)=>handlers.input({target:{closest:()=>({dataset:{field:id},value,type:'text'})}});
- assert.equal((root.innerHTML.match(/class="module-card"/g)||[]).length,6);
+ assert.equal((root.innerHTML.match(/class="module-card"/g)||[]).length,8);
  click('ckm');click('ckm-result');assert.match(root.innerHTML,/Estadio CKM no evaluable/);
  for(const [id,value] of Object.entries({edad:'50',embarazo:'No procede',dm1:'No',fecha_evaluacion:'2026-11-12',
  ckm_evaluacion_confirmada:'Sí',ckm_cvd:'No identificada tras revisión',ecv:'No',ic:'No',

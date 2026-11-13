@@ -96,7 +96,7 @@ export function evaluateClinicalBrief(d,id){
   }
   if(age===null||fib===null||fib<=0){r.situation='Introducir edad y FIB-4 disponible.';return r;}
   if(age<35){r.situation='FIB-4 de rendimiento limitado por debajo de 35 años.';r.steps.push('Valorar otra evaluación según perfil clínico; un índice bajo no cierra el circuito.');return r;}
-  if(get(d,'hepatico_valoracion')!=='Esteatosis documentada y otras causas evaluadas'){r.situation='Completar la evaluación inicial de esteatosis y otras causas.';return r;}
+  if(!(['Esteatosis documentada y otras causas evaluadas','Otras causas evaluadas; esteatosis no confirmada'].includes(get(d,'hepatico_valoracion'))&&(get(d,'hepatico_valoracion')==='Esteatosis documentada y otras causas evaluadas'||get(d,'dm2')==='Sí'||get(d,'fib4_contexto')==='Perfil de riesgo compatible con evaluación MASLD'))){r.situation='Completar la evaluación inicial de esteatosis y otras causas.';return r;}
   const band=classifyMasldFib4(fib,age);
   r.situation='FIB-4 introducido: '+fib.toFixed(2)+' · '+(band==='bajo'?'banda baja':band==='alto'?'banda alta':'banda intermedia')+'.';
   // Los identificadores del clasificador se normalizan sin duplicar umbrales.

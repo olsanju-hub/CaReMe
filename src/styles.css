@@ -584,3 +584,9 @@ h2 { letter-spacing:-.025em }
 
 /* Nombres de principios activos largos en pantallas estrechas. */
 .page h1 { overflow-wrap:anywhere; }
+
+/* Recorrido clínico por patología */
+.flow-progress{display:flex;flex-wrap:wrap;gap:.5rem;margin:1rem 0 1.5rem;border-bottom:1px solid var(--line,#dce3e6);padding-bottom:.75rem}
+.flow-progress [aria-current="step"]{font-weight:700;text-decoration:underline;text-underline-offset:.4rem}
+.pathology-page{max-width:850px}.pathology-page select{max-width:100%;width:100%}.flow-calculator{margin:1rem 0}.flow-reference{margin-top:2rem}.pathology-page .form-card{margin-bottom:1rem}
+.bottom-nav{display:none}body{padding-bottom:0}.module-card{min-height:108px}.module-content{padding:.3rem}

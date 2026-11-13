@@ -9,7 +9,7 @@ test('HTA conserva seis consultas, comparte PA y retira resultado tras editar',a
  await import('../src/app.mjs');
  const click=(action,data={})=>handlers.click({target:{closest:()=>({dataset:{action,...data}})}});
  const set=(id,value)=>handlers.input({target:{closest:()=>({dataset:{field:id},value,type:'text'})}});
- assert.equal((root.innerHTML.match(/class="module-card"/g)||[]).length,6);
+ assert.equal((root.innerHTML.match(/class="module-card"/g)||[]).length,8);
  click('hta');assert.equal((root.innerHTML.match(/class="field module-field"/g)||[]).length,4);click('brief-advanced');assert.match(root.innerHTML,/Datos iniciales/);assert.match(root.innerHTML,/AMPA\/MAPA/);
  set('pas','180');click('hta-result');assert.match(root.innerHTML,/valorar daño agudo/);
  set('pas','150');assert.equal(removed,true);click('hta-result');assert.doesNotMatch(root.innerHTML,/PA aportada ≥180/);
