@@ -98,6 +98,15 @@ try{
    await module('ic','detail');await fill({ic:'Sí',edad:'60',embarazo:'No procede',fecha_evaluacion:'2026-11-13',fevi:'55',fecha_fevi:'2026-11-10',ic_fevigrupo:'Preservada · FEVI ≥50 %',ic_evidencia_objetiva:'Confirmada por evaluación especializada',ic_fevi_previa_reducida:'Sí',ic_sintomatica:'Sí',ic_estabilidad:'Estable evaluado',ic_alarma:['Sin señales de alarma tras valoración'],congestion:'Ausentes',ic_fc:'70',pas:'120',pad:'75',tfge:'70',fecha_tfge:'2026-11-10',potasio:'4.3',fecha_potasio:'2026-11-10',lra_sospecha:'No',ic_descompensada:'No',situacion_aguda:'Estable sin proceso agudo grave',medicacion_revisada:'Sí',alergias_revisadas:'Sí'});
    await page.locator('[data-action="ic-result"]').click();assert.match(await page.locator('#ic-result').innerText(),/antecedente de FEVI <50/);assert.match(await page.locator('#ic-result').innerText(),/no indica retirar tratamiento previo/);
   });
+  await check(profile.id,'cetoacidosis sin diagnóstico retiene el plan y calendario',async()=>{
+   await home();await page.locator('[data-action="new"]').first().click();
+   await module('erc','detail');await fill({cetoacidosis_sospecha:'Sí'});await summary();
+   assert.match(await page.locator('#integrated-plan').innerText(),/Resolver primero las alertas/);
+   await action('tools');await page.locator('[data-action="open-drug"][data-drug-id="finerenona"][data-route-id="erc_dm2"]').first().click();
+   await page.locator('[data-action="followup"]').click();await page.locator('#action-date').fill('2026-11-01');await page.locator('#action-dose').selectOption('20');await page.locator('#action-confirm').check();await page.locator('[data-action="confirm-med-action"]').click();
+   assert.match(await page.locator('main').innerText(),/Referencia retenida/);assert.match(await page.locator('main').innerText(),/2026-11-29/);
+   await home();await page.locator('[data-action="new"]').first().click();
+  });
   await check(profile.id,'privacidad: captura sin almacenamiento o red clínica',async()=>{
    assert.deepEqual(await page.evaluate(()=>({local:Object.keys(localStorage),session:Object.keys(sessionStorage)})),{local:[],session:[]});assert.deepEqual(await context.cookies(),[]);assert.deepEqual(external,[]);
   });

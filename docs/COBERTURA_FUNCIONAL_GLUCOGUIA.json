@@ -316,5 +316,13 @@
     "no_prescription": true,
     "browser_qa": "152_passed_0_failed"
   },
-  "updated_on": "2026-11-13"
+  "updated_on": "2026-11-13",
+  "safety_audit": {
+    "date": "2026-11-13",
+    "base_commit": "a9ac2d90d14488e272fcd5d6f5a7a27ae4d437ee",
+    "node_tests_passed": 957,
+    "new_browser_run": "pending",
+    "report": "docs/AUDITORIA_SEGURIDAD_2026-11-13.md",
+    "independent_clinical_validation": "pending"
+  }
 }

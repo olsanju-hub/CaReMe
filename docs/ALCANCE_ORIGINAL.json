@@ -114,5 +114,13 @@
     "failed": 0,
     "evidence": "docs/AUDITORIA_GLOBAL_2026-11-13.md",
     "physical_device": false
+  },
+  "safety_audit": {
+    "date": "2026-11-13",
+    "base_commit": "a9ac2d90d14488e272fcd5d6f5a7a27ae4d437ee",
+    "node_tests_passed": 957,
+    "new_browser_run": "pending",
+    "report": "docs/AUDITORIA_SEGURIDAD_2026-11-13.md",
+    "independent_clinical_validation": "pending"
   }
 }

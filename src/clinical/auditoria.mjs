@@ -15,6 +15,14 @@ const NUMBER=(draft,id)=>{
   const v=VALUE(draft,id);return v===null?null:Number(v);
 };
 export const AUDIT_RULES=Object.freeze({
+  ACUTE_KETOACIDOSIS:'Sospecha de cetoacidosis independientemente del diagnóstico',
+  ACUTE_METABOLIC_ACIDOSIS:'Acidosis metabólica aguda declarada',
+  ACUTE_HYPOXIA:'Hipoxia tisular o enfermedad cardiorrespiratoria aguda',
+  ACUTE_KIDNEY_INJURY:'Lesión renal aguda o deterioro reciente',
+  ACUTE_PANCREATITIS:'Sospecha actual de pancreatitis',
+  ACUTE_DEHYDRATION:'Deshidratación significativa declarada',
+  ACUTE_VISION_LOSS:'Pérdida súbita de visión actual',
+  ACUTE_CONTEXT_REVIEW:'Revisión del contexto agudo antes de tratamiento crónico',
   MASLD_ACUTE_REVIEW:'Alarma hepática: valoración aguda prioritaria',
   LIPID_ACUTE_REVIEW:'Síntomas que exigen valoración aguda en dislipemia',
   LIPID_TG_SEVERE:'TG >880 mg/dL: priorizar evaluación',
@@ -50,6 +58,22 @@ export function auditCrossDomain(draft) {
   const provenance=auditProvenance(draft);
   const out=[...provenance.findings];
   const yes=id=>VALUE(draft,id)==='Sí';
+  // Una señal aguda afirmativa se conserva aunque no haya diagnóstico,
+  // módulo activado o respuesta al campo general de estabilidad.
+  const acuteSignals=[
+    ['cetoacidosis_sospecha','ACUTE_KETOACIDOSIS','Sospecha de cetoacidosis: valoración inmediata','Evaluar de inmediato cetonas y equilibrio ácido-base según contexto, independientemente de glucemia o antecedentes. Retener decisiones crónicas.'],
+    ['acidosis_metabolica','ACUTE_METABOLIC_ACIDOSIS','Acidosis metabólica aguda: valoración prioritaria','Valorar con urgencia la causa, gravedad y seguridad farmacológica antes del tratamiento crónico; no inferir etiología.'],
+    ['hipoxia_tisular','ACUTE_HYPOXIA','Hipoxia o enfermedad cardiorrespiratoria aguda','Priorizar valoración de oxigenación, perfusión y gravedad; retener decisiones crónicas hasta evaluar el proceso.'],
+    ['lra_sospecha','ACUTE_KIDNEY_INJURY','Lesión renal aguda o deterioro reciente','Revisar evolución renal, volumen y medicamentos antes de aplicar recomendaciones de enfermedad estable. Una TFGe aislada normal no excluye deterioro reciente.'],
+    ['pancreatitis_sospecha','ACUTE_PANCREATITIS','Sospecha actual de pancreatitis','Valoración clínica urgente y revisión del tratamiento administrado antes de intensificar pautas crónicas; la aplicación no confirma pancreatitis.'],
+    ['deshidratacion_gi','ACUTE_DEHYDRATION','Deshidratación significativa declarada','Valorar estado de volumen, función renal y tratamiento actual antes de aplicar un plan rutinario.'],
+    ['vision_subita','ACUTE_VISION_LOSS','Pérdida súbita de visión: valoración inmediata','Priorizar valoración urgente, incluida oftalmológica según contexto. No atribuir automáticamente el síntoma al medicamento ni diagnosticar NOIANA.']
+  ];
+  for(const [field,id,title,detail] of acuteSignals)
+    if(yes(field))out.push(item(id,'critical',title,detail,[field,'situacion_aguda']));
+  if(['Enfermedad aguda grave','Cirugía mayor o ayuno prolongado'].includes(VALUE(draft,'situacion_aguda')))
+    out.push(item('ACUTE_CONTEXT_REVIEW','critical','Revisar contexto agudo antes del tratamiento crónico',
+      'La enfermedad aguda grave, cirugía mayor o ayuno prolongado requieren revisar seguridad farmacológica y seguimiento. La selección de cirugía/ayuno no implica por sí sola una emergencia.', ['situacion_aguda']));
   if(yes('masld_alarma'))out.push(item('MASLD_ACUTE_REVIEW','critical','Señales de alarma en evaluación hepática',
     'Sangrado digestivo, confusión nueva o ictericia con deterioro agudo: valoración urgente antes de decisiones crónicas.', ['masld_alarma']));
   if(VALUE(draft,'lip_alarma')==='Sí')
@@ -144,7 +168,7 @@ export function auditCrossDomain(draft) {
       'Se han declarado varias clases IECA/ARA-II/ARNI. Confirmar si es transición, error de medicación o tratamiento simultáneo antes de modificar cualquier otra pauta.',
       ['farmacos_clases','farmacos','medicacion_revisada']));
   const acuteFlags=['cetoacidosis_sospecha','ic_descompensada','lra_sospecha',
-    'acidosis_metabolica','deshidratacion_gi','pancreatitis_sospecha'];
+    'acidosis_metabolica','hipoxia_tisular','deshidratacion_gi','pancreatitis_sospecha','vision_subita'];
   if(VALUE(draft,'situacion_aguda')==='Estable sin proceso agudo grave'&&
      acuteFlags.some(id=>yes(id)))
     out.push(item('ACUTE_STATE_CONFLICT','critical','Estado agudo incompatible con estabilidad declarada',
@@ -195,7 +219,7 @@ export function auditCrossDomain(draft) {
     status:critical.length?'critical':out.length?'review':'clear',
     critical,findings:out,requiresResolution:critical.length>0,
     summary:critical.length
-      ? 'Existen incoherencias críticas: no presentar candidatos farmacológicos como opciones de inicio.'
+      ? 'Existen alertas o incoherencias críticas: no presentar candidatos farmacológicos como opciones de inicio.'
       : out.length
         ? 'Existen comprobaciones de coherencia pendientes; no asumir que los datos sean definitivos.'
         : 'Sin incoherencias detectadas por estas reglas limitadas; no equivale a validar la historia clínica.'};

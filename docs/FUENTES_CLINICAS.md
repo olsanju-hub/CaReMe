@@ -141,3 +141,7 @@ La síntesis reutiliza objetivos y controles de los motores existentes con sus f
 ## Comprobación selectiva de coherencia · 13/11/2026
 
 ESC2026, sección5.2.2: antes de clasificar IC-FEp con FEVI≥50 debe comprobarse que no existió FEVI<50. Se añade historial explícito y se retienen nuevas opciones si falta esa revisión. Fuente primaria: https://academic.oup.com/eurheartj/article/47/38/5346/8766302 . Esta comprobación no representa revalidación exhaustiva de todas las referencias ni validación clínica independiente. Véase AUDITORIA_GLOBAL_2026-11-13.md.
+
+## Contraste selectivo de seguridad aguda · 13/11/2026
+
+Consultadas CIMA Jardiance 114930014 §4.4, Metformina Tarbis 76579 §§4.3–4.4 y Wegovy subcutáneo 1211608006 §4.4. La barrera de decisiones crónicas se conserva ante señales agudas aunque falte diagnóstico o dato de estabilidad. Fuente, límites y distinción entre sospecha/antecedente en [auditoría de seguridad](AUDITORIA_SEGURIDAD_2026-11-13.md). No equivale a revisión farmacológica exhaustiva ni validación clínica independiente.

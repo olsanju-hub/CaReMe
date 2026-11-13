@@ -9,7 +9,7 @@ import { MODULES, MODULE_BY_ID, moduleFields, readMulti } from './consultas.mjs'
 import { SOURCES, evaluateRenal } from './clinical/engine.mjs';
 import { integratePatient, INTEGRATION_SOURCES } from './clinical/integracion.mjs';
 import { DRUGS, getDrug, getDrugRoute, reviewDrug } from './clinical/farmacologia.mjs';
-import { reviewFinerenoneContinuation, reviewEmpagliflozinContinuation, confirmedAction, followUpFromHistory } from './clinical/continuidad.mjs';
+import { reviewFinerenoneContinuation, reviewEmpagliflozinContinuation, confirmedAction } from './clinical/continuidad.mjs';
 import {buildIntegratedPlan} from './clinical/plan-integral.mjs';
 import { evaluateDm2Quick } from './clinical/dm2-rapida.mjs';
 import { evaluateDm2Detail } from './clinical/dm2-detallada.mjs';
@@ -821,7 +821,8 @@ function followupPage() {
       <button type="button" class="ghost" data-action="tools">Volver a Herramientas</button>
       </section></div>`;
   const drug=getDrug(current.drug),route=getDrugRoute(current.drug,current.route);
-  const events=followUpFromHistory(confirmedHistory);
+  const plan=buildIntegratedPlan(draft,confirmedHistory);
+  const events=[...plan.controls.filter(x=>x.domain==='farmacologia'),...plan.archivedControls];
   const last=confirmedHistory.filter(e=>e.drugId===current.drug && e.routeId===current.route);
   const actionName={inicio:'Inicio',reinicio:'Reinicio',ajuste:'Modificación de dosis',interrupcion:'Interrupción'};
   return `<div class="page interior">
@@ -855,7 +856,7 @@ function followupPage() {
       ${events.length ? `<div class="review-list">${events.map(e=>`<div class="review-row">
         <span><strong>${escape(e.drugId)}</strong> · ${escape(e.trigger)}
           <small class="followup-description">${escape(e.description)}</small>
-          <small class="followup-status">${e.status==='sustituido'?'Sustituido por una actuación posterior':e.status==='previsto'?'Control previsto':'Reevaluación clínica pendiente'}</small></span>
+          <small class="followup-status">${e.status==='sustituido'?'Sustituido por una actuación posterior':e.status==='requiere_reevaluacion'?'Referencia retenida: revisar seguridad y contexto actuales':e.temporalStatus==='plazo_superado'?'Plazo superado: revisar cumplimiento':e.status==='referencia_activa'?'Control de referencia para revisión':'Reevaluación clínica pendiente'}</small></span>
         <strong class="${e.status==='sustituido'?'followup-superseded':''}">${e.dueOn?escape(e.dueOn):'Sin fecha fija'}</strong></div>`).join('')}</div>`
         : '<p>Aún no hay controles programables: ninguna actuación se ha confirmado.</p>'}
       <p class="drug-disclaimer">Estas fechas se muestran en pantalla, sin notificaciones. La periodicidad puede requerir adelanto o modificación según la situación clínica.</p>

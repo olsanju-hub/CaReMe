@@ -4,7 +4,11 @@
 
 **Repositorio:** `olsanju-hub/CaReMe` · **Nombre de la aplicación:** CaHReMe
 
-## Auditoría vigente · 13/11/2026
+## Auditoría de seguridad vigente · 13/11/2026
+
+[Auditoría transversal y seguimiento](docs/AUDITORIA_SEGURIDAD_2026-11-13.md): corregidos bloqueos de señales agudas y discrepancia del calendario. 957 pruebas Node superadas. La ejecución de navegador del cambio se registra en el informe; sigue pendiente validación clínica independiente.
+
+## Auditoría de interfaz · 13/11/2026
 
 [Hallazgos y comprobaciones](docs/AUDITORIA_GLOBAL_2026-11-13.md). Incluye corrección del historial de FEVI, navegación de ordenador/tablet y caché offline por ámbito. 925 pruebas Node y 152 comprobaciones Chromium/WebKit superadas, sin fallos. El informe recoge la ejecución de GitHub Actions y sus límites.
 

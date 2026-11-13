@@ -77,3 +77,8 @@ El análisis está basado en las funciones reales de los módulos, no en un supu
 **Riesgos residuales:** no se ha efectuado una reconciliación exhaustiva de moléculas desde texto libre; no se asume que el catálogo de siete productos cubra toda la farmacoterapia; el control de fechas no evalúa por sí solo la estabilidad de una función renal; los datos declarados dependen de verificación profesional y el motor no reproduce aún toda la funcionalidad terapéutica de GlucoGuía.
 
 **Conclusión de auditoría técnica:** los tres incrementos están implementados y las pruebas automatizadas actuales pasan. **No concluye seguridad o eficacia clínica para asistir decisiones reales**. El PR debe permanecer en borrador hasta validación clínica, revisión visual y aceptación explícita.
+
+
+## Revisión posterior · 13/11/2026
+
+La auditoría transversal incorpora señales agudas independientes del módulo activado y concilia el calendario con el plan integral. Véase [hallazgos reproducidos, fuentes y límites](AUDITORIA_SEGURIDAD_2026-11-13.md). Los recuentos de secciones anteriores se conservan como históricos.
