@@ -24,6 +24,6 @@ IMC, FIB-4 y TFGe se calculan sin salir de la patología; Cockcroft–Gault se a
 
 ## Validación y límites
 
-1443 pruebas Node superadas antes de publicación. Auditoría de navegación actual en Chromium y WebKit, incluyendo anchura de 320 px, cálculos integrados, pautas, invalidación, privacidad, reparación de caché y recarga offline con servidor detenido. Resultado de navegador pendiente hasta finalizar Actions.
+1443 pruebas Node superadas antes de publicación. Auditoría de navegación actual en Chromium y WebKit, incluyendo anchura de 320 px, cálculos integrados, pautas, invalidación, privacidad, reparación de caché y recarga offline con servidor detenido. Primera auditoría: 148/148 comprobaciones superadas en los cuatro perfiles. La revisión de capturas detectó una columna de icono residual que comprimía los títulos sin provocar desbordamiento; se corrige la rejilla y se añade una aserción de anchura útil del texto. Pendiente completar la repetición de navegador de esta corrección visual.
 
 La auditoría de navegador anterior se conserva en qa/browser-legacy-audit.mjs para trazabilidad; no representa la navegación vigente. Las pruebas unitarias de motores y de las vistas completas permanecen activas. No se han realizado pruebas en iPhone físico ni validación clínica independiente. El selector de medicamento facilita acceso a las pautas disponibles; no constituye un algoritmo de selección exhaustiva ni amplía el catálogo farmacológico.
