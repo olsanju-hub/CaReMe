@@ -89,13 +89,25 @@ export function evaluateTherapySequence(d,id){
  if(actual.ids.length&&!adherent){r.state='review';hold('Resolver adherencia antes de intensificar','Confirmar la pauta realmente tomada y abordar dosis omitidas. No aumentar dosis para compensar incumplimiento.');return r;}
  if(actual.ids.length&&!tolerated&&!reducing){r.state='review';hold('Revisar tolerancia antes de escalar','Identificar el efecto adverso y su relación con el producto; valorar reducción o sustitución, sin una nueva escalada automática.');return r;}
  if(id==='dm2'){
-  need('dm2','hba1c','dm_objetivo_valor','tfge','dm_hipoglucemias','dm_sintomas','seq_comorbilidades');
+  need('dm2','tfge','dm_hipoglucemias','dm_sintomas','seq_comorbilidades');
   if(r.missing.length)return r;
   if(hypo==='No valoradas'||g(d,'dm_sintomas')==='No valorados'){r.state='review';hold('Comprobar hipoglucemias y síntomas','Los datos sin valorar no equivalen a ausencia de problemas.');return r;}
   if(hypo==='Leves'&&(cls('Insulina')||cls('Sulfonilurea'))&&!reducing){r.state='review';hold('Resolver hipoglucemia antes de intensificar','Revisar el fármaco responsable y el patrón glucémico; una HbA1c elevada no excluye hipoglucemias.');return r;}
   if(has('metformina')){need('seq_dosis_metformina');if(r.missing.length)return r;const cap=egfr>=60?3000:egfr>=45?2000:egfr>=30?1000:0;if(egfr<30||dose('metformina')>cap){step('reduce',egfr<30?'Suspender metformina por TFGe <30':'Reducir metformina al límite renal verificado',egfr<30?'Contraindicación renal: revisar evolución y alternativa.':`La dosis registrada supera el máximo de ${cap} mg/día para esta TFGe. Revisar la pauta y distribución antes de administrar.`);}}
   if(g(d,'dm2')!=='Sí'){hold('Confirmar el diagnóstico de DM2','No aplicar una secuencia de DM2 a un diagnóstico negado o no establecido.');r.state='review';return r;}
   if(n(d,'hba1c')>10||g(d,'dm_sintomas')==='Poliuria, polidipsia o pérdida de peso'){hold('Valorar insulinización y gravedad clínica','Comprobar glucemia actual, síntomas, hidratación y cetonas cuando corresponda. Tras descartar descompensación, usar el recorrido de insulina.',null);step('insulin','Calcular insulina tras valoración de estabilidad','Inicio, ajuste basal, primer bolo o reducción; cada decisión mantiene sus comprobaciones.');r.state='review';return r;}
+  if(g(d,'hba1c')===null||g(d,'dm_objetivo_valor')===null||g(d,'dm_hba1c_fiable')==='Posible interferencia o discordancia'){
+   const protective=flags.has('Insuficiencia cardíaca')||flags.has('Enfermedad renal crónica');
+   if(protective&&!reducing&&!flags.has('Fragilidad')){
+    if(flags.has('Enfermedad renal crónica')){need('persistencia');if(r.missing.length)return r;if(g(d,'persistencia')!=='Sí'){hold('Confirmar ERC antes de atribuir esa indicación','La cronicidad renal no está confirmada.');r.state='review';return r;}}
+    if(!cls('iSGLT2')&&egfr>=20)add(flags.has('Insuficiencia cardíaca')?'empa_ic':'empa_erc','La protección cardiorrenal no exige disponer de HbA1c ni estar fuera del objetivo glucémico.');
+    else step('maintain','Revisar y conservar la protección cardiorrenal adecuada','La ausencia de HbA1c no equivale a control glucémico confirmado; no intensificar glucosa sin datos interpretables.');
+    hold('Completar la evaluación glucémica por separado','Obtener HbA1c interpretable y objetivo individual o valorar glucemias/monitorización si existe interferencia.');r.followup.push('Revisar seguridad renal y tolerancia tras el cambio; completar después el control glucémico.');r.state=r.steps.some(x=>x.key)?'plan':'review';return r;
+   }
+   if(g(d,'dm_hba1c_fiable')==='Posible interferencia o discordancia'){hold('Usar una medida interpretable del control glucémico','No intensificar desde una HbA1c con posible interferencia; revisar glucemias o monitorización.');r.state='review';return r;}
+   need('hba1c','dm_objetivo_valor');if(r.missing.length)return r;
+  }
+
   const above=n(d,'hba1c')>=n(d,'dm_objetivo_valor');
   if(reducing){
    if(cls('Insulina'))step('insulin','Revisar reducción de insulina','Usar patrón glucémico, hipoglucemias y dosis reales; no retirar bolos mediante un porcentaje de basal.');
@@ -150,13 +162,16 @@ export function evaluateTherapySequence(d,id){
   r.followup.push('Reevaluar PA y tolerancia alrededor de un mes tras el cambio; adelantar si aparecen síntomas.','Tras IECA/ARA-II: creatinina y K a las 2–4 semanas; con indapamida revisar K durante la primera semana y Na según contexto.');
  }
  if(id==='lipids'){
-  need('ldl','lip_riesgo','lip_intolerancia');if(r.missing.length)return r;
-  const goal=lipidGoalForCategory(g(d,'lip_riesgo'));
+  need('ldl','lip_intolerancia');if(g(d,'lip_ascvd')!=='Sí')need('lip_riesgo');if(r.missing.length)return r;
+  const category=g(d,'lip_ascvd')==='Sí'?'Muy alto':g(d,'lip_riesgo');
+  const goal=lipidGoalForCategory(category);
   if(!goal){hold('Establecer el riesgo cardiovascular','Determinar la categoría antes de calcular intensidad y objetivo LDL.');r.state='review';return r;}
   if(reducing||g(d,'lip_intolerancia')!=='No'){hold('Revisar intolerancia y alternativa hipolipemiante','Confirmar relación con el tratamiento; valorar estatina tolerada, ezetimiba y otras terapias con beneficio según riesgo. No retirar prevención secundaria por un LDL bajo aislado.');r.state='review';return r;}
   const statin=has('atorvastatina')?'atorvastatina':has('rosuvastatina')?'rosuvastatina':null;
-  const high=['Alto','Muy alto'].includes(g(d,'lip_riesgo'));
-  if(n(d,'ldl')<goal.ldlLessThan){step('maintain','Mantener la pauta si cumple también la reducción desde el basal','LDL por debajo del objetivo absoluto; en alto/muy alto riesgo comprobar además la reducción relativa requerida.');}
+  const high=['Alto','Muy alto'].includes(category);
+  if(category==='Muy alto'){need('seq_sca_reciente');if(r.missing.length)return r;if(g(d,'seq_sca_reciente')!=='No'){hold('Aplicar estrategia de intensificación precoz tras SCA','Conciliar el plan de alta y valorar tratamiento intensivo/combinado según LDL y riesgo. No aplicar por defecto una escalada ambulatoria lenta; si no se ha revisado el antecedente, aclararlo antes.');r.state='review';return r;}}
+  if(n(d,'ldl')<goal.ldlLessThan&&!statin&&high){need('lip_ascvd');if(g(d,'lip_ascvd')==='Sí')add('atorvastatina','Prevención secundaria: el LDL basal bajo no sustituye la indicación de tratamiento por ECVA confirmada.','Ahora',{initialDose:40});else hold('Revisar indicación por riesgo aunque el LDL sea bajo','No interpretar el objetivo absoluto aislado como ausencia de indicación farmacológica; revisar el motivo de alto riesgo y preferencias.');}
+  else if(n(d,'ldl')<goal.ldlLessThan){step('maintain','Mantener la pauta si cumple también la reducción desde el basal','LDL por debajo del objetivo absoluto; en alto/muy alto riesgo comprobar además la reducción relativa requerida.');}
   else if(!statin)add('atorvastatina','Estatina de referencia del circuito; intensidad calculada por riesgo, sin afirmar superioridad sobre otras estatinas.', 'Ahora',{initialDose:high?40:10});
   else{
    need('seq_dosis_'+statin,'seq_semanas_'+statin,'lip_max_tolerada');

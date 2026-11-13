@@ -104,7 +104,7 @@ try{
   };
   for(const id of ['dm2','hta','lipids','obesidad','erc','ic','hepatico'])await check(profile.id,id+': decisión propuesta sin selector de fármaco',async()=>{
    await reset();await open(id);await stage(3);await completeSequence(id);assert.equal(await page.locator('#flow-treatment').count(),0);assert.ok(await page.locator('#therapy-sequence').isVisible());await inspect(id+'-sequence');
-   if(id==='dm2')await page.screenshot({path:fileURLToPath(new URL(profile.id+'-dm2-sequence.png',output)),fullPage:true});
+   if(id==='dm2'){await page.locator('details').evaluateAll(xs=>xs.forEach(x=>x.open=false));await page.screenshot({path:fileURLToPath(new URL(profile.id+'-dm2-sequence.png',output)),fullPage:true});}
   });
   const confirmed='Indicación, contraindicaciones e interacciones revisadas';
   await check(profile.id,'HTA: dos clases propuestas y dosis calculada sin elegir medicamento',async()=>{await reset();await open('hta');await stage(3);await completeSequence('hta');assert.equal(await page.locator('[data-action="sequence-dose"]').count(),2);await page.locator('[data-action="sequence-dose"][data-key="losartan"]').click();assert.equal(await page.locator('[data-field="tx_operacion"]').count(),0);await fill({tfge:'60',potasio:'4.5',tx_revision:confirmed});await page.locator('[data-action="module-dose-result"]').click();assert.match(await page.locator('#module-dose-result').innerText(),/50 mg · cada 24 h/);await fill({potasio:'5.8'});assert.equal(await page.locator('#module-dose-result').count(),0);await page.locator('[data-action="module-dose-result"]').click();assert.equal(await page.locator('.dose-proposal').count(),0);await inspect('hta-dose-inline');});

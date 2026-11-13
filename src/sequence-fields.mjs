@@ -22,6 +22,7 @@ export const SEQUENCE_FIELDS=[
  {id:'seq_comorbilidades',label:'Condicionantes confirmados que modifican el tratamiento',type:'multi',options:['Ninguno de los siguientes','Insuficiencia cardíaca','Enfermedad renal crónica','Enfermedad cardiovascular aterosclerótica','Obesidad','HTA o dislipemia asociadas al peso','Fragilidad']},
  {id:'seq_adherencia',label:'Tratamiento realmente tomado y continuidad',type:'select',options:['Dosis y adherencia confirmadas','Dosis omitidas o dudas de adherencia','No comprobadas']},
  {id:'seq_tolerancia',label:'Tolerancia del tratamiento actual',type:'select',options:['Buena tolerancia','Efectos adversos o intolerancia','No comprobada']},
+ {id:'seq_sca_reciente',label:'Síndrome coronario agudo reciente o plan de alta aún en ajuste',type:'select',options:['Sí','No','No revisado']},
  {id:'seq_metformina_forma',label:'Presentación de metformina que ya toma',type:'select',options:['Liberación inmediata, pauta confirmada','Otra presentación o sin confirmar']},
  {id:'seq_respuesta_peso',label:'Respuesta de peso y función con la pauta actual',type:'select',options:['Insuficiente tras evaluación','Objetivo acordado alcanzado o respuesta suficiente','No evaluada']},
  {id:'seq_pad_objetivo',label:'Límite superior de PAD individualizado',type:'number',min:60,max:100,unit:'mmHg'},
