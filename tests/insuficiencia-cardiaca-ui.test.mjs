@@ -24,7 +24,7 @@ test('IC rápida y detallada muestran valoración y mantienen valores entre mód
  set('ic_fevigrupo','Reducida · FEVI <50 %');
  click('ic-result');
  assert.match(root.innerHTML,/Valoración por fenotipo y congestión/);
- assert.match(root.innerHTML,/INSUFICIENCIA CARDÍACA · ESC 2026/);
+ assert.match(root.innerHTML,/Guía original en European Heart Journal/);
  click('module-mode',{mode:'detail'});
  assert.match(root.innerHTML,/FEVI registrada/);
  assert.match(root.innerHTML,/evidencia objetiva de IC/);

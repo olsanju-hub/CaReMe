@@ -8,7 +8,7 @@ test('interfaz distingue resultado externo y lo retiene tras modificar datos',as
  await import('../src/app.mjs');
  const click=(action,data={})=>handlers.click({target:{closest:()=>({dataset:{action,...data}})}});
  const set=(id,value)=>handlers.input({target:{closest:()=>({dataset:{field:id},value,type:'text'})}});
- click('cv-risk');
+ click('cv-risk');click('cv-expand');
  for(const [id,value] of Object.entries({edad:'75',cv_sexo_modelo:'Hombre',cv_region:'España · región ESC de riesgo bajo',
  tabaco:'Nunca',ecv:'No',ic:'No',dm1:'No',dm2:'No',erc:'No',embarazo:'No procede',cv_hfamiliar:'No',cv_sintomas:'No',
  pas:'135',pad:'80',fecha_pas:'2026-11-12',colesterol_total:'210',hdl:'50',ldl:'130',fecha_lipidos:'2026-11-10',fecha_evaluacion:'2026-11-12'}))set(id,value);

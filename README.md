@@ -4,6 +4,12 @@
 
 **Repositorio:** `olsanju-hub/CaReMe` · **Nombre de la aplicación:** CaHReMe
 
+## Consulta rápida por problema clínico · estado vigente
+
+La portada abre consultas breves; la evaluación integral es opcional. Las seis consultas de referencia tienen dos a cuatro criterios iniciales y salida de conducta/tratamiento por rama. HTA y dislipemia disponen de entrada breve; riesgo cardiovascular comprueba el circuito antes del cálculo. Las verificaciones por producto siguen en el detalle. [Contrato y auditoría](docs/CONSULTA_RAPIDA_2026-11-13.md).
+
+Los registros siguientes conservan la historia del proyecto. Sus cifras y estados corresponden a cada incremento.
+
 ## Auditoría de seguridad vigente · 13/11/2026
 
 [Auditoría transversal y seguimiento](docs/AUDITORIA_SEGURIDAD_2026-11-13.md): corregidos bloqueos de señales agudas y discrepancia del calendario. 957 pruebas Node y 156 comprobaciones Chromium/WebKit superadas, sin fallos. Sigue pendiente validación clínica independiente.

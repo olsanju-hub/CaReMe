@@ -11,7 +11,7 @@ test('obesidad rápida/detallada y resumen comparten captura e invalidan resulta
  const click=(action,data={})=>handlers.click({target:{closest:()=>({dataset:{action,...data}})}});
  const set=(id,value)=>handlers.input({target:{closest:()=>({dataset:{field:id},value,type:'text'})}});
  assert.equal((root.innerHTML.match(/class="module-card"/g)||[]).length,6);
- click('start-module',{module:'obesidad'});set('imc','32');click('obesity-result');assert.match(root.innerHTML,/IMC 32.00/);assert.match(root.innerHTML,/Información necesaria/);
+ click('start-module',{module:'obesidad'});set('imc','32');click('obesity-result');assert.match(root.innerHTML,/IMC 32.00/);assert.match(root.innerHTML,/Para precisar esta rama/);
  set('imc','36');assert.equal(removed,true);click('obesity-result');assert.match(root.innerHTML,/IMC 36.00/);assert.doesNotMatch(root.innerHTML,/IMC 32.00/);
  click('module-mode',{mode:'detail'});
  for(const id of moduleFields('obesidad','detail'))assert.equal((root.innerHTML.match(new RegExp('data-field-id="'+id+'"','g'))||[]).length,1,id+' una vez');

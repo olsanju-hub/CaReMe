@@ -29,7 +29,7 @@ test('consulta DM2 rápida muestra orientación propia y fuentes en lugar de sol
  set('dm_control','En el objetivo individual');
  click('dm2-result');
  assert.match(root.innerHTML,/Orientación rápida según el caso/);
- assert.match(root.innerHTML,/Clases farmacológicas y opciones/);
+ assert.match(root.innerHTML,/Tratamiento a considerar/);
  assert.match(root.innerHTML,/Fundación redGDPS/);
  assert.match(root.innerHTML,/revisión|Revisión/);
  click('module-mode',{mode:'review'});
@@ -38,3 +38,4 @@ test('consulta DM2 rápida muestra orientación propia y fuentes en lugar de sol
  click('start-module',{module:'insulina'});
  assert.doesNotMatch(root.innerHTML,/id="dm2-rapid-result"/);
 });
+

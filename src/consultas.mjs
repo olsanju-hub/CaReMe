@@ -11,7 +11,7 @@ export const MODULES = [
   {
     id: 'ic', title: 'Insuficiencia cardíaca', domain: 'cardiovascular',
     short: 'Fenotipo ESC 2026, congestión y tratamiento',
-    quick: ['ic','ic_fevigrupo','congestion','ic_alarma'],
+    quick: ['ic_fevigrupo','congestion'],
     detail: ['ic','edad','embarazo','fecha_evaluacion','fevi','fecha_fevi','ic_fevigrupo',
       'ic_evidencia_objetiva','ic_fevi_previa_reducida','ic_sintomatica','ic_estabilidad','ic_alarma','congestion',
       'ic_fc','pas','pad','tfge','fecha_tfge','potasio','fecha_potasio',
@@ -21,19 +21,19 @@ export const MODULES = [
   {
     id: 'erc', title: 'Enfermedad renal crónica', domain: 'renal',
     short: 'Función renal, albuminuria y persistencia',
-    quick: ['tfge','cac','unidad_cac','persistencia','lra_sospecha','potasio','situacion_aguda'],
+    quick: ['tfge','cac','unidad_cac','persistencia'],
     detail: ['edad','embarazo','erc_contexto','erc','erc_hematuria','erc_cac_persistente','fecha_evaluacion','tfge','fecha_tfge','cac','unidad_cac','fecha_cac','persistencia','lra_sospecha','contraste_yodado','potasio','fecha_potasio','potasio_normal','ras_optimizado','ras_evento','ras_evento_confirmado','fecha_ras_evento','creatinina_basal_ras','fecha_creatinina_basal_ras','fecha_creatinina','pas','fecha_pas','ras_hipotension','cyp3a4_fuerte','addison','creatinina','situacion_aguda','cetoacidosis_sospecha','farmacos_clases','farmacos','medicacion_revisada','alergias','alergias_revisadas']
   },
   {
     id: 'obesidad', title: 'Sobrepeso y obesidad', domain: 'metabolico',
     short: 'Adiposidad y comorbilidades',
-    quick: ['edad', 'embarazo', 'ob_lactancia', 'fecha_evaluacion', 'peso', 'talla', 'imc', 'ob_fecha_medidas', 'dm2', 'comorbilidad_peso_confirmada', 'obesidad_perfil', 'ob_acuerdo', 'ob_complicaciones_revisadas', 'ob_perdida_involuntaria', 'ob_edema', 'ob_tca', 'ob_musculo', 'ob_farmaco_actual'],
+    quick: ['imc','dm2','obesidad_perfil'],
     detail: ['edad', 'embarazo', 'ob_lactancia', 'fecha_evaluacion', 'peso', 'talla', 'imc', 'ob_fecha_medidas', 'dm2', 'comorbilidad_peso_confirmada', 'obesidad_perfil', 'ob_acuerdo', 'ob_complicaciones_revisadas', 'ob_perdida_involuntaria', 'ob_edema', 'ob_tca', 'ob_musculo', 'ob_farmaco_actual', 'cintura', 'ob_complicacion_grave', 'ob_secundaria', 'ob_adaptacion_muscular', 'ob_alimentacion', 'ob_actividad', 'ob_limitacion_ejercicio', 'ob_sueno_psicosocial', 'ob_respuesta_previa', 'ob_adherencia', 'ob_tolerancia', 'ob_peso_basal', 'ob_fecha_basal', 'ob_basal_confirmado', 'ob_objetivo', 'ob_objetivo_porcentaje', 'ob_objetivo_salud', 'ob_plan_estado', 'ob_plan_confirmado', 'ob_fecha_plan', 'embarazo_planificado', 'pancreatitis_sospecha', 'pancreatitis_previa', 'deshidratacion_gi', 'gastroparesia_grave', 'vision_subita', 'retinopatia_dm', 'hepatica_grave', 'dm1', 'tfge', 'fecha_tfge', 'situacion_aguda', 'comorbilidades', 'farmacos_clases', 'farmacos', 'medicacion_revisada', 'alergias', 'alergias_revisadas', 'imc_inicio']
   },
   {
     id: 'hepatico', title: 'Enfermedad hepática metabólica', domain: 'hepatico',
     short: 'Esteatosis y valoración de fibrosis',
-    quick: ['edad', 'embarazo', 'fecha_evaluacion', 'fib4_agudo', 'masld_alarma', 'masld_cirrosis', 'fib4_contexto', 'hepatico_valoracion', 'masld_alcohol', 'masld_etiologia', 'masld_fib4_origen', 'fib4_informado', 'masld_fecha_fib4', 'masld_fuente_fib4', 'masld_fib4_confirmado', 'elastografia', 'masld_elasto_metodo', 'masld_fecha_elasto', 'masld_elasto_calidad', 'masld_elasto_confusores'],
+    quick: ['edad','fib4_informado','hepatico_valoracion'],
     detail: ['edad', 'embarazo', 'fecha_evaluacion', 'fib4_agudo', 'masld_alarma', 'masld_cirrosis', 'fib4_contexto', 'hepatico_valoracion', 'masld_alcohol', 'masld_etiologia', 'masld_fib4_origen', 'fib4_informado', 'masld_fecha_fib4', 'masld_fuente_fib4', 'masld_fib4_confirmado', 'elastografia', 'masld_elasto_metodo', 'masld_fecha_elasto', 'masld_elasto_calidad', 'masld_elasto_confusores', 'fecha_ast', 'fecha_alt', 'fecha_plaquetas', 'ast', 'alt', 'plaquetas', 'hepatica_grave', 'esteatosis', 'masld_enzimas_persistentes', 'dm2', 'imc', 'situacion_aguda', 'farmacos_clases', 'farmacos']
   },
   {

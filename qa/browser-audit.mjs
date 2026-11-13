@@ -77,11 +77,11 @@ try{
   await check(profile.id,'summary: estructura y anchura',async()=>{await summary();assert.equal(await page.locator('#integrated-plan').count(),1);await inspect('summary');});
   await check(profile.id,'datos compartidos e invalidación',async()=>{
    await action('lipids');await fill({ldl:'130'});await page.locator('[data-action="lipid-result"]').click();assert.ok(await page.locator('#lipid-result').isVisible());
-   await fill({ldl:'125'});assert.equal(await page.locator('#lipid-result').count(),0);await action('cv-risk');assert.equal(await page.locator('[data-field="ldl"]').inputValue(),'125');
-   await page.reload();await action('cv-risk');assert.equal(await page.locator('[data-field="ldl"]').inputValue(),'');
+   await fill({ldl:'125'});assert.equal(await page.locator('#lipid-result').count(),0);await action('cv-risk');await page.locator('[data-action="cv-expand"]').click();assert.equal(await page.locator('[data-field="ldl"]').inputValue(),'125');
+   await page.reload();await action('cv-risk');await page.locator('[data-action="cv-expand"]').click();assert.equal(await page.locator('[data-field="ldl"]').inputValue(),'');
   });
   await check(profile.id,'FIB-4 externo e invalidación de confirmación',async()=>{
-   await module('hepatico');await fill({edad:'55',embarazo:'No procede',fecha_evaluacion:'2026-11-13',fib4_agudo:'No',masld_alarma:'No',masld_cirrosis:'No tras valoración',fib4_contexto:'Perfil de riesgo compatible con evaluación MASLD',hepatico_valoracion:'Esteatosis documentada y otras causas evaluadas',masld_alcohol:'Revisados',masld_etiologia:'Compatible con evaluación MASLD',masld_fib4_origen:'Informado por fuente externa',fib4_informado:'2.8',masld_fecha_fib4:'2026-11-10',masld_fuente_fib4:'Informe sintético QA',masld_fib4_confirmado:'Sí'});
+   await module('hepatico','detail');await fill({edad:'55',embarazo:'No procede',fecha_evaluacion:'2026-11-13',fib4_agudo:'No',masld_alarma:'No',masld_cirrosis:'No tras valoración',fib4_contexto:'Perfil de riesgo compatible con evaluación MASLD',hepatico_valoracion:'Esteatosis documentada y otras causas evaluadas',masld_alcohol:'Revisados',masld_etiologia:'Compatible con evaluación MASLD',masld_fib4_origen:'Informado por fuente externa',fib4_informado:'2.8',masld_fecha_fib4:'2026-11-10',masld_fuente_fib4:'Informe sintético QA',masld_fib4_confirmado:'Sí'});
    await page.locator('[data-action="masld-result"]').click();assert.match(await page.locator('#masld-result').innerText(),/FIB-4 utilizado: 2.80/);
    await fill({edad:'66'});assert.equal(await page.locator('#masld-result').count(),0);await page.locator('[data-action="masld-result"]').click();assert.doesNotMatch(await page.locator('#masld-result').innerText(),/FIB-4 utilizado: 2.80/);
   });
@@ -109,10 +109,10 @@ try{
   });
   await check(profile.id,'consulta breve y acceso directo a tratamiento',async()=>{
    await home();
-   for(const [id,count] of [['obesidad',6],['hepatico',4]]){
-    await module(id);assert.equal(await page.locator('.form-card input,.form-card select').evaluateAll(xs=>xs.filter(x=>!x.closest('details:not([open])')).length),count);
+   for(const [id,count] of [['obesidad',2],['hepatico',3]]){
+    await module(id);assert.equal(await page.locator('.form-card .module-field').count(),id==='obesidad'?3:count);
    }
-   await module('obesidad');await page.locator('[data-action="module-outcome"]').click();assert.ok(await page.locator('#obesity-result').isVisible());assert.equal(await page.locator('.capture-details').getAttribute('open'),null);
+   await module('obesidad');await page.locator('[data-action="obesity-result"]').click();assert.ok(await page.locator('#obesity-result').isVisible());assert.equal(await page.locator('.capture-details').count(),0);await page.locator('.brief-drugs summary').click();
    await page.locator('.treatment-access [data-drug-id="tirzepatida"]').click();assert.match(await page.locator('main').innerText(),/DOSIS DE FICHA TÉCNICA/);assert.match(await page.locator('main').innerText(),/Datos esenciales incompletos/);
    await home();
   });
@@ -123,6 +123,23 @@ try{
    await fill({ckm_cvd:'Confirmada'});assert.equal(await page.locator('[data-field="ckm_fecha_cvd"]').count(),1);await fill({ckm_fecha_cvd:'2026-11-10'});
    await page.locator('[data-action="ckm-next"]').click();await fill({dm2:'Sí'});assert.match(await page.locator('#ckm-result').innerText(),/al menos estadio 4/);
    assert.equal(await page.locator('[data-block="subclinica"]').count(),0);assert.ok(await page.locator('.form-card input,.form-card select').count()<=6);
+   await home();await page.locator('[data-action="new"]').first().click();
+  });
+  await check(profile.id,'menú por tareas y consultas rápidas con dos a cuatro criterios',async()=>{
+   await home();assert.equal(await page.locator('.module-grid button.module-card').count(),6);assert.equal(await page.locator('.module-grid button.task-card').count(),4);
+   assert.equal(await page.locator('[data-action="start"]:visible').count(),0);
+   for(const [id,count] of [['dm2',2],['ic',2],['erc',4],['obesidad',3],['hepatico',3],['insulina',2]]){
+    await module(id);assert.equal(await page.locator('.form-card .module-field').count(),count,id);
+   }
+   for(const id of ['hta','lipids']){await action(id);assert.equal(await page.locator('.form-card .module-field').count(),4,id);}
+   await action('cv-risk');assert.equal(await page.locator('.form-card .module-field').count(),5);
+  });
+  await check(profile.id,'dos criterios de IC entregan orientación sin historia completa',async()=>{
+   await module('ic');await fill({ic_fevigrupo:'Reducida · FEVI <50 %',congestion:'Ausentes'});
+   const result=await page.locator('#ic-result').innerText();assert.match(result,/betabloqueante/);assert.match(result,/no añadir diurético/);assert.equal(await page.locator('[data-field="fecha_potasio"]').count(),0);
+   await inspect('ic-brief-result');await page.screenshot({path:fileURLToPath(new URL(profile.id+'-ic-brief-result.png',output)),fullPage:false});
+   await home();await page.locator('[data-action="new"]').first().click();
+   await module('obesidad');await fill({imc:'32',dm2:'No',obesidad_perfil:['Ninguna seleccionada']});assert.match(await page.locator('#obesity-result').innerText(),/semaglutida subcutánea para peso o tirzepatida/);
    await home();await page.locator('[data-action="new"]').first().click();
   });
   await check(profile.id,'actualización recupera una portada antigua en caché y conserva cachés ajenas',async()=>{

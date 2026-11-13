@@ -23,8 +23,8 @@ test('rutas rápidas y detalladas de insulina muestran resultado sin prescripci�
  assert.match(root.innerHTML,/Ver orientación de insulinización/);
  set('insulina_fase','Valorar inicio');
  click('insulin-result');
- assert.match(root.innerHTML,/INSULINIZACIÓN DM2/);
- assert.match(root.innerHTML,/Información necesaria/);
+ assert.match(root.innerHTML,/Insulinización: siguiente decisión/);
+ assert.match(root.innerHTML,/Para precisar esta rama/);
  assert.match(root.innerHTML,/ADA\/EASD/);
  assert.doesNotMatch(root.innerHTML,/Iniciar tratamiento confirmado/);
  click('module-mode',{mode:'detail'});
@@ -46,3 +46,4 @@ test('resultado de insulina se invalida al editar campos compartidos',()=>{
  assert.match(app,/current\.insulinVisible=false/);
  assert.match(app,/id="insulin-result"/);
 });
+

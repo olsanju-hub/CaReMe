@@ -1,3 +1,4 @@
+import {BRIEF_FIELDS,evaluateClinicalBrief} from './clinical/consulta-breve.mjs';
 import {evaluateObesity} from './clinical/obesidad.mjs';
 import {evaluateMasld} from './clinical/masld.mjs';
 import {LIPID_FIELDS,evaluateDyslipidemia} from './clinical/dislipemia.mjs';
@@ -36,52 +37,23 @@ function header() {
       <span><strong>Ca<span class="brand-accent">H</span>ReMe</strong><small>Salud cardiorrenal-hepatometabólica</small></span>
     </button>
     <nav class="desktop-nav" aria-label="Navegación principal en ordenador">
-      ${[['home','Inicio'],['evaluation','Evaluar'],['tools','Herramientas'],['sources','Fuentes']].map(([id,label])=>`<button type="button" class="text-link" data-action="${id}" ${current.page===id?'aria-current="page"':''}>${label}</button>`).join('')}
+      ${[['home','Inicio'],['evaluation','Integral'],['tools','Herramientas'],['sources','Fuentes']].map(([id,label])=>`<button type="button" class="text-link" data-action="${id}" ${current.page===id?'aria-current="page"':''}>${label}</button>`).join('')}
     </nav><div class="top-right"></div>
   </div></header>`;
 }
 function nav() {
-  const items = [['home','Inicio','⌂'],['evaluation','Evaluar','＋'],['tools','Herramientas','▦'],['sources','Fuentes','≡']];
+  const items = [['home','Inicio','⌂'],['evaluation','Integral','＋'],['tools','Herramientas','▦'],['sources','Fuentes','≡']];
   return `<nav class="bottom-nav" aria-label="Navegación principal">${items.map(([id,label,sym]) =>
     `<button type="button" class="${current.page === id || (id==='evaluation' && ['module','summary'].includes(current.page)) ? 'active' : ''}" data-action="${id}" ${current.page === id ? 'aria-current="page"' : ''}>
       <span aria-hidden="true" class="nav-symbol">${sym}</span><span>${label}</span></button>`).join('')}</nav>`;
 }
 function home() {
-  return `<div class="page home">
-    <section class="hero">
-      <div class="hero-copy"><div class="eyebrow light">ATENCIÓN PRIMARIA · ESPAÑA</div>
-        <h1>Una visión completa.<br><em>Un paciente.</em></h1>
-        <p>Evaluación multiorgánica y seis consultas dirigidas. Los datos compartidos no se vuelven a introducir.</p>
-        <button class="primary hero-button" type="button" data-action="start" data-focus="integral">
-          ${(counts().registrado + counts().no_disponible + counts().revisar)>0 ? 'Continuar evaluación integral' : 'Nueva evaluación integral'}
-          <span aria-hidden="true">→</span></button>
-          ${(counts().registrado + counts().no_disponible + counts().revisar)>0
-            ? '<button type="button" class="hero-reset" data-action="new">Borrar datos y comenzar otra evaluación</button>' : ''}
-      </div>
-      <div class="hero-art" aria-hidden="true"><img class="hero-logo" src="./public/icon-concept.svg" alt="" /></div>
-    </section>
-    ${banner()}
-    <div class="section-heading"><div><div class="eyebrow">SEIS CONSULTAS CLÍNICAS</div><h2>¿Qué necesitas valorar?</h2></div>
-      <p>Consulta rápida y revisión detallada en seis áreas, con resultados para revisión profesional.</p>
-    </div>
-    <section class="info-strip"><div><strong>Riesgo cardiovascular</strong><p>SCORE2 para el grupo elegible en España y registro documentado de SCORE2-OP externo.</p></div>
-      <button type="button" class="primary" data-action="cv-risk">Valorar riesgo cardiovascular →</button></section>
-    <section class="info-strip"><div><strong>Estadificación CKM</strong><p>Contexto cardiovascular, renal y metabólico con evidencia disponible.</p></div>
-      <button type="button" class="primary" data-action="ckm">Valorar estadio CKM →</button></section>
-    <section class="info-strip"><div><strong>Presión arterial e HTA</strong><p>Confirmación, contexto extraconsulta y revisión de objetivos.</p></div>
-      <button type="button" class="primary" data-action="hta">Valorar presión arterial →</button></section>
-    <section class="info-strip"><div><strong>Dislipemia</strong><p>Riesgo lipídico, objetivos de LDL y revisión de tratamiento.</p></div>
-      <button type="button" class="primary" data-action="lipids">Valorar dislipemia →</button></section>
-    <div class="module-grid">${MODULES.map(m =>
-      `<button type="button" class="module-card" data-action="start-module" data-module="${escape(m.id)}">
-      <span class="module-art" aria-hidden="true"><img src="./public/domain-${escape(m.domain)}.svg" alt="" /></span>
-      <span class="module-content"><strong>${escape(m.title)}</strong><small>${escape(m.short)}</small></span>
-      <span class="module-arrow" aria-hidden="true">↗</span></button>`
-    ).join('')}</div>
-    <section class="info-strip"><div><strong>Una ficha compartida, sin identificación</strong>
-      <p>Las seis consultas y la evaluación integral reutilizan la información disponible. Los datos permanecen en memoria y se pierden al recargar.</p></div>
-      <button type="button" class="text-link" data-action="sources">Fuentes y limitaciones →</button></section>
-  </div>`;
+ const more=[['cv-risk','Riesgo cardiovascular','Elegibilidad y cálculo SCORE2'],['ckm','Estadio CKM','Clasificación con los datos disponibles'],['hta','Presión arterial','Confirmar o revisar tratamiento'],['lipids','Dislipemia','Objetivo LDL y tratamiento']];
+ return `<div class="page home"><section class="quick-home"><h1>¿Qué necesitas resolver?</h1><p>Elige una consulta. Introduce sus criterios y consulta la conducta.</p>
+ ${(counts().registrado+counts().no_disponible+counts().revisar)>0?'<button type="button" class="ghost" data-action="new">Borrar datos y comenzar otra evaluación</button>':''}</section>
+ <div class="module-grid">${MODULES.map(m=>`<button type="button" class="module-card" data-action="start-module" data-module="${escape(m.id)}"><span class="module-art" aria-hidden="true"><img src="./public/domain-${escape(m.domain)}.svg" alt="" /></span><span class="module-content"><strong>${escape(m.title)}</strong><small>${escape(m.short)}</small></span><span class="module-arrow" aria-hidden="true">↗</span></button>`).join('')}
+ ${more.map(([action,title,description])=>`<button type="button" class="task-card" data-action="${action}"><strong>${title}</strong><small>${description}</small><span aria-hidden="true">↗</span></button>`).join('')}</div>
+ <details class="integral-access"><summary>Evaluación integral y ficha compartida</summary><p>Acceso opcional para reunir la evaluación de varias áreas.</p><button class="ghost" type="button" data-action="start" data-focus="integral">${counts().registrado?'Continuar evaluación integral':'Nueva evaluación integral'}</button></details></div>`;
 }
 function obesityResult(mode='detail'){
  const r=evaluateObesity(draft,mode);
@@ -136,7 +108,12 @@ function lipidResult(){
  <details><summary>Guías y fuentes</summary>${r.sources.map(x=>`<p><a href="${escape(x.url)}" target="_blank" rel="noopener noreferrer">${escape(x.title)}</a> · ${escape(x.locator)}</p>`).join('')}</details>
  </section>`;
 }
+function briefStandaloneView(id,title){
+ const fields=BRIEF_FIELDS[id],visible=(id==='hta'?current.htaVisible:current.lipidVisible)||fields.every(x=>fieldState(draft,x)==='registrado')||evaluateClinicalBrief(draft,id).safety.length;
+ return `<div class="page"><div class="bread"><button type="button" data-action="home">Inicio</button><span>${title}</span></div><h1>${title}</h1><section class="form-card"><div class="field-grid">${fields.map(x=>moduleFieldMarkup(FIELDS[x])).join('')}</div><button type="button" class="primary" data-action="${BRIEF_ACTIONS[id]}">${BRIEF_BUTTONS[id]} →</button></section>${visible?briefResult(id):''}<button type="button" class="text-link" data-action="brief-advanced" data-target="${id}">Revisión detallada · opcional →</button></div>`;
+}
 function lipidView(){
+ if(!current.lipidDetail)return briefStandaloneView('lipids','Dislipemia');
  const basic=['edad','embarazo','lip_lactancia','fecha_evaluacion','colesterol_total','hdl','ldl','trigliceridos','fecha_lipidos','lip_metodo_ldl','lip_alarma'];
  return `<div class="page"><div class="bread"><button type="button" data-action="home">Inicio</button><span>Dislipemia</span></div>
  <h1>Dislipemia</h1>${banner()}<section class="form-card"><h2>Perfil lipídico disponible</h2><div class="field-grid">${basic.map(id=>moduleFieldMarkup(FIELDS[id])).join('')}</div>
@@ -172,6 +149,7 @@ function htaResult(){
  </section>`;
 }
 function htaView(){
+ if(!current.htaDetail)return briefStandaloneView('hta','Presión arterial e HTA');
  const basic=['edad','embarazo','fecha_evaluacion','hta_conocida','pas','pad','fecha_pas','hta_consulta_calidad','hta_alarma','hta_dano_agudo','hta_tratamiento'];
  return `<div class="page"><div class="bread"><button type="button" data-action="home">Inicio</button><span>PA e HTA</span></div>
  <h1>Presión arterial e HTA</h1>${banner()}
@@ -257,15 +235,16 @@ function cvRiskView(){
  return `<div class="page"><div class="bread"><button type="button" data-action="home">Inicio</button><span>Riesgo cardiovascular</span></div>
   <h1>Riesgo cardiovascular</h1>${banner()}
   <section class="form-card"><h2>Elegibilidad y datos disponibles</h2><p>Los valores se comparten con la evaluación integral. No se solicita una prueba solo para completar la herramienta.</p>
-  <div class="field-grid">${CV_FIELDS.map(id=>moduleFieldMarkup(FIELDS[id])).join('')}</div>
-  ${Number(draft.values.edad)>=70&&Number(draft.values.edad)<90?`<section><h2>SCORE2-OP calculado externamente</h2>
+  <div class="field-grid">${(current.cvDetail?CV_FIELDS:['edad','ecv','ic','dm2','erc']).map(id=>moduleFieldMarkup(FIELDS[id])).join('')}</div>
+  ${!current.cvDetail?'<p>Comprueba el circuito antes de calcular.</p><button type="button" class="text-link" data-action="cv-expand">Completar los datos del cálculo →</button>':''}
+  ${current.cvDetail&&Number(draft.values.edad)>=70&&Number(draft.values.edad)<90?`<section><h2>SCORE2-OP calculado externamente</h2>
    <p>Registra el resultado obtenido en <a href="https://www.heartscore.org/" target="_blank" rel="noopener noreferrer">HeartScore ESC</a> con los mismos datos. El cálculo no se envía ni se importa automáticamente.</p>
    <div class="field-grid">${OP_FIELDS.map(id=>moduleFieldMarkup(FIELDS[id])).join('')}</div></section>`:''}
   <button type="button" class="primary" data-action="cv-risk-result">Ver evaluación de riesgo →</button></section>
   ${current.cvVisible?`<section id="cv-result" class="dm2-result" aria-live="polite"><h2>Resultado y siguiente paso</h2>
   ${r.percent!==null?`<p><strong>${escape(r.percent.toFixed(1))} % a 10 años</strong> · SCORE2, región de riesgo bajo (España). Resultado en revisión clínica.</p>`:r.externalEstimate?`<p><strong>${escape(r.externalEstimate.percent.toFixed(1))} % a 10 años</strong> · SCORE2-OP externo de HeartScore, región baja España. Confirmado por el profesional; no calculado por CaHReMe.</p>`:'<p>No se emite un porcentaje con estos datos o en este circuito.</p>'}
   ${r.alerts.length?`<div class="dm2-safety">${list(r.alerts)}</div>`:''}
-  ${r.missing.length?`<h3>Información necesaria</h3>${list(r.missing)}`:''}
+  ${r.missing.length?`<h3>Para precisar</h3>${list(r.missing.slice(0,2))}${r.missing.length>2?`<details><summary>Datos adicionales del cálculo</summary>${list(r.missing.slice(2))}</details>`:''}`:''}
   ${list(r.steps)}<details><summary>Fuentes y límites</summary>${r.sources.map(x=>`<p><a href="${escape(x.url)}" target="_blank" rel="noopener noreferrer">${escape(x.title)}</a> · ${escape(x.locator)}</p>`).join('')}</details>
   </section>`:''}
  </div>`;
@@ -672,10 +651,34 @@ function consultationReview(module) {
       <button class="primary" type="button" data-action="summary">Ver ficha integral →</button></div>
   </div>`;
 }
+const BRIEF_RESULT_IDS={dm2:'dm2-rapid-result',ic:'ic-result',erc:'renal-result',obesidad:'obesity-result',hepatico:'masld-result',insulina:'insulin-result',hta:'hta-result',lipids:'lipid-result'};
+const BRIEF_ACTIONS={dm2:'dm2-result',ic:'ic-result',erc:'renal-result',obesidad:'obesity-result',hepatico:'masld-result',insulina:'insulin-result',hta:'hta-result',lipids:'lipid-result'};
+const BRIEF_BUTTONS={dm2:'Ver orientación clínica rápida',ic:'Ver orientación de insuficiencia cardíaca',erc:'Ver orientación renal',obesidad:'Ver plan de obesidad y seguimiento',hepatico:'Ver evaluación de fibrosis y derivación',insulina:'Ver orientación de insulinización',hta:'Ver orientación de PA e HTA',lipids:'Ver orientación de dislipemia'};
+function briefResult(id){
+ const r=evaluateClinicalBrief(draft,id),list=xs=>xs.length?`<ul>${xs.map(x=>`<li>${escape(x)}</li>`).join('')}</ul>`:'';
+ return `<section id="${BRIEF_RESULT_IDS[id]}" class="dm2-result brief-result" aria-live="polite"><h2>${escape(r.title)}</h2>
+ ${r.safety.length?`<div class="dm2-safety"><h3>Prioridad clínica</h3>${list(r.safety)}</div>`:''}<p class="brief-conduct">${escape(r.situation)}</p>
+ ${r.treatment.length?'<h3>Tratamiento a considerar</h3>'+r.treatment.map(x=>`<article><h4>${escape(x.title)}</h4><p>${escape(x.detail)}</p></article>`).join(''):''}
+ ${r.steps.length?`<h3>Siguiente paso</h3>${list(r.steps)}`:''}
+ ${r.missing.length?`<p>Para precisar esta rama: ${r.missing.map(escape).join(' · ')}.</p>`:''}
+ <details><summary>Fuentes</summary>${r.sources.map(x=>`<p><a href="${escape(x.url)}" target="_blank" rel="noopener noreferrer">${escape(x.title)}</a></p>`).join('')}</details></section>`;
+}
+function briefModuleView(m){
+ const fields=BRIEF_FIELDS[m.id],r=evaluateClinicalBrief(draft,m.id),complete=fields.every(id=>fieldState(draft,id)==='registrado');
+ const forced=current.briefForced||({dm2:current.dm2ResultVisible,ic:current.icVisible,erc:current.renalVisible,obesidad:current.obesityVisible,hepatico:current.masldVisible,insulina:current.insulinVisible})[m.id];
+ const show=complete||forced||r.safety.length;
+ return `<div class="page module-page"><div class="bread"><button type="button" data-action="home">Inicio</button><span>${escape(m.title)}</span></div><h1>${escape(m.title)}</h1>
+ <div class="module-tabs" role="group" aria-label="Nivel de revisión"><button type="button" class="active" data-action="module-mode" data-mode="quick" aria-pressed="true">Consulta rápida</button><button type="button" data-action="module-mode" data-mode="detail" aria-pressed="false">Revisión detallada · opcional</button><button type="button" data-action="module-mode" data-mode="review" aria-pressed="false">Resumen</button></div>
+ <section class="form-card"><div class="field-grid">${fields.map(id=>moduleFieldMarkup(FIELDS[id])).join('')}</div><button type="button" class="primary" data-action="${BRIEF_ACTIONS[m.id]}">${BRIEF_BUTTONS[m.id]} →</button></section>
+ ${show?briefResult(m.id):'<p class="quick-empty">Selecciona los criterios para ver la orientación.</p>'}
+ ${['dm2','ic','erc','obesidad'].includes(m.id)?`<details class="brief-drugs"><summary>Dosis y ajustes por medicamento</summary>${treatmentReferences(m.id)}</details>`:''}
+ <button type="button" class="text-link" data-action="module-mode" data-mode="detail">Concretar tratamiento o seguimiento →</button></div>`;
+}
 function moduleView() {
   const m=MODULE_BY_ID[current.module];
   if (!m) return home();
   const mode=current.mode || 'quick';
+  if(mode==='quick')return briefModuleView(m);
   const fields=moduleFields(m.id, mode === 'detail' ? 'detail' : 'quick');
   const completed=fields.filter(id => fieldState(draft,id)==='registrado').length;
   return `<div class="page module-page">
@@ -782,12 +785,9 @@ function summary() {
     <p>Datos disponibles y resultados de los módulos evaluados, para revisión profesional.</p></div>
     <button class="ghost" type="button" data-action="new">Nueva evaluación</button></div>
     ${banner()}
-    <div class="stats-grid"><div><strong>${stats.registrado}</strong><span>Registrados</span></div>
-    <div><strong>${stats.no_disponible}</strong><span>No disponibles</span></div>
-    <div><strong>${stats.sin_registrar}</strong><span>Sin registrar</span></div>
-    <div><strong>${stats.revisar}</strong><span>Por revisar</span></div></div>
+
     ${integratedPlanPanel()}
-    <div class="summary-grid">${SECTIONS.map((s,i) =>
+    <details class="capture-details"><summary>Ficha compartida · datos registrados</summary><div class="summary-grid">${SECTIONS.map((s,i) =>
       `<section class="summary-card"><div class="summary-card-head"><h2>${escape(s.title)}</h2>
         <button type="button" class="text-link" data-action="go-step" data-step="${i}">Editar →</button></div>
         <dl>${s.fields.map(f => {
@@ -795,7 +795,7 @@ function summary() {
           const content = state === 'registrado' || state === 'revisar'
             ? escape(draft.values[f.id]) + (f.unit ? ' ' + escape(f.unit) : '') : statusLabel(state);
           return `<div><dt>${escape(f.label)}</dt><dd class="${state}">${content}</dd></div>`;
-        }).join('')}</dl></section>`).join('')}</div>
+        }).join('')}</dl></section>`).join('')}</div></details>
     ${obesitySummaryCard()}
     ${lipidSummaryCard()}
     ${htaSummaryCard()}
@@ -1082,6 +1082,11 @@ app.addEventListener('input', event => {
       if(previous && typeof previous.remove==='function')previous.remove();
     }
   }
+  if((current.page==='hta'&&!current.htaDetail)||(current.page==='lipids'&&!current.lipidDetail)){document.getElementById(BRIEF_RESULT_IDS[current.page])?.remove();if(['select','multi'].includes(FIELDS[id]?.type))return render();}
+  if(current.page==='module'&&current.mode==='quick'){
+    current.briefForced=false;document.getElementById(BRIEF_RESULT_IDS[current.module])?.remove();
+    if(['select','multi'].includes(FIELDS[id]?.type))return render();
+  }
   if(current.page==='ckm'&&FIELDS[id]?.type==='select')return render();
   const counter=document.getElementById('section-count');
   if (!counter) return;
@@ -1093,15 +1098,17 @@ app.addEventListener('click', event => {
   const btn = event.target.closest('button[data-action]');
   if (!btn) return;
   const action = btn.dataset.action;
-  if(action==='lipids'){current.lipidVisible=false;return navigate('lipids');}
+  if(action==='lipids'){current.lipidDetail=false;current.lipidVisible=false;return navigate('lipids');}
   if(action==='lipid-result'){if(current.page!=='lipids')return;current.lipidVisible=true;return render();}
-  if(action==='hta'){current.htaVisible=false;return navigate('hta');}
+  if(action==='hta'){current.htaDetail=false;current.htaVisible=false;return navigate('hta');}
+  if(action==='brief-advanced'){if(current.page==='hta')current.htaDetail=true;if(current.page==='lipids')current.lipidDetail=true;return render();}
   if(action==='hta-result'){if(current.page!=='hta')return;current.htaVisible=true;return render();}
   if(action==='ckm'){current.ckmVisible=false;current.ckmBlock='contexto';return navigate('ckm');}
   if(action==='ckm-block'){if(current.page!=='ckm')return;if(ckmQuestionBlocks().some(x=>x.id===btn.dataset.block))current.ckmBlock=btn.dataset.block;return navigate('ckm');}
   if(action==='ckm-next'){if(current.page!=='ckm')return;const blocks=ckmQuestionBlocks(),i=blocks.findIndex(x=>x.id===current.ckmBlock);current.ckmBlock=blocks[Math.min(Math.max(0,i)+1,blocks.length-1)].id;current.ckmVisible=true;return navigate('ckm');}
   if(action==='ckm-result'){if(current.page!=='ckm')return;current.ckmVisible=true;return render();}
-  if(action==='cv-risk'){current.cvVisible=false;return navigate('cv-risk');}
+  if(action==='cv-expand'){current.cvDetail=true;return render();}
+  if(action==='cv-risk'){current.cvDetail=false;current.cvVisible=false;return navigate('cv-risk');}
   if(action==='cv-risk-result'){if(current.page!=='cv-risk')return;current.cvVisible=true;return render();}
   if(action==='obesity-result'){
     if(current.page!=='module'||current.module!=='obesidad'||!['quick','detail'].includes(current.mode))return;
@@ -1171,10 +1178,10 @@ app.addEventListener('click', event => {
   }
   if (action === 'start-module') {
     if (!MODULE_BY_ID[btn.dataset.module]) return;
-    current.obesityVisible=false; current.masldVisible=false; current.renalVisible=false; current.module=btn.dataset.module; current.mode='quick'; current.dm2ResultVisible=false; current.dm2DetailedVisible=false; current.insulinVisible=false; current.icVisible=false; return navigate('module');
+    current.briefForced=false;current.obesityVisible=false; current.masldVisible=false; current.renalVisible=false; current.module=btn.dataset.module; current.mode='quick'; current.dm2ResultVisible=false; current.dm2DetailedVisible=false; current.insulinVisible=false; current.icVisible=false; return navigate('module');
   }
   if (action === 'module-outcome') {
-    if(current.page!=='module')return;current.mode='review';return navigate('module');
+    if(current.page!=='module')return;if(current.mode==='quick'){current.briefForced=true;return render();}current.mode='review';return navigate('module');
   }
   if (action === 'module-mode') {
     if (!['quick','detail','review'].includes(btn.dataset.mode)) return;

@@ -28,6 +28,7 @@ export const LIPID_FIELDS=['edad','embarazo','lip_lactancia','fecha_evaluacion',
 const get=(d,id)=>fieldState(d,id)==='registrado'?d.values[id]:null;
 const num=(d,id)=>{const x=get(d,id);return x!==null&&/^(?:\d+\.?\d*|\.\d+)$/.test(x)?Number(x):null};
 const RANK={Bajo:0,Moderado:1,Alto:2,'Muy alto':3};
+export function lipidGoalForCategory(risk){const limits={Bajo:116,Moderado:100,Alto:70,'Muy alto':55};return Object.hasOwn(limits,risk??'')?{ldlLessThan:limits[risk],requiresFiftyPercent:['Alto','Muy alto'].includes(risk),framework:'ESC/EAS 2025 + objetivos conservados de 2019'}:null;}
 export function lipidCategoryFromScore(percent){
  if(typeof percent!=='number'||!Number.isFinite(percent)||percent<0||percent>100)return null;
  return percent<2?'Bajo':percent<10?'Moderado':percent<20?'Alto':'Muy alto';
@@ -106,7 +107,7 @@ export function evaluateDyslipidemia(draft){
   else if(unit==='mg/dL'&&lpa>50||unit==='nmol/L'&&lpa>105)checks.push('Lp(a) elevada en su unidad original: modificador de riesgo para valoración clínica, sin ascenso automático de categoría ni conversión fija mg/dL–nmol/L.');
  }
  if(risk){
-  goal={ldlLessThan:({Bajo:116,Moderado:100,Alto:70,'Muy alto':55})[risk],requiresFiftyPercent:['Alto','Muy alto'].includes(risk),framework:'ESC/EAS 2025 + objetivos conservados de 2019'};
+  goal=lipidGoalForCategory(risk);
   if(ldl!==null&&ldl>0&&dated('fecha_lipidos')&&method&&method!=='No consta'){
    if(baselineValid)reduction=(baseline-ldl)/baseline*100;
    const absolute=ldl<goal.ldlLessThan;

@@ -558,3 +558,14 @@ h2 { letter-spacing:-.025em }
 .capture-details { margin-bottom:16px; }
 
 .ckm-block-links { display:flex; flex-direction:column; align-items:flex-start; gap:10px; }
+
+.quick-home { padding:12px 0 18px; }.quick-home h1 { margin:0 0 8px; font-size:clamp(1.65rem,5vw,2.35rem); }.quick-home p { color:var(--muted); }
+.task-card { display:flex; flex-direction:column; align-items:flex-start; text-align:left; gap:8px; padding:20px; border:1px solid var(--line); border-radius:16px; background:#fff; color:var(--ink); font:inherit; }.task-card strong{font-size:1.1rem}.task-card small{color:var(--muted)}
+.integral-access { margin:24px 0; }.brief-result h3 { margin-top:18px; }.brief-result article { padding:12px 0; border-bottom:1px solid var(--line); }.brief-conduct { font-weight:600; }.brief-drugs { margin:18px 0; }
+/* Menú de consulta: accesos compactos con la identidad de cada dominio. */
+.home .module-card { min-height:112px; display:grid; grid-template-columns:42px minmax(0,1fr); align-items:center; gap:10px; padding:14px; text-align:left; }
+.home .module-art { width:42px; height:46px; margin:0; }.home .module-art img { width:42px; height:46px; }
+.home .module-content { min-width:0; }.home .module-content strong { font-size:1rem; overflow-wrap:anywhere; }.home .module-content small { font-size:.74rem; }
+.home .module-arrow { display:none; }.home .task-card { padding:14px; min-height:100px; }.home .task-card strong { font-size:1rem; }
+
+.task-card{min-width:0}.task-card>*{max-width:100%;overflow-wrap:anywhere}
