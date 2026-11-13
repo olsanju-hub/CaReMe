@@ -1,7 +1,7 @@
 // Solo cachea recursos estáticos: nunca guarda información introducida en formularios.
 // El símbolo SVG incluido es provisional; el icono aprobado en la conversación aún debe subirse.
 const CACHE_PREFIX = 'cahreme-shell-' + encodeURIComponent(new URL(self.registration.scope).pathname) + '-';
-const CACHE = CACHE_PREFIX + 'v0-34';
+const CACHE = CACHE_PREFIX + 'v0-35';
 const ASSETS = [
   './', './index.html', './manifest.webmanifest',
   './src/app.mjs', './src/model.mjs', './src/consultas.mjs', './src/clinical/obesidad.mjs', './src/clinical/masld.mjs', './src/clinical/dislipemia.mjs', './src/clinical/hta.mjs', './src/clinical/ckm.mjs', './src/clinical/riesgo-cv.mjs', './src/clinical/renal.mjs', './src/clinical/engine.mjs', './src/clinical/integracion.mjs', './src/clinical/farmacologia.mjs', './src/clinical/continuidad.mjs', './src/clinical/incretinas.mjs', './src/clinical/basales.mjs', './src/clinical/auditoria.mjs', './src/clinical/proveniencia.mjs', './src/clinical/plan-integral.mjs', './src/clinical/plan.mjs', './src/clinical/dm2-rapida.mjs', './src/clinical/dm2-detallada.mjs', './src/clinical/insulinizacion.mjs', './src/clinical/insuficiencia-cardiaca.mjs', './src/styles.css',
@@ -11,7 +11,7 @@ const ASSETS = [
 ];
 const STATIC_PATHS = new Set(ASSETS.map(asset => new URL(asset, self.registration.scope).pathname));
 self.addEventListener('install', event => {
-  event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(ASSETS)).then(() => self.skipWaiting()));
+  event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(ASSETS.map(asset => new Request(new URL(asset, self.registration.scope), { cache: 'reload' })))).then(() => self.skipWaiting()));
 });
 self.addEventListener('activate', event => {
   event.waitUntil(

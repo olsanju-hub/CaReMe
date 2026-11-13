@@ -125,6 +125,19 @@ try{
    assert.equal(await page.locator('[data-block="subclinica"]').count(),0);assert.ok(await page.locator('.form-card input,.form-card select').count()<=6);
    await home();await page.locator('[data-action="new"]').first().click();
   });
+  await check(profile.id,'actualización recupera una portada antigua en caché y conserva cachés ajenas',async()=>{
+   await page.reload();await page.waitForFunction(()=>!!navigator.serviceWorker.controller);
+   await page.evaluate(async()=>{
+    const keys=await caches.keys(),key=keys.find(x=>x.startsWith('cahreme-shell-%2F-'));
+    const cache=await caches.open(key);await cache.put(location.origin+'/',new Response('<!doctype html><h1>Prototipo en revisión: versión antigua de prueba</h1>',{headers:{'Content-Type':'text/html'}}));
+    await (await caches.open('otra-aplicacion-prueba')).put(location.origin+'/fixture.txt',new Response('conservar'));
+   });
+   await page.goto(origin+'/');assert.match(await page.locator('body').innerText(),/versión antigua de prueba/);
+   await page.goto(origin+'/actualizar.html');await page.locator('#update').click();await page.waitForURL(origin+'/');
+   assert.equal(await page.locator('button.module-card').count(),6);assert.doesNotMatch(await page.locator('body').innerText(),/Prototipo en revisión|Ningún resultado autoriza/);
+   assert.equal(await page.evaluate(async()=>!!await (await caches.open('otra-aplicacion-prueba')).match(location.origin+'/fixture.txt')),true);
+   await page.evaluate(()=>caches.delete('otra-aplicacion-prueba'));
+  });
   await check(profile.id,'privacidad: captura sin almacenamiento o red clínica',async()=>{
    assert.deepEqual(await page.evaluate(()=>({local:Object.keys(localStorage),session:Object.keys(sessionStorage)})),{local:[],session:[]});assert.deepEqual(await context.cookies(),[]);assert.deepEqual(external,[]);
   });

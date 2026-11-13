@@ -1206,7 +1206,7 @@ if (typeof window !== 'undefined' && typeof navigator !== 'undefined' &&
     'serviceWorker' in navigator &&
     (location.protocol === 'https:' || location.hostname === 'localhost')) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./service-worker.js').catch(() => {});
+    navigator.serviceWorker.register('./service-worker.js', { updateViaCache: 'none' }).then(registration => registration.update()).catch(() => {});
   });
 }
 

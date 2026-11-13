@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>Actualizar CaHReMe</title><style>body{font:18px system-ui;color:#173347;background:#f4f8f9;max-width:560px;margin:12vh auto;padding:24px}button{font:inherit;background:#087c82;color:white;padding:14px 20px;border:0;border-radius:12px}p{line-height:1.5}</style></head><body>
+<h1>Actualizar CaHReMe</h1><p>Renueva los archivos de la aplicación. No necesitas borrar los datos de Safari.</p><p>Si tienes una consulta abierta, termina de revisarla antes de actualizar: sus datos no se guardan al recargar.</p><button id="update">Cargar versión actual</button><p id="status" role="status"></p>
+<script type="module">
+const button=document.getElementById('update'),status=document.getElementById('status');
+button.addEventListener('click',async()=>{
+ button.disabled=true;status.textContent='Actualizando…';
+ try {
+  const scope=new URL('./',location.href).href,prefix='cahreme-shell-'+encodeURIComponent(new URL(scope).pathname)+'-';
+  if('serviceWorker' in navigator){for(const reg of await navigator.serviceWorker.getRegistrations())if(reg.scope===scope)await reg.unregister();}
+  for(const name of await caches.keys())if(name.startsWith(prefix)||/^cahreme-shell-v0-\d+$/.test(name))await caches.delete(name);
+  if('serviceWorker' in navigator){await navigator.serviceWorker.register('./service-worker.js',{scope:'./',updateViaCache:'none'});await navigator.serviceWorker.ready;}
+  location.replace(scope);
+ }catch(error){status.textContent='No se ha podido actualizar. Comprueba la conexión y vuelve a intentarlo.';button.disabled=false;}
+});
+</script></body></html>

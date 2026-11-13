@@ -5,9 +5,9 @@ import vm from 'node:vm';
 const source=readFileSync(new URL('../service-worker.js',import.meta.url),'utf8');
 function worker(scope='https://example.test/CaReMe/'){
  const listeners={},stored=new Map(),opened=[],removed=[];let network=0;
- const cache={addAll:async assets=>assets.forEach(x=>stored.set(new URL(x,scope).pathname,'cached:'+x)),match:async request=>stored.get(new URL(request.url).pathname)};
+ const cache={addAll:async assets=>assets.forEach(x=>stored.set(new URL(x.url??x,scope).pathname,'cached:'+(x.url??x))),match:async request=>stored.get(new URL(request.url).pathname)};
  const caches={open:async name=>{opened.push(name);return cache;},keys:async()=>[opened[0]??'', 'cahreme-shell-%2FCaReMe%2F-v0-old','cahreme-shell-%2Fother%2F-v0-old'],delete:async name=>removed.push(name),match:()=>{throw new Error('No buscar en cachés ajenas')}};
- vm.runInNewContext(source,{URL,Set,self:{registration:{scope},location:{origin:new URL(scope).origin},addEventListener:(event,fn)=>listeners[event]=fn,skipWaiting:async()=>{},clients:{claim:async()=>{}}},caches,fetch:async()=>{network++;return 'network';}});
+ vm.runInNewContext(source,{URL,Request,Set,self:{registration:{scope},location:{origin:new URL(scope).origin},addEventListener:(event,fn)=>listeners[event]=fn,skipWaiting:async()=>{},clients:{claim:async()=>{}}},caches,fetch:async()=>{network++;return 'network';}});
  const lifecycle=async type=>{let promise;listeners[type]({waitUntil:p=>promise=p});await promise;};
  const request=async(url,method='GET')=>{let response;listeners.fetch({request:{url,method},respondWith:p=>response=p});return response?await response:null;};
  return {lifecycle,request,stored,opened,removed,network:()=>network};
