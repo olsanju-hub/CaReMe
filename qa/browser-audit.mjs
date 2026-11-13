@@ -129,7 +129,7 @@ try{
    await page.reload();await page.waitForFunction(()=>!!navigator.serviceWorker.controller);
    await page.evaluate(async()=>{
     const keys=await caches.keys(),key=keys.find(x=>x.startsWith('cahreme-shell-%2F-'));
-    const cache=await caches.open(key);await cache.put(location.origin+'/',new Response('<!doctype html><h1>Prototipo en revisión: versión antigua de prueba</h1>',{headers:{'Content-Type':'text/html'}}));
+    const cache=await caches.open(key);await cache.put(location.origin+'/',new Response('<!doctype html><meta charset="utf-8"><h1>Prototipo en revisión: versión antigua de prueba</h1>',{headers:{'Content-Type':'text/html'}}));
     await (await caches.open('otra-aplicacion-prueba')).put(location.origin+'/fixture.txt',new Response('conservar'));
    });
    await page.goto(origin+'/');assert.match(await page.locator('body').innerText(),/versión antigua de prueba/);
