@@ -1,6 +1,6 @@
 {
   "schema": "cahreme-functional-coverage-v1",
-  "audited_on": "2026-11-12",
+  "audited_on": "2026-11-13",
   "basis": {
     "reference_repo": "aarnal80/diabetes-congreso-mobile",
     "reference_version": "GlucoGuía 1.6",
@@ -17,7 +17,7 @@
     "reference_app_js_blob": "c60bf8bc72db8a0a4b863b8e50c0a8d04dfb3705",
     "target_repo": "olsanju-hub/CaReMe",
     "target_branch": "feat/prototipo-interfaz",
-    "method": "source-code inspection; no real-device equivalence test"
+    "method": "Inspección de código y 152 comprobaciones Chromium/WebKit; sin prueba de equivalencia clínica ni dispositivo físico"
   },
   "status_meanings": {
     "implemented": "Capture or behavior present and identifiable in source, not clinical approval",
@@ -194,12 +194,12 @@
     {
       "id": "offline_pwa",
       "status": "partial",
-      "evidence": "manifest.webmanifest and service-worker.js exist; real device install/offline untested"
+      "evidence": "Offline con origen detenido verificado en Chromium/WebKit: docs/AUDITORIA_GLOBAL_2026-11-13.md; instalación real pendiente"
     },
     {
       "id": "real_device_review",
       "status": "missing",
-      "evidence": "No manual iPhone/desktop validation evidence available"
+      "evidence": "QA automatizado Chromium/WebKit superado; sin validación manual en dispositivo físico"
     },
     {
       "id": "individualized_therapeutic_plan",
@@ -313,7 +313,8 @@
     "clinical_validation": "pending",
     "mobile_qa": "pending",
     "keep_pr_draft": true,
-    "no_prescription": true
+    "no_prescription": true,
+    "browser_qa": "152_passed_0_failed"
   },
-  "updated_on": "2026-11-12"
+  "updated_on": "2026-11-13"
 }

@@ -1,6 +1,6 @@
 {
   "schema": "cahreme-original-scope-v1",
-  "reviewed_on": "2026-11-12",
+  "reviewed_on": "2026-11-13",
   "baseline_commit": "d3c539bbf88d14179579861de5f4d4fb81217820",
   "acceptance": "Implementación no equivale a validación clínica; ningún bloque está aprobado para uso asistencial.",
   "areas": [
@@ -43,7 +43,7 @@
     {
       "id": "ic",
       "status": "partial",
-      "evidence": "insuficiencia-cardiaca.mjs",
+      "evidence": "insuficiencia-cardiaca.mjs; historial de FEVI previa exigido antes de IC-FEp, contrastado con ESC2026 sección5.2.2",
       "pending": "Revalidación clínica/fuentes, titulación por producto y QA real"
     },
     {
@@ -80,7 +80,8 @@
     {
       "id": "pwa",
       "status": "partial",
-      "pending": "Instalación/offline real, accesibilidad e icono definitivo"
+      "pending": "Instalación en dispositivos físicos, revisión completa de accesibilidad e icono definitivo",
+      "evidence": "Offline verificado en Chromium/WebKit con origen detenido; caché aislada por ámbito"
     },
     {
       "id": "evidencia",
@@ -100,10 +101,18 @@
     "full_mvp": false
   },
   "next": [
-    "Auditoría global de coherencia y QA real; revisión clínica independiente",
+    "Revisión clínica independiente y QA en dispositivos físicos; auditoría automatizada inicial superada",
     "Cálculo interno SCORE2-OP pendiente de parámetros primarios; variantes restantes",
     "Completar dislipemia por producto y escenarios específicos",
     "Completar HTA por producto y derivación",
     "Publicación versionada"
-  ]
+  ],
+  "browser_qa": {
+    "status": "passed",
+    "node_tests": 925,
+    "browser_checks": 152,
+    "failed": 0,
+    "evidence": "docs/AUDITORIA_GLOBAL_2026-11-13.md",
+    "physical_device": false
+  }
 }

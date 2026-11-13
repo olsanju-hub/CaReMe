@@ -137,3 +137,7 @@ Se verifican GIRO2.0 (abril2025), EASO2024, criterios ASMBS/IFSO2022 y CIMA vige
 ## Trazabilidad del plan integral · 12/11/2026
 
 La síntesis reutiliza objetivos y controles de los motores existentes con sus fuentes primarias. No introduce umbrales, plazos o recomendaciones clínicas nuevos ni acredita revalidación independiente del conjunto. [Contrato de composición y auditoría](PLAN_INTEGRAL.md). Las referencias de origen permanecen separadas; riesgo/CKM no se convierten en objetivos terapéuticos.
+
+## Comprobación selectiva de coherencia · 13/11/2026
+
+ESC2026, sección5.2.2: antes de clasificar IC-FEp con FEVI≥50 debe comprobarse que no existió FEVI<50. Se añade historial explícito y se retienen nuevas opciones si falta esa revisión. Fuente primaria: https://academic.oup.com/eurheartj/article/47/38/5346/8766302 . Esta comprobación no representa revalidación exhaustiva de todas las referencias ni validación clínica independiente. Véase AUDITORIA_GLOBAL_2026-11-13.md.

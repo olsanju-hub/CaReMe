@@ -6,7 +6,7 @@
 
 ## Auditoría vigente · 13/11/2026
 
-[Hallazgos y comprobaciones](docs/AUDITORIA_GLOBAL_2026-11-13.md). Incluye corrección del historial de FEVI, navegación de ordenador/tablet y caché offline por ámbito. Las pruebas de navegador se ejecutan en GitHub Actions; su resultado y límites constan en el informe.
+[Hallazgos y comprobaciones](docs/AUDITORIA_GLOBAL_2026-11-13.md). Incluye corrección del historial de FEVI, navegación de ordenador/tablet y caché offline por ámbito. 925 pruebas Node y 152 comprobaciones Chromium/WebKit superadas, sin fallos. El informe recoge la ejecución de GitHub Actions y sus límites.
 
 ## Propósito
 PWA independiente de apoyo a la decisión clínica en Atención Primaria en España. Evaluación integrada de los dominios **cardiovascular, renal, hepático y metabólico**, sin reducir la app a diabetes mellitus.

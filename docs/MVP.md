@@ -4,6 +4,12 @@
 **Fecha:** 2026-11-11  
 **Dependencia:** [Documento rector](DOCUMENTO_RECTOR.md)
 
+## Estado vigente · 13/11/2026
+
+Las seis consultas tienen una primera salida propia y plan integral para revisión. La auditoría automatizada inicial supera 925 pruebas Node y 152 comprobaciones Chromium/WebKit, con recarga sin origen. No equivale a paridad clínica completa ni aprobación asistencial. Quedan revisión clínica independiente y pruebas en dispositivos físicos. [Informe de auditoría](AUDITORIA_GLOBAL_2026-11-13.md).
+
+Los estados de iteración siguientes se conservan como registro histórico; prevalece este estado y la matriz de alcance vigente.
+
 ## Requisito de equivalencia funcional (2026-11-11)
 
 **Es imprescindible reproducir mediante implementación original la cobertura clínica funcional de las seis consultas de GlucoGuía**: DM2, IC, ERC, sobrepeso/obesidad, enfermedad hepática metabólica e insulinización, con consulta rápida, revisión detallada cuando exista, resultados y acceso a fuentes. **La evaluación integral es un séptimo acceso adicional, no reemplaza las seis consultas.**
