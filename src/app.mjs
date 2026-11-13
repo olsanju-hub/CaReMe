@@ -853,12 +853,14 @@ function followupPage() {
        : '<p>No hay actuaciones confirmadas en esta sesión.</p>'}
     </section>
     <section class="drug-card"><h2>Controles vinculados a actuaciones confirmadas</h2>
+      ${plan.history.heldRecords ? '<p class="form-error" role="alert">Hay registros históricos que requieren revisión de fechas o contenido; no generan un control automático.</p>' : ''}
       ${events.length ? `<div class="review-list">${events.map(e=>`<div class="review-row">
         <span><strong>${escape(e.drugId)}</strong> · ${escape(e.trigger)}
           <small class="followup-description">${escape(e.description)}</small>
+          ${e.holdReasons?.length ? `<small class="followup-description">${escape(e.holdReasons.join(' '))}</small>` : ''}
           <small class="followup-status">${e.status==='sustituido'?'Sustituido por una actuación posterior':e.status==='requiere_reevaluacion'?'Referencia retenida: revisar seguridad y contexto actuales':e.temporalStatus==='plazo_superado'?'Plazo superado: revisar cumplimiento':e.status==='referencia_activa'?'Control de referencia para revisión':'Reevaluación clínica pendiente'}</small></span>
         <strong class="${e.status==='sustituido'?'followup-superseded':''}">${e.dueOn?escape(e.dueOn):'Sin fecha fija'}</strong></div>`).join('')}</div>`
-        : '<p>Aún no hay controles programables: ninguna actuación se ha confirmado.</p>'}
+        : '<p>No hay controles aplicables con el historial y contexto actuales. Revisa fechas y confirmaciones.</p>'}
       <p class="drug-disclaimer">Estas fechas se muestran en pantalla, sin notificaciones. La periodicidad puede requerir adelanto o modificación según la situación clínica.</p>
     </section>
   </div>`;

@@ -12,5 +12,6 @@ test('calendario conserva fecha pero retiene referencia cuando falta contexto o 
  click('evaluation');
  for(const [k,v] of Object.entries({edad:'60',embarazo:'No procede',fecha_evaluacion:'2026-11-13',situacion_aguda:'Estable sin proceso agudo grave',lra_sospecha:'No',medicacion_revisada:'Sí',fin_estado:'En tratamiento'}))set(k,v);
  followup();assert.match(app.innerHTML,/Control de referencia para revisión/);
- click('evaluation');set('cetoacidosis_sospecha','Sí');set('situacion_aguda','');followup();assert.match(app.innerHTML,/Referencia retenida/);assert.match(app.innerHTML,/2026-11-29/);assert.doesNotMatch(app.innerHTML,/Control de referencia para revisión/);
+ click('evaluation');set('cetoacidosis_sospecha','Sí');set('situacion_aguda','');followup();assert.match(app.innerHTML,/Referencia retenida/);assert.match(app.innerHTML,/2026-11-29/);assert.doesNotMatch(app.innerHTML,/Control de referencia para revisión/);assert.match(app.innerHTML,/Resolver primero la seguridad actual/);
+ click('evaluation');set('fecha_evaluacion','2026-10-01');followup();assert.match(app.innerHTML,/registros históricos que requieren revisión/);assert.match(app.innerHTML,/No hay controles aplicables/);assert.doesNotMatch(app.innerHTML,/2026-11-29/);
 });
