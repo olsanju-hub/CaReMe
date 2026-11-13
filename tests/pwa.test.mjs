@@ -24,10 +24,10 @@ test('service worker solo cachea recursos estáticos', () => {
     assert.ok(sw.includes(asset));
   }
 });
-test('interfaz no contiene instrucciones clínicas reales ni almacenamiento de datos', () => {
+test('interfaz no almacena ni transmite los datos de consulta', () => {
   const app = read('src/app.mjs');
-  assert.ok(app.includes('Ningún resultado autoriza diagnóstico'));
   assert.ok(!app.includes('localStorage.'));
   assert.ok(!app.includes('sessionStorage.'));
   assert.ok(!app.includes('fetch('));
 });
+

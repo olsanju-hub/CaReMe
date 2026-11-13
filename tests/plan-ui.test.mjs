@@ -17,7 +17,7 @@ test('plan de verificación visible en herramientas y síntesis sin generar acci
  click('tools');
  assert.match(root.innerHTML,/Plan de verificación clínica/);
  assert.match(root.innerHTML,/No se han generado controles nuevos/);
- assert.match(root.innerHTML,/no tratamientos iniciados|no tratamientos iniciados/i);
+ assert.match(root.innerHTML,/Actuaciones registradas: 0/);
  click('start-module',{module:'erc'});
  click('module-mode',{mode:'detail'});
  assert.match(root.innerHTML,/type="date"/);
@@ -30,3 +30,4 @@ test('plan de verificación visible en herramientas y síntesis sin generar acci
  click('summary');
  assert.match(root.innerHTML,/Actuaciones registradas: 0/);
 });
+

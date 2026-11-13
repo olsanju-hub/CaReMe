@@ -1,7 +1,7 @@
 {
   "name": "CaHReMe — Evaluación cardiorrenal-hepatometabólica",
   "short_name": "CaHReMe",
-  "description": "Prototipo CaHReMe de evaluación cardiorrenal-hepatometabólica: categorías G/A, FIB-4 y orientación DM2 en revisión; sin prescripción.",
+  "description": "CaHReMe: evaluación cardiorrenal-hepatometabólica para Atención Primaria.",
   "id": "./",
   "start_url": "./",
   "scope": "./",

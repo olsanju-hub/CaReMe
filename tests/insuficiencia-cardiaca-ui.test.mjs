@@ -44,5 +44,6 @@ test('el módulo conserva salida no prescriptiva e invalida resultados al editar
  assert.match(s,/if\(current\.icVisible\)/);
  assert.match(s,/current\.icVisible=false/);
  assert.match(s,/data-action="ic-result"/);
- assert.match(s,/sin prescripción|SIN PRESCRIPCIÓN/i);
+ assert.match(s,/Fuentes ESC y fichas CIMA/);
 });
+

@@ -113,7 +113,7 @@ try{
     await module(id);assert.equal(await page.locator('.form-card input,.form-card select').evaluateAll(xs=>xs.filter(x=>!x.closest('details:not([open])')).length),count);
    }
    await module('obesidad');await page.locator('[data-action="module-outcome"]').click();assert.ok(await page.locator('#obesity-result').isVisible());assert.equal(await page.locator('.capture-details').getAttribute('open'),null);
-   await page.locator('.treatment-access [data-drug-id="tirzepatida"]').click();assert.match(await page.locator('main').innerText(),/SOLO PAUTA DE FICHA TÉCNICA/);assert.match(await page.locator('main').innerText(),/Datos esenciales incompletos/);
+   await page.locator('.treatment-access [data-drug-id="tirzepatida"]').click();assert.match(await page.locator('main').innerText(),/DOSIS DE FICHA TÉCNICA/);assert.match(await page.locator('main').innerText(),/Datos esenciales incompletos/);
    await home();
   });
   await check(profile.id,'CKM dirigido: bloque breve, resultado mínimo y preguntas condicionales',async()=>{

@@ -21,7 +21,7 @@ test('hígado rápido y detallado comparten datos; resultado se invalida al edit
  set('masld_fib4_confirmado','Sí');click('masld-result');assert.match(root.innerHTML,/FIB-4 utilizado: 2.80/);
  click('module-mode',{mode:'detail'});assert.match(root.innerHTML,/value="2.8"/);assert.match(root.innerHTML,/data-field="ast"/);
  click('module-mode',{mode:'review'});assert.match(root.innerHTML,/Fibrosis hepática y derivación/);assert.doesNotMatch(root.innerHTML,/Aquí aparecerán situación/);
- click('summary');assert.match(root.innerHTML,/Fibrosis hepática y derivación/);assert.match(root.innerHTML,/La derivación propuesta no se considera enviada/);
+ click('summary');assert.match(root.innerHTML,/Fibrosis hepática y derivación/);
 });
 test('servidor y caché incluyen MASLD',()=>{
  for(const path of ['../server.mjs','../service-worker.js'])assert.match(readFileSync(new URL(path,import.meta.url),'utf8'),/src\/clinical\/masld.mjs/);

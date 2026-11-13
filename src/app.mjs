@@ -27,7 +27,7 @@ const escape = (value) => String(value ?? '').replace(/[&<>"']/g, c =>
 const counts = () => totalStats(draft);
 
 function banner() {
-  return '<div class="safety" role="note"><span class="safety-dot"></span><span>Prototipo en revisión: evaluación clínica y seguimiento para valoración profesional. Ningún resultado autoriza diagnóstico, prescripción o suspensión farmacológica.</span></div>';
+  return '';
 }
 function header() {
   return `<header class="topbar"><div class="topbar-inner">
@@ -37,7 +37,7 @@ function header() {
     </button>
     <nav class="desktop-nav" aria-label="Navegación principal en ordenador">
       ${[['home','Inicio'],['evaluation','Evaluar'],['tools','Herramientas'],['sources','Fuentes']].map(([id,label])=>`<button type="button" class="text-link" data-action="${id}" ${current.page===id?'aria-current="page"':''}>${label}</button>`).join('')}
-    </nav><div class="top-right"><span class="dev-label">PROTOTIPO · V0.1</span></div>
+    </nav><div class="top-right"></div>
   </div></header>`;
 }
 function nav() {
@@ -62,7 +62,7 @@ function home() {
     </section>
     ${banner()}
     <div class="section-heading"><div><div class="eyebrow">SEIS CONSULTAS CLÍNICAS</div><h2>¿Qué necesitas valorar?</h2></div>
-      <p>Consulta rápida y revisión detallada en seis áreas, con resultados para revisión profesional. Validación clínica pendiente.</p>
+      <p>Consulta rápida y revisión detallada en seis áreas, con resultados para revisión profesional.</p>
     </div>
     <section class="info-strip"><div><strong>Riesgo cardiovascular</strong><p>SCORE2 para el grupo elegible en España y registro documentado de SCORE2-OP externo.</p></div>
       <button type="button" class="primary" data-action="cv-risk">Valorar riesgo cardiovascular →</button></section>
@@ -103,7 +103,7 @@ function obesityResult(mode='detail'){
  <details><summary>Fichas de referencia · sin pauta individual</summary><button type="button" class="text-link" data-action="open-drug" data-drug-id="semaglutida_wegovy_sc" data-route-id="peso">Semaglutida subcutánea para peso: ficha CIMA →</button>
  <button type="button" class="text-link" data-action="open-drug" data-drug-id="tirzepatida" data-route-id="peso">Tirzepatida para peso: ficha CIMA →</button><p>Las fichas se consultan para revisión; no determinan elegibilidad ni financiación. Otros productos requieren revisión individual.</p></details>
  <details><summary>Fuentes</summary>${r.sources.map(x=>`<p><a href="${escape(x.url)}" target="_blank" rel="noopener noreferrer">${escape(x.title)}</a> · ${escape(x.locator)}</p>`).join('')}</details>
- <p class="privacy-note">Sin diagnóstico, prescripción ni autorización quirúrgica automáticos. No se crea cita ni se envía derivación. Validación clínica independiente pendiente.</p></section>`;
+ </section>`;
 }
 function obesityFieldsMarkup(fields,mode){
  if(mode==='quick')return fields.map(id=>moduleFieldMarkup(FIELDS[id])).join('');
@@ -134,7 +134,7 @@ function lipidResult(){
  <h3>Seguimiento</h3>${r.followUp?`<p>Ventana orientativa: ${escape(r.followUp.from)} a ${escape(r.followUp.to)}. ${r.followUp.status==='plazo_superado'?'Plazo superado: revisar controles disponibles.':''} ${escape(r.followUp.text)}</p>`:'<p>No se genera una fecha de control desde una propuesta o con datos insuficientes. Individualizar seguimiento.</p>'}
  <details><summary>Referencias farmacológicas CIMA · sin pauta individual</summary>${r.drugReferences.map(x=>`<h4>${escape(x.name)}</h4><p>${escape(x.reference)} <a href="${escape(x.source)}" target="_blank" rel="noopener noreferrer">Ficha técnica</a></p>`).join('')}</details>
  <details><summary>Guías y fuentes</summary>${r.sources.map(x=>`<p><a href="${escape(x.url)}" target="_blank" rel="noopener noreferrer">${escape(x.title)}</a> · ${escape(x.locator)}</p>`).join('')}</details>
- <p class="privacy-note">No prescribe ni confirma financiación o elegibilidad por producto. Validación clínica independiente pendiente.</p></section>`;
+ </section>`;
 }
 function lipidView(){
  const basic=['edad','embarazo','lip_lactancia','fecha_evaluacion','colesterol_total','hdl','ldl','trigliceridos','fecha_lipidos','lip_metodo_ldl','lip_alarma'];
@@ -169,7 +169,7 @@ function htaResult(){
  ${r.options.length?`<h3>Opciones para revisión profesional</h3>${r.options.map(x=>`<article><h4>${escape(x.title)}</h4><p>${escape(x.detail)}</p>${list(x.checks)}</article>`).join('')}`:''}
  <h3>Comprobaciones</h3>${list(r.checks)}<h3>Reevaluación</h3><p>${escape(r.followUp)}</p>
  <p><a href="${escape(r.source.url)}" target="_blank" rel="noopener noreferrer">${escape(r.source.title)}</a> · ${escape(r.source.locator)}</p>
- <p class="privacy-note">No confirma diagnósticos ni inicia o modifica una pauta individual. Validación clínica independiente pendiente.</p></section>`;
+ </section>`;
 }
 function htaView(){
  const basic=['edad','embarazo','fecha_evaluacion','hta_conocida','pas','pad','fecha_pas','hta_consulta_calidad','hta_alarma','hta_dano_agudo','hta_tratamiento'];
@@ -196,7 +196,7 @@ function ckmResult(){
   ${r.missing.length?`<h3>Para precisar el resultado</h3>${list(r.missing.slice(0,2))}${r.missing.length>2?`<details><summary>Otras comprobaciones pendientes (${r.missing.length-2})</summary>${list(r.missing.slice(2))}</details>`:''}`:''}
   <details><summary>Interpretación y límites</summary>${list(r.notes)}</details>
   <p><a href="${escape(r.source.url)}" target="_blank" rel="noopener noreferrer">${escape(r.source.title)}</a> · ${escape(r.source.locator)}</p>
-  <p class="privacy-note">Sin diagnóstico o tratamiento automático. Revisión clínica independiente pendiente.</p></section>`;
+  </section>`;
 }
 // Preguntas dirigidas: solo se representa un bloque; los valores compartidos se conservan.
 function ckmQuestionBlocks(){
@@ -241,7 +241,7 @@ function ckmView(){
   </section>
   <details><summary>Elegir qué dato revisar</summary><div class="ckm-block-links">${blocks.map(x=>`<button type="button" class="text-link" data-action="ckm-block" data-block="${x.id}" ${x.id===block.id?'aria-current="step"':''}>${escape(x.title)}</button>`).join('')}</div></details>
   ${r.stage!==null?'<p>La clasificación ya está disponible. Revisa otros apartados solo si necesitas corregir datos o precisar el resultado.</p>':''}
-  <p class="privacy-note">No se solicitan pruebas nuevas solo para completar la clasificación. Revisión clínica independiente pendiente.</p></div>`;
+  <p class="privacy-note">No se solicitan pruebas nuevas solo para completar la clasificación.</p></div>`;
 }
 function ckmSummaryCard(){
  const r=evaluateCkm(draft);
@@ -267,7 +267,7 @@ function cvRiskView(){
   ${r.alerts.length?`<div class="dm2-safety">${list(r.alerts)}</div>`:''}
   ${r.missing.length?`<h3>Información necesaria</h3>${list(r.missing)}`:''}
   ${list(r.steps)}<details><summary>Fuentes y límites</summary>${r.sources.map(x=>`<p><a href="${escape(x.url)}" target="_blank" rel="noopener noreferrer">${escape(x.title)}</a> · ${escape(x.locator)}</p>`).join('')}</details>
-  <p class="privacy-note">Sin prescripción ni clasificación CKM automática. Validación clínica independiente pendiente.</p></section>`:''}
+  </section>`:''}
  </div>`;
 }
 function moduleFieldMarkup(f) {
@@ -337,7 +337,7 @@ function fib4ResultCard() {
  <h3>Seguimiento</h3><p>${r.followUp?escape(r.followUp.text):'Individualizar tras completar la evaluación; sin calendario rutinario automático.'}</p>
  <details><summary>Fuentes y límites</summary>${r.sources.map(x=>`<p><a href="${escape(x.url)}" target="_blank" rel="noopener noreferrer">${escape(x.title)}</a> · ${escape(x.locator)}</p>`).join('')}
  <p>Fórmula: edad × AST / (plaquetas × √ALT). Umbral inferior 1,3 hasta 65 años; 2,0 por encima de 65. Por debajo de 35 años la precisión es limitada. No confirma MASLD, MASH o cirrosis.</p></details>
- <p class="privacy-note">La derivación propuesta no se considera enviada. Sin prescripción ni indicación automática de tratamiento específico para MASH. Revisión clínica independiente pendiente.</p></section>`;
+ </section>`;
 }
 function calculatorsForModule(id) {
   if(id==='erc') return renalResultCard();
@@ -409,7 +409,7 @@ function integratedPlanPanel(){
  ${p.contexts.length?`<details><summary>Contexto de riesgo y CKM</summary>${list(p.contexts.map(x=>x.text))}</details>`:''}
  <details><summary>Fuentes de los módulos evaluados</summary>${p.domains.filter(d=>d.active).map(d=>`<h4>${escape(d.title)}</h4>${d.sources.map(x=>`<p><a href="${escape(x.url)}" target="_blank" rel="noopener noreferrer">${escape(x.title)}</a>${x.locator?' · '+escape(x.locator):''}</p>`).join('')}`).join('')}</details>
  ${p.archivedControls.length?`<details><summary>Referencias históricas sustituidas (${p.archivedControls.length})</summary><p>No se presentan como controles actuales; se conservan en el historial de esta sesión.</p></details>`:''}
- <p class="privacy-note">Propuestas para revisión, no tratamientos iniciados. Actuaciones registradas: ${p.history.acceptedRecords}.${p.history.heldRecords?' Registros históricos por conciliar: '+p.history.heldRecords+'.':''} No se considera realizada una prueba o enviada una derivación por aparecer aquí. Sin citas creadas ni prescripción. Validación clínica pendiente.</p></section>`;
+ <p class="privacy-note">Actuaciones registradas: ${p.history.acceptedRecords}.${p.history.heldRecords?' Registros históricos por conciliar: '+p.history.heldRecords+'.':''} </p></section>`;
 }
 function integratedCards(focus = null) {
   const result=integratePatient(draft);
@@ -424,7 +424,7 @@ function integratedCards(focus = null) {
   return `<section class="integration-panel" aria-label="Integración cardiorrenal-hepatometabólica">
     <div class="integration-head"><div><div class="eyebrow">INTEGRACIÓN MULTIORGÁNICA</div>
     <h2>Prioridades para revisión clínica</h2>
-    <p>Basadas en antecedentes declarados y datos disponibles. No son órdenes médicas ni un plan de prescripción.</p>
+    <p>Basadas en antecedentes declarados y datos disponibles. </p>
     </div><span class="integration-status">SIN PRESCRIPCIONES</span></div>
     ${nonempty.length ? nonempty.map(group=>`<div class="integration-group">
       <h3>${escape(group.title)}</h3>
@@ -452,7 +452,7 @@ function dm2RapidResult() {
     `<ul>${items.map(x=>`<li>${escape(x)}</li>`).join('')}</ul>`
     :'<p>No se han generado entradas en esta sección.</p>';
   return `<section id="dm2-rapid-result" class="dm2-result" aria-live="polite">
-    <div class="eyebrow">DM2 · REDGDPS / ADA 2026 · SIN PRESCRIPCIÓN</div>
+    <div class="eyebrow">DM2 · REDGDPS / ADA 2026</div>
     <h2>Orientación rápida según el caso</h2>
     <strong class="dm2-status ${escape(r.state)}">${escape(state)}</strong>
     <h3>Situación clínica</h3><p>${escape(r.situation)}</p>
@@ -472,7 +472,7 @@ function dm2RapidResult() {
         `<li><a target="_blank" rel="noopener noreferrer" href="${escape(x.url)}">${escape(x.name)}</a>
         <small> · ${escape(x.detail)}</small></li>`).join('')}</ul>
     </details>
-    <p class="privacy-note">${escape(r.scope)} Ninguna alternativa es una prescripción realizada.</p>
+    
   </section>`;
 }
 function dm2DetailedResult() {
@@ -490,7 +490,7 @@ function dm2DetailedResult() {
   const comparison=goal.comparison;
   const numberText=number=>number===null?'No registrado':number.toLocaleString('es-ES',{maximumFractionDigits:2});
   return `<section id="dm2-detailed-result" class="dm2-result dm2-detailed" aria-live="polite">
-    <div class="eyebrow">DM2 DETALLADA · REDGDPS / ADA 2026 · SIN PRESCRIPCIÓN</div>
+    <div class="eyebrow">DM2 DETALLADA · REDGDPS / ADA 2026</div>
     <h2>Interpretación del objetivo individual</h2>
     <strong class="dm2-status ${escape(result.state)}">${escape(labels[result.state]||'Revisión pendiente')}</strong>
     <div class="dm2-detail-metrics">
@@ -524,7 +524,7 @@ function dm2DetailedResult() {
         `<li><a href="${escape(source.url)}" target="_blank" rel="noopener noreferrer">${escape(source.name)}</a>
         <small> · ${escape(source.detail)}</small></li>`).join('')}
     </ul></details>
-    <p class="privacy-note">No se ha prescrito ni modificado ningún medicamento. La selección individual y revisión clínica externa siguen pendientes.</p>
+    
   </section>`;
 }
 function insulinResult(mode) {
@@ -540,7 +540,7 @@ function insulinResult(mode) {
     :'<p>No se han registrado elementos en esta sección.</p>';
   const r=result.glycemicPattern;
   return `<section id="insulin-result" class="dm2-result insulin-result" aria-live="polite">
-    <div class="eyebrow">INSULINIZACIÓN DM2 · ADA/EASD 2026 · REVISIÓN NO PRESCRIPTIVA</div>
+    <div class="eyebrow">INSULINIZACIÓN DM2 · ADA/EASD 2026</div>
     <h2>${escape(result.phase||'Seleccionar el circuito de insulinización')}</h2>
     <strong class="dm2-status ${escape(result.state)}">${escape(stateLabels[result.state]||'Revisión')}</strong>
     <p>${escape(result.summary)}</p>
@@ -564,8 +564,7 @@ function insulinResult(mode) {
         <a href="${escape(x.url)}" target="_blank" rel="noopener noreferrer">${escape(x.name)}</a>
         <small> · ${escape(x.detail)}</small></li>`).join('')}
     </ul></details>
-    <p class="privacy-note">Las referencias de dosis de las guías no son dosis individualizadas.
-    La aplicación no registra una prescripción, modificación ni administración de insulina.</p>
+    
   </section>`;
 }
 function heartFailureResult(mode){
@@ -580,7 +579,7 @@ function heartFailureResult(mode){
     ?`<ul>${entries.map(x=>`<li>${escape(x)}</li>`).join('')}</ul>`
     :'<p>No se han identificado elementos en esta sección.</p>';
   return `<section id="ic-result" class="dm2-result ic-result" aria-live="polite">
-    <div class="eyebrow">INSUFICIENCIA CARDÍACA · ESC 2026 · SIN PRESCRIPCIÓN</div>
+    <div class="eyebrow">INSUFICIENCIA CARDÍACA · ESC 2026</div>
     <h2>Valoración por fenotipo y congestión</h2>
     <strong class="dm2-status ${escape(r.state)}">${escape(labels[r.state]||'Revisión')}</strong>
     <div class="dm2-detail-metrics">
@@ -605,8 +604,7 @@ function heartFailureResult(mode){
         target="_blank" rel="noopener noreferrer">${escape(x.name)}</a>
         <small> · ${escape(x.detail)}</small></li>`).join('')}
     </ul></details>
-    <p class="privacy-note">La FEVI aislada no diagnostica IC. El motor no prescribe,
-      suspende ni modifica dosis. Revisión clínica externa pendiente.</p>
+    <p>La FEVI aislada no diagnostica IC.</p>
   </section>`;
 }
 function kidneyResult(mode){
@@ -631,13 +629,13 @@ function kidneyResult(mode){
       ${r.treatment.window?`<p>Ventana orientativa: <strong>${escape(r.treatment.window.from)} a ${escape(r.treatment.window.to)}</strong>. ${r.treatment.window.status==='plazo_superado'?'Plazo superado: revisar controles pendientes.':'Individualizar según función renal y potasio.'} No se ha creado ninguna cita.</p>`:''}
     </section>
     <details><summary>Fuente y reglas</summary>${r.sources.map(x=>`<p><a href="${escape(x.url)}" target="_blank" rel="noopener noreferrer">${escape(x.title)}</a> · ${escape(x.locator)}</p>`).join('')}</details>
-    <p class="privacy-note">Sin diagnóstico ni cambios de medicación automáticos. Revisión clínica independiente pendiente.</p>
+    
   </section>`;
 }
 function treatmentReferences(moduleId){
  const entries={dm2:[['metformina','dm2'],['empagliflozina','dm2'],['dapagliflozina','dm2'],['semaglutida_ozempic','dm2'],['tirzepatida','dm2']],ic:[['empagliflozina','ic'],['dapagliflozina','ic'],['finerenona','ic_fevi40']],erc:[['empagliflozina','erc'],['dapagliflozina','erc'],['finerenona','erc_dm2']],obesidad:[['semaglutida_wegovy_sc','peso'],['tirzepatida','peso']]};
  const refs=entries[moduleId]??[];
- return `<section class="treatment-access"><h2>Tratamiento y dosis de referencia</h2><p>${refs.length?'Consulta las pautas CIMA sin completar toda la ficha. Son referencias por indicación, no una selección ni dosis individual para el paciente.':'Este módulo no dispone aún de una pauta farmacológica individual validada. La orientación clínica indica los próximos pasos y sus límites.'}</p>
+ return `<section class="treatment-access"><h2>Tratamiento y dosis de referencia</h2><p>${refs.length?'Pautas CIMA por indicación, con dosis y ajustes.':'No hay una pauta farmacológica individual disponible en este módulo.'}</p>
  ${refs.map(([id,route])=>{const d=getDrug(id),r=getDrugRoute(id,route);return `<button type="button" class="ghost" data-action="open-drug" data-drug-id="${id}" data-route-id="${route}">${escape(d.generic)} · ${escape(d.exampleBrand)} · dosis y seguridad →</button>`}).join('')}</section>`;
 }
 function directedFieldsMarkup(module,fields,mode){
@@ -670,22 +668,6 @@ function consultationReview(module) {
     ${module.id==='erc'?kidneyResult('detail'):''}
     ${module.id==='obesidad'?obesityResult('detail'):''}
     ${integratedCards(({dm2:'DM2',ic:'IC',erc:'Renal',obesidad:'Metabólico',hepatico:'Hepático',insulina:'DM2'})[module.id])}
-    ${module.id==='obesidad'
-      ? '<p class="clinical-lock">Obesidad: recorrido de objetivos, hábitos, revisión farmacológica y derivación implementado; revisión clínica pendiente.</p>'
-      :module.id==='hepatico'
-      ? '<p class="clinical-lock">Hepático: primer circuito de FIB-4, VCTE y derivación implementado; revisión clínica pendiente.</p>'
-      :module.id==='erc'
-      ? '<p class="clinical-lock">ERC: primera orientación renal implementada. Validación clínica pendiente.</p>'
-      :module.id==='ic'
-      ? '<p class="clinical-lock">IC: orientación por fenotipo ESC 2026 y congestión implementada. No se prescriben tratamientos ni se establece diagnóstico automáticamente.</p>'
-      :module.id==='insulina'
-      ? '<p class="clinical-lock">Insulinización: tres rutas de orientación y seguridad implementadas. La revisión clínica externa, dosis por producto y validación funcional permanecen pendientes.</p>'
-      :module.id==='dm2'
-      ? '<p class="clinical-lock">DM2: orientación rápida y primera interpretación detallada implementadas. La validación clínica formal y selección por principio activo siguen pendientes.</p>'
-      : `<div class="clinical-lock"><strong>Motor terapéutico pendiente de validación</strong>
-      <p>${missing.length} datos sin registrar y ${invalid.length} entradas por revisar.
-       Aquí aparecerán situación, siguiente paso, alternativas, seguridad, seguimiento y fuentes,
-       solo cuando cada regla esté verificada y probada.</p></div>`}
     <div class="wizard-actions"><button type="button" class="ghost" data-action="module-mode" data-mode="quick">Volver a consulta</button>
       <button class="primary" type="button" data-action="summary">Ver ficha integral →</button></div>
   </div>`;
@@ -717,22 +699,22 @@ function moduleView() {
         <button type="button" class="primary" data-action="module-mode" data-mode="review">Ver resumen de datos →</button>
       </div>
     </section>`}
-    ${m.id==='obesidad' && (mode==='quick'||mode==='detail')?`<div class="dm2-result-trigger"><button type="button" class="primary" data-action="obesity-result">Ver plan de obesidad y seguimiento →</button><p>Objetivos acordados y revisión de tratamiento; sin prescripción.</p></div>${current.obesityVisible?obesityResult(mode):''}`:''}
+    ${m.id==='obesidad' && (mode==='quick'||mode==='detail')?`<div class="dm2-result-trigger"><button type="button" class="primary" data-action="obesity-result">Ver plan de obesidad y seguimiento →</button><p>Objetivos, tratamiento y seguimiento.</p></div>${current.obesityVisible?obesityResult(mode):''}`:''}
     ${m.id==='hepatico' && (mode==='quick'||mode==='detail')?`<div class="dm2-result-trigger">
       <button class="primary" type="button" data-action="masld-result">Ver evaluación de fibrosis y derivación →</button>
       <p>FIB-4 con procedencia y elastografía según método. Sin diagnóstico automático.</p>
     </div>${current.masldVisible?fib4ResultCard():''}`:''}
     ${m.id==='erc' && (mode==='quick'||mode==='detail')?`<div class="dm2-result-trigger">
       <button class="primary" type="button" data-action="renal-result">Ver orientación renal →</button>
-      <p>Cronicidad, seguridad y derivación. Sin prescripción.</p>
+      <p>Cronicidad, seguridad y derivación.</p>
     </div>${current.renalVisible?kidneyResult(mode):''}`:''}
     ${m.id==='ic' && (mode==='quick'||mode==='detail')?`<div class="dm2-result-trigger">
       <button class="primary" type="button" data-action="ic-result">Ver orientación de insuficiencia cardíaca →</button>
-      <p>FEVI y congestión según ESC 2026. Sin prescripción.</p>
+      <p>FEVI y congestión según ESC 2026.</p>
     </div>${current.icVisible?heartFailureResult(mode):''}`:''}
     ${m.id==='insulina' && (mode==='quick'||mode==='detail')?`<div class="dm2-result-trigger">
       <button class="primary" type="button" data-action="insulin-result">Ver orientación de insulinización →</button>
-      <p>Inicio, intensificación o desintensificación. No prescribe ni modifica dosis.</p>
+      <p>Inicio, intensificación o desintensificación.</p>
     </div>${current.insulinVisible?insulinResult(mode):''}`:''}
     ${m.id==='dm2' && mode==='detail'?`<div class="dm2-result-trigger">
       <button class="primary" type="button" data-action="dm2-detailed-result">Ver orientación clínica detallada →</button>
@@ -740,9 +722,8 @@ function moduleView() {
     </div>${current.dm2DetailedVisible?dm2DetailedResult():''}`:''}
     ${m.id==='dm2' && mode==='quick'?`<div class="dm2-result-trigger">
       <button class="primary" type="button" data-action="dm2-result">Ver orientación clínica rápida →</button>
-      <p>El resultado se genera para revisión. No prescribe ni confirma diagnósticos.</p>
+      <p>Orientación según los datos disponibles.</p>
     </div>${current.dm2ResultVisible?dm2RapidResult():''}`:''}
-    <div class="module-note"><strong>Documentación:</strong> las orientaciones de DM2, insulinización e IC son preliminares; ERC tiene una primera orientación; hígado dispone de evaluación secuencial; obesidad dispone de recorrido dirigido. La validación clínica sigue pendiente.</div>
     <p class="privacy-note">No introduzcas identificadores del paciente. Los datos no se guardan después de cerrar o recargar.</p>
   </div>`;
 }
@@ -782,7 +763,7 @@ function evaluation() {
       `<button class="${i === current.step ? 'active' : ''}" type="button" data-action="go-step" data-step="${i}">
       <span class="step-num">${String(i + 1).padStart(2,'0')}</span>${escape(s.title)}</button>`).join('')}</aside>
       <section class="form-card" aria-label="Datos de ${escape(section.title)}">
-      <div class="form-title"><div><h2>${escape(section.title)}</h2><p>Los campos son opcionales en este prototipo.</p></div>
+      <div class="form-title"><div><h2>${escape(section.title)}</h2><p>Completa los datos disponibles.</p></div>
       <span class="count-pill" id="section-count">${stats.registrado} registrados</span></div>
       <div class="field-grid">${section.fields.map(fieldMarkup).join('')}</div>
       <div class="wizard-actions"><button type="button" class="ghost" data-action="prev" ${current.step === 0 ? 'disabled' : ''}>← Anterior</button>
@@ -878,7 +859,7 @@ function followupPage() {
   const actionName={inicio:'Inicio',reinicio:'Reinicio',ajuste:'Modificación de dosis',interrupcion:'Interrupción'};
   return `<div class="page interior">
     <div class="bread"><button type="button" data-action="tools">Herramientas</button><span>›</span><span>Seguimiento</span></div>
-    <div class="eyebrow">REGISTRO EFECTIVAMENTE CONFIRMADO · NO PRESCRIPCIÓN</div>
+    <div class="eyebrow">REGISTRO EFECTIVAMENTE CONFIRMADO</div>
     <h1>Seguimiento farmacológico</h1>
     <p>El calendario se genera exclusivamente cuando confirmas una actuación que ya se ha realizado. No crea avisos automáticos ni envía datos.</p>
     ${banner()}
@@ -945,10 +926,10 @@ function drugView() {
         class="${r.id===route.id?'active':''}" aria-pressed="${r.id===route.id}">${escape(r.name)}</button>`).join('')}
     </div>
     <section class="drug-card">
-      <div class="eyebrow">SOLO PAUTA DE FICHA TÉCNICA · NO DOSIS PERSONALIZADA</div>
+      <div class="eyebrow">DOSIS DE FICHA TÉCNICA</div>
       <h2>${escape(route.name)}</h2>
       <ul>${items(route.labelDoses)}</ul>
-      <p class="drug-disclaimer">La tabla es informativa incluso si existen bloqueos. No equivale a una recomendación para el paciente.</p>
+      <p class="drug-disclaimer">Consulta los bloqueos y ajustes del producto antes de aplicar la pauta.</p>
     </section>
     <section class="drug-card">
       <div class="drug-state ${escape(review.state)}">${escape(states[review.state])}</div>
@@ -997,40 +978,40 @@ function tools() {
     <div class="followup-link"><button type="button" class="ghost" data-action="followup">Historial y calendario de controles →</button></div>
     <div class="tool-grid">
       <div class="tool-card"><span class="tag">DM2 · rápida y detallada preliminares</span>
-        <h2>Diabetes tipo 2</h2><p>Consulta rápida y revisión detallada por objetivo individual, conciliación y seguridad. Fuentes redGDPS/ADA 2026; sin prescripción.</p>
+        <h2>Diabetes tipo 2</h2><p>Consulta rápida y revisión detallada por objetivo individual, conciliación y seguridad. Fuentes redGDPS/ADA 2026.</p>
         <button type="button" class="text-link" data-action="start-module" data-module="dm2">Abrir DM2 rápida →</button>
       </div>
       <div class="tool-card"><span class="tag">Insulinización · tres circuitos preliminares</span>
         <h2>Insulinización</h2>
-        <p>Inicio, intensificación y desintensificación según glucemias y tratamiento actual. Revisión ADA/EASD 2026 y redGDPS. Sin prescripción.</p>
+        <p>Inicio, intensificación y desintensificación según glucemias y tratamiento actual. Revisión ADA/EASD 2026 y redGDPS.</p>
         <button type="button" class="text-link" data-action="start-module" data-module="insulina">Abrir insulinización →</button>
       </div>
       <div class="tool-card"><span class="tag">Insuficiencia cardíaca · ESC 2026</span>
         <h2>Insuficiencia cardíaca</h2>
-        <p>FEVI actual e historial, congestión y clases farmacológicas para revisión. No diagnostica ni prescribe.</p>
+        <p>FEVI actual e historial, congestión y clases farmacológicas para revisión.</p>
         <button type="button" class="text-link" data-action="start-module" data-module="ic">Abrir IC →</button>
       </div>
       ${['obesidad'].map(id=>{
         const m=MODULE_BY_ID[id];
         return `<div class="tool-card"><span class="tag">GIRO2025 · revisión profesional</span>
-          <h2>${escape(m.title)}</h2><p>Evaluación de complicaciones, objetivos y hábitos, con revisión farmacológica y derivación. Validación clínica pendiente.</p>
+          <h2>${escape(m.title)}</h2><p>Evaluación de complicaciones, objetivos y hábitos, con revisión farmacológica y derivación.</p>
           <button type="button" class="text-link" data-action="start-module" data-module="${escape(m.id)}">Abrir consulta →</button>
         </div>`;
       }).join('')}
     </div></div>`;
 }
 function sources() {
-  return `<div class="page interior"><div class="eyebrow">TRANSPARENCIA</div><h1>Fuentes y validación</h1>
+  return `<div class="page interior"><div class="eyebrow">TRANSPARENCIA</div><h1>Fuentes clínicas</h1>
   <p>CaHReMe calcula categorías G/A y FIB-4, además de mostrar candidatos multiorgánicos para revisión profesional. No determina idoneidad terapéutica individual ni genera dosis, recetas o suspensiones automáticas.</p>
   ${banner()}
   <section class="sources-card"><h2>Documentación de desarrollo</h2>
-  <p>El proyecto se gestiona en un repositorio privado. El acceso a estos enlaces requiere los permisos correspondientes.</p>
+  <p>Guías, reglas y documentación del proyecto.</p>
   <a href="https://github.com/olsanju-hub/CaReMe/blob/feat/prototipo-interfaz/docs/DOCUMENTO_RECTOR.md" target="_blank" rel="noopener noreferrer">Documento rector ↗</a>
   <a href="https://github.com/olsanju-hub/CaReMe/blob/feat/prototipo-interfaz/docs/MVP.md" target="_blank" rel="noopener noreferrer">Alcance del MVP ↗</a>
   <a href="https://github.com/olsanju-hub/CaReMe/blob/feat/prototipo-interfaz/docs/FUENTES_CLINICAS.md" target="_blank" rel="noopener noreferrer">Registro de fuentes clínicas ↗</a>
   <a href="https://github.com/olsanju-hub/CaReMe/blob/feat/prototipo-interfaz/docs/INTEGRACION_TERAPEUTICA.md" target="_blank" rel="noopener noreferrer">Matriz de integración terapéutica ↗</a>
   <a href="https://github.com/olsanju-hub/CaReMe/blob/feat/prototipo-interfaz/docs/INCRETINAS_CIMA.md" target="_blank" rel="noopener noreferrer">Ozempic, Wegovy inyectable y Mounjaro · CIMA ↗</a>
-  <a href="https://github.com/olsanju-hub/CaReMe/blob/feat/prototipo-interfaz/docs/DM2_RAPIDA_REDGDPS_2026.md" target="_blank" rel="noopener noreferrer">DM2 rápida · redGDPS y ADA 2026 (estado provisional) ↗</a>
+  <a href="https://github.com/olsanju-hub/CaReMe/blob/feat/prototipo-interfaz/docs/DM2_RAPIDA_REDGDPS_2026.md" target="_blank" rel="noopener noreferrer">DM2 rápida · redGDPS y ADA 2026 ↗</a>
   <a href="https://github.com/olsanju-hub/CaReMe/blob/feat/prototipo-interfaz/docs/DM2_DETALLADA_ADA_REDGDPS_2026.md" target="_blank" rel="noopener noreferrer">DM2 detallada · objetivo, seguridad y fuentes ↗</a>
   <a href="https://github.com/olsanju-hub/CaReMe/blob/feat/prototipo-interfaz/docs/INSULINIZACION_ADA_EASD_2026.md" target="_blank" rel="noopener noreferrer">Insulinización · ADA/EASD 2026 y redGDPS 2022 ↗</a>
   <a href="https://github.com/olsanju-hub/CaReMe/blob/feat/prototipo-interfaz/docs/INSUFICIENCIA_CARDIACA_ESC_2026.md" target="_blank" rel="noopener noreferrer">Insuficiencia cardíaca · ESC 2026 y control de seguridad ↗</a>
@@ -1046,7 +1027,7 @@ function render() {
   const contents = current.page === 'home' ? home() : current.page === 'lipids' ? lipidView() : current.page === 'hta' ? htaView() : current.page === 'ckm' ? ckmView() : current.page === 'cv-risk' ? cvRiskView() : current.page === 'module' ? moduleView() : current.page === 'evaluation' ? evaluation()
     : current.page === 'summary' ? summary() : current.page === 'tools' ? tools() : current.page === 'drug' ? drugView() : current.page === 'followup' ? followupPage() : sources();
   app.innerHTML = '<a class="skip-link" href="#main-content">Saltar al contenido</a>' + header() + '<main id="main-content" tabindex="-1">' + contents + '</main>' + nav() +
-    '<footer class="footer">CaHReMe · Identidad Atlántico · Prototipo no validado para uso asistencial</footer>';
+    '<footer class="footer">CaHReMe · Salud cardiorrenal-hepatometabólica</footer>';
 }
 function navigate(page) { current.page = page; render(); scrollTo({ top: 0, behavior: 'auto' }); document.getElementById('main-content')?.focus?.({preventScroll:true}); }
 function start(focus) {
@@ -1167,7 +1148,7 @@ app.addEventListener('click', event => {
       followupError='Debes confirmar la actuación y una fecha efectiva válida, que no puede ser futura.';
       return render();
     }
-    if(!confirm('¿Confirmas que la actuación se realizó realmente? No se está emitiendo una prescripción.')) return;
+    if(!confirm('¿Confirmas que la actuación se realizó realmente?')) return;
     try {
       confirmedHistory=confirmedAction(confirmedHistory,{
         drugId:current.drug,routeId:current.route,type,performedOn,doseMg,confirmedByClinician:true
