@@ -569,3 +569,11 @@ h2 { letter-spacing:-.025em }
 .home .module-arrow { display:none; }.home .task-card { padding:14px; min-height:100px; }.home .task-card strong { font-size:1rem; }
 
 .task-card{min-width:0}.task-card>*{max-width:100%;overflow-wrap:anywhere}
+
+.home .module-content { margin-top:0; padding-right:0; }
+@media(max-width:440px) {
+  .home .module-grid { grid-template-columns:minmax(0,1fr); }
+  .home .module-card { min-height:88px; }
+  .home .task-card { min-height:88px; }
+  .bottom-nav button { min-width:0; font-size:.66rem; }
+}

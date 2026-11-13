@@ -1213,7 +1213,10 @@ if (typeof window !== 'undefined' && typeof navigator !== 'undefined' &&
     'serviceWorker' in navigator &&
     (location.protocol === 'https:' || location.hostname === 'localhost')) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./service-worker.js', { updateViaCache: 'none' }).then(registration => registration.update()).catch(() => {});
+    navigator.serviceWorker.getRegistration('./').then(registration => {
+      if (registration?.scope === new URL('./', location.href).href) return registration;
+      return navigator.serviceWorker.register('./service-worker.js', { updateViaCache: 'none' });
+    }).catch(() => {});
   });
 }
 
