@@ -34,3 +34,8 @@ test('todos los módulos declaran tratamiento o relación explícita',()=>{for(c
 
 for(const key of ['indapamida','rosuvastatina'])test(key+' exige CrCl y no lo sustituye por TFGe',()=>{assert.equal(run(key,{lip_aclaramiento:''}).proposal,null);assert.equal(run(key,{lip_aclaramiento:29.9}).proposal,null);});
 test('indapamida 1,5mg fija y rosuvastatina 5mg conservadora',()=>{assert.equal(run('indapamida').proposal.amount,1.5);assert.equal(run('rosuvastatina',{lip_aclaramiento:40}).proposal.amount,5);assert.equal(run('rosuvastatina',{...escalation,tx_dosis_actual:20}).proposal,null);});
+
+for(const[key,v]of [['arni',{ic_sintomatica:'No'}],['espironolactona',{ic_sintomatica:'No'}],['atorvastatina',{lip_mialgias:'Sí'}],['atorvastatina',{cyp3a4_fuerte:'Sí'}],['furosemida',{alergias:'Alergia a sulfametoxazol'}]])test('dato previo prevalece '+key+' '+JSON.stringify(v),()=>assert.equal(run(key,v).proposal,null));
+
+test('ARNI escala ambos componentes, no un número aislado',()=>{assert.equal(run('arni',{...escalation,tx_dosis_arni:'24/26 mg'}).proposal.amount,'49/51');assert.equal(run('arni',{...escalation,tx_dosis_arni:'49/51 mg'}).proposal.amount,'97/103');});
+test('ARNI exige pareja, intervalo y máximo',()=>{assert.equal(run('arni',{...escalation,tx_dosis_actual:49}).proposal,null);assert.equal(run('arni',{...escalation,tx_dosis_arni:'24/26 mg',tx_semanas:1}).proposal,null);assert.equal(run('arni',{...escalation,tx_dosis_arni:'97/103 mg'}).proposal,null);});

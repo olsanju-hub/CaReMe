@@ -31,7 +31,7 @@ const multi=(d,k)=>readMulti(get(d,k)||'[]');
 export function treatmentFields(d,key){
  const p=THERAPEUTIC_OPTIONS[key];if(!p)return [];
  const ids=['tx_operacion','tx_contexto',...p.needs.filter(id=>!(key==='atorvastatina'&&get(d,'tx_operacion')==='Escalada del mismo producto, sin interrupciones'&&id==='tx_estatina_dosis'))];
- if(get(d,'tx_operacion')==='Escalada del mismo producto, sin interrupciones')ids.push('tx_dosis_actual','tx_semanas','tx_tolerancia');
+ if(get(d,'tx_operacion')==='Escalada del mismo producto, sin interrupciones')ids.push(key==='arni'?'tx_dosis_arni':'tx_dosis_actual','tx_semanas','tx_tolerancia');
  ids.push('tx_revision');return [...new Set(ids)];
 }
 export function reviewModuleTreatment(d,key){
@@ -47,7 +47,7 @@ export function reviewModuleTreatment(d,key){
  if(g('embarazo')==='Sí'||g('dm1')==='Sí'||g('ob_lactancia')==='Sí'||g('lip_lactancia')==='Sí')blocks.push('Gestación, lactancia o DM1 requieren un circuito específico.');
  if(g('hepatica_grave')==='Sí'||g('insuficiencia_hepatica')==='Sí')blocks.push('Hepatopatía grave: no aplicar una pauta rutinaria.');
  if((key.includes('dm2')||['metformina','ozempic','fine_erc'].includes(key))&&g('dm2')==='No')blocks.push('DM2 negada: no aplicar esta indicación.');
- if(p.route==='ic'||['arni','bisoprolol','espironolactona','furosemida','fine_ic'].includes(key))if(g('ic')==='No')blocks.push('IC negada: confirmar indicación antes de pautar.');
+ if(p.route==='ic'||['arni','bisoprolol','espironolactona','furosemida','fine_ic'].includes(key)){if(g('ic')==='No')blocks.push('IC negada: confirmar indicación antes de pautar.');if(g('ic_sintomatica')==='No'&&['arni','espironolactona','furosemida'].includes(key))blocks.push('IC sintomática negada: conciliar con la indicación seleccionada.');}
  if(p.route==='erc'||key==='fine_erc')if(g('persistencia')==='No'||g('erc')==='No')blocks.push('ERC no confirmada: revisar indicación.');
  if(['losartan','amlodipino','indapamida'].includes(key)&&g('hta_conocida')==='No')blocks.push('HTA no confirmada: no iniciar desde una cifra aislada.');
  if(e!==null&&e<20&&key.startsWith('empa'))blocks.push('No iniciar empagliflozina con TFGe <20.');
@@ -62,6 +62,9 @@ export function reviewModuleTreatment(d,key){
   if(bmi!==null&&(bmi<27||bmi<30&&!comorb))blocks.push('Indicación por peso: IMC ≥30 o ≥27 con comorbilidad confirmada.');
   if(['ob_tca','ob_perdida_involuntaria','ob_edema','ob_secundaria'].some(x=>g(x)==='Sí'))blocks.push('Resolver condicionante nutricional/etiológico antes de intensificar pérdida de peso.');
  }
+ if(['furosemida','indapamida'].includes(key)&&/sulf(?:on|amid|amet)|sulfa/i.test(d.values.alergias||''))blocks.push('Alergia a sulfamidas registrada: revisar seguridad del diurético antes de pautar.');
+ if(['atorvastatina','rosuvastatina'].includes(key)&&(g('lip_mialgias')==='Sí'||g('lip_alarma')==='Sí'))blocks.push('Síntomas musculares o alarma registrados: revisar antes de iniciar o escalar estatina.');
+ if(key==='atorvastatina'&&g('cyp3a4_fuerte')==='Sí')blocks.push('Inhibidor potente de CYP3A4 registrado: verificar compatibilidad y límite de dosis antes de atorvastatina.');
  if(['atorvastatina','rosuvastatina','ezetimiba'].includes(key)&&g('lip_interacciones')==='No')blocks.push('Interacciones constan como no revisadas.');
  if(key==='losartan'&&(k!==null&&(k>5||k<3.5)||bp!==null&&bp<100))blocks.push('Revisar PA y potasio antes de iniciar un ARA-II.');
  if(key==='amlodipino'&&bp!==null&&bp<100)blocks.push('PA baja: no iniciar por este circuito.');
@@ -120,7 +123,7 @@ export function evaluateTreatmentDose(d,key){
    if(i<0||i===p.ladder.length-1)r.blocks.push('Dosis actual fuera de los escalones calculados o en el máximo de esta vía.');
    else if(weeks<4)r.blocks.push('Completar al menos 4 semanas con la dosis actual antes de escalar.');else amount=p.ladder[i+1];
   }
-  detail=key==='wegovy'?'La vía automática termina en 2,4 mg/semana; el escalón de 7,2 requiere revisión separada del IMC inicial, beneficio y presentación.':'Valorar siguiente escalón solo si sigue indicado y se tolera. No convertir dosis a clics ni a volumen.';
+  detail='Mantener el escalón al menos cuatro semanas y revisar tolerancia antes de otro aumento. No convertir dosis a clics ni a volumen.';
  }else if(key==='metformina'){
   const max=e>=60?3000:e>=45?2000:1000;
   if(escalating)r.blocks.push('Este recorrido calcula inicio y máximo renal, no interpreta dosis por toma frente a dosis total de una pauta previa.');
@@ -136,7 +139,7 @@ export function evaluateTreatmentDose(d,key){
  }
  else if(key==='arni'){
   frequency='cada 12 h';const lower=e<60||Number(d.values.pas)<=110||get(d,'tx_raas_dosis')==='No tratado o dosis bajas'||get(d,'tx_raas')==='Sin IECA/ARA-II previo';amount=lower?'24/26':'49/51';
-  if(escalating)r.blocks.push('El escalado de ARNI requiere confirmar la pareja de dosis de ambos componentes; no se interpreta un único número de mg.');
+  if(escalating){const pair=get(d,'tx_dosis_arni'),minWeeks=get(d,'tx_raas')==='Sin IECA/ARA-II previo'?3:2;if(pair==='97/103 mg')r.blocks.push('ARNI en la dosis objetivo máxima: no escalar.');else if(weeks<minWeeks)r.blocks.push(`Completar al menos ${minWeeks} semanas con la pareja de dosis actual y tolerancia confirmada.`);else amount=pair==='24/26 mg'?'49/51':'97/103';}
   detail='Sustituye el IECA/ARA-II, no se añade a él. Respetar ≥36 h tras última dosis de IECA.';
  }
  else if(key==='espironolactona'){amount=25;if(escalating)r.blocks.push('Antes de escalar ARM, revisar respuesta, K y creatinina con el seguimiento específico.');}

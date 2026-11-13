@@ -55,6 +55,7 @@ export const EXTRA_FIELDS = [
   {id:'tx_operacion',label:'Situación real del tratamiento seleccionado',type:'select',options:['Inicio sin fármaco/clase equivalentes','Escalada del mismo producto, sin interrupciones']},
   {id:'tx_contexto',label:'Ámbito comprobado',type:'select',options:['Adulto estable, sin embarazo ni lactancia','Otro ámbito o sin confirmar']},
   {id:'tx_revision',label:'Revisión final para esta pauta',type:'select',options:['Indicación, contraindicaciones e interacciones revisadas','Pendiente']},
+  {id:'tx_dosis_arni',label:'Pareja de dosis actual de sacubitrilo/valsartán cada 12 h',type:'select',options:['24/26 mg','49/51 mg','97/103 mg']},
   {id:'tx_dosis_actual',label:'Dosis actual del mismo producto (mg por toma)',type:'number',min:0,unit:'mg'},
   {id:'tx_semanas',label:'Semanas completas con esta dosis sin interrupciones',type:'number',integer:true,min:0,unit:'semanas'},
   {id:'tx_tolerancia',label:'Tolerancia y necesidad del siguiente escalón',type:'select',options:['Buena tolerancia y escalado indicado','Mala tolerancia, objetivo alcanzado o sin revisar']},

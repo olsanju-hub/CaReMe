@@ -42,7 +42,7 @@ Finerenona: separa inicio y objetivo ERC-DM2/IC. La continuidad no se reduce a u
 
 Las escaladas automáticas disponibles son las sucesiones verificadas de incretinas, bisoprolol, amlodipino, losartán, atorvastatina y rosuvastatina, y empagliflozina en DM2 según TFGe. Exigen dosis realmente tomada, continuidad, tiempo mínimo, tolerancia y necesidad declarada. No se infiere necesidad por tiempo transcurrido. El intervalo de cuatro semanas para amlodipino y seis para losartán son decisiones conservadoras de esta implementación; no se atribuyen a una obligación literal de ficha.
 
-Rosuvastatina: inicio conservador de 5 mg; cálculo de escalado hasta 20 mg, sin seleccionar automáticamente 40 mg. Indapamida: 1,5 mg de liberación prolongada, sin escalada de dosis. Ambas usan CrCl, no TFGe como sustituto. Sacubitrilo/valsartán conserva ambos componentes: no se interpreta un único número de mg para escalar una pareja. No se calculan conversiones de combinaciones fijas.
+Rosuvastatina: inicio conservador de 5 mg; cálculo de escalado hasta 20 mg, sin seleccionar automáticamente 40 mg. Indapamida: 1,5 mg de liberación prolongada, sin escalada de dosis. Ambas usan CrCl, no TFGe como sustituto. Sacubitrilo/valsartán solicita la pareja real de dosis y calcula ambos componentes juntos, con intervalo mínimo según tratamiento previo; no interpreta un número de mg aislado. No se calculan conversiones de combinaciones fijas.
 
 Wegovy: la vía automática termina en 2,4 mg. La referencia vigente de 7,2 mg se conserva, pero requiere evaluación separada del IMC inicial, beneficio y presentación; no se transforma un simple contador de semanas en una recomendación de ese escalón. No se calculan clics ni mL.
 
@@ -70,6 +70,6 @@ Se mantienen fuentes originales por producto para iSGLT2 e incretinas; se contra
 
 ## Auditoría y pendientes
 
-Base previa: 1170 pruebas. Incremento: 235 escenarios del motor/interfaz funcional de datos, hasta 1405/1405 Node y sintaxis superadas. Incluye estados vacíos, cambios de disponibilidad, retención por alertas, duplicidades, extremos y equivalencia de unidades, escalones, máximos y caducidad de confirmaciones. Los escenarios de las nuevas funciones se añaden; no se retiran las pruebas clínicas anteriores.
+Base previa: 1170 pruebas. Incremento: 242 escenarios del motor/interfaz funcional de datos, hasta 1412/1412 Node y sintaxis superadas. Incluye estados vacíos, cambios de disponibilidad, retención por alertas, duplicidades, extremos y equivalencia de unidades, escalones, máximos y caducidad de confirmaciones. Los escenarios de las nuevas funciones se añaden; no se retiran las pruebas clínicas anteriores.
 
 Se amplía la auditoría real de navegador a calculadoras, transferencia/invalidez, presencia de pauta por consulta, dosis HTA e incretinas y ausencia de desbordamiento. Se revisará Actions y capturas antes del cierre. La revisión clínica independiente y la prueba en dispositivos físicos siguen pendientes. Los resultados de software no acreditan validación clínica de todas las combinaciones ni completan el catálogo.
