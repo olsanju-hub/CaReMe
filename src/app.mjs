@@ -1030,7 +1030,12 @@ app.addEventListener('input', event => {
       : checked;
     draft = setValue(draft,id,JSON.stringify(selected));
     // Refrescar tras seleccionar «ninguna» para garantizar exclusividad.
-    if (selected.length !== checked.length) return render();
+    if (selected.length !== checked.length) {
+      const openGroups=[...document.querySelectorAll('details[open]')].map(x=>x.querySelector?.('summary')?.textContent).filter(Boolean);
+      render();
+      for(const group of document.querySelectorAll('details'))if(openGroups.includes(group.querySelector?.('summary')?.textContent))group.open=true;
+      return;
+    }
   } else draft=setValue(draft,id,el.value);
   if(current.obesityVisible){current.obesityVisible=false;document.getElementById('obesity-result')?.remove();}
   if(current.masldVisible){current.masldVisible=false;document.getElementById('masld-result')?.remove();}
