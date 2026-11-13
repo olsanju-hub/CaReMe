@@ -35,8 +35,9 @@ function header() {
       <span class="brand-mark" aria-hidden="true"><img src="./public/icon-concept.svg" alt="" /></span>
       <span><strong>Ca<span class="brand-accent">H</span>ReMe</strong><small>Salud cardiorrenal-hepatometabólica</small></span>
     </button>
-    <div class="top-right"><span class="dev-label">PROTOTIPO · V0.1</span>
-      <button class="ghost small" type="button" data-action="sources">Fuentes y estado</button></div>
+    <nav class="desktop-nav" aria-label="Navegación principal en ordenador">
+      ${[['home','Inicio'],['evaluation','Evaluar'],['tools','Herramientas'],['sources','Fuentes']].map(([id,label])=>`<button type="button" class="text-link" data-action="${id}" ${current.page===id?'aria-current="page"':''}>${label}</button>`).join('')}
+    </nav><div class="top-right"><span class="dev-label">PROTOTIPO · V0.1</span></div>
   </div></header>`;
 }
 function nav() {
@@ -61,7 +62,7 @@ function home() {
     </section>
     ${banner()}
     <div class="section-heading"><div><div class="eyebrow">SEIS CONSULTAS CLÍNICAS</div><h2>¿Qué necesitas valorar?</h2></div>
-      <p>Consulta rápida con orientación preliminar de DM2; otros módulos aún pendientes de validación.</p>
+      <p>Consulta rápida y revisión detallada en seis áreas, con resultados para revisión profesional. Validación clínica pendiente.</p>
     </div>
     <section class="info-strip"><div><strong>Riesgo cardiovascular</strong><p>SCORE2 para el grupo elegible en España y registro documentado de SCORE2-OP externo.</p></div>
       <button type="button" class="primary" data-action="cv-risk">Valorar riesgo cardiovascular →</button></section>

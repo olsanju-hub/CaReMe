@@ -39,11 +39,16 @@ const option=(id,title,reason,checks,refs)=>({
  id,title,reason,checks,refs,state:'candidato_para_revision',
  performed:false,actionPerformed:false,prescription:null,patientDose:null
 });
-export function classifyHf2026(fevi,evidence=null){
+export function classifyHf2026(fevi,evidence=null,priorReduced=null){
  if(typeof fevi!=='number'||!Number.isFinite(fevi)||fevi<0||fevi>100)
    return {code:'no_evaluable',label:'FEVI no evaluable',established:false};
  if(fevi<50)return {code:'reducida',label:'FEVI <50 %: compatible con fenotipo IC-FEr (ESC 2026) si hay IC clínica',
    established:false,requiresClinicalDiagnosis:true};
+ if(priorReduced==='Sí')return {code:'antecedente_reducida',
+   label:'FEVI actual ≥50 % con antecedente de FEVI <50 %: revisar trayectoria; no clasificar automáticamente como IC-FEp',
+   established:false,requiresClinicalDiagnosis:true};
+ if(evidence==='Confirmada por evaluación especializada'&&priorReduced!=='No tras revisión del historial')return {
+   code:'historia_fevi_pendiente',label:'FEVI ≥50 %: revisar FEVI previa antes de atribuir IC-FEp',established:false,requiresClinicalDiagnosis:true};
  if(evidence==='Confirmada por evaluación especializada')
    return {code:'preservada',label:'FEVI ≥50 % con evidencia objetiva aportada: compatible con fenotipo IC-FEp (ESC 2026)',
      established:false,requiresClinicalDiagnosis:true};
@@ -57,7 +62,8 @@ export function evaluateHeartFailure(draft,mode='quick'){
  const hf=v(draft,'ic'),symptomatic=v(draft,'ic_sintomatica');
  const group=v(draft,'ic_fevigrupo'),fevi=n(draft,'fevi');
  const evidence=v(draft,'ic_evidencia_objetiva');
- const ef=classifyHf2026(fevi,evidence);
+ const priorReduced=v(draft,'ic_fevi_previa_reducida');
+ const ef=classifyHf2026(fevi,evidence,priorReduced);
  const congestion=v(draft,'congestion');
  const stability=v(draft,'ic_estabilidad');
  const flagsInvalid=fieldState(draft,'ic_alarma')==='revisar';
@@ -171,9 +177,15 @@ export function evaluateHeartFailure(draft,mode='quick'){
  const hfpEvidenceOk=chosenPhenotype!=='preservada'||
    evidence==='Confirmada por evaluación especializada';
  // Quick cannot confirm HFpEF without objective evidence, hence no drug candidates.
- const effectivePhase=chosenPhenotype==='preservada_no_confirmada'?null:chosenPhenotype;
- const noHFpEF=mode==='detail'&&ef.code==='preservada_no_confirmada';
- if(noHFpEF)missing.push('Corroborar evidencia objetiva de IC-FEp o replantear el diagnóstico.');
+ const effectivePhase=['reducida','preservada'].includes(chosenPhenotype)?chosenPhenotype:null;
+ const noHFpEF=mode==='detail'&&fevi!==null&&fevi>=50&&ef.code!=='preservada';
+ if(mode==='detail'&&fevi!==null&&fevi>=50){
+  if(priorReduced==='Sí'){
+   missing.push('Revisar trayectoria de FEVI y tratamiento previo; esta primera ruta no reclasifica automáticamente como IC-FEp.');
+   checks.push('Una FEVI que ha mejorado no indica retirar tratamiento previo. Confirmar fenotipo e indicación con el historial.');
+  }else if(priorReduced!=='No tras revisión del historial')missing.push('Revisar y documentar si hubo FEVI <50 % antes del resultado actual.');
+ }
+ if(mode==='detail'&&ef.code==='preservada_no_confirmada')missing.push('Corroborar evidencia objetiva de IC-FEp o replantear el diagnóstico.');
  const vitalUnknown=mode==='detail'&&
    (stability!=='Estable evaluado'||congestion===null||congestion==='No valorados');
  const safetyUnknown=mode==='detail'&&(
@@ -323,3 +335,4 @@ export function evaluateHeartFailure(draft,mode='quick'){
   clinicalValidation:'pendiente'
  };
 }
+

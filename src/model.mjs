@@ -21,6 +21,7 @@ export const SECTIONS = [
     EXTRA_BY_ID.ic_fevigrupo,
     EXTRA_BY_ID.fecha_fevi,
     EXTRA_BY_ID.ic_evidencia_objetiva,
+    EXTRA_BY_ID.ic_fevi_previa_reducida,
     EXTRA_BY_ID.ic_estabilidad,
     EXTRA_BY_ID.ic_alarma,
     EXTRA_BY_ID.ic_fc,

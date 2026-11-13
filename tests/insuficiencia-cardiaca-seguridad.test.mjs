@@ -25,7 +25,7 @@ test('ESC 2026: FEVI <50 incluye 49,9; 50 requiere evidencia objetiva',()=>{
  assert.equal(reduced.phenotype.code,'reducida');
  assert.ok(reduced.options.some(x=>x.id==='HF-RAAS-REVIEW'));
  const preserved=run({fevi:'50',ic_fevigrupo:'Preservada · FEVI ≥50 %',
-   ic_evidencia_objetiva:'Confirmada por evaluación especializada'});
+   ic_evidencia_objetiva:'Confirmada por evaluación especializada',ic_fevi_previa_reducida:'No tras revisión del historial'});
  assert.equal(preserved.phenotype.code,'preservada');
  assert.ok(!preserved.options.some(x=>x.id==='HF-RAAS-REVIEW'));
  const uncertain=run({fevi:'50',ic_fevigrupo:'Preservada · FEVI ≥50 %',
@@ -90,3 +90,4 @@ test('la presencia de un diurético evita sugerir inicio duplicado',()=>{
  assert.ok(!r.options.some(x=>x.id==='HF-DIURETIC-REVIEW'));
  assert.equal(r.actionPerformed,false);
 });
+

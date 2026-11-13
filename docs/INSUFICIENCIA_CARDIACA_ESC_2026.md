@@ -72,3 +72,9 @@ La tarjeta diferenciada enlaza directamente a la **revisión CIMA de finerenona 
 **Casos añadidos** en `tests/ic-finerenona-esc2026.test.mjs`: FEVI 39,9/40/45, TFGe 24,99/25/30, K 4,99/5,0/5,01, contraindicación por Addison/CYP3A4, ausencia de dato, ARM preexistente, IC descompensada y potasio ≥6. No se sustituye la necesidad de revisión clínica por pasar esas pruebas.
 
 Se mantienen pendientes la selección por producto, revisión farmacológica independiente y validación de casos clínicos externos.
+
+
+
+## Auditoría de historia de FEVI · 13/11/2026
+
+La FEVI actual ≥50% requiere revisar si anteriormente fue <50% antes de atribuir IC-FEp (ESC2026§5.2.2). Se añade `ic_fevi_previa_reducida`: si falta revisión se retiene la clasificación; si existió FEVI reducida se solicita evaluación de trayectoria sin reclasificar automáticamente ni retirar tratamiento por mejoría. No se establece diagnóstico automático de IC con FEVI mejorada. [Auditoría global](AUDITORIA_GLOBAL_2026-11-13.md). La indicación CIMA finerenona FEVI≥40 permanece diferenciada.

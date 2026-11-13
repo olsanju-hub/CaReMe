@@ -525,3 +525,16 @@ h2 { letter-spacing:-.025em }
 .ic-result .dm2-safety {border-left:4px solid #B75D47}
 .ic-result .dm2-options article {border-left:3px solid #138B8B}
 @media(max-width:680px){.ic-result .dm2-detail-metrics{grid-template-columns:1fr}}
+
+
+/* Navegación disponible también en ordenador y tablet. */
+.desktop-nav { display:flex; align-items:center; gap:12px; }
+.desktop-nav button { white-space:nowrap; }
+.desktop-nav [aria-current="page"] { text-decoration:underline; text-underline-offset:5px; }
+@media(max-width:900px) {
+ .desktop-nav { display:none; }
+ body { padding-bottom:78px; }
+ .bottom-nav { position:fixed; z-index:30; left:0; right:0; bottom:0; display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:3px; padding:7px 9px calc(7px + env(safe-area-inset-bottom)); background:#fff; border-top:1px solid var(--line); }
+ .bottom-nav button { border:0; border-radius:11px; background:none; display:grid; place-content:center; gap:2px; padding:7px 3px; color:var(--muted); font-size:.72rem; }
+ .bottom-nav button.active { background:#E6F3F2; color:#0B747A; }
+}

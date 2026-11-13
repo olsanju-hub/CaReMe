@@ -13,7 +13,7 @@ export const MODULES = [
     short: 'Fenotipo ESC 2026, congestión y tratamiento',
     quick: ['ic','ic_fevigrupo','congestion','ic_alarma'],
     detail: ['ic','edad','embarazo','fecha_evaluacion','fevi','fecha_fevi','ic_fevigrupo',
-      'ic_evidencia_objetiva','ic_sintomatica','ic_estabilidad','ic_alarma','congestion',
+      'ic_evidencia_objetiva','ic_fevi_previa_reducida','ic_sintomatica','ic_estabilidad','ic_alarma','congestion',
       'ic_fc','pas','pad','tfge','fecha_tfge','potasio','fecha_potasio',
       'lra_sospecha','ic_descompensada','situacion_aguda','farmacos_clases',
       'farmacos','medicacion_revisada','alergias','alergias_revisadas']
@@ -45,6 +45,7 @@ export const MODULES = [
 ];
 export const MODULE_BY_ID = Object.fromEntries(MODULES.map(m => [m.id, m]));
 export const EXTRA_FIELDS = [
+  {id:'ic_fevi_previa_reducida',label:'Antecedente documentado de FEVI <50 % antes del resultado actual',type:'select',options:['Sí','No tras revisión del historial','No valorado']},
   {id:'ob_fecha_medidas',label:'Fecha de peso/IMC actuales',type:'date'},
   {id:'ob_acuerdo',label:'Abordaje del peso acordado con la persona',type:'select',options:['Sí','No','No explorado']},
   {id:'ob_complicaciones_revisadas',label:'Complicaciones y repercusión funcional revisadas',type:'select',options:['Sí','No','No valoradas']},

@@ -23,7 +23,7 @@ test('ESC 2026: FEVI 40 y 49,9 reducidas; FEVI 50 requiere evidencia objetiva',(
   assert.equal(classifyHf2026(x).code,'reducida',String(x));
  for(const x of [50,55,65])
   assert.equal(classifyHf2026(x).code,'preservada_no_confirmada',String(x));
- assert.equal(classifyHf2026(50,'Confirmada por evaluación especializada').code,'preservada');
+ assert.equal(classifyHf2026(50,'Confirmada por evaluación especializada','No tras revisión del historial').code,'preservada');
  assert.equal(classifyHf2026(-1).code,'no_evaluable');
  assert.equal(classifyHf2026(101).code,'no_evaluable');
 });
@@ -56,7 +56,7 @@ test('FEVI 50 sin prueba objetiva de IC-FEp no emite candidatos',()=>{
 });
 test('FEVI 50 con evidencia objetiva mantiene MRA y SGLT2; no extrapola RAAS/betabloqueante de IC-FEr',()=>{
  const x=run({fevi:'50',ic_fevigrupo:'Preservada · FEVI ≥50 %',
-  ic_evidencia_objetiva:'Confirmada por evaluación especializada'});
+  ic_evidencia_objetiva:'Confirmada por evaluación especializada',ic_fevi_previa_reducida:'No tras revisión del historial'});
  assert.equal(x.state,'revision_pendiente');
  assert.equal(x.phenotype.code,'preservada');
  assert.ok(has(x,'HF-SGLT2-REVIEW'));
@@ -81,7 +81,7 @@ test('diurético de asa ya registrado se revisa como existente sin duplicar inic
 });
 test('FEVI aislada no establece diagnóstico de IC independientemente de la clasificación',()=>{
  const low=classifyHf2026(40);
- const high=classifyHf2026(50,'Confirmada por evaluación especializada');
+ const high=classifyHf2026(50,'Confirmada por evaluación especializada','No tras revisión del historial');
  assert.equal(low.established,false);
  assert.equal(high.established,false);
  assert.equal(low.requiresClinicalDiagnosis,true);
@@ -232,3 +232,4 @@ test('un paciente nuevo no hereda cardiopatía ni medicamentos del anterior',()=
  assert.ok(a.options.length>0);
  assert.equal(b.options.length,0);
 });
+
