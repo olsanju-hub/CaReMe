@@ -6,8 +6,11 @@ test('recorrido por patología permite tratamiento directo y cálculo integrado 
  await import('../src/app.mjs');const click=(action,data={})=>handlers.click({target:{closest:()=>({dataset:{action,...data}})}});
  assert.equal((root.innerHTML.match(/data-action="open-pathology"/g)||[]).length,8);assert.doesNotMatch(root.innerHTML,/bottom-nav|integral-access/);
  click('open-pathology',{pathology:'dm2'});assert.match(root.innerHTML,/Diagnóstico confirmado: ir a tratamiento/);assert.doesNotMatch(root.innerHTML,/data-field=/);
- click('flow-stage',{stage:'3'});assert.match(root.innerHTML,/flow-treatment/);assert.doesNotMatch(root.innerHTML,/medication-list|module-tabs/);
- handlers.change({target:{id:'flow-treatment',value:'metformina'}});assert.match(root.innerHTML,/Calcular pauta/);assert.match(root.innerHTML,/data-field="tfge"/);
- click('flow-insulin');assert.match(root.innerHTML,/data-field="ins_calc_accion"/);assert.doesNotMatch(root.innerHTML,/data-action="module-dose-result"/);
+ click('flow-stage',{stage:'3'});assert.doesNotMatch(root.innerHTML,/id="flow-treatment"|medication-list|module-tabs/);assert.match(root.innerHTML,/sequence-continue/);
+ const set=(id,value)=>handlers.input({target:{closest:()=>({dataset:{field:id},type:'text',value:Array.isArray(value)?JSON.stringify(value):String(value)})}});
+ for(const[k,v]of Object.entries({seq_ambito:'Adulto estable, sin embarazo ni lactancia, sin proceso agudo',seq_objetivo:'Iniciar o ajustar tratamiento',seq_actual_dm2:['Sin tratamiento para esta patología'],dm2:'Sí',hba1c:8,dm_objetivo_valor:7,tfge:70,dm_hipoglucemias:'No referidas',dm_sintomas:'Ausentes',seq_comorbilidades:['Ninguno de los siguientes']}))set(k,v);
+ click('sequence-continue');assert.match(root.innerHTML,/Iniciar Metformina/);assert.doesNotMatch(root.innerHTML,/id="flow-treatment"/);
+ click('sequence-dose',{step:'0'});assert.match(root.innerHTML,/Calcular pauta/);assert.doesNotMatch(root.innerHTML,/data-field="tx_operacion"/);
+ click('flow-insulin');assert.match(root.innerHTML,/Decidir y calcular/);set('insulina_esquema','Sin insulina');set('ins_calc_hipo','Sin episodios confirmados');set('ins_calc_glp1','Ya utilizado o alternativa valorada y no adecuada');click('sequence-insulin-evaluate');assert.match(root.innerHTML,/data-action="insulin-dose-result"/);assert.doesNotMatch(root.innerHTML,/data-field="ins_calc_accion"|data-field="ins_calc_metodo"|data-field="ins_calc_producto"/);
  click('open-pathology',{pathology:'hepatico'});click('flow-stage',{stage:'2'});assert.equal((root.innerHTML.match(/data-field="edad"/g)||[]).length,1);assert.match(root.innerHTML,/data-field="ast"/);
 });

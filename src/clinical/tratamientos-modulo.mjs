@@ -32,6 +32,7 @@ export function treatmentFields(d,key){
  const p=THERAPEUTIC_OPTIONS[key];if(!p)return [];
  const ids=['tx_operacion','tx_contexto',...p.needs.filter(id=>!(key==='atorvastatina'&&get(d,'tx_operacion')==='Escalada del mismo producto, sin interrupciones'&&id==='tx_estatina_dosis'))];
  if(get(d,'tx_operacion')==='Escalada del mismo producto, sin interrupciones')ids.push(key==='arni'?'tx_dosis_arni':'tx_dosis_actual','tx_semanas','tx_tolerancia');
+ if(key==='metformina'&&get(d,'tx_operacion')==='Escalada del mismo producto, sin interrupciones'){ids.splice(ids.indexOf('tx_dosis_actual'),1);ids.push('seq_dosis_metformina','seq_metformina_forma');}
  ids.push('tx_revision');return [...new Set(ids)];
 }
 export function reviewModuleTreatment(d,key){
@@ -127,7 +128,7 @@ export function evaluateTreatmentDose(d,key){
   detail='Mantener el escalón al menos cuatro semanas y revisar tolerancia antes de otro aumento. No convertir dosis a clics ni a volumen.';
  }else if(key==='metformina'){
   const max=e>=60?3000:e>=45?2000:1000;
-  if(escalating)r.blocks.push('Este recorrido calcula inicio y máximo renal, no interpreta dosis por toma frente a dosis total de una pauta previa.');
+  if(escalating){const daily=n(d,'seq_dosis_metformina');if(get(d,'seq_metformina_forma')!=='Liberación inmediata, pauta confirmada'||daily===null||daily<=0||daily>=Math.min(max,2000)||weeks<2)r.blocks.push('Confirmar metformina de liberación inmediata, dosis TOTAL diaria positiva, al menos 2 semanas y margen dentro del máximo renal.');else{amount=Math.min(daily+500,max,2000);frequency='al día, repartidos con comidas';if(![1000,1500,2000].includes(amount))r.blocks.push('La pauta diaria no corresponde a los escalones de comprimidos de 500 mg verificados. Revisar presentación y distribución.');detail=amount===1000?'500 mg cada 12 h.':amount===1500?'500 mg cada 8 h.':amount===2000?'1.000 mg cada 12 h (dos comprimidos de 500 mg por toma).':'Distribuir la dosis diaria con una presentación adecuada; revisar pauta antes de administrar.';}}
   else {amount=500;frequency=e<45?'cada 24 h':'cada 12 h';detail=`Máximo diario por TFGe: ${max} mg, repartido en 2–3 tomas. Ajustar progresivamente según tolerancia y glucemia; con TFGe 30–59 el inicio no supera la mitad del máximo.`;}
  }else if(key.startsWith('empa')){
   amount=10;if(escalating){if(key!=='empa_dm2'||dose!==10||e<60)r.blocks.push('25 mg solo desde 10 mg en DM2, TFGe ≥60, tolerancia y necesidad de mayor control.');else amount=25;}

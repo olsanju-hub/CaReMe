@@ -4,6 +4,10 @@
 
 **Repositorio:** `olsanju-hub/CaReMe` · **Nombre de la aplicación:** CaHReMe
 
+## Tratamiento propuesto y escaladas · versión vigente
+
+La aplicación pregunta qué toma el paciente y propone el siguiente paso, con escaladas condicionadas y comprobación de la pauta. El selector de tratamientos futuros se retira del recorrido principal. DM2, HTA, lípidos, obesidad, ERC e IC tienen selección por contexto; hígado dirige pruebas y comorbilidades. Insulina deriva la acción del esquema actual y las glucemias. [Criterios, evaluación por fases y límites](docs/SECUENCIAS_TERAPEUTICAS_2026-11-13.md).
+
 ## Recorrido por patología · interfaz vigente
 
 Ocho áreas clínicas. Entrada por diagnóstico, clasificación y tratamiento, con acceso directo al tratamiento cuando el diagnóstico está confirmado. Insulina dentro de DM2; cálculos y pautas en el contexto de cada patología. Se retiran de la navegación principal los niveles rápida/detallada/resumen y el menú Integral/Herramientas. [Contrato y auditoría de esta revisión](docs/RECORRIDO_POR_PATOLOGIA_2026-11-13.md).

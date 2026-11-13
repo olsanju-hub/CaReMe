@@ -1,3 +1,5 @@
+import {resolveInsulinSequence} from './clinical/secuencia-insulina.mjs';
+import {evaluateTherapySequence,prepareSequenceDose,sequenceSchedule} from './clinical/secuencia-terapeutica.mjs';
 import {THERAPEUTIC_OPTIONS,MODULE_TREATMENTS,treatmentFields,reviewModuleTreatment,evaluateTreatmentDose} from './clinical/tratamientos-modulo.mjs';
 import {CALCULATOR_FIELDS,CALCULATOR_TITLES,calculateClinical,additionalLdlReduction} from './clinical/calculadoras.mjs';
 import {insulinDoseFields,evaluateInsulinDose,BASAL_PRODUCTS} from './clinical/insulina-dosis.mjs';
@@ -79,18 +81,36 @@ function pathologyView(){
  let content='';
  if(stage===1)content=`<section class="form-card"><h2>Diagnóstico</h2><p>${escape(DIAGNOSIS_GUIDANCE[id])}</p><div class="consultation-buttons"><button class="primary" type="button" data-action="flow-stage" data-stage="2">Valorar y clasificar</button><button class="ghost" type="button" data-action="flow-stage" data-stage="3">Diagnóstico confirmado: ir a tratamiento</button></div><p>El acceso directo no registra ni presupone un diagnóstico en los datos clínicos.</p></section>`;
  if(stage===2)content=`<section class="form-card"><h2>Clasificación</h2><div class="field-grid">${fields.map(x=>moduleFieldMarkup(FIELDS[x])).join('')}</div>${calculator?`<details class="flow-calculator"><summary>Calcular ${escape(CALCULATOR_TITLES[calculator])} con los datos disponibles</summary>${inlineBody(clinicalCalculatorView())}</details>`:''}<button class="primary" type="button" data-action="flow-classify">Ver clasificación y conducta</button></section>${current.flowResult?briefResult(id):''}<button class="primary" type="button" data-action="flow-stage" data-stage="3">Continuar a tratamiento</button>`;
- if(stage===3){
-  const keys=MODULE_TREATMENTS[id]||[];
-  const key=draft.values.tx_clave;
-  const selected=keys.includes(key)?key:'';
-  content=`<section class="form-card"><h2>Tratamiento</h2><p>${escape(r.situation)}</p>${r.treatment.map(x=>`<p><strong>${escape(x.title)}</strong> ${escape(x.detail)}</p>`).join('')}${r.safety.length?`<div role="alert">${r.safety.map(x=>`<p>${escape(x)}</p>`).join('')}</div>`:''}
-  <details><summary>Datos que orientan la elección</summary><div class="field-grid">${fields.filter(f=>!selected||!treatmentFields(draft,selected).includes(f)).map(f=>moduleFieldMarkup(FIELDS[f])).join('')}</div></details>${keys.length?`<label for="flow-treatment">Fármaco que vas a valorar según la indicación</label><select id="flow-treatment"><option value="">Seleccionar tratamiento</option>${keys.map(k=>`<option value="${k}" ${k===selected?'selected':''}>${escape(THERAPEUTIC_OPTIONS[k].name)}</option>`).join('')}</select><p>La pauta se calcula después de comprobar indicación, tratamiento actual y seguridad.</p>`:'<p>El índice de fibrosis orienta la siguiente prueba o derivación. El tratamiento farmacológico de las comorbilidades se concreta en su patología.</p>'}
-  ${id==='dm2'?'<button class="ghost" type="button" data-action="flow-insulin">Insulina: iniciar, ajustar o reducir</button>':''}</section>`;
-  if(current.flowInsulin&&id==='dm2')content+=inlineBody(insulinDoseView());
-  else if(selected)content+=`<h3>${escape(THERAPEUTIC_OPTIONS[selected].name)}</h3><p>${escape(THERAPEUTIC_OPTIONS[selected].reference[0])}</p>${inlineBody(moduleDoseView())}${THERAPEUTIC_OPTIONS[selected].needs.includes('tfge')?'<button class="ghost" type="button" data-action="clinical-calculator" data-kind="tfge">Calcular TFGe con creatinina</button>':''}${current.flowDoseCalculator?`<details open class="flow-calculator"><summary>Calculadora para esta pauta</summary>${inlineBody(clinicalCalculatorView())}</details>`:''}`;
-  if(id==='hepatico')content+='<div class="consultation-buttons"><button type="button" class="ghost" data-action="open-pathology" data-pathology="obesidad">Tratar obesidad</button><button type="button" class="ghost" data-action="open-pathology" data-pathology="dm2">Tratar diabetes</button></div>';
- }
+ if(stage===3)content=therapySequenceView(id);
+
  return `<div class="page pathology-page">${back}<h1>${escape(title)}</h1><nav class="flow-progress" aria-label="Recorrido clínico">${stepButton(1,'Diagnóstico')}${stepButton(2,'Clasificación')}${stepButton(3,'Tratamiento')}</nav>${stage!==3&&r.safety.length?`<section class="dm2-safety" role="alert"><h2>Prioridad clínica</h2>${r.safety.map(x=>`<p>${escape(x)}</p>`).join('')}</section>`:''}${content}<details class="flow-reference"><summary>Datos clínicos adicionales y fuentes</summary><p>Consulta el algoritmo completo si el caso requiere más contexto.</p><button class="text-link" type="button" data-action="flow-context">Abrir valoración clínica específica</button><button class="text-link" type="button" data-action="sources">Fuentes</button></details></div>`;
+}
+function therapySequenceView(id){
+ if(current.flowInsulin&&id==='dm2')return '<button class="text-link" type="button" data-action="sequence-return">Volver al tratamiento de DM2</button>'+insulinSequenceView();
+ const plan=evaluateTherapySequence(draft,id);
+ if(!current.sequenceQuestions)current.sequenceQuestions=plan.missing.slice(0,4);
+ const questions=current.sequenceQuestions;
+ const registered=[...new Set(current.sequenceCaptured||[])].filter(k=>fieldState(draft,k)==='registrado'&&!questions.includes(k));
+ const list=xs=>xs.length?`<ul>${xs.map(x=>`<li>${escape(x)}</li>`).join('')}</ul>`:'';
+ const summary=registered.length?`<details class="sequence-data"><summary>Datos utilizados · editar</summary>${registered.map(k=>`<p><strong>${escape(FIELDS[k].label)}:</strong> ${escape(FIELDS[k].type==='multi'?readMulti(draft.values[k]).join(' · '):draft.values[k])} <button class="text-link" type="button" data-action="sequence-edit" data-field-id="${k}">Editar</button></p>`).join('')}</details>`:'';
+ let body=`<section id="sequence-questions" class="form-card" tabindex="-1"><h2>Resolver el tratamiento</h2><p>Indica lo que toma y los datos del caso. La aplicación propone el siguiente paso y las condiciones para escalar.</p>${summary}${plan.blocks.length?`<div class="dm2-safety" role="alert"><h3>Prioridad clínica</h3>${list(plan.blocks)}</div>`:''}${questions.length?`<div class="field-grid">${questions.map(k=>k.startsWith('seq_actual_')?`<details class="current-medication"><summary>Medicamentos que toma actualmente</summary>${moduleFieldMarkup(FIELDS[k])}</details>`:moduleFieldMarkup(FIELDS[k])).join('')}</div>`:''}<button class="primary" type="button" data-action="sequence-continue">${questions.length?'Continuar':'Actualizar plan'}</button></section>`;
+ if(current.sequenceVisible&&!plan.missing.length&&!plan.blocks.length){
+  body+=`<section id="therapy-sequence" class="dm2-result" aria-live="polite"><h2>Conducta y secuencia de tratamiento</h2>${plan.steps.map((step,i)=>`<article class="sequence-step"><p class="eyebrow">${escape(step.when)}</p><h3>${escape(step.title)}</h3><p>${escape(step.reason)}</p>${step.referenceKey?`<details><summary>Pauta del posible escalón posterior · no iniciar ahora</summary>${list(sequenceSchedule(step.referenceKey))}</details>`:''}${step.key?`<details><summary>Pauta de referencia y escaladas condicionadas</summary>${list(sequenceSchedule(step.key))}<a href="${escape(THERAPEUTIC_OPTIONS[step.key].source)}" target="_blank" rel="noopener noreferrer">Ficha técnica CIMA</a></details><button class="primary" type="button" data-action="sequence-dose" data-key="${step.key}" data-step="${i}">${step.when==='Ahora'?'Concretar pauta propuesta':'Comprobar pauta y requisitos de este paso'}</button>`:''}${step.action==='insulin'?'<button class="primary" type="button" data-action="flow-insulin">Calcular la pauta de insulina</button>':''}</article>`).join('')}<h3>Seguimiento</h3>${list(plan.followup)}<details><summary>Fuentes del algoritmo</summary>${plan.sources.map(url=>`<p><a href="${escape(url)}" target="_blank" rel="noopener noreferrer">Guía o ficha técnica</a></p>`).join('')}</details></section>`;
+  if(id==='hepatico')body+='<div class="consultation-buttons"><button class="ghost" type="button" data-action="open-pathology" data-pathology="dm2">Resolver tratamiento de DM2</button><button class="ghost" type="button" data-action="open-pathology" data-pathology="obesidad">Resolver tratamiento de obesidad</button></div>';
+ }
+ if(current.sequenceVisible&&current.sequenceDoseKey&&plan.steps.some(step=>step.key===current.sequenceDoseKey)){
+  body+=`<section id="sequence-dose-panel" class="sequence-dose" tabindex="-1"><h2>Pauta propuesta · ${escape(THERAPEUTIC_OPTIONS[current.sequenceDoseKey].name)}</h2>${inlineBody(moduleDoseView())}</section>`;
+  const p=THERAPEUTIC_OPTIONS[current.sequenceDoseKey];
+  if(p.needs.includes('tfge'))body+='<button class="ghost" type="button" data-action="clinical-calculator" data-kind="tfge">Calcular TFGe con creatinina</button>';
+  if(current.flowDoseCalculator)body+=`<details open class="flow-calculator"><summary>Calculadora para esta pauta</summary>${inlineBody(clinicalCalculatorView())}</details>`;
+ }
+ if(current.flowInsulin&&id==='dm2')body+=insulinSequenceView();
+ if(id==='dm2'&&!current.flowInsulin)body+='<details><summary>Paciente ya insulinizado: acceso al cálculo</summary><button class="ghost" type="button" data-action="flow-insulin">Inicio, ajuste o reducción de insulina</button></details>';
+ return body;
+}
+function insulinSequenceView(){
+ const decision=resolveInsulinSequence(draft),list=xs=>xs.length?`<ul>${xs.map(x=>`<li>${escape(x)}</li>`).join('')}</ul>`:'';
+ return `<section id="sequence-insulin-panel" class="form-card" tabindex="-1"><h2>Decidir y calcular la pauta de insulina</h2>${list(decision.blocks)}${decision.missing.length?`<div class="field-grid">${decision.missing.slice(0,4).map(id=>moduleFieldMarkup(FIELDS[id])).join('')}</div><button class="primary" type="button" data-action="sequence-insulin-evaluate">Continuar</button>`:`<p>${escape(decision.reason)}</p>${decision.action?`<button class="primary" type="button" data-action="sequence-insulin-evaluate">${escape(decision.action)} · comprobar pauta</button>`:''}`}</section>${current.sequenceInsulinReady&&decision.action&&!decision.blocks.length&&!decision.missing.length?inlineBody(insulinDoseView()):''}`;
 }
 function obesityResult(mode='detail'){
  const r=evaluateObesity(draft,mode);
@@ -164,7 +184,7 @@ function medicationPanel(id){
 function moduleDoseView(){
  const key=draft.values.tx_clave,p=THERAPEUTIC_OPTIONS[key];if(!p)return tools();
  const r=current.moduleDoseVisible?evaluateTreatmentDose(draft,key):null,list=xs=>xs.length?`<ul>${xs.map(x=>`<li>${escape(x)}</li>`).join('')}</ul>`:'';
- return `<div class="page"><div class="bread"><button type="button" data-action="home">Inicio</button><button type="button" data-action="return-dose-module">Volver a la consulta</button></div><h1>${escape(p.name)}</h1><p>${escape(p.indication)}</p><section class="form-card"><div class="field-grid">${treatmentFields(draft,key).filter(id=>id!=='tx_revision').map(id=>fieldMarkup(FIELDS[id])).join('')}</div>
+ return `<div class="page"><div class="bread"><button type="button" data-action="home">Inicio</button><button type="button" data-action="return-dose-module">Volver a la consulta</button></div><h1>${escape(p.name)}</h1><p>${escape(p.indication)}</p><section class="form-card"><div class="field-grid">${treatmentFields(draft,key).filter(id=>id!=='tx_revision'&&!(current.page==='pathology'&&current.sequenceDoseKey&&['tx_operacion','tx_contexto','tx_dosis_actual','tx_semanas','tx_tolerancia','tx_estatina_dosis','seq_dosis_metformina','seq_metformina_forma'].includes(id))).map(id=>fieldMarkup(FIELDS[id])).join('')}</div>
  <details><summary>Revisar antes de confirmar la pauta</summary>${list([...p.checks,...p.monitoring])}<p>Comprobar indicación, alergias, medicación realmente utilizada y ausencia de duplicidades. El inicio requiere confirmar que no se administra ya ese producto o una clase equivalente; una escalada requiere el mismo producto, sin interrupciones.</p></details>${p.needs.includes('lip_aclaramiento')?'<button type="button" class="ghost" data-action="clinical-calculator" data-kind="crcl" data-return="dose">Calcular aclaramiento para esta pauta →</button>':''}${fieldMarkup(FIELDS.tx_revision)}<button type="button" class="primary" data-action="module-dose-result">Calcular pauta →</button></section>
  ${r?`<section id="module-dose-result" class="dm2-result" tabindex="-1" aria-live="polite"><h2>${r.proposal?'Propuesta según los datos':'Antes de pautar'}</h2>${list(r.blocks)}${r.missing.length?'<h3>Información necesaria</h3>'+list(r.missing):''}${r.proposal?`<article class="dose-proposal"><h3>${escape(r.proposal.name)}</h3><p class="dose-number">${escape(r.proposal.amount)} ${escape(r.proposal.unit)} · ${escape(r.proposal.frequency)}</p><p>Vía ${escape(r.proposal.via)}.</p><p>${escape(r.proposal.detail)}</p></article><h3>Seguimiento</h3>${list(r.proposal.monitoring)}`:''}${p.drug==='finerenona'?`<button type="button" class="ghost" data-action="open-drug" data-drug-id="finerenona" data-route-id="${escape(p.route)}">Abrir continuidad y ajustes específicos de finerenona →</button>`:''}<a href="${escape(r.source)}" target="_blank" rel="noopener noreferrer">Ficha técnica de la presentación</a></section>`:''}</div>`;
 }
@@ -740,7 +760,7 @@ function insulinDoseView(){
  ${r.proposal.basalProposal?`<h3>Ajuste basal asociado</h3><p>${escape(r.proposal.basalProposal.product)}: <strong>${escape(r.proposal.basalProposal.units)} U al día</strong>.</p><p>${escape(r.proposal.basalProposal.formula)}. Redondeo hacia abajo.</p>`:''}</article>`:''}
  ${r.steps.length?'<h3>Seguimiento y aplicación</h3>'+list(r.steps):''}<details><summary>Reglas y fichas técnicas</summary>${r.sources.map(x=>`<p><a href="${escape(x.url)}" target="_blank" rel="noopener noreferrer">${escape(x.title)}</a></p>`).join('')}</details></section>`:'';
  return `<div class="page"><div class="bread"><button type="button" data-action="home">Inicio</button><button type="button" data-action="start-module" data-module="insulina">Insulinización</button></div><h1>Calcular pauta de insulina</h1>
- <p>Elige la decisión. Solo aparecen los datos necesarios para esa pauta.</p><section class="form-card"><div class="field-grid">${fields.filter(id=>id!=='ins_calc_revision').map(id=>fieldMarkup(FIELDS[id])).join('')}</div>
+ <p>Elige la decisión. Solo aparecen los datos necesarios para esa pauta.</p><section class="form-card"><div class="field-grid">${fields.filter(id=>id!=='ins_calc_revision'&&!(current.page==='pathology'&&current.sequenceInsulinReady&&['ins_calc_accion','ins_calc_contexto','ins_calc_metodo','ins_calc_rapida','ins_calc_bolo','ins_calc_reduccion','ins_calc_patron'].includes(id))&&!(current.page==='pathology'&&current.sequenceInsulinReady&&draft.values.insulina_esquema==='Sin insulina'&&id==='ins_calc_producto')).map(id=>fieldMarkup(FIELDS[id])).join('')}</div>
  ${action==='Iniciar basal'?'<p>Elige la presentación tras valorar coste y riesgo de hipoglucemia. Glargina U100: 10 U o inicio por peso. Toujeo: inicio por peso. Tresiba U100: inicio de 10 U. Las concentraciones y plumas no se intercambian automáticamente.</p>':''}
  ${action==='Añadir bolo en una comida'?'<p>Con HbA1c <8 %, se calcula también la alternativa ADA de reducir un 10 % la basal al añadir el primer bolo.</p>':''}
  <details class="dose-scope"><summary>Comprobar ámbito y seguridad</summary><p>Confirmar DM2 adulta estable, sin embarazo, alergia al producto ni enfermedad aguda. Revisar indicación (incluidas alternativas basadas en GLP-1), medicación y secretagogos, técnica de inyección, autocontrol y manejo de hipoglucemia. No usar este circuito para corticoides, fragilidad/paliativos, insuficiencia hepática, ERC avanzada o cambios entre productos.</p></details>
@@ -1137,9 +1157,9 @@ app.addEventListener('input', event => {
   const id=el.dataset.field;
   if (el.type === 'checkbox') {
     const checked=[...document.querySelectorAll('input[data-field="'+id+'"]:checked')].map(e=>e.value);
-    const chosen=checked.filter(x=>! /^(Sin |Ninguna )/.test(x));
-    const selected=checked.length>1 && checked.some(x=>/^(Sin |Ninguna )/.test(x))
-      ? (el.checked && /^(Sin |Ninguna )/.test(el.value) ? [el.value] : chosen)
+    const chosen=checked.filter(x=>! /^(Sin |Ningun[oa] )/.test(x));
+    const selected=checked.length>1 && checked.some(x=>/^(Sin |Ningun[oa] )/.test(x))
+      ? (el.checked && /^(Sin |Ningun[oa] )/.test(el.value) ? [el.value] : chosen)
       : checked;
     draft = setValue(draft,id,JSON.stringify(selected));
     // Refrescar tras seleccionar «ninguna» para garantizar exclusividad.
@@ -1150,7 +1170,7 @@ app.addEventListener('input', event => {
       return;
     }
   } else draft=setValue(draft,id,el.value);
-  if(current.page==='pathology'){current.moduleDoseVisible=false;current.insulinDoseVisible=false;current.calculatorVisible=false;current.flowResult=false;for(const result of document.querySelectorAll('#module-dose-result,#insulin-dose-result,#clinical-calc-result,.brief-result'))result.remove();if(['select','multi'].includes(FIELDS[id]?.type))render();return;}
+  if(current.page==='pathology'){if(!id.startsWith('tx_')&&!id.startsWith('ins_calc_')&&!id.startsWith('calc_')){if(current.sequenceDoseKey){current.sequenceCaptured=[...new Set([...(current.sequenceCaptured||[]),id])];}else current.sequenceVisible=false;document.getElementById('therapy-sequence')?.remove();}current.moduleDoseVisible=false;current.insulinDoseVisible=false;current.calculatorVisible=false;current.flowResult=false;if(current.flowInsulin&&!['ins_calc_revision','tfge','peso','insulina_dosis_basal','ins_calc_dias','ins_calc_causa','ins_calc_comida','ins_calc_glp1','ins_calc_producto'].includes(id))current.sequenceInsulinReady=false;for(const result of document.querySelectorAll('#module-dose-result,#insulin-dose-result,#clinical-calc-result,.brief-result'))result.remove();if(['select','multi'].includes(FIELDS[id]?.type))render();return;}
   if(current.page==='module-dose'||current.page==='clinical-calculator'){current.moduleDoseVisible=false;current.calculatorVisible=false;document.getElementById('module-dose-result')?.remove();document.getElementById('clinical-calc-result')?.remove();if(FIELDS[id]?.type==='select')return render();return;}
   if(current.page==='insulin-dose'){current.insulinDoseVisible=false;document.getElementById('insulin-dose-result')?.remove();if(FIELDS[id]?.type==='select')return render();return;}
   if(current.obesityVisible){current.obesityVisible=false;document.getElementById('obesity-result')?.remove();}
@@ -1196,10 +1216,27 @@ app.addEventListener('click', event => {
   const btn = event.target.closest('button[data-action]');
   if (!btn) return;
   const action = btn.dataset.action;
-  if(action==='open-pathology'){if(!PATHOLOGIES.some(x=>x[0]===btn.dataset.pathology))return;current.pathology=btn.dataset.pathology;current.module=current.pathology;current.flowStage=1;current.flowResult=false;current.flowInsulin=false;current.moduleDoseVisible=false;current.insulinDoseVisible=false;current.calculatorVisible=false;current.calculatorKind={obesidad:'imc',hepatico:'fib4',erc:'tfge',dm2:'tfge',ic:'tfge'}[current.pathology];return navigate('pathology');}
-  if(action==='flow-stage'){current.flowStage=Number(btn.dataset.stage);current.flowDoseCalculator=false;current.calculatorVisible=false;current.calculatorKind={obesidad:'imc',hepatico:'fib4',erc:'tfge',dm2:'tfge',ic:'tfge'}[current.pathology];current.flowResult=false;return navigate('pathology');}
+  if(action==='open-pathology'){if(!PATHOLOGIES.some(x=>x[0]===btn.dataset.pathology))return;current.pathology=btn.dataset.pathology;current.sequenceQuestions=null;current.sequenceCaptured=[];current.sequenceVisible=false;current.sequenceDoseKey=null;current.module=current.pathology;current.flowStage=1;current.flowResult=false;current.flowInsulin=false;current.moduleDoseVisible=false;current.insulinDoseVisible=false;current.calculatorVisible=false;current.calculatorKind={obesidad:'imc',hepatico:'fib4',erc:'tfge',dm2:'tfge',ic:'tfge'}[current.pathology];return navigate('pathology');}
+  if(action==='sequence-return'){current.flowInsulin=false;current.sequenceQuestions=null;current.sequenceVisible=false;return render();}
+  if(action==='sequence-insulin-evaluate'){
+   const decision=resolveInsulinSequence(draft);if(decision.blocks.length||decision.missing.length||!decision.action){current.sequenceInsulinReady=false;return render();}
+   for(const [id,value]of Object.entries(decision.patch))if(draft.values[id]!==value)draft=setValue(draft,id,value);
+   current.sequenceInsulinReady=true;current.insulinDoseVisible=false;return render();
+  }
+  if(action==='sequence-continue'){
+   if(current.page!=='pathology')return;
+   current.sequenceCaptured=[...new Set([...(current.sequenceCaptured||[]),...(current.sequenceQuestions||[])])];
+   const plan=evaluateTherapySequence(draft,current.pathology);current.sequenceQuestions=plan.missing.slice(0,4);current.sequenceVisible=!plan.missing.length;current.sequenceDoseKey=null;current.moduleDoseVisible=false;render();document.getElementById(current.sequenceVisible?'therapy-sequence':'sequence-questions')?.scrollIntoView?.({block:'start'});return;
+  }
+  if(action==='sequence-edit'){if(!FIELDS[btn.dataset.fieldId])return;current.sequenceQuestions=[btn.dataset.fieldId];current.sequenceVisible=false;current.sequenceDoseKey=null;current.flowInsulin=false;return render();}
+  if(action==='sequence-dose'){
+   if(current.page!=='pathology')return;
+   const plan=evaluateTherapySequence(draft,current.pathology),step=plan.steps[Number(btn.dataset.step)];if(plan.missing.length||plan.blocks.length||!step?.key)return;
+   draft=prepareSequenceDose(draft,current.pathology,step);current.sequenceDoseKey=step.key;current.sequenceVisible=true;current.moduleDoseVisible=false;current.flowInsulin=false;render();document.getElementById('sequence-dose-panel')?.scrollIntoView?.({block:'start'});document.getElementById('sequence-dose-panel')?.focus?.({preventScroll:true});return;
+  }
+  if(action==='flow-stage'){current.flowStage=Number(btn.dataset.stage);current.sequenceQuestions=null;current.sequenceVisible=false;current.sequenceDoseKey=null;current.flowDoseCalculator=false;current.calculatorVisible=false;current.calculatorKind={obesidad:'imc',hepatico:'fib4',erc:'tfge',dm2:'tfge',ic:'tfge'}[current.pathology];current.flowResult=false;return navigate('pathology');}
   if(action==='flow-classify'){current.flowResult=true;return render();}
-  if(action==='flow-insulin'){current.flowInsulin=true;current.insulinDoseVisible=false;return render();}
+  if(action==='flow-insulin'){current.flowInsulin=true;current.sequenceInsulinReady=false;current.sequenceDoseKey=null;current.insulinDoseVisible=false;render();document.getElementById('sequence-insulin-panel')?.scrollIntoView?.({block:'start'});return;}
   if(action==='flow-context'){const id=current.pathology;if(['hta','lipids'].includes(id)){current.htaDetail=true;current.lipidDetail=true;return navigate(id);}current.module=id;current.mode='detail';return navigate('module');}
 
   if(action==='clinical-calculator'){if(!CALCULATOR_FIELDS[btn.dataset.kind])return;if(current.page==='pathology'){current.calculatorKind=btn.dataset.kind;current.calculatorVisible=false;current.flowDoseCalculator=true;return render();}current.calculatorKind=btn.dataset.kind;current.calculatorReturnDose=btn.dataset.return==='dose';current.calculatorVisible=false;return navigate('clinical-calculator');}

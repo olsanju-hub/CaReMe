@@ -1,3 +1,4 @@
+import {SEQUENCE_FIELDS} from './sequence-fields.mjs';
 // Definiciones funcionales originales para captura en CaHReMe.
 // Inspiradas en la cobertura de uso de GlucoGuía, sin copiar su implementación.
 // Estas rutas NO contienen reglas, umbrales de decisión ni recomendaciones clínicas.
@@ -45,6 +46,7 @@ export const MODULES = [
 ];
 export const MODULE_BY_ID = Object.fromEntries(MODULES.map(m => [m.id, m]));
 export const EXTRA_FIELDS = [
+  ...SEQUENCE_FIELDS,
   {id:'calc_peso_cg',label:'Peso seleccionado para Cockcroft–Gault tras revisar obesidad, edema y masa muscular',type:'number',min:0,unit:'kg'},
   {id:'calc_peso_cg_revision',label:'Idoneidad del peso usado en Cockcroft–Gault',type:'select',options:['Peso seleccionado apropiado tras revisión clínica','Pendiente o no interpretable']},
   {id:'calc_sexo',label:'Sexo utilizado por la ecuación renal',type:'select',options:['Hombre','Mujer']},

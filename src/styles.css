@@ -593,3 +593,5 @@ h2 { letter-spacing:-.025em }
 /* Las tarjetas nuevas no llevan la columna de icono de la portada anterior. */
 .home .module-card{grid-template-columns:minmax(0,1fr)}
 .home .module-content{width:100%;padding:0}
+
+.sequence-step{padding:1rem 0;border-bottom:1px solid var(--line,#dce3e6)}.sequence-step:last-child{border:0}.sequence-step details{margin:1rem 0}.sequence-data{margin:1rem 0}.sequence-data p{overflow-wrap:anywhere}.sequence-dose{margin-top:1.5rem}.sequence-dose .dose-number{overflow-wrap:anywhere}
