@@ -556,3 +556,5 @@ h2 { letter-spacing:-.025em }
 .treatment-access button { margin:4px 6px 4px 0; max-width:100%; white-space:normal; overflow-wrap:anywhere; }
 .progressive-fields { grid-column:1 / -1; min-width:0; width:100%; }
 .capture-details { margin-bottom:16px; }
+
+.ckm-block-links { display:flex; flex-direction:column; align-items:flex-start; gap:10px; }

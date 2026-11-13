@@ -116,6 +116,15 @@ try{
    await page.locator('.treatment-access [data-drug-id="tirzepatida"]').click();assert.match(await page.locator('main').innerText(),/SOLO PAUTA DE FICHA TÉCNICA/);assert.match(await page.locator('main').innerText(),/Datos esenciales incompletos/);
    await home();
   });
+  await check(profile.id,'CKM dirigido: bloque breve, resultado mínimo y preguntas condicionales',async()=>{
+   await action('ckm');assert.equal(await page.locator('.form-card input,.form-card select').count(),6);
+   await fill({edad:'60',embarazo:'No procede',dm1:'No',fecha_evaluacion:'2026-11-13',situacion_aguda:'Estable sin proceso agudo grave',lra_sospecha:'No'});
+   await page.locator('[data-action="ckm-next"]').click();assert.equal(await page.locator('[data-field="ckm_fecha_cvd"]').count(),0);
+   await fill({ckm_cvd:'Confirmada'});assert.equal(await page.locator('[data-field="ckm_fecha_cvd"]').count(),1);await fill({ckm_fecha_cvd:'2026-11-10'});
+   await page.locator('[data-action="ckm-next"]').click();await fill({dm2:'Sí'});assert.match(await page.locator('#ckm-result').innerText(),/al menos estadio 4/);
+   assert.equal(await page.locator('[data-block="subclinica"]').count(),0);assert.ok(await page.locator('.form-card input,.form-card select').count()<=6);
+   await home();await page.locator('[data-action="new"]').first().click();
+  });
   await check(profile.id,'privacidad: captura sin almacenamiento o red clínica',async()=>{
    assert.deepEqual(await page.evaluate(()=>({local:Object.keys(localStorage),session:Object.keys(sessionStorage)})),{local:[],session:[]});assert.deepEqual(await context.cookies(),[]);assert.deepEqual(external,[]);
   });

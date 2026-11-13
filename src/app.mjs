@@ -193,18 +193,55 @@ function ckmResult(){
  return `<section id="ckm-result" class="dm2-result" aria-live="polite"><h2>${escape(title)}</h2>
   ${r.alerts.length?`<div class="dm2-safety">${list(r.alerts)}</div>`:''}
   ${r.evidence.length?`<h3>Evidencia aportada</h3>${list(r.evidence)}`:''}
-  ${r.missing.length?`<h3>Información que falta revisar</h3>${list(r.missing)}`:''}
-  <h3>Interpretación y límites</h3>${list(r.notes)}
+  ${r.missing.length?`<h3>Para precisar el resultado</h3>${list(r.missing.slice(0,2))}${r.missing.length>2?`<details><summary>Otras comprobaciones pendientes (${r.missing.length-2})</summary>${list(r.missing.slice(2))}</details>`:''}`:''}
+  <details><summary>Interpretación y límites</summary>${list(r.notes)}</details>
   <p><a href="${escape(r.source.url)}" target="_blank" rel="noopener noreferrer">${escape(r.source.title)}</a> · ${escape(r.source.locator)}</p>
   <p class="privacy-note">Sin diagnóstico o tratamiento automático. Revisión clínica independiente pendiente.</p></section>`;
 }
+// Preguntas dirigidas: solo se representa un bloque; los valores compartidos se conservan.
+function ckmQuestionBlocks(){
+ const v=id=>fieldState(draft,id)==='registrado'?draft.values[id]:null;
+ const r=evaluateCkm(draft),level=r.stage??r.minimumStage;
+ const blocks=[
+  {id:'contexto',title:'¿Es aplicable este circuito?',fields:['edad','embarazo','dm1','situacion_aguda','lra_sospecha','fecha_evaluacion']},
+  {id:'cardiovascular',title:'¿Hay enfermedad cardiovascular conocida?',fields:['ckm_cvd','ecv','ic',...((v('ckm_cvd')==='Confirmada'||v('ic')==='Sí')?['ckm_fecha_cvd']:[])]},
+  {id:'factores',title:'¿Qué factores ya están documentados?',fields:['dm2','ckm_hta_tratada','ckm_mets','imc']},
+  {id:'renal',title:'¿Qué sabemos de la función renal?',fields:['erc','ckm_reemplazo_renal','tfge',...(v('tfge')?['fecha_tfge']:[]),'persistencia']}
+ ];
+ if(level!==4){
+  blocks.push({id:'albuminuria',title:'Albuminuria disponible',fields:['cac',...(v('cac')?['unidad_cac','fecha_cac']:[])]});
+  if(level!==3)blocks.push({id:'subclinica',title:'¿Existe evidencia de mayor riesgo?',fields:['ckm_subclinica',...(v('ckm_subclinica')==='Confirmada por evaluación clínica/especializada'?['ckm_fecha_subclinica']:[]),'ckm_prevent',...(v('ckm_prevent')==='PREVENT-CVD ≥20 % a 10 años documentado'?['ckm_fecha_prevent','ckm_version_prevent']:[])]});
+  if(level===null||level<2){
+   blocks.push({id:'presion',title:'Presión habitual disponible',fields:['pas','pad','fecha_pas','ckm_pa_contexto']});
+   blocks.push({id:'lipidos',title:'Perfil metabólico disponible',fields:['trigliceridos','fecha_lipidos','ckm_lipidos']});
+  }
+  if(level===null){
+   blocks.push({id:'adiposidad',title:'Adiposidad: precisar la evaluación',fields:['cintura','cv_sexo_modelo','ckm_ascendencia']});
+   blocks.push({id:'glucemia',title:'Glucemia disponible',fields:['hba1c','fecha_hba1c','dm_hba1c_fiable','glucemia_ayunas','fecha_glucemia_ayunas']});
+  }
+ }
+ blocks.push({id:'confirmacion',title:'Confirmar la revisión',fields:['ckm_evaluacion_confirmada']});
+ return blocks;
+}
 function ckmView(){
+ const blocks=ckmQuestionBlocks();
+ const index=Math.max(0,blocks.findIndex(x=>x.id===(current.ckmBlock??'contexto'))),block=blocks[index];
+ current.ckmBlock=block.id;
+ const r=evaluateCkm(draft);
  return `<div class="page"><div class="bread"><button type="button" data-action="home">Inicio</button><span>Estadificación CKM</span></div>
-  <h1>Estadificación CKM</h1>${banner()}
-  <p>Se utilizan los datos disponibles. Una evaluación incompleta no equivale a estadio 0 ni obliga a solicitar pruebas sin indicación.</p>
-  <section class="form-card"><h2>Contexto y evidencia</h2><div class="field-grid">${CKM_FIELDS.map(id=>moduleFieldMarkup(FIELDS[id])).join('')}</div>
-  <button type="button" class="primary" data-action="ckm-result">Ver estadificación CKM →</button></section>
-  ${current.ckmVisible?ckmResult():''}</div>`;
+  <h1>Estadificación CKM</h1>
+  <p>Revisa solo lo que necesitas. Puedes detenerte con un estadio mínimo documentado; los datos desconocidos no se consideran normales.</p>
+  ${ckmResult()}
+  <section class="form-card"><h2>${escape(block.title)}</h2>
+  <p>${block.fields.length} datos en este bloque. Los ya registrados se reutilizan. No necesitas recorrer todos los apartados.</p>
+  <div class="field-grid">${block.fields.map(id=>moduleFieldMarkup(FIELDS[id])).join('')}</div>
+  <div class="wizard-actions"><button type="button" class="ghost" data-action="ckm-block" data-block="${blocks[Math.max(0,index-1)].id}" ${index===0?'disabled':''}>Anterior</button>
+  <button type="button" class="primary" data-action="ckm-next">${index===blocks.length-1?'Actualizar resultado':'Revisar siguiente apartado →'}</button></div>
+  <button type="button" class="text-link" data-action="ckm-result">Actualizar orientación con lo disponible</button>
+  </section>
+  <details><summary>Elegir qué dato revisar</summary><div class="ckm-block-links">${blocks.map(x=>`<button type="button" class="text-link" data-action="ckm-block" data-block="${x.id}" ${x.id===block.id?'aria-current="step"':''}>${escape(x.title)}</button>`).join('')}</div></details>
+  ${r.stage!==null?'<p>La clasificación ya está disponible. Revisa otros apartados solo si necesitas corregir datos o precisar el resultado.</p>':''}
+  <p class="privacy-note">No se solicitan pruebas nuevas solo para completar la clasificación. Revisión clínica independiente pendiente.</p></div>`;
 }
 function ckmSummaryCard(){
  const r=evaluateCkm(draft);
@@ -1041,7 +1078,7 @@ app.addEventListener('input', event => {
   if(current.masldVisible){current.masldVisible=false;document.getElementById('masld-result')?.remove();}
   if(current.lipidVisible){current.lipidVisible=false;document.getElementById('lipid-result')?.remove();}
   if(current.htaVisible){current.htaVisible=false;document.getElementById('hta-result')?.remove();}
-  if(current.ckmVisible){current.ckmVisible=false;document.getElementById('ckm-result')?.remove();}
+  if(current.page==='ckm'){current.ckmVisible=false;document.getElementById('ckm-result')?.remove();}
   if(current.cvVisible){current.cvVisible=false;document.getElementById('cv-result')?.remove();}
   if(current.renalVisible){
     current.renalVisible=false;
@@ -1064,6 +1101,7 @@ app.addEventListener('input', event => {
       if(previous && typeof previous.remove==='function')previous.remove();
     }
   }
+  if(current.page==='ckm'&&FIELDS[id]?.type==='select')return render();
   const counter=document.getElementById('section-count');
   if (!counter) return;
   const fields=current.page==='lipids'?LIPID_FIELDS:current.page==='hta'?HTA_FIELDS:current.page==='ckm'?CKM_FIELDS:current.page==='cv-risk'?CV_FIELDS:current.page==='module'?moduleFields(current.module,current.mode):current.page==='drug'?currentContinuityFields():SECTIONS[current.step].fields.map(f=>f.id);
@@ -1078,7 +1116,9 @@ app.addEventListener('click', event => {
   if(action==='lipid-result'){if(current.page!=='lipids')return;current.lipidVisible=true;return render();}
   if(action==='hta'){current.htaVisible=false;return navigate('hta');}
   if(action==='hta-result'){if(current.page!=='hta')return;current.htaVisible=true;return render();}
-  if(action==='ckm'){current.ckmVisible=false;return navigate('ckm');}
+  if(action==='ckm'){current.ckmVisible=false;current.ckmBlock='contexto';return navigate('ckm');}
+  if(action==='ckm-block'){if(current.page!=='ckm')return;if(ckmQuestionBlocks().some(x=>x.id===btn.dataset.block))current.ckmBlock=btn.dataset.block;return navigate('ckm');}
+  if(action==='ckm-next'){if(current.page!=='ckm')return;const blocks=ckmQuestionBlocks(),i=blocks.findIndex(x=>x.id===current.ckmBlock);current.ckmBlock=blocks[Math.min(Math.max(0,i)+1,blocks.length-1)].id;current.ckmVisible=true;return navigate('ckm');}
   if(action==='ckm-result'){if(current.page!=='ckm')return;current.ckmVisible=true;return render();}
   if(action==='cv-risk'){current.cvVisible=false;return navigate('cv-risk');}
   if(action==='cv-risk-result'){if(current.page!=='cv-risk')return;current.cvVisible=true;return render();}
