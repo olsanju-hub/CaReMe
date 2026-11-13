@@ -170,6 +170,7 @@ function moduleCalculationLinks(id){
  return (map[id]||[]).map(kind=>`<button type="button" class="ghost" data-action="clinical-calculator" data-kind="${kind}" data-module="${id}">Calcular ${escape(CALCULATOR_TITLES[kind])} →</button>`).join('');
 }
 function medicationPanel(id){
+ if(['dm2','hta','lipids','ic','erc','obesidad','hepatico','insulina'].includes(id))return `<section class="module-medication"><h2>Tratamiento y escaladas</h2><button class="primary" type="button" data-action="sequence-context-return" data-pathology="${id==='insulina'?'dm2':id}">Resolver el tratamiento con estos datos</button></section>`;
  let keys=MODULE_TREATMENTS[id]||[];
  if(id==='ic'){
   if(draft.values.ic_fevigrupo?.startsWith('Preservada')||Number(draft.values.fevi)>=50)keys=keys.filter(x=>!['arni','bisoprolol','espironolactona'].includes(x));
@@ -1217,6 +1218,7 @@ app.addEventListener('click', event => {
   if (!btn) return;
   const action = btn.dataset.action;
   if(action==='open-pathology'){if(!PATHOLOGIES.some(x=>x[0]===btn.dataset.pathology))return;current.pathology=btn.dataset.pathology;current.sequenceQuestions=null;current.sequenceCaptured=[];current.sequenceVisible=false;current.sequenceDoseKey=null;current.module=current.pathology;current.flowStage=1;current.flowResult=false;current.flowInsulin=false;current.moduleDoseVisible=false;current.insulinDoseVisible=false;current.calculatorVisible=false;current.calculatorKind={obesidad:'imc',hepatico:'fib4',erc:'tfge',dm2:'tfge',ic:'tfge'}[current.pathology];return navigate('pathology');}
+  if(action==='sequence-context-return'){const id=btn.dataset.pathology;if(!PATHOLOGIES.some(p=>p[0]===id))return;current.pathology=id;current.flowStage=3;current.sequenceQuestions=null;current.sequenceCaptured=[];current.sequenceVisible=false;current.sequenceDoseKey=null;current.flowInsulin=false;return navigate('pathology');}
   if(action==='sequence-return'){current.flowInsulin=false;current.sequenceQuestions=null;current.sequenceVisible=false;return render();}
   if(action==='sequence-insulin-evaluate'){
    const decision=resolveInsulinSequence(draft);if(decision.blocks.length||decision.missing.length||!decision.action){current.sequenceInsulinReady=false;return render();}
@@ -1245,7 +1247,7 @@ app.addEventListener('click', event => {
   if(action==='module-dose'){if(!THERAPEUTIC_OPTIONS[btn.dataset.key])return;if(draft.values.tx_clave!==btn.dataset.key){for(const id of ['tx_operacion','tx_dosis_actual','tx_dosis_arni','tx_semanas','tx_tolerancia','tx_estatina_dosis'])draft=setValue(draft,id,'');}draft=setValue(draft,'tx_clave',btn.dataset.key);current.doseOrigin=btn.dataset.module;current.moduleDoseVisible=false;return navigate('module-dose');}
   if(action==='module-dose-result'){if(!['pathology','module-dose'].includes(current.page))return;current.moduleDoseVisible=true;render();const result=document.getElementById('module-dose-result');result?.scrollIntoView?.({block:'start'});result?.focus?.({preventScroll:true});return;}
   if(action==='return-dose-module'){const origin=current.doseOrigin;if(['hta','lipids'].includes(origin))return navigate(origin);if(MODULE_BY_ID[origin]){current.module=origin;current.mode='quick';return navigate('module');}return navigate('tools');}
-  if(action==='insulin-dose'){current.insulinDoseVisible=false;return navigate('insulin-dose');}
+  if(action==='insulin-dose'){current.pathology='dm2';current.flowStage=3;current.flowInsulin=true;current.sequenceInsulinReady=false;current.sequenceVisible=false;current.insulinDoseVisible=false;return navigate('pathology');}
   if(action==='insulin-dose-result'){if(!['pathology','insulin-dose'].includes(current.page))return;current.insulinDoseVisible=true;render();const result=document.getElementById('insulin-dose-result');result?.scrollIntoView?.({block:'start'});result?.focus?.({preventScroll:true});return;}
   if(action==='lipids'){current.lipidDetail=false;current.lipidVisible=false;return navigate('lipids');}
   if(action==='lipid-result'){if(current.page!=='lipids')return;current.lipidVisible=true;return render();}
