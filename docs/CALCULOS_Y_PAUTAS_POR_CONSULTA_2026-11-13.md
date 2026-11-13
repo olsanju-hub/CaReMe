@@ -75,3 +75,8 @@ Base previa: 1170 pruebas. Incremento: 242 escenarios del motor/interfaz funcion
 Se amplía la auditoría real de navegador a calculadoras, transferencia/invalidez, presencia de pauta por consulta, dosis HTA e incretinas y ausencia de desbordamiento. Se revisará Actions y capturas antes del cierre. La revisión clínica independiente y la prueba en dispositivos físicos siguen pendientes. Los resultados de software no acreditan validación clínica de todas las combinaciones ni completan el catálogo.
 
 La primera ejecución completa superó 192 comprobaciones de navegador. Tras añadir el escalado de ARNI, 191/192 pasaron: en WebKit 320 px, el nombre del medicamento del encabezado desbordaba el texto aunque su caja no excedía el contenedor. Se permite partir nombres largos en los títulos, sin ocultar desbordamiento ni retirar la comprobación.
+
+## Cierre de ejecución
+
+Código funcional `ab141226e9f51a4dd7fbb3c646dd5147ac39e10f`: 1412/1412 pruebas Node y 192/192 comprobaciones Chromium/WebKit, cero fallos. Runs 43446955770 y 43446966577 correctos; despliegue Pages 43446955277 completado. Perfiles entre 320 y 1280 px. Se verificaron presencia de medicación por consulta, cálculos, uso/invalidez de resultados, inicio/escalado de HTA, ARNI por pareja e incretinas, privacidad y recarga sin origen. Capturas de dosis móviles revisadas; artifacts disponibles en Actions. Pendientes validación clínica independiente y prueba física. PR #4 permanece en borrador, sin fusión.
+
