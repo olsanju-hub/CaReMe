@@ -53,3 +53,7 @@ Persisten brechas: simplificación basal-bolo/premezclas, manejo por fragilidad 
 Se amplía el recorrido Chromium/WebKit para probar inicio por peso, cambio de peso sin confirmación, titulación, bolo y reducción. Su resultado se consulta en Actions antes de cerrar el incremento.
 
 La primera ejecución de navegador conservó 176 comprobaciones previas correctas. El nuevo escenario no arrancó porque intentaba borrar una sesión ya vacía; se corrige su preparación sin retirar aserciones de dosis. Se añade retención de HbA1c fuera de 3–20 % y salto/foco al resultado tras calcular.
+
+### Cierre de ejecución
+
+Código funcional `a2d055b97a8cf103735c68a146c7f9fbcf250817`: 1170/1170 pruebas Node y 180/180 comprobaciones Chromium/WebKit, cero fallos. Runs navegador 43440515414 y 43440524550 correctos; Pages 43440514303 desplegado. Cuatro perfiles, 320–1280 px; escenarios nuevos de inicio, invalidación, titulación, bolo y reducción superados en todos. Captura WebKit de 320 px revisada: producto, dosis, fórmula y seguimiento visibles. Informe y capturas sintéticas conservados como artifact de Actions. No equivale a prueba en iPhone físico ni validación clínica externa.
