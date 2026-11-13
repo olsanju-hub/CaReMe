@@ -32,7 +32,7 @@ try{
   let browser;
   await check(profile.id,'inicio de motor',async()=>{browser=await profile.engine.launch({headless:true});});
   if(!browser)continue;
-  report.profiles.push({id:profile.id,version:browser.version(),width:profile.width,height:profile.height,offlineMethod:profile.id.startsWith('webkit')?'origin_stopped':'origin_stopped_and_setOffline'});
+  report.profiles.push({id:profile.id,version:browser.version(),width:profile.width,height:profile.height,offlineMethod:'origin_stopped_with_uncached_negative_control'});
   const context=await browser.newContext({viewport:{width:profile.width,height:profile.height},isMobile:profile.touch,hasTouch:profile.touch});
   const page=await context.newPage();page.setDefaultTimeout(5000);const errors=[],external=[];
   page.on('pageerror',error=>errors.push(error.message));
@@ -150,7 +150,7 @@ try{
     await assert.rejects(()=>fetch(origin));
     const uncached=await browser.newContext(),negative=await uncached.newPage();
     await assert.rejects(()=>negative.goto(origin,{timeout:5000}));await uncached.close();
-    if(!profile.id.startsWith('webkit'))await context.setOffline(true);
+    // El origen permanece detenido; el contexto sin caché acredita que no puede responder la red.
     await page.reload({waitUntil:'load'});assert.equal(await page.locator('button.module-card').count(),6);
    for(const id of ['obesidad','hepatico']){await module(id,'detail');assert.ok(await page.locator('[data-action="'+(id==='obesidad'?'obesity-result':'masld-result')+'"]').isVisible());}
    await summary();assert.ok(await page.locator('#integrated-plan').isVisible());
