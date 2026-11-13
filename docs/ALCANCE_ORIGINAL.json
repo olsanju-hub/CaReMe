@@ -13,37 +13,37 @@
     {
       "id": "hta",
       "status": "partial",
-      "evidence": "src/clinical/hta.mjs: umbrales por método, patrones, confirmación, objetivo condicionado y revisión de tratamiento; alertas transversales",
-      "pending": "Algoritmos/dosis por producto y titulación CIMA, HTA resistente/secundaria, validación clínica y QA real"
+      "evidence": "src/clinical/hta.mjs: umbrales por método, patrones, confirmación, objetivo condicionado y revisión de tratamiento; alertas transversales; tratamientos-modulo.mjs: pautas visibles y propuesta numérica condicionada para productos incluidos",
+      "pending": "Catálogo completo/algoritmo de escalada combinada, HTA resistente/secundaria, validación clínica y dispositivos físicos"
     },
     {
       "id": "dislipemia",
       "status": "partial",
-      "evidence": "src/clinical/dislipemia.mjs: objetivos LDL absoluto/relativo, procedencia del riesgo, revisión de escalada y seguimiento confirmado; referencias CIMA y seguridad CrCl",
-      "pending": "Selección y titulación individual por producto, interacciones exhaustivas, HF/diabetes y TG específicos; revisión clínica y QA móvil"
+      "evidence": "src/clinical/dislipemia.mjs: objetivos LDL absoluto/relativo, procedencia del riesgo, revisión de escalada y seguimiento confirmado; referencias CIMA y seguridad CrCl; tratamientos-modulo.mjs: pautas visibles y propuesta numérica condicionada para productos incluidos",
+      "pending": "Catálogo completo e interacciones exhaustivas, tratamientos especializados y TG específicos; validación independiente/física"
     },
     {
       "id": "obesidad",
       "status": "partial",
-      "evidence": "src/clinical/obesidad.mjs: recorrido rápido/detallado, antropometría, objetivos, hábitos, riesgo muscular, revisión CIMA, seguimiento confirmado y valoración bariátrica",
+      "evidence": "src/clinical/obesidad.mjs: recorrido rápido/detallado, antropometría, objetivos, hábitos, riesgo muscular, revisión CIMA, seguimiento confirmado y valoración bariátrica; tratamientos-modulo.mjs: pautas visibles y propuesta numérica condicionada para productos incluidos",
       "pending": "Validación clínica y QA real; titulación individual y catálogo completo de fármacos, estadificación EOSS y escenarios específicos"
     },
     {
       "id": "dm2",
       "status": "partial",
-      "evidence": "dm2-rapida.mjs, dm2-detallada.mjs, insulinizacion.mjs, insulina-dosis.mjs: cálculo por presentación de inicio/ajuste basal/primer bolo/reducción",
+      "evidence": "dm2-rapida.mjs, dm2-detallada.mjs, insulinizacion.mjs, insulina-dosis.mjs: cálculo por presentación de inicio/ajuste basal/primer bolo/reducción; tratamientos-modulo.mjs: pautas visibles y propuesta numérica condicionada para productos incluidos",
       "pending": "Titulación prandial posterior, simplificación compleja y situaciones especiales; otras presentaciones y validación independiente"
     },
     {
       "id": "erc",
       "status": "partial",
-      "evidence": "engine.mjs, renal.mjs y monitorización IECA/ARA-II",
+      "evidence": "engine.mjs, renal.mjs y monitorización IECA/ARA-II; tratamientos-modulo.mjs: pautas visibles y propuesta numérica condicionada para productos incluidos; calculadoras.mjs: CKD-EPI 2021 y Cockcroft–Gault separados",
       "pending": "KFRE, historial de actuaciones RAAS y ruta farmacológica completa"
     },
     {
       "id": "ic",
       "status": "partial",
-      "evidence": "insuficiencia-cardiaca.mjs; historial de FEVI previa exigido antes de IC-FEp, contrastado con ESC2026 sección5.2.2",
+      "evidence": "insuficiencia-cardiaca.mjs; historial de FEVI previa exigido antes de IC-FEp, contrastado con ESC2026 sección5.2.2; tratamientos-modulo.mjs: pautas visibles y propuesta numérica condicionada para productos incluidos",
       "pending": "Revalidación clínica/fuentes, titulación por producto y QA real"
     },
     {

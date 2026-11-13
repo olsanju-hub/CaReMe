@@ -579,3 +579,5 @@ h2 { letter-spacing:-.025em }
 }
 
 .dose-proposal { padding:18px; border:1px solid var(--teal); border-radius:14px; background:#edf8f7; }.dose-number{font-size:2rem;font-weight:800;color:var(--teal-dark);margin:10px 0}.dose-scope{margin:16px 0}
+
+.module-medication{margin:24px 0}.medication-list{display:grid;gap:14px}.medication-option{min-width:0;padding:18px;background:#fff;border:1px solid var(--line);border-radius:16px}.medication-option h3{margin-bottom:8px}.reference-dose{color:var(--ink)}.medication-hold{color:#8a342e}.consultation-buttons,.calculator-menu{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0}.consultation-buttons>*{max-width:100%;white-space:normal}.dm2-result .dose-number{font-size:1.65rem;font-weight:800;overflow-wrap:anywhere}.module-medication details{margin:12px 0}

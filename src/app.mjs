@@ -1,12 +1,14 @@
+import {THERAPEUTIC_OPTIONS,MODULE_TREATMENTS,treatmentFields,reviewModuleTreatment,evaluateTreatmentDose} from './clinical/tratamientos-modulo.mjs';
+import {CALCULATOR_FIELDS,CALCULATOR_TITLES,calculateClinical,additionalLdlReduction} from './clinical/calculadoras.mjs';
 import {insulinDoseFields,evaluateInsulinDose,BASAL_PRODUCTS} from './clinical/insulina-dosis.mjs';
 import {BRIEF_FIELDS,evaluateClinicalBrief} from './clinical/consulta-breve.mjs';
 import {evaluateObesity} from './clinical/obesidad.mjs';
 import {evaluateMasld} from './clinical/masld.mjs';
-import {LIPID_FIELDS,evaluateDyslipidemia} from './clinical/dislipemia.mjs';
+import {LIPID_FIELDS,evaluateDyslipidemia,lipidGoalForCategory} from './clinical/dislipemia.mjs';
 import {HTA_FIELDS,evaluateHypertension} from './clinical/hta.mjs';
 import {CKM_FIELDS,evaluateCkm} from './clinical/ckm.mjs';
 import {CV_FIELDS,OP_FIELDS,evaluateCvRisk} from './clinical/riesgo-cv.mjs';
-import { SECTIONS, FIELDS, createDraft, setValue, setUnavailable, fieldState, sectionStats, totalStats, sectionForFocus } from './model.mjs';
+import { SECTIONS, FIELDS, createDraft, setValue, setUnavailable, fieldState, sectionStats, totalStats, sectionForFocus, setCalculatedMeasurement } from './model.mjs';
 import { MODULES, MODULE_BY_ID, moduleFields, readMulti } from './consultas.mjs';
 import { SOURCES, evaluateRenal } from './clinical/engine.mjs';
 import { integratePatient, INTEGRATION_SOURCES } from './clinical/integracion.mjs';
@@ -109,9 +111,39 @@ function lipidResult(){
  <details><summary>Guías y fuentes</summary>${r.sources.map(x=>`<p><a href="${escape(x.url)}" target="_blank" rel="noopener noreferrer">${escape(x.title)}</a> · ${escape(x.locator)}</p>`).join('')}</details>
  </section>`;
 }
+function moduleCalculationLinks(id){
+ const map={obesidad:['imc'],hepatico:['fib4'],erc:['tfge'],dm2:['tfge'],ic:['tfge']};
+ return (map[id]||[]).map(kind=>`<button type="button" class="ghost" data-action="clinical-calculator" data-kind="${kind}" data-module="${id}">Calcular ${escape(CALCULATOR_TITLES[kind])} →</button>`).join('');
+}
+function medicationPanel(id){
+ let keys=MODULE_TREATMENTS[id]||[];
+ if(id==='ic'){
+  if(draft.values.ic_fevigrupo?.startsWith('Preservada')||Number(draft.values.fevi)>=50)keys=keys.filter(x=>!['arni','bisoprolol','espironolactona'].includes(x));
+  if(draft.values.congestion==='Ausentes')keys=keys.filter(x=>x!=='furosemida');
+ }
+ if(!keys.length){
+  if(id==='insulina')return '<section class="module-medication"><h2>Insulina y dosis</h2><p>La calculadora de esta consulta concreta producto, unidades y seguimiento para la decisión seleccionada.</p></section>';
+  return `<section class="module-medication"><h2>Tratamiento según el problema clínico</h2><p>${id==='hepatico'?'Un FIB-4 no indica por sí solo un fármaco para MASH. Tratar las comorbilidades por sus propias indicaciones.':'El estadio o porcentaje de riesgo orienta prioridades; no tiene una medicación única.'}</p><div class="consultation-buttons">${[['dm2','Diabetes'],['obesidad','Obesidad']].map(([key,title])=>`<button type="button" class="ghost" data-action="start-module" data-module="${key}">${title}: medicamentos y pauta →</button>`).join('')}<button type="button" class="ghost" data-action="lipids">Lípidos: medicamentos y pauta →</button><button type="button" class="ghost" data-action="hta">HTA: medicamentos y pauta →</button></div></section>`;
+ }
+ return `<section class="module-medication"><h2>Medicamentos y pautas en esta consulta</h2><p>Alternativas por indicación. Selecciona una para concretar inicio o el siguiente escalón; no se suman todas.</p><div class="medication-list">${keys.map(key=>{const p=THERAPEUTIC_OPTIONS[key],blocked=reviewModuleTreatment(draft,key);return `<article class="medication-option"><h3>${escape(p.name)}</h3><p>${escape(p.indication)}</p>${blocked.length?`<p class="medication-hold">${blocked.map(escape).join(' ')}</p>`:`<p class="reference-dose"><strong>Pauta de referencia:</strong> ${escape(p.reference[0])}</p>`}<details><summary>Escalado, ajustes y comprobaciones</summary>${p.reference.slice(1).map(x=>`<p>${escape(x)}</p>`).join('')}<ul>${[...p.checks,...p.monitoring].map(x=>`<li>${escape(x)}</li>`).join('')}</ul></details><div class="consultation-buttons">${!blocked.length?`<button type="button" class="primary" data-action="module-dose" data-key="${key}" data-module="${id}">Concretar pauta →</button>`:''}${p.drug?`<button type="button" class="text-link" data-action="open-drug" data-drug-id="${p.drug}" data-route-id="${p.route}">Ficha completa →</button>`:''}<a href="${escape(p.source)}" target="_blank" rel="noopener noreferrer">CIMA</a></div></article>`}).join('')}</div></section>`;
+}
+function moduleDoseView(){
+ const key=draft.values.tx_clave,p=THERAPEUTIC_OPTIONS[key];if(!p)return tools();
+ const r=current.moduleDoseVisible?evaluateTreatmentDose(draft,key):null,list=xs=>xs.length?`<ul>${xs.map(x=>`<li>${escape(x)}</li>`).join('')}</ul>`:'';
+ return `<div class="page"><div class="bread"><button type="button" data-action="home">Inicio</button><button type="button" data-action="return-dose-module">Volver a la consulta</button></div><h1>${escape(p.name)}</h1><p>${escape(p.indication)}</p><section class="form-card"><div class="field-grid">${treatmentFields(draft,key).filter(id=>id!=='tx_revision').map(id=>fieldMarkup(FIELDS[id])).join('')}</div>
+ <details><summary>Revisar antes de confirmar la pauta</summary>${list([...p.checks,...p.monitoring])}<p>Comprobar indicación, alergias, medicación realmente utilizada y ausencia de duplicidades. El inicio requiere confirmar que no se administra ya ese producto o una clase equivalente; una escalada requiere el mismo producto, sin interrupciones.</p></details>${p.needs.includes('lip_aclaramiento')?'<button type="button" class="ghost" data-action="clinical-calculator" data-kind="crcl" data-return="dose">Calcular aclaramiento para esta pauta →</button>':''}${fieldMarkup(FIELDS.tx_revision)}<button type="button" class="primary" data-action="module-dose-result">Calcular pauta →</button></section>
+ ${r?`<section id="module-dose-result" class="dm2-result" tabindex="-1" aria-live="polite"><h2>${r.proposal?'Propuesta según los datos':'Antes de pautar'}</h2>${list(r.blocks)}${r.missing.length?'<h3>Información necesaria</h3>'+list(r.missing):''}${r.proposal?`<article class="dose-proposal"><h3>${escape(r.proposal.name)}</h3><p class="dose-number">${escape(r.proposal.amount)} ${escape(r.proposal.unit)} · ${escape(r.proposal.frequency)}</p><p>Vía ${escape(r.proposal.via)}.</p><p>${escape(r.proposal.detail)}</p></article><h3>Seguimiento</h3>${list(r.proposal.monitoring)}`:''}<a href="${escape(r.source)}" target="_blank" rel="noopener noreferrer">Ficha técnica de la presentación</a></section>`:''}</div>`;
+}
+function clinicalCalculatorView(){
+ const kind=current.calculatorKind||'imc',r=current.calculatorVisible?calculateClinical(draft,kind):null;
+ const list=xs=>xs.length?`<ul>${xs.map(x=>`<li>${escape(x)}</li>`).join('')}</ul>`:'';
+ return `<div class="page"><div class="bread"><button type="button" data-action="tools">Herramientas</button></div><h1>${escape(CALCULATOR_TITLES[kind])}</h1><section class="form-card"><div class="field-grid">${CALCULATOR_FIELDS[kind].map(id=>fieldMarkup(FIELDS[id])).join('')}</div><button type="button" class="primary" data-action="clinical-calculate">Calcular →</button></section>
+ ${r?`<section id="clinical-calc-result" class="dm2-result" tabindex="-1" aria-live="polite"><h2>Resultado</h2>${r.missing.length?list(r.missing.map(x=>FIELDS[x].label)):''}${list(r.blocks)}${r.value!==null?`<p class="dose-number">${escape(r.value.toFixed(2))} ${escape(r.unit)}</p><p>Fórmula: ${escape(r.formula)}</p><p>${escape(r.interpretation)}</p>${r.transferField?`<button type="button" class="primary" data-action="use-calculation">Usar este valor de ${escape(r.transferField==='tfge'?'TFGe':r.transferField==='imc'?'IMC':'aclaramiento')} en la consulta →</button><p>Se conserva la precisión completa. ${['tfge','crcl'].includes(kind)?'La fecha de la medición debe documentarse por separado; no se reutiliza una fecha de laboratorio anterior.':''}</p>`:''}<a href="${escape(r.source)}" target="_blank" rel="noopener noreferrer">Fuente de la fórmula</a>`:''}</section>`:''}
+ <section class="consultation-actions"><h2>Volver al problema clínico</h2><button type="button" class="ghost" data-action="start-module" data-module="${kind==='imc'?'obesidad':kind==='fib4'?'hepatico':'erc'}">Ver valoración y tratamiento →</button></section></div>`;
+}
 function briefStandaloneView(id,title){
  const fields=BRIEF_FIELDS[id],visible=(id==='hta'?current.htaVisible:current.lipidVisible)||fields.every(x=>fieldState(draft,x)==='registrado')||evaluateClinicalBrief(draft,id).safety.length;
- return `<div class="page"><div class="bread"><button type="button" data-action="home">Inicio</button><span>${title}</span></div><h1>${title}</h1><section class="form-card"><div class="field-grid">${fields.map(x=>moduleFieldMarkup(FIELDS[x])).join('')}</div><button type="button" class="primary" data-action="${BRIEF_ACTIONS[id]}">${BRIEF_BUTTONS[id]} →</button></section>${visible?briefResult(id):''}<button type="button" class="text-link" data-action="brief-advanced" data-target="${id}">Revisión detallada · opcional →</button></div>`;
+ return `<div class="page"><div class="bread"><button type="button" data-action="home">Inicio</button><span>${title}</span></div><h1>${title}</h1><section class="form-card"><div class="field-grid">${fields.map(x=>moduleFieldMarkup(FIELDS[x])).join('')}</div><button type="button" class="primary" data-action="${BRIEF_ACTIONS[id]}">${BRIEF_BUTTONS[id]} →</button></section>${visible?briefResult(id):''}${medicationPanel(id)}<button type="button" class="text-link" data-action="brief-advanced" data-target="${id}">Revisión detallada · opcional →</button></div>`;
 }
 function lipidView(){
  if(!current.lipidDetail)return briefStandaloneView('lipids','Dislipemia');
@@ -121,7 +153,7 @@ function lipidView(){
  <details><summary>Riesgo, basal y modificadores</summary><button type="button" class="text-link" data-action="cv-risk">Abrir evaluación del riesgo cardiovascular →</button><div class="field-grid">${LIPID_FIELDS.slice(10,24).filter(id=>!basic.includes(id)).map(id=>moduleFieldMarkup(FIELDS[id])).join('')}</div></details>
  <details><summary>Tratamiento, seguridad y seguimiento</summary><div class="field-grid">${LIPID_FIELDS.filter(id=>!basic.includes(id)&&!LIPID_FIELDS.slice(10,24).includes(id)).map(id=>moduleFieldMarkup(FIELDS[id])).join('')}</div></details>
  <button type="button" class="primary" data-action="lipid-result">Ver orientación de dislipemia →</button></section>
- ${current.lipidVisible?lipidResult():''}</div>`;
+ ${current.lipidVisible?lipidResult():''}${medicationPanel('lipids')}</div>`;
 }
 function lipidSummaryCard(){
  const r=evaluateDyslipidemia(draft);
@@ -157,7 +189,7 @@ function htaView(){
  <section class="form-card"><h2>Datos iniciales</h2><div class="field-grid">${basic.map(id=>moduleFieldMarkup(FIELDS[id])).join('')}</div>
  <details><summary>AMPA/MAPA, seguridad y revisión de tratamiento</summary><div class="field-grid">${HTA_FIELDS.filter(id=>!basic.includes(id)).map(id=>moduleFieldMarkup(FIELDS[id])).join('')}</div></details>
  <button type="button" class="primary" data-action="hta-result">Ver orientación de PA e HTA →</button></section>
- ${current.htaVisible?htaResult():''}</div>`;
+ ${current.htaVisible?htaResult():''}${medicationPanel('hta')}</div>`;
 }
 function htaSummaryCard(){
  const r=evaluateHypertension(draft);
@@ -220,7 +252,7 @@ function ckmView(){
   </section>
   <details><summary>Elegir qué dato revisar</summary><div class="ckm-block-links">${blocks.map(x=>`<button type="button" class="text-link" data-action="ckm-block" data-block="${x.id}" ${x.id===block.id?'aria-current="step"':''}>${escape(x.title)}</button>`).join('')}</div></details>
   ${r.stage!==null?'<p>La clasificación ya está disponible. Revisa otros apartados solo si necesitas corregir datos o precisar el resultado.</p>':''}
-  <p class="privacy-note">No se solicitan pruebas nuevas solo para completar la clasificación.</p></div>`;
+  <p class="privacy-note">No se solicitan pruebas nuevas solo para completar la clasificación.</p>${medicationPanel('ckm')}</div>`;
 }
 function ckmSummaryCard(){
  const r=evaluateCkm(draft);
@@ -248,7 +280,7 @@ function cvRiskView(){
   ${r.missing.length?`<h3>Para precisar</h3>${list(r.missing.slice(0,2))}${r.missing.length>2?`<details><summary>Datos adicionales del cálculo</summary>${list(r.missing.slice(2))}</details>`:''}`:''}
   ${list(r.steps)}<details><summary>Fuentes y límites</summary>${r.sources.map(x=>`<p><a href="${escape(x.url)}" target="_blank" rel="noopener noreferrer">${escape(x.title)}</a> · ${escape(x.locator)}</p>`).join('')}</details>
   </section>`:''}
- </div>`;
+ ${medicationPanel('cv-risk')}</div>`;
 }
 function moduleFieldMarkup(f) {
   const unavailable = draft.unavailable.includes(f.id);
@@ -296,7 +328,7 @@ function renalResultCard() {
     </div>
     <p>${escape(x.message)}</p>
     ${note}
-    <p class="calc-limits">No determina por sí solo ERC ni la causa. La confirmación exige evaluar duración ≥3 meses y/o otros marcadores; no se calcula TFGe a partir de creatinina.</p>
+    <p class="calc-limits">No determina por sí solo ERC ni la causa. La confirmación exige evaluar duración ≥3 meses y/o otros marcadores; la TFGe desde creatinina se obtiene en la calculadora CKD-EPI 2021.</p>
     <a href="${SOURCES.kdigo2024.url}" target="_blank" rel="noopener noreferrer">Fuente: KDIGO 2024, tablas 1–3 ↗</a>
   </section>`;
 }
@@ -656,9 +688,9 @@ const BRIEF_RESULT_IDS={dm2:'dm2-rapid-result',ic:'ic-result',erc:'renal-result'
 const BRIEF_ACTIONS={dm2:'dm2-result',ic:'ic-result',erc:'renal-result',obesidad:'obesity-result',hepatico:'masld-result',insulina:'insulin-result',hta:'hta-result',lipids:'lipid-result'};
 const BRIEF_BUTTONS={dm2:'Ver orientación clínica rápida',ic:'Ver orientación de insuficiencia cardíaca',erc:'Ver orientación renal',obesidad:'Ver plan de obesidad y seguimiento',hepatico:'Ver evaluación de fibrosis y derivación',insulina:'Ver orientación de insulinización',hta:'Ver orientación de PA e HTA',lipids:'Ver orientación de dislipemia'};
 function briefResult(id){
- const r=evaluateClinicalBrief(draft,id),list=xs=>xs.length?`<ul>${xs.map(x=>`<li>${escape(x)}</li>`).join('')}</ul>`:'';
+ const r=evaluateClinicalBrief(draft,id),goal=id==='lipids'?lipidGoalForCategory(draft.values.lip_riesgo):null,reduction=goal&&fieldState(draft,'ldl')==='registrado'?additionalLdlReduction(Number(draft.values.ldl),goal.ldlLessThan):null,list=xs=>xs.length?`<ul>${xs.map(x=>`<li>${escape(x)}</li>`).join('')}</ul>`:'';
  return `<section id="${BRIEF_RESULT_IDS[id]}" class="dm2-result brief-result" aria-live="polite"><h2>${escape(r.title)}</h2>
- ${r.safety.length?`<div class="dm2-safety"><h3>Prioridad clínica</h3>${list(r.safety)}</div>`:''}<p class="brief-conduct">${escape(r.situation)}</p>
+ ${r.safety.length?`<div class="dm2-safety"><h3>Prioridad clínica</h3>${list(r.safety)}</div>`:''}<p class="brief-conduct">${escape(r.situation)}</p>${reduction!==null&&!r.safety.length&&Number(draft.values.ldl)>=goal.ldlLessThan?`<p>Para quedar por debajo del objetivo absoluto aportado, reducción adicional necesaria: <strong>más del ${escape(reduction.toFixed(1))} %</strong> respecto al LDL actual. Comprobar además la reducción desde el basal cuando corresponda.</p>`:''}
  ${r.treatment.length?'<h3>Tratamiento a considerar</h3>'+r.treatment.map(x=>`<article><h4>${escape(x.title)}</h4><p>${escape(x.detail)}</p></article>`).join(''):''}
  ${r.steps.length?`<h3>Siguiente paso</h3>${list(r.steps)}`:''}
  ${r.missing.length?`<p>Para precisar esta rama: ${r.missing.map(escape).join(' · ')}.</p>`:''}
@@ -687,9 +719,11 @@ function briefModuleView(m){
  const show=complete||forced||r.safety.length;
  return `<div class="page module-page"><div class="bread"><button type="button" data-action="home">Inicio</button><span>${escape(m.title)}</span></div><h1>${escape(m.title)}</h1>
  ${m.id==='insulina'?'<section class="consultation-actions"><h2>Calcular la pauta</h2><p>Inicio, ajuste basal, primer bolo o reducción de dosis.</p><button type="button" class="primary" data-action="insulin-dose">Abrir calculadora de insulina →</button></section>':''}
+ <div class="consultation-buttons">${moduleCalculationLinks(m.id)}</div>
  <div class="module-tabs" role="group" aria-label="Nivel de revisión"><button type="button" class="active" data-action="module-mode" data-mode="quick" aria-pressed="true">Consulta rápida</button><button type="button" data-action="module-mode" data-mode="detail" aria-pressed="false">Revisión detallada · opcional</button><button type="button" data-action="module-mode" data-mode="review" aria-pressed="false">Resumen</button></div>
  <section class="form-card"><div class="field-grid">${fields.map(id=>moduleFieldMarkup(FIELDS[id])).join('')}</div><button type="button" class="primary" data-action="${BRIEF_ACTIONS[m.id]}">${BRIEF_BUTTONS[m.id]} →</button></section>
  ${show?briefResult(m.id):'<p class="quick-empty">Selecciona los criterios para ver la orientación.</p>'}
+ ${medicationPanel(m.id)}
  ${['dm2','ic','erc','obesidad'].includes(m.id)?`<details class="brief-drugs"><summary>Dosis y ajustes por medicamento</summary>${treatmentReferences(m.id)}</details>`:''}
  <button type="button" class="text-link" data-action="module-mode" data-mode="detail">Concretar tratamiento o seguimiento →</button></div>`;
 }
@@ -980,7 +1014,7 @@ function drugView() {
 function tools() {
   return `<div class="page interior">
     <div class="eyebrow">MOTOR CLÍNICO · FASE DE CÁLCULO</div><h1>Herramientas de evaluación</h1>
-    <p>Estas clasificaciones utilizan los datos ya introducidos en la consulta. No generan diagnósticos ni recomendaciones terapéuticas.</p>
+    <p>Calcula con los datos necesarios y abre la valoración o pauta del problema clínico.</p><div class="calculator-menu">${Object.entries(CALCULATOR_TITLES).map(([kind,title])=>`<button type="button" class="ghost" data-action="clinical-calculator" data-kind="${kind}">Calcular ${escape(title)} →</button>`).join('')}<button type="button" class="ghost" data-action="insulin-dose">Calcular pauta de insulina →</button></div>
     ${banner()}
     <p class="privacy-note">La fecha y unidad real de cada analítica deben verificarse antes de utilizarla para decidir. Una fecha no consignada no significa que el resultado sea actual.</p>
     ${obesitySummaryCard()}
@@ -1043,7 +1077,7 @@ function sources() {
   <section class="sources-card"><h2>Privacidad en esta versión</h2><p>Los valores permanecen exclusivamente en memoria durante la sesión abierta: no se usan cookies, almacenamiento local ni servicios remotos. Al recargar se pierden los datos.</p></section></div>`;
 }
 function render() {
-  const contents = current.page === 'insulin-dose' ? insulinDoseView() : current.page === 'home' ? home() : current.page === 'lipids' ? lipidView() : current.page === 'hta' ? htaView() : current.page === 'ckm' ? ckmView() : current.page === 'cv-risk' ? cvRiskView() : current.page === 'module' ? moduleView() : current.page === 'evaluation' ? evaluation()
+  const contents = current.page === 'module-dose' ? moduleDoseView() : current.page === 'clinical-calculator' ? clinicalCalculatorView() : current.page === 'insulin-dose' ? insulinDoseView() : current.page === 'home' ? home() : current.page === 'lipids' ? lipidView() : current.page === 'hta' ? htaView() : current.page === 'ckm' ? ckmView() : current.page === 'cv-risk' ? cvRiskView() : current.page === 'module' ? moduleView() : current.page === 'evaluation' ? evaluation()
     : current.page === 'summary' ? summary() : current.page === 'tools' ? tools() : current.page === 'drug' ? drugView() : current.page === 'followup' ? followupPage() : sources();
   app.innerHTML = '<a class="skip-link" href="#main-content">Saltar al contenido</a>' + header() + '<main id="main-content" tabindex="-1">' + contents + '</main>' + nav() +
     '<footer class="footer">CaHReMe · Salud cardiorrenal-hepatometabólica</footer>';
@@ -1057,7 +1091,7 @@ function start(focus) {
 }
 app.addEventListener('input', event => {
   const el = event.target.closest('[data-field]');
-  if (!el || !['evaluation','module','drug','cv-risk','ckm','hta','lipids','insulin-dose'].includes(current.page)) return;
+  if (!el || !['evaluation','module','drug','cv-risk','ckm','hta','lipids','insulin-dose','module-dose','clinical-calculator'].includes(current.page)) return;
   const id=el.dataset.field;
   if (el.type === 'checkbox') {
     const checked=[...document.querySelectorAll('input[data-field="'+id+'"]:checked')].map(e=>e.value);
@@ -1074,6 +1108,7 @@ app.addEventListener('input', event => {
       return;
     }
   } else draft=setValue(draft,id,el.value);
+  if(current.page==='module-dose'||current.page==='clinical-calculator'){current.moduleDoseVisible=false;current.calculatorVisible=false;document.getElementById('module-dose-result')?.remove();document.getElementById('clinical-calc-result')?.remove();if(FIELDS[id]?.type==='select')return render();return;}
   if(current.page==='insulin-dose'){current.insulinDoseVisible=false;document.getElementById('insulin-dose-result')?.remove();if(FIELDS[id]?.type==='select')return render();return;}
   if(current.obesityVisible){current.obesityVisible=false;document.getElementById('obesity-result')?.remove();}
   if(current.masldVisible){current.masldVisible=false;document.getElementById('masld-result')?.remove();}
@@ -1118,6 +1153,12 @@ app.addEventListener('click', event => {
   const btn = event.target.closest('button[data-action]');
   if (!btn) return;
   const action = btn.dataset.action;
+  if(action==='clinical-calculator'){if(!CALCULATOR_FIELDS[btn.dataset.kind])return;current.calculatorKind=btn.dataset.kind;current.calculatorReturnDose=btn.dataset.return==='dose';current.calculatorVisible=false;return navigate('clinical-calculator');}
+  if(action==='clinical-calculate'){if(current.page!=='clinical-calculator')return;current.calculatorVisible=true;render();const result=document.getElementById('clinical-calc-result');result?.scrollIntoView?.({block:'start'});result?.focus?.({preventScroll:true});return;}
+  if(action==='use-calculation'){if(current.page!=='clinical-calculator')return;const kind=current.calculatorKind,r=calculateClinical(draft,kind);if(r.value===null||!r.transferField)return;draft=setCalculatedMeasurement(draft,r.transferField,r.value,[...CALCULATOR_FIELDS[kind],...(['tfge','crcl'].includes(kind)?['embarazo','lra_sospecha']:[])]);if(current.calculatorReturnDose){current.moduleDoseVisible=false;return navigate('module-dose');}if(kind==='crcl')return navigate('lipids');current.module=kind==='imc'?'obesidad':'erc';current.mode='quick';return navigate('module');}
+  if(action==='module-dose'){if(!THERAPEUTIC_OPTIONS[btn.dataset.key])return;if(draft.values.tx_clave!==btn.dataset.key){for(const id of ['tx_operacion','tx_dosis_actual','tx_semanas','tx_tolerancia','tx_estatina_dosis'])draft=setValue(draft,id,'');}draft=setValue(draft,'tx_clave',btn.dataset.key);current.doseOrigin=btn.dataset.module;current.moduleDoseVisible=false;return navigate('module-dose');}
+  if(action==='module-dose-result'){if(current.page!=='module-dose')return;current.moduleDoseVisible=true;render();const result=document.getElementById('module-dose-result');result?.scrollIntoView?.({block:'start'});result?.focus?.({preventScroll:true});return;}
+  if(action==='return-dose-module'){const origin=current.doseOrigin;if(['hta','lipids'].includes(origin))return navigate(origin);if(MODULE_BY_ID[origin]){current.module=origin;current.mode='quick';return navigate('module');}return navigate('tools');}
   if(action==='insulin-dose'){current.insulinDoseVisible=false;return navigate('insulin-dose');}
   if(action==='insulin-dose-result'){if(current.page!=='insulin-dose')return;current.insulinDoseVisible=true;render();const result=document.getElementById('insulin-dose-result');result?.scrollIntoView?.({block:'start'});result?.focus?.({preventScroll:true});return;}
   if(action==='lipids'){current.lipidDetail=false;current.lipidVisible=false;return navigate('lipids');}

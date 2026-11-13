@@ -4,6 +4,10 @@
 
 **Repositorio:** `olsanju-hub/CaReMe` · **Nombre de la aplicación:** CaHReMe
 
+## Cálculos y pautas dentro de cada consulta · 13/11/2026
+
+IMC, FIB-4, CKD-EPI 2021 y Cockcroft–Gault con entrada directa y fórmula. Pautas visibles por módulo, 23 combinaciones producto/indicación y cálculo condicionado de inicio/escalado, con confirmación invalidable y sin registrar administración. [Contrato y auditoría](docs/CALCULOS_Y_PAUTAS_POR_CONSULTA_2026-11-13.md). Catálogo parcial; revisión clínica independiente pendiente.
+
 ## Consulta rápida por problema clínico · estado vigente
 
 La portada abre consultas breves; la evaluación integral es opcional. Las seis consultas de referencia tienen dos a cuatro criterios iniciales y salida de conducta/tratamiento por rama. HTA y dislipemia disponen de entrada breve; riesgo cardiovascular comprueba el circuito antes del cálculo. Las verificaciones por producto siguen en el detalle. [Contrato y auditoría](docs/CONSULTA_RAPIDA_2026-11-13.md).

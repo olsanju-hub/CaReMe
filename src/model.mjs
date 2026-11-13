@@ -122,12 +122,33 @@ const fib4Snapshot=draft=>JSON.stringify(fib4AssociationFields.map(id=>[id,draft
 export function externalFib4AssociationValid(draft){
  return draft.values.masld_fib4_confirmado==='Sí'&&typeof draft.fib4Association==='string'&&draft.fib4Association===fib4Snapshot(draft);
 }
+const therapeuticSnapshot=draft=>JSON.stringify({values:Object.fromEntries(Object.entries(draft.values).filter(([id])=>id!=='tx_revision').sort(([a],[b])=>a.localeCompare(b))),unavailable:[...draft.unavailable].sort()});
+export function therapeuticAssociationValid(draft){return draft.values.tx_revision==='Indicación, contraindicaciones e interacciones revisadas'&&draft.therapeuticAssociation===therapeuticSnapshot(draft);}
+function invalidateDerived(next,id,changed){
+ if(!changed||!next.derivedMeasurements)return;
+ const derived={...next.derivedMeasurements};
+ for(const [target,source] of Object.entries(derived)){
+  if(target===id){delete derived[target];continue;}
+  if(source.keys.includes(id)){delete next.values[target];if(target==='tfge')delete next.values.fecha_tfge;if(target==='lip_aclaramiento')delete next.values.lip_fecha_aclaramiento;delete derived[target];}
+ }
+ next.derivedMeasurements=derived;
+}
+export function setCalculatedMeasurement(draft,target,result,keys){
+ if(!['tfge','imc','lip_aclaramiento'].includes(target)||!Number.isFinite(result)||result<=0)throw new Error('Medición calculada inválida');
+ let next=setValue(draft,target,String(result));
+ if(target==='tfge')next=setValue(next,'fecha_tfge','');
+ if(target==='lip_aclaramiento')next=setValue(next,'lip_fecha_aclaramiento','');
+ if(next.values.tx_revision==='Indicación, contraindicaciones e interacciones revisadas')next=setValue(next,'tx_revision','Pendiente');
+ if(next.values.ins_calc_revision==='Indicación, seguridad y educación revisadas')next=setValue(next,'ins_calc_revision','Pendientes');
+ return {...next,derivedMeasurements:{...next.derivedMeasurements,[target]:{keys:[...keys],origin:'Cálculo local confirmado'}}};
+}
 const insulinDoseSnapshot=draft=>JSON.stringify({values:Object.fromEntries(Object.entries(draft.values).filter(([id])=>id!=='ins_calc_revision').sort(([a],[b])=>a.localeCompare(b))),unavailable:[...draft.unavailable].sort()});
 export function insulinDoseAssociationValid(draft){return draft.values.ins_calc_revision==='Indicación, seguridad y educación revisadas'&&draft.insulinDoseAssociation===insulinDoseSnapshot(draft);}
 export function setValue(draft,id,value){
  if(!FIELDS[id])throw new Error('Campo inexistente');
  const changed=draft.values[id]!==String(value)||draft.unavailable.includes(id);
  const next={...draft,values:{...draft.values,[id]:String(value)},unavailable:draft.unavailable.filter(x=>x!==id)};
+ invalidateDerived(next,id,changed);
  if(id==='masld_fib4_confirmado'){
   if(String(value)==='Sí')next.fib4Association=fib4Snapshot(next);else delete next.fib4Association;
  }else if(changed&&fib4AssociationFields.includes(id)&&draft.values.masld_fib4_confirmado==='Sí'){
@@ -142,6 +163,10 @@ export function setValue(draft,id,value){
  if(id==='ins_calc_revision'){
   if(String(value)==='Indicación, seguridad y educación revisadas')next.insulinDoseAssociation=insulinDoseSnapshot(next);else delete next.insulinDoseAssociation;
  }else if(changed&&draft.values.ins_calc_revision==='Indicación, seguridad y educación revisadas'){next.values.ins_calc_revision='Pendientes';delete next.insulinDoseAssociation;}
+ if(id==='tx_revision'){
+  if(String(value)==='Indicación, contraindicaciones e interacciones revisadas')next.therapeuticAssociation=therapeuticSnapshot(next);else delete next.therapeuticAssociation;
+ }else if(changed&&draft.values.tx_revision==='Indicación, contraindicaciones e interacciones revisadas'){next.values.tx_revision='Pendiente';delete next.therapeuticAssociation;}
+ if(id==='ins_calc_revision'&&String(value)==='Indicación, seguridad y educación revisadas')next.insulinDoseAssociation=insulinDoseSnapshot(next);
  return next;
 }
 export function setUnavailable(draft,id,yes){
@@ -150,6 +175,8 @@ export function setUnavailable(draft,id,yes){
  if(yes)unavailable.add(id);else unavailable.delete(id);
  const values={...draft.values};if(yes)delete values[id];
  const next={...draft,values,unavailable:[...unavailable]};
+ invalidateDerived(next,id,draft.unavailable.includes(id)!==yes);
+ if(draft.unavailable.includes(id)!==yes){if(draft.values.tx_revision==='Indicación, contraindicaciones e interacciones revisadas')next.values.tx_revision='Pendiente';delete next.therapeuticAssociation;}
  if(draft.unavailable.includes(id)!==yes){if(draft.values.ins_calc_revision==='Indicación, seguridad y educación revisadas')next.values.ins_calc_revision='Pendientes';delete next.insulinDoseAssociation;}
  if(draft.unavailable.includes(id)!==yes&&(fib4AssociationFields.includes(id)||id==='masld_fib4_confirmado')){
   if(id!=='masld_fib4_confirmado'&&draft.values.masld_fib4_confirmado==='Sí')next.values.masld_fib4_confirmado='No';

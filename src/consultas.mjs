@@ -45,6 +45,25 @@ export const MODULES = [
 ];
 export const MODULE_BY_ID = Object.fromEntries(MODULES.map(m => [m.id, m]));
 export const EXTRA_FIELDS = [
+  {id:'calc_peso_cg',label:'Peso seleccionado para Cockcroft–Gault tras revisar obesidad, edema y masa muscular',type:'number',min:0,unit:'kg'},
+  {id:'calc_peso_cg_revision',label:'Idoneidad del peso usado en Cockcroft–Gault',type:'select',options:['Peso seleccionado apropiado tras revisión clínica','Pendiente o no interpretable']},
+  {id:'calc_sexo',label:'Sexo utilizado por la ecuación renal',type:'select',options:['Hombre','Mujer']},
+  {id:'calc_creatinina',label:'Creatinina para el cálculo renal',type:'number',min:0},
+  {id:'calc_creat_unidad',label:'Unidad real de creatinina',type:'select',options:['mg/dL','µmol/L']},
+  {id:'calc_estabilidad',label:'Aplicabilidad de la estimación renal',type:'select',options:['Creatinina estable, sin embarazo ni diálisis','No confirmada o fuera de ámbito']},
+  {id:'tx_clave',label:'Producto e indicación seleccionados',type:'textarea'},
+  {id:'tx_operacion',label:'Situación real del tratamiento seleccionado',type:'select',options:['Inicio sin fármaco/clase equivalentes','Escalada del mismo producto, sin interrupciones']},
+  {id:'tx_contexto',label:'Ámbito comprobado',type:'select',options:['Adulto estable, sin embarazo ni lactancia','Otro ámbito o sin confirmar']},
+  {id:'tx_revision',label:'Revisión final para esta pauta',type:'select',options:['Indicación, contraindicaciones e interacciones revisadas','Pendiente']},
+  {id:'tx_dosis_actual',label:'Dosis actual del mismo producto (mg por toma)',type:'number',min:0,unit:'mg'},
+  {id:'tx_semanas',label:'Semanas completas con esta dosis sin interrupciones',type:'number',integer:true,min:0,unit:'semanas'},
+  {id:'tx_tolerancia',label:'Tolerancia y necesidad del siguiente escalón',type:'select',options:['Buena tolerancia y escalado indicado','Mala tolerancia, objetivo alcanzado o sin revisar']},
+  {id:'tx_raas',label:'Situación de IECA/ARA-II antes de ARNI',type:'select',options:['Sin IECA/ARA-II previo','IECA suspendido hace al menos 36 horas','ARA-II suspendido','No conciliado']},
+  {id:'tx_raas_dosis',label:'Dosis previa de IECA/ARA-II',type:'select',options:['No tratado o dosis bajas','Dosis habituales toleradas']},
+  {id:'tx_nyha',label:'Indicación de espironolactona confirmada',type:'select',options:['IC grave NYHA III-IV','Otra o sin confirmar']},
+  {id:'tx_sodio',label:'Sodio actual',type:'number',min:0,unit:'mmol/L'},
+  {id:'tx_estatina_dosis',label:'Dosis inicial de atorvastatina elegida según intensidad necesaria',type:'select',options:['10 mg','20 mg','40 mg','80 mg']},
+
   {id:'ins_calc_accion',label:'¿Qué necesitas calcular?',type:'select',options:['Iniciar basal','Ajustar basal','Añadir bolo en una comida','Reducir basal']},
   {id:'ins_calc_contexto',label:'Ámbito clínico comprobado',type:'select',options:['Adulto con DM2 estable, sin gestación','Fuera de este ámbito o sin confirmar']},
   {id:'ins_calc_revision',label:'Comprobaciones previas',type:'select',options:['Indicación, seguridad y educación revisadas','Pendientes']},
