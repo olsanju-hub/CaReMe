@@ -577,3 +577,5 @@ h2 { letter-spacing:-.025em }
   .home .task-card { min-height:88px; }
   .bottom-nav button { min-width:0; font-size:.66rem; }
 }
+
+.dose-proposal { padding:18px; border:1px solid var(--teal); border-radius:14px; background:#edf8f7; }.dose-number{font-size:2rem;font-weight:800;color:var(--teal-dark);margin:10px 0}.dose-scope{margin:16px 0}

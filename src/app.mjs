@@ -1,3 +1,4 @@
+import {insulinDoseFields,evaluateInsulinDose,BASAL_PRODUCTS} from './clinical/insulina-dosis.mjs';
 import {BRIEF_FIELDS,evaluateClinicalBrief} from './clinical/consulta-breve.mjs';
 import {evaluateObesity} from './clinical/obesidad.mjs';
 import {evaluateMasld} from './clinical/masld.mjs';
@@ -663,11 +664,29 @@ function briefResult(id){
  ${r.missing.length?`<p>Para precisar esta rama: ${r.missing.map(escape).join(' · ')}.</p>`:''}
  <details><summary>Fuentes</summary>${r.sources.map(x=>`<p><a href="${escape(x.url)}" target="_blank" rel="noopener noreferrer">${escape(x.title)}</a></p>`).join('')}</details></section>`;
 }
+function insulinDoseView(){
+ const fields=insulinDoseFields(draft),action=draft.values.ins_calc_accion;
+ const list=xs=>xs.length?`<ul>${xs.map(x=>`<li>${escape(x)}</li>`).join('')}</ul>`:'';
+ const r=current.insulinDoseVisible?evaluateInsulinDose(draft):null;
+ const result=r?`<section id="insulin-dose-result" class="dm2-result" aria-live="polite"><h2>${r.proposal?'Propuesta calculada':r.state==='mantener_y_revisar'?'Mantener y revisar':'Antes de calcular'}</h2>
+ ${list(r.blocks)}${r.missing.length?'<h3>Datos necesarios</h3>'+list(r.missing):''}
+ ${r.proposal?`<article class="dose-proposal"><h3>${escape(r.proposal.product)}</h3><p class="dose-number">${escape(r.proposal.units)} U${r.proposal.kind==='bolo'?' en la comida elegida':' al día'}</p><p>${escape(r.proposal.schedule)}</p><p>${escape(r.proposal.formula)}. ${escape(r.proposal.rounding)}</p>${r.proposal.previousUnits!==null?`<p>Dosis anterior: ${escape(r.proposal.previousUnits)} U/día.</p>`:''}
+ ${r.proposal.basalProposal?`<h3>Ajuste basal asociado</h3><p>${escape(r.proposal.basalProposal.product)}: <strong>${escape(r.proposal.basalProposal.units)} U al día</strong>.</p><p>${escape(r.proposal.basalProposal.formula)}. Redondeo hacia abajo.</p>`:''}</article>`:''}
+ ${r.steps.length?'<h3>Seguimiento y aplicación</h3>'+list(r.steps):''}<details><summary>Reglas y fichas técnicas</summary>${r.sources.map(x=>`<p><a href="${escape(x.url)}" target="_blank" rel="noopener noreferrer">${escape(x.title)}</a></p>`).join('')}</details></section>`:'';
+ return `<div class="page"><div class="bread"><button type="button" data-action="home">Inicio</button><button type="button" data-action="start-module" data-module="insulina">Insulinización</button></div><h1>Calcular pauta de insulina</h1>
+ <p>Elige la decisión. Solo aparecen los datos necesarios para esa pauta.</p><section class="form-card"><div class="field-grid">${fields.filter(id=>id!=='ins_calc_revision').map(id=>fieldMarkup(FIELDS[id])).join('')}</div>
+ ${action==='Iniciar basal'?'<p>Elige la presentación tras valorar coste y riesgo de hipoglucemia. Glargina U100: 10 U o inicio por peso. Toujeo: inicio por peso. Tresiba U100: inicio de 10 U. Las concentraciones y plumas no se intercambian automáticamente.</p>':''}
+ ${action==='Añadir bolo en una comida'?'<p>Con HbA1c <8 %, se calcula también la alternativa ADA de reducir un 10 % la basal al añadir el primer bolo.</p>':''}
+ <details class="dose-scope"><summary>Comprobar ámbito y seguridad</summary><p>Confirmar DM2 adulta estable, sin embarazo, alergia al producto ni enfermedad aguda. Revisar indicación (incluidas alternativas basadas en GLP-1), medicación y secretagogos, técnica de inyección, autocontrol y manejo de hipoglucemia. No usar este circuito para corticoides, fragilidad/paliativos, insuficiencia hepática, ERC avanzada o cambios entre productos.</p></details>
+ ${fieldMarkup(FIELDS.ins_calc_revision)}<button type="button" class="primary" data-action="insulin-dose-result">Calcular dosis →</button></section>${result}
+ <details class="consultation-actions"><summary>Simplificar o retirar una pauta compleja</summary><p>Reducir basal por hipoglucemia no equivale a retirar bolos. En fragilidad o con premezclas, se necesita la distribución real de dosis, objetivos y tratamiento de sustitución; este calculador no hace una conversión automática. La revisión de desintensificación permanece disponible en Insulinización.</p><button type="button" class="text-link" data-action="start-module" data-module="insulina">Revisar esquema completo →</button></details></div>`;
+}
 function briefModuleView(m){
  const fields=BRIEF_FIELDS[m.id],r=evaluateClinicalBrief(draft,m.id),complete=fields.every(id=>fieldState(draft,id)==='registrado');
  const forced=current.briefForced||({dm2:current.dm2ResultVisible,ic:current.icVisible,erc:current.renalVisible,obesidad:current.obesityVisible,hepatico:current.masldVisible,insulina:current.insulinVisible})[m.id];
  const show=complete||forced||r.safety.length;
  return `<div class="page module-page"><div class="bread"><button type="button" data-action="home">Inicio</button><span>${escape(m.title)}</span></div><h1>${escape(m.title)}</h1>
+ ${m.id==='insulina'?'<section class="consultation-actions"><h2>Calcular la pauta</h2><p>Inicio, ajuste basal, primer bolo o reducción de dosis.</p><button type="button" class="primary" data-action="insulin-dose">Abrir calculadora de insulina →</button></section>':''}
  <div class="module-tabs" role="group" aria-label="Nivel de revisión"><button type="button" class="active" data-action="module-mode" data-mode="quick" aria-pressed="true">Consulta rápida</button><button type="button" data-action="module-mode" data-mode="detail" aria-pressed="false">Revisión detallada · opcional</button><button type="button" data-action="module-mode" data-mode="review" aria-pressed="false">Resumen</button></div>
  <section class="form-card"><div class="field-grid">${fields.map(id=>moduleFieldMarkup(FIELDS[id])).join('')}</div><button type="button" class="primary" data-action="${BRIEF_ACTIONS[m.id]}">${BRIEF_BUTTONS[m.id]} →</button></section>
  ${show?briefResult(m.id):'<p class="quick-empty">Selecciona los criterios para ver la orientación.</p>'}
@@ -1024,7 +1043,7 @@ function sources() {
   <section class="sources-card"><h2>Privacidad en esta versión</h2><p>Los valores permanecen exclusivamente en memoria durante la sesión abierta: no se usan cookies, almacenamiento local ni servicios remotos. Al recargar se pierden los datos.</p></section></div>`;
 }
 function render() {
-  const contents = current.page === 'home' ? home() : current.page === 'lipids' ? lipidView() : current.page === 'hta' ? htaView() : current.page === 'ckm' ? ckmView() : current.page === 'cv-risk' ? cvRiskView() : current.page === 'module' ? moduleView() : current.page === 'evaluation' ? evaluation()
+  const contents = current.page === 'insulin-dose' ? insulinDoseView() : current.page === 'home' ? home() : current.page === 'lipids' ? lipidView() : current.page === 'hta' ? htaView() : current.page === 'ckm' ? ckmView() : current.page === 'cv-risk' ? cvRiskView() : current.page === 'module' ? moduleView() : current.page === 'evaluation' ? evaluation()
     : current.page === 'summary' ? summary() : current.page === 'tools' ? tools() : current.page === 'drug' ? drugView() : current.page === 'followup' ? followupPage() : sources();
   app.innerHTML = '<a class="skip-link" href="#main-content">Saltar al contenido</a>' + header() + '<main id="main-content" tabindex="-1">' + contents + '</main>' + nav() +
     '<footer class="footer">CaHReMe · Salud cardiorrenal-hepatometabólica</footer>';
@@ -1038,7 +1057,7 @@ function start(focus) {
 }
 app.addEventListener('input', event => {
   const el = event.target.closest('[data-field]');
-  if (!el || !['evaluation','module','drug','cv-risk','ckm','hta','lipids'].includes(current.page)) return;
+  if (!el || !['evaluation','module','drug','cv-risk','ckm','hta','lipids','insulin-dose'].includes(current.page)) return;
   const id=el.dataset.field;
   if (el.type === 'checkbox') {
     const checked=[...document.querySelectorAll('input[data-field="'+id+'"]:checked')].map(e=>e.value);
@@ -1055,6 +1074,7 @@ app.addEventListener('input', event => {
       return;
     }
   } else draft=setValue(draft,id,el.value);
+  if(current.page==='insulin-dose'){current.insulinDoseVisible=false;document.getElementById('insulin-dose-result')?.remove();if(FIELDS[id]?.type==='select')return render();return;}
   if(current.obesityVisible){current.obesityVisible=false;document.getElementById('obesity-result')?.remove();}
   if(current.masldVisible){current.masldVisible=false;document.getElementById('masld-result')?.remove();}
   if(current.lipidVisible){current.lipidVisible=false;document.getElementById('lipid-result')?.remove();}
@@ -1098,6 +1118,8 @@ app.addEventListener('click', event => {
   const btn = event.target.closest('button[data-action]');
   if (!btn) return;
   const action = btn.dataset.action;
+  if(action==='insulin-dose'){current.insulinDoseVisible=false;return navigate('insulin-dose');}
+  if(action==='insulin-dose-result'){if(current.page!=='insulin-dose')return;current.insulinDoseVisible=true;return render();}
   if(action==='lipids'){current.lipidDetail=false;current.lipidVisible=false;return navigate('lipids');}
   if(action==='lipid-result'){if(current.page!=='lipids')return;current.lipidVisible=true;return render();}
   if(action==='hta'){current.htaDetail=false;current.htaVisible=false;return navigate('hta');}

@@ -122,6 +122,8 @@ const fib4Snapshot=draft=>JSON.stringify(fib4AssociationFields.map(id=>[id,draft
 export function externalFib4AssociationValid(draft){
  return draft.values.masld_fib4_confirmado==='Sí'&&typeof draft.fib4Association==='string'&&draft.fib4Association===fib4Snapshot(draft);
 }
+const insulinDoseSnapshot=draft=>JSON.stringify({values:Object.fromEntries(Object.entries(draft.values).filter(([id])=>id!=='ins_calc_revision').sort(([a],[b])=>a.localeCompare(b))),unavailable:[...draft.unavailable].sort()});
+export function insulinDoseAssociationValid(draft){return draft.values.ins_calc_revision==='Indicación, seguridad y educación revisadas'&&draft.insulinDoseAssociation===insulinDoseSnapshot(draft);}
 export function setValue(draft,id,value){
  if(!FIELDS[id])throw new Error('Campo inexistente');
  const changed=draft.values[id]!==String(value)||draft.unavailable.includes(id);
@@ -137,6 +139,9 @@ export function setValue(draft,id,value){
  }else if(changed&&draft.values.cv_op_confirmado==='Sí'){
   next.values.cv_op_confirmado='No';delete next.opAssociation;
  }
+ if(id==='ins_calc_revision'){
+  if(String(value)==='Indicación, seguridad y educación revisadas')next.insulinDoseAssociation=insulinDoseSnapshot(next);else delete next.insulinDoseAssociation;
+ }else if(changed&&draft.values.ins_calc_revision==='Indicación, seguridad y educación revisadas'){next.values.ins_calc_revision='Pendientes';delete next.insulinDoseAssociation;}
  return next;
 }
 export function setUnavailable(draft,id,yes){
@@ -145,6 +150,7 @@ export function setUnavailable(draft,id,yes){
  if(yes)unavailable.add(id);else unavailable.delete(id);
  const values={...draft.values};if(yes)delete values[id];
  const next={...draft,values,unavailable:[...unavailable]};
+ if(draft.unavailable.includes(id)!==yes){if(draft.values.ins_calc_revision==='Indicación, seguridad y educación revisadas')next.values.ins_calc_revision='Pendientes';delete next.insulinDoseAssociation;}
  if(draft.unavailable.includes(id)!==yes&&(fib4AssociationFields.includes(id)||id==='masld_fib4_confirmado')){
   if(id!=='masld_fib4_confirmado'&&draft.values.masld_fib4_confirmado==='Sí')next.values.masld_fib4_confirmado='No';
   delete next.fib4Association;

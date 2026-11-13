@@ -146,8 +146,8 @@
       "quick_clinical_result": "partial",
       "detailed_decision": "partial",
       "priority": "P0",
-      "gap": "Las tres fases tienen primera orientación no prescriptiva, con perfil glucémico, seguridad y seguimiento. Faltan titulación individual por insulina/formulación, pautas prandiales, manejo con corticoterapia y validación clínica y móvil.",
-      "note": "Implementados src/clinical/insulinizacion.mjs y paneles rápidos/detallados. Referencia ADA/EASD 2026 + redGDPS 2022; no se calcula dosis individual."
+      "gap": "Cálculo inicial, ajuste basal, primer bolo y reducción basal por hipoglucemia leve implementados para presentaciones específicas. Pendientes simplificación compleja, titulación prandial posterior, corticoides, otras formulaciones y validación independiente/física.",
+      "note": "insulinizacion.mjs conserva orientación. insulina-dosis.mjs calcula propuesta explícita con confirmación asociada y sin administración registrada. ADA/redGDPS 2026 y CIMA individual."
     }
   ],
   "shared": [

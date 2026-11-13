@@ -31,8 +31,8 @@
     {
       "id": "dm2",
       "status": "partial",
-      "evidence": "dm2-rapida.mjs, dm2-detallada.mjs, insulinizacion.mjs",
-      "pending": "Decisiones y titulación por producto/formulación y validación"
+      "evidence": "dm2-rapida.mjs, dm2-detallada.mjs, insulinizacion.mjs, insulina-dosis.mjs: cálculo por presentación de inicio/ajuste basal/primer bolo/reducción",
+      "pending": "Titulación prandial posterior, simplificación compleja y situaciones especiales; otras presentaciones y validación independiente"
     },
     {
       "id": "erc",

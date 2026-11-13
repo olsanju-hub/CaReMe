@@ -1,3 +1,9 @@
+# Estado actual · 13/11/2026
+
+Se añade un motor separado de propuestas numéricas en `insulina-dosis.mjs`. El motor de orientación descrito abajo conserva su contrato anterior. Las restricciones antiguas sobre ausencia de cualquier calculadora corresponden a aquel incremento y quedan sustituidas por el [contrato vigente de cálculo](INSULINA_CALCULADORA_2026-11-13.md).
+
+## Registro original · 12/11/2026
+
 # Insulinización DM2 · inicio, intensificación y desintensificación
 
 **Corte de revisión:** 12/11/2026. **Ámbito:** atención primaria, adultos con DM2 previamente conocida.  
@@ -91,3 +97,4 @@ Las pruebas cubren:
 **Pendientes:** selección validada de producto por situación, algoritmo de titulación supervisada con dosis y controles, manejo de dosis de insulina rápida y mezclas, contrastes con registros clínicos externos, QA real en iPhone y escritorio, revisión científica y evaluación regulatoria.
 
 No declarar paridad clínica completa con GlucoGuía ni fusionar PR #4 hasta cerrar las puertas de validación.
+

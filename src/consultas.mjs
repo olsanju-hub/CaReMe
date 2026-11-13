@@ -45,6 +45,26 @@ export const MODULES = [
 ];
 export const MODULE_BY_ID = Object.fromEntries(MODULES.map(m => [m.id, m]));
 export const EXTRA_FIELDS = [
+  {id:'ins_calc_accion',label:'¿Qué necesitas calcular?',type:'select',options:['Iniciar basal','Ajustar basal','Añadir bolo en una comida','Reducir basal']},
+  {id:'ins_calc_contexto',label:'Ámbito clínico comprobado',type:'select',options:['Adulto con DM2 estable, sin gestación','Fuera de este ámbito o sin confirmar']},
+  {id:'ins_calc_revision',label:'Comprobaciones previas',type:'select',options:['Indicación, seguridad y educación revisadas','Pendientes']},
+  {id:'ins_calc_producto',label:'Insulina basal y pluma concreta',type:'select',options:['Glargina U100 · Lantus SoloStar','Glargina U300 · Toujeo SoloStar','Degludec U100 · Tresiba FlexTouch','Otra presentación o no confirmada']},
+  {id:'ins_calc_metodo',label:'Estrategia de inicio de glargina U100',type:'select',options:['10 U al día','0,1 U/kg/día','0,2 U/kg/día']},
+  {id:'ins_calc_hipo',label:'Hipoglucemia en el período revisado',type:'select',options:['Sin episodios confirmados','Leve, resuelta y sin causa corregible identificada','Actual, grave o recurrente','No revisada']},
+  {id:'ins_calc_dias',label:'Días completos con la misma dosis basal',type:'number',integer:true,min:0,max:3650,unit:'días'},
+  {id:'ins_calc_g1',label:'Ayunas del primer día',type:'number',min:20,max:600,unit:'mg/dL'},
+  {id:'ins_calc_g2',label:'Ayunas del segundo día',type:'number',min:20,max:600,unit:'mg/dL'},
+  {id:'ins_calc_g3',label:'Ayunas del tercer día (más reciente)',type:'number',min:20,max:600,unit:'mg/dL'},
+  {id:'ins_calc_min',label:'Límite inferior del objetivo de ayunas acordado',type:'number',min:70,max:180,unit:'mg/dL'},
+  {id:'ins_calc_max',label:'Límite superior del objetivo de ayunas acordado',type:'number',min:80,max:250,unit:'mg/dL'},
+  {id:'ins_calc_patron',label:'Patrón que motiva el bolo',type:'select',options:['Ayunas en objetivo y elevación posprandial repetida','Otro patrón o sin confirmar']},
+  {id:'ins_calc_glp1',label:'Tratamiento basado en GLP-1 antes de añadir bolo',type:'select',options:['Ya utilizado o alternativa valorada y no adecuada','Pendiente de valorar']},
+  {id:'ins_calc_comida',label:'Comida con mayor excursión comprobada e ingesta asegurada',type:'select',options:['Desayuno','Comida','Cena','No identificada o ingesta insegura']},
+  {id:'ins_calc_rapida',label:'Insulina prandial elegida',type:'select',options:['Asparta U100 · NovoRapid FlexPen','Otra presentación o no confirmada']},
+  {id:'ins_calc_bolo',label:'Estrategia para el primer bolo',type:'select',options:['4 U','10 % de la basal actual']},
+  {id:'ins_calc_reduccion',label:'Reducción basal elegida tras revisar la causa',type:'select',options:['10 %','20 %']},
+  {id:'ins_calc_causa',label:'Relación de la hipoglucemia con la basal',type:'select',options:['Revisada: basal responsable, sin bolo ni causa corregible','No confirmada o atribuible a otro factor']},
+
   {id:'ic_fevi_previa_reducida',label:'Antecedente documentado de FEVI <50 % antes del resultado actual',type:'select',options:['Sí','No tras revisión del historial','No valorado']},
   {id:'ob_fecha_medidas',label:'Fecha de peso/IMC actuales',type:'date'},
   {id:'ob_acuerdo',label:'Abordaje del peso acordado con la persona',type:'select',options:['Sí','No','No explorado']},

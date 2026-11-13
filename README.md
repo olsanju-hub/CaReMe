@@ -8,6 +8,10 @@
 
 La portada abre consultas breves; la evaluación integral es opcional. Las seis consultas de referencia tienen dos a cuatro criterios iniciales y salida de conducta/tratamiento por rama. HTA y dislipemia disponen de entrada breve; riesgo cardiovascular comprueba el circuito antes del cálculo. Las verificaciones por producto siguen en el detalle. [Contrato y auditoría](docs/CONSULTA_RAPIDA_2026-11-13.md).
 
+## Cálculo de insulina · 13/11/2026
+
+Insulinización incorpora una calculadora explícita de inicio, ajuste basal, primer bolo y reducción basal por hipoglucemia leve resuelta. Presentaciones concretas, dosis calculada y fórmula visible, comprobaciones condicionadas y confirmación que caduca al cambiar datos. [Fuentes, reglas y límites](docs/INSULINA_CALCULADORA_2026-11-13.md). No registra administración ni convierte pautas complejas.
+
 Los registros siguientes conservan la historia del proyecto. Sus cifras y estados corresponden a cada incremento.
 
 ## Auditoría de seguridad vigente · 13/11/2026

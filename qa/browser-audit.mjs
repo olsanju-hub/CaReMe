@@ -116,6 +116,21 @@ try{
    await page.locator('.treatment-access [data-drug-id="tirzepatida"]').click();assert.match(await page.locator('main').innerText(),/DOSIS DE FICHA TÉCNICA/);assert.match(await page.locator('main').innerText(),/Datos esenciales incompletos/);
    await home();
   });
+  await check(profile.id,'calculadora de insulina: dosis real, revisión e invalidación',async()=>{
+   await home();await page.locator('[data-action="new"]').first().click();await module('insulina');await page.locator('[data-action="insulin-dose"]').click();
+   await fill({ins_calc_accion:'Iniciar basal',ins_calc_contexto:'Adulto con DM2 estable, sin gestación',ins_calc_producto:'Glargina U300 · Toujeo SoloStar',insulina_esquema:'Sin insulina',peso:'87',tfge:'60',ins_calc_hipo:'Sin episodios confirmados',ins_calc_revision:'Indicación, seguridad y educación revisadas'});
+   await page.locator('[data-action="insulin-dose-result"]').click();assert.match(await page.locator('#insulin-dose-result').innerText(),/17 U al día/);assert.match(await page.locator('#insulin-dose-result').innerText(),/Toujeo/);await inspect('insulin-dose');
+   await page.screenshot({path:fileURLToPath(new URL(profile.id+'-insulin-dose.png',output)),fullPage:true});
+   await fill({peso:'90'});assert.equal(await page.locator('#insulin-dose-result').count(),0);await page.locator('[data-action="insulin-dose-result"]').click();assert.doesNotMatch(await page.locator('#insulin-dose-result').innerText(),/18 U al día/);
+   await fill({ins_calc_revision:'Indicación, seguridad y educación revisadas'});await page.locator('[data-action="insulin-dose-result"]').click();assert.match(await page.locator('#insulin-dose-result').innerText(),/18 U al día/);
+   await fill({ins_calc_accion:'Ajustar basal',insulina_esquema:'Solo basal',insulina_dosis_basal:'20',ins_calc_dias:'4',ins_calc_min:'80',ins_calc_max:'130',ins_calc_g1:'150',ins_calc_g2:'160',ins_calc_g3:'150',ins_calc_revision:'Indicación, seguridad y educación revisadas'});
+   await page.locator('[data-action="insulin-dose-result"]').click();assert.match(await page.locator('#insulin-dose-result').innerText(),/22 U al día/);await inspect('insulin-dose-adjust');
+   await fill({ins_calc_accion:'Añadir bolo en una comida',ins_calc_patron:'Ayunas en objetivo y elevación posprandial repetida',ins_calc_glp1:'Ya utilizado o alternativa valorada y no adecuada',ins_calc_comida:'Comida',ins_calc_rapida:'Asparta U100 · NovoRapid FlexPen',ins_calc_bolo:'4 U',hba1c:'8.5',ins_calc_revision:'Indicación, seguridad y educación revisadas'});
+   await page.locator('[data-action="insulin-dose-result"]').click();assert.match(await page.locator('#insulin-dose-result').innerText(),/4 U en la comida/);assert.match(await page.locator('#insulin-dose-result').innerText(),/NovoRapid/);await inspect('insulin-dose-bolus');
+   await fill({ins_calc_accion:'Reducir basal',ins_calc_hipo:'Leve, resuelta y sin causa corregible identificada',ins_calc_causa:'Revisada: basal responsable, sin bolo ni causa corregible',ins_calc_reduccion:'10 %',ins_calc_revision:'Indicación, seguridad y educación revisadas'});
+   await page.locator('[data-action="insulin-dose-result"]').click();assert.match(await page.locator('#insulin-dose-result').innerText(),/18 U al día/);await inspect('insulin-dose-reduce');
+   await home();await page.locator('[data-action="new"]').first().click();
+  });
   await check(profile.id,'CKM dirigido: bloque breve, resultado mínimo y preguntas condicionales',async()=>{
    await action('ckm');assert.equal(await page.locator('.form-card input,.form-card select').count(),6);
    await fill({edad:'60',embarazo:'No procede',dm1:'No',fecha_evaluacion:'2026-11-13',situacion_aguda:'Estable sin proceso agudo grave',lra_sospecha:'No'});
