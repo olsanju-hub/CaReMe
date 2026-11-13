@@ -48,6 +48,8 @@ Persisten brechas: simplificación basal-bolo/premezclas, manejo por fragilidad 
 
 ## Auditoría
 
-90 escenarios nuevos del motor: cálculo y redondeo por producto, dosis no administrables, umbrales de glucemia y función renal, intervalos de ajuste, contradicciones, ausencia de datos, seguridad transversal, caducidad de confirmación y ausencia de mutación/administración. Base total local: 1166/1166 pruebas y sintaxis superadas.
+94 escenarios nuevos del motor: cálculo y redondeo por producto, dosis no administrables, umbrales de glucemia y función renal, intervalos de ajuste, contradicciones, ausencia de datos, seguridad transversal, caducidad de confirmación y ausencia de mutación/administración. Base total local: 1170/1170 pruebas y sintaxis superadas.
 
 Se amplía el recorrido Chromium/WebKit para probar inicio por peso, cambio de peso sin confirmación, titulación, bolo y reducción. Su resultado se consulta en Actions antes de cerrar el incremento.
+
+La primera ejecución de navegador conservó 176 comprobaciones previas correctas. El nuevo escenario no arrancó porque intentaba borrar una sesión ya vacía; se corrige su preparación sin retirar aserciones de dosis. Se añade retención de HbA1c fuera de 3–20 % y salto/foco al resultado tras calcular.

@@ -668,7 +668,7 @@ function insulinDoseView(){
  const fields=insulinDoseFields(draft),action=draft.values.ins_calc_accion;
  const list=xs=>xs.length?`<ul>${xs.map(x=>`<li>${escape(x)}</li>`).join('')}</ul>`:'';
  const r=current.insulinDoseVisible?evaluateInsulinDose(draft):null;
- const result=r?`<section id="insulin-dose-result" class="dm2-result" aria-live="polite"><h2>${r.proposal?'Propuesta calculada':r.state==='mantener_y_revisar'?'Mantener y revisar':'Antes de calcular'}</h2>
+ const result=r?`<section id="insulin-dose-result" class="dm2-result" tabindex="-1" aria-live="polite"><h2>${r.proposal?'Propuesta calculada':r.state==='mantener_y_revisar'?'Mantener y revisar':'Antes de calcular'}</h2>
  ${list(r.blocks)}${r.missing.length?'<h3>Datos necesarios</h3>'+list(r.missing):''}
  ${r.proposal?`<article class="dose-proposal"><h3>${escape(r.proposal.product)}</h3><p class="dose-number">${escape(r.proposal.units)} U${r.proposal.kind==='bolo'?' en la comida elegida':' al día'}</p><p>${escape(r.proposal.schedule)}</p><p>${escape(r.proposal.formula)}. ${escape(r.proposal.rounding)}</p>${r.proposal.previousUnits!==null?`<p>Dosis anterior: ${escape(r.proposal.previousUnits)} U/día.</p>`:''}
  ${r.proposal.basalProposal?`<h3>Ajuste basal asociado</h3><p>${escape(r.proposal.basalProposal.product)}: <strong>${escape(r.proposal.basalProposal.units)} U al día</strong>.</p><p>${escape(r.proposal.basalProposal.formula)}. Redondeo hacia abajo.</p>`:''}</article>`:''}
@@ -1119,7 +1119,7 @@ app.addEventListener('click', event => {
   if (!btn) return;
   const action = btn.dataset.action;
   if(action==='insulin-dose'){current.insulinDoseVisible=false;return navigate('insulin-dose');}
-  if(action==='insulin-dose-result'){if(current.page!=='insulin-dose')return;current.insulinDoseVisible=true;return render();}
+  if(action==='insulin-dose-result'){if(current.page!=='insulin-dose')return;current.insulinDoseVisible=true;render();const result=document.getElementById('insulin-dose-result');result?.scrollIntoView?.({block:'start'});result?.focus?.({preventScroll:true});return;}
   if(action==='lipids'){current.lipidDetail=false;current.lipidVisible=false;return navigate('lipids');}
   if(action==='lipid-result'){if(current.page!=='lipids')return;current.lipidVisible=true;return render();}
   if(action==='hta'){current.htaDetail=false;current.htaVisible=false;return navigate('hta');}

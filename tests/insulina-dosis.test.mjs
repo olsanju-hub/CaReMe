@@ -38,3 +38,5 @@ test('glucemia actual baja detiene también reducción declarada resuelta',()=>a
 test('hipoglucemia compartida no se borra con selección de ausencia',()=>assert.equal(run({...adjust,dm_hipoglucemias:'Leves'}).proposal,null));
 test('dosis actual sin verificar impide ajuste',()=>assert.equal(run({...adjust,dm_dosis_confirmadas:'No'}).proposal,null));
 test('HbA1c ya en objetivo no intensifica con bolo',()=>assert.equal(run({...bolo,hba1c:7.4,dm_objetivo_valor:7.5}).proposal,null));
+
+for(const value of [0,2.9,20.1,85])test('HbA1c no interpretable '+value,()=>assert.equal(run({...bolo,hba1c:value}).proposal,null));

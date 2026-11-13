@@ -98,6 +98,7 @@ export function evaluateInsulinDose(d){
   if(get(d,'ins_calc_rapida')!=='Asparta U100 · NovoRapid FlexPen')block('Insulina rápida no cubierta; no extrapolar horario ni dispositivo.');
   if(get(d,'insulina_ayunas_objetivo')&&get(d,'insulina_ayunas_objetivo')!=='En objetivo individual')block('El dato compartido de ayunas contradice el patrón seleccionado.');
   const fasting=num(d,'insulina_ayunas');if(fasting!==null&&(fasting<70||fasting>=300))block('Ayunas documentadas fuera de seguridad (<70 o ≥300): revisar antes del bolo.');
+  if(num(d,'hba1c')<3||num(d,'hba1c')>20)block('Revisar valor y unidad de HbA1c; fuera del intervalo técnico de esta rama (3–20 %).');
   if(num(d,'dm_objetivo_valor')!==null&&num(d,'hba1c')<=num(d,'dm_objetivo_valor'))block('HbA1c en el objetivo individual registrado: reevaluar necesidad de intensificación antes del bolo.');
   if(get(d,'dm_hba1c_fiable')&&get(d,'dm_hba1c_fiable')!=='Fiable tras comprobación')block('HbA1c no fiable: no utilizarla para el ajuste basal asociado al bolo.');
   if(!out.blocks.length){

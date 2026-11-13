@@ -117,7 +117,7 @@ try{
    await home();
   });
   await check(profile.id,'calculadora de insulina: dosis real, revisión e invalidación',async()=>{
-   await home();await page.locator('[data-action="new"]').first().click();await module('insulina');await page.locator('[data-action="insulin-dose"]').click();
+   await home();if(await page.locator('[data-action="new"]').count())await page.locator('[data-action="new"]').first().click();await module('insulina');await page.locator('[data-action="insulin-dose"]').click();
    await fill({ins_calc_accion:'Iniciar basal',ins_calc_contexto:'Adulto con DM2 estable, sin gestación',ins_calc_producto:'Glargina U300 · Toujeo SoloStar',insulina_esquema:'Sin insulina',peso:'87',tfge:'60',ins_calc_hipo:'Sin episodios confirmados',ins_calc_revision:'Indicación, seguridad y educación revisadas'});
    await page.locator('[data-action="insulin-dose-result"]').click();assert.match(await page.locator('#insulin-dose-result').innerText(),/17 U al día/);assert.match(await page.locator('#insulin-dose-result').innerText(),/Toujeo/);await inspect('insulin-dose');
    await page.screenshot({path:fileURLToPath(new URL(profile.id+'-insulin-dose.png',output)),fullPage:true});
