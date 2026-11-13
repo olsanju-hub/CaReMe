@@ -597,12 +597,24 @@ function kidneyResult(mode){
     <p class="privacy-note">Sin diagnóstico ni cambios de medicación automáticos. Revisión clínica independiente pendiente.</p>
   </section>`;
 }
+function treatmentReferences(moduleId){
+ const entries={dm2:[['metformina','dm2'],['empagliflozina','dm2'],['dapagliflozina','dm2'],['semaglutida_ozempic','dm2'],['tirzepatida','dm2']],ic:[['empagliflozina','ic'],['dapagliflozina','ic'],['finerenona','ic_fevi40']],erc:[['empagliflozina','erc'],['dapagliflozina','erc'],['finerenona','erc_dm2']],obesidad:[['semaglutida_wegovy_sc','peso'],['tirzepatida','peso']]};
+ const refs=entries[moduleId]??[];
+ return `<section class="treatment-access"><h2>Tratamiento y dosis de referencia</h2><p>${refs.length?'Consulta las pautas CIMA sin completar toda la ficha. Son referencias por indicación, no una selección ni dosis individual para el paciente.':'Este módulo no dispone aún de una pauta farmacológica individual validada. La orientación clínica indica los próximos pasos y sus límites.'}</p>
+ ${refs.map(([id,route])=>{const d=getDrug(id),r=getDrugRoute(id,route);return `<button type="button" class="ghost" data-action="open-drug" data-drug-id="${id}" data-route-id="${route}">${escape(d.generic)} · ${escape(d.exampleBrand)} · dosis y seguridad →</button>`}).join('')}</section>`;
+}
+function directedFieldsMarkup(module,fields,mode){
+ const initial={obesidad:['edad','imc','peso','talla','dm2','ob_farmaco_actual'],hepatico:['edad','masld_fib4_origen','fib4_informado','masld_alarma']}[module.id];
+ if(mode==='quick'&&initial){const elasto=['elastografia','masld_elasto_metodo','masld_fecha_elasto','masld_elasto_calidad','masld_elasto_confusores'];const rest=fields.filter(id=>!initial.includes(id)&&!(module.id==='hepatico'&&elasto.includes(id)));return initial.map(id=>moduleFieldMarkup(FIELDS[id])).join('')+`<details class="progressive-fields"><summary>Completar seguridad y contexto (${rest.length} datos)</summary><p>Se necesitan para decisiones específicas; puedes consultar primero la orientación disponible.</p><div class="field-grid">${rest.map(id=>moduleFieldMarkup(FIELDS[id])).join('')}</div></details>`+(module.id==='hepatico'?`<details class="progressive-fields"><summary>Elastografía disponible (opcional)</summary><div class="field-grid">${elasto.map(id=>moduleFieldMarkup(FIELDS[id])).join('')}</div></details>`:'');}
+ if(mode==='detail'&&!['obesidad','hepatico'].includes(module.id)){const initial=module.quick;return initial.map(id=>moduleFieldMarkup(FIELDS[id])).join('')+`<details class="progressive-fields"><summary>Datos para valorar tratamiento y seguimiento</summary><div class="field-grid">${fields.filter(id=>!initial.includes(id)).map(id=>moduleFieldMarkup(FIELDS[id])).join('')}</div></details>`;}
+ return module.id==='obesidad'?obesityFieldsMarkup(fields,mode):fields.map(id=>moduleFieldMarkup(FIELDS[id])).join('');
+}
 function consultationReview(module) {
   const fields = [...new Set([...module.quick,...module.detail])];
   const missing = fields.filter(id => fieldState(draft,id) === 'sin_registrar');
   const invalid = fields.filter(id => fieldState(draft,id) === 'revisar');
   return `<div class="module-review">
-    <h2>Resumen de captura · ${escape(module.title)}</h2>
+    <details class="capture-details"><summary>Resumen de captura · ${escape(module.title)}</summary>
     <p>Información aportada en esta sesión. No constituye valoración diagnóstica ni terapéutica.</p>
     <div class="review-list">${fields.map(id=>{
       const f=FIELDS[id],state=fieldState(draft,id);
@@ -613,6 +625,7 @@ function consultationReview(module) {
       return `<div class="review-row"><span>${escape(f.label)}</span>
         <strong class="${state}">${escape(value)}</strong></div>`;
     }).join('')}</div>
+    </details>
     ${calculatorsForModule(module.id)}
     ${module.id==='dm2'?dm2RapidResult()+dm2DetailedResult():''}
     ${module.id==='insulina'?insulinResult('detail'):''}
@@ -655,12 +668,13 @@ function moduleView() {
       ${[['quick','Consulta rápida'],['detail','Revisión detallada'],['review','Resumen']].map(([id,name])=>
        `<button type="button" data-action="module-mode" data-mode="${id}" class="${mode===id?'active':''}" aria-pressed="${mode===id}">${name}</button>`).join('')}
     </div>
+    ${mode!=='review'?`<div class="consultation-actions"><button class="primary" type="button" data-action="module-outcome">Ver orientación y tratamiento →</button><p>Puedes continuar con datos parciales. El resultado señalará qué falta para decidir.</p></div>`:''}
+    ${treatmentReferences(m.id)}
     ${mode==='review' ? consultationReview(m) : `<section class="form-card">
       <div class="form-title"><div><h2>${mode==='quick'?'Datos esenciales':'Datos clínicos detallados'}</h2>
         <p>La información se comparte con los demás módulos y la evaluación integral.</p></div>
         <span class="count-pill" id="section-count">${completed} de ${fields.length} registrados</span></div>
-      <div class="field-grid">${m.id==='obesidad'?obesityFieldsMarkup(fields,mode):m.id==='hepatico'&&mode==='quick'?fields.filter(id=>!['elastografia','masld_elasto_metodo','masld_fecha_elasto','masld_elasto_calidad','masld_elasto_confusores'].includes(id)).map(id=>moduleFieldMarkup(FIELDS[id])).join(''):fields.map(id=>moduleFieldMarkup(FIELDS[id])).join('')}</div>
-      ${m.id==='hepatico'&&mode==='quick'?`<details><summary>Elastografía disponible (opcional)</summary><div class="field-grid">${['elastografia','masld_elasto_metodo','masld_fecha_elasto','masld_elasto_calidad','masld_elasto_confusores'].map(id=>moduleFieldMarkup(FIELDS[id])).join('')}</div></details>`:''}
+      <div class="field-grid">${directedFieldsMarkup(m,fields,mode)}</div>
       <div class="wizard-actions">
         <button type="button" class="ghost" data-action="module-mode" data-mode="${mode==='quick'?'detail':'quick'}">${mode==='quick'?'Revisión detallada':'Consulta rápida'}</button>
         <button type="button" class="primary" data-action="module-mode" data-mode="review">Ver resumen de datos →</button>
@@ -894,6 +908,12 @@ function drugView() {
         class="${r.id===route.id?'active':''}" aria-pressed="${r.id===route.id}">${escape(r.name)}</button>`).join('')}
     </div>
     <section class="drug-card">
+      <div class="eyebrow">SOLO PAUTA DE FICHA TÉCNICA · NO DOSIS PERSONALIZADA</div>
+      <h2>${escape(route.name)}</h2>
+      <ul>${items(route.labelDoses)}</ul>
+      <p class="drug-disclaimer">La tabla es informativa incluso si existen bloqueos. No equivale a una recomendación para el paciente.</p>
+    </section>
+    <section class="drug-card">
       <div class="drug-state ${escape(review.state)}">${escape(states[review.state])}</div>
       <h2>Aplicación de la ficha al contexto introducido</h2>
       <p>Datos declarados: esta pantalla no determina si el paciente puede recibir el medicamento.</p>
@@ -905,12 +925,6 @@ function drugView() {
         ?'TFGe inferior a 30: ficha contraindica metformina.'
         :'Máximo diario según la ficha: '+review.renalReference.maxMgPerDay.toLocaleString('es-ES')+' mg/día.'}</p>
       </div>`:''}
-    </section>
-    <section class="drug-card">
-      <div class="eyebrow">SOLO PAUTA DE FICHA TÉCNICA · NO DOSIS PERSONALIZADA</div>
-      <h2>${escape(route.name)}</h2>
-      <ul>${items(route.labelDoses)}</ul>
-      <p class="drug-disclaimer">La tabla es informativa incluso si existen bloqueos. No equivale a una recomendación para el paciente.</p>
     </section>
     ${['finerenona','empagliflozina'].includes(drug.id)
        ?continuityPanel()
@@ -1132,6 +1146,9 @@ app.addEventListener('click', event => {
   if (action === 'start-module') {
     if (!MODULE_BY_ID[btn.dataset.module]) return;
     current.obesityVisible=false; current.masldVisible=false; current.renalVisible=false; current.module=btn.dataset.module; current.mode='quick'; current.dm2ResultVisible=false; current.dm2DetailedVisible=false; current.insulinVisible=false; current.icVisible=false; return navigate('module');
+  }
+  if (action === 'module-outcome') {
+    if(current.page!=='module')return;current.mode='review';return navigate('module');
   }
   if (action === 'module-mode') {
     if (!['quick','detail','review'].includes(btn.dataset.mode)) return;
