@@ -47,3 +47,12 @@ No se declara una validación clínica independiente. Las pruebas de software ve
 Base local: 958 pruebas. Nueva capa: 118 escenarios adicionales de seguridad y orientación. Total Node: 1076/1076 superadas, cero fallos, antes de CI. Se conservan las pruebas clínicas anteriores y se adaptan expectativas de interfaz a la entrada explícita en detalle.
 
 Navegadores: se amplía el recorrido reproducible para comprobar entrada compacta, resultado de IC con dos criterios, tratamiento de peso sin historia completa, acceso a dosis, revisión opcional, conservación/invalidez de datos y ausencia de desbordamiento. El resultado de Actions se consulta antes de cerrar el cambio. Sigue pendiente prueba de uso en iPhone físico por el usuario.
+
+
+### Cierre de navegador y publicación
+
+Código funcional `36345a1f310daf480591cc98dc8ad5314120aa43`: 1076/1076 pruebas Node y 176/176 comprobaciones reales Chromium/WebKit superadas, cero fallos. Actions navegador 43397772626 y 43397780966; Pages 43397772187 correcto. Chromium 151.0.7922.34 y WebKit 26.5; perfiles 320, 390 y 1280 px. Capturas finales revisadas, incluida portada a 320 px.
+
+La primera ejecución encontró dos defectos de interfaz/distribución: anchura de navegación inferior en WebKit de 320 px y nueva solicitud del registro de service worker durante la comprobación sin origen. Se corrigen con etiquetas ajustadas, tarjetas de una columna en móvil y reutilización del registro del ámbito propio. No se ocultan errores de navegador ni se elimina la prueba offline. Caché v0-38.
+
+La publicación está disponible en https://olsanju-hub.github.io/CaReMe/ ; https://olsanju-hub.github.io/CaReMe/actualizar.html permite recuperar una instalación con recursos antiguos. PR #4 permanece abierto como borrador. Prueba en iPhone físico y revisión clínica independiente siguen pendientes.
