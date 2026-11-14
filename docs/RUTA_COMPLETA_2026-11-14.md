@@ -6,7 +6,7 @@ El cambio anterior daba acceso directo al tratamiento, pero no una ruta de consu
 
 La ruta visible contiene Evaluación, Tratamiento inicial, Escaladas y Seguimiento. La evaluación reciente indica analítica y pruebas de partida; en enfermedad conocida se revisa lo disponible y se puede desplegar el estudio inicial si faltó. No se obliga a introducir resultados para consultar qué pedir o cuándo revisar. Clasificación y calculadoras se abren en el contexto de evaluación.
 
-Tratamiento inicial y escaladas reutilizan el motor clínico existente: medicación realmente tomada, perfil y seguridad determinan la propuesta. Elegir «Escaladas» no da por hecho que haya tratamiento ni autoriza intensificar. Los pasos posteriores siguen condicionados a respuesta y tolerancia. La dosis requiere la comprobación invalidable ya existente.
+Tratamiento inicial y escaladas reutilizan el motor clínico existente: medicación realmente tomada, perfil y seguridad determinan la propuesta. Elegir «Escaladas» no da por hecho que haya tratamiento ni autoriza intensificar. Los pasos posteriores siguen condicionados a respuesta y tolerancia. La dosis requiere la comprobación invalidable ya existente. Consultar seguimiento y volver a tratamiento o escaladas conserva una revisión válida si los datos y la pauta no han cambiado. Cambiar datos sigue invalidándola. Al cambiar de etapa se sale de la subruta de insulina, para evitar quedar atrapado en ella.
 
 Seguimiento ofrece plazos y contenido de las revisiones por enfermedad, con controles adicionales de la pauta consultada. Ante una alerta crítica compartida se retiene el calendario estable. No se crean citas, solicitudes de pruebas ni administraciones. La situación reciente/conocida se conserva en memoria durante la sesión por patología y se borra al iniciar otro paciente.
 
@@ -30,6 +30,12 @@ Las recomendaciones se sintetizan con redacción propia. Los plazos son de plani
 
 ## Auditoría
 
-Pruebas locales: 1.635 superadas, sin fallos. Se añaden comprobaciones de las dos entradas por enfermedad y un caso de DM2 reciente que termina en dosis y seguimiento. Auditoría de navegador en ejecución.
+Pruebas locales: 1.636 superadas, sin fallos. Se añaden comprobaciones de las dos entradas por enfermedad y un caso de DM2 reciente que termina en dosis y seguimiento. Auditoría final: 284 comprobaciones de navegador superadas, sin fallos, en Chromium de escritorio/móvil y WebKit de 390/320 px. Incluye las dos entradas por cada patología, consulta de evaluación y seguimiento sin formulario obligatorio, clasificación contextual, tratamiento y dosis, conservación de revisión válida entre etapas, alertas críticas, privacidad y recarga offline con servidor detenido y control negativo.
+
+Durante la implementación, el primer intento de auditoría no pudo completar los recorridos: el servidor local excluía el nuevo módulo y la aplicación no arrancaba en ese entorno. Se corrigió su lista de recursos y se añadió una prueba del grafo completo de importaciones frente a los recursos servidos y precacheados. También se actualizó el acceso de prueba a Clasificación, ahora dentro de Evaluación. No se omitieron escenarios clínicos para conseguir la ejecución final.
+
+Revisión comprobada: `3dd515c1975e3521b3b2e473a1acb878f8397db5`. [Auditoría de navegador 43595560385](https://github.com/olsanju-hub/CaReMe/actions/runs/43595560385) y [verificación Node 43595560390](https://github.com/olsanju-hub/CaReMe/actions/runs/43595560390). [Pages 43595559997](https://github.com/olsanju-hub/CaReMe/actions/runs/43595559997) desplegado. Caché `v0-61`.
+
+Se inspeccionaron las capturas de evaluación inicial de DM2 y dosis de obesidad en 320 px. Aplicación, estilos, módulo de rutas y service worker públicos coinciden por SHA-256 con la revisión local. El PR #4 permanece abierto como borrador, sin fusionar main.
 
 Pendientes: revisión clínica independiente, prueba en iPhone físico y evaluación de usabilidad con médicos. No se declara validación asistencial ni app definitiva a partir de los tests de software.
