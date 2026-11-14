@@ -9,3 +9,9 @@ export function isFinerenoneContinuation(d){
  const meds=['dm2','hta','lipids','obesidad','ic','erc'].flatMap(id=>readMulti(g(d,'seq_actual_'+id)||'[]'));
  return (meds.includes('Finerenona')||g(d,'fin_estado')==='En tratamiento')&&!meds.some(x=>['Espironolactona','Eplerenona'].includes(x));
 }
+
+export function isEplerenoneContinuation(d){
+ if(g(d,'tx_clave')!=='eplerenona'||g(d,'tx_operacion')!=='Escalada del mismo producto, sin interrupciones'||g(d,'seq_epl_indicacion_previa')!=='IC crónica NYHA II y FEVI ≤30 % al inicio, revisado')return false;
+ const meds=['dm2','hta','lipids','obesidad','ic','erc'].flatMap(id=>readMulti(g(d,'seq_actual_'+id)||'[]'));
+ return meds.includes('Eplerenona')&&!meds.some(x=>['Finerenona','Espironolactona'].includes(x));
+}

@@ -41,7 +41,7 @@ test('IC NYHA II con FEVI 35 no extrapola indicación de eplerenona',()=>assert.
 for(const [crcl,freq]of [[30,'cada 48 h'],[60,'cada 48 h'],[61,'cada 24 h']])test('eplerenona inicial por CrCl '+crcl,()=>assert.equal(calc('ic',{...epl,lip_aclaramiento:crcl},'eplerenona').proposal?.frequency,freq));
 test('eplerenona no se calcula desde TFGe si falta CrCl',()=>{const r=calc('ic',{...epl,lip_aclaramiento:''},'eplerenona');assert.equal(r.proposal,null);assert.ok(r.missing.length);});
 test('eplerenona en NYHA III no desplaza la pauta verificada de espironolactona',()=>{const r=plan('ic',{...epl,seq_ic_nyha:'III'});assert.ok(find(r,'espironolactona'));assert.ok(!find(r,'eplerenona'));});
-const eplCurrent={...epl,seq_actual_ic:['Eplerenona'],seq_dosis_eplerenona:25,seq_semanas_eplerenona:4,seq_epl_frecuencia:'Cada 24 h',seq_mra_control:'Analítica actual revisada, sin deterioro agudo'};
+const eplCurrent={...epl,seq_actual_ic:['Eplerenona'],seq_dosis_eplerenona:25,seq_semanas_eplerenona:4,seq_epl_indicacion_previa:'IC crónica NYHA II y FEVI ≤30 % al inicio, revisado',seq_epl_frecuencia:'Cada 24 h',seq_mra_control:'Analítica actual revisada, sin deterioro agudo'};
 test('eplerenona diaria: siguiente escalón 50 mg si CrCl y K lo permiten',()=>assert.equal(calc('ic',eplCurrent,'eplerenona').proposal?.amount,50));
 test('eplerenona alterna: siguiente escalón 25 mg diarios',()=>{const r=calc('ic',{...eplCurrent,seq_epl_frecuencia:'Cada 48 h',lip_aclaramiento:40},'eplerenona');assert.equal(r.proposal?.amount,25);assert.equal(r.proposal?.frequency,'cada 24 h');});
 test('eplerenona mantiene 25 mg diarios con CrCl 45',()=>assert.ok(!find(plan('ic',{...eplCurrent,lip_aclaramiento:45}),'eplerenona')));
@@ -56,3 +56,5 @@ test('dos ARM impiden interpretar una tabla aislada como suficiente',()=>{const 
 test('eplerenona en 50 mg diarios no se titula de nuevo',()=>assert.ok(!find(plan('ic',{...eplCurrent,seq_dosis_eplerenona:50}),'eplerenona')));
 test('finerenona registrada en la ficha previa no se ignora al declarar ausencia de tratamiento',()=>{const r=plan('ic',{...ic,seq_actual_ic:['Sin tratamiento para esta patología'],fin_estado:'En tratamiento',fin_dosis_actual:'20'});assert.equal(r.state,'blocked');});
 test('la identidad de finerenona heredada conserva la tabla de su indicación actual',()=>{const v={...ic,seq_actual_ic:['Empagliflozina'],fin_estado:'En tratamiento',fin_dosis_actual:'20'};assert.equal(calc('ic',v,'fine_ic').proposal?.amount,40);});
+test('FEVI mejorada no borra una indicación original verificada de eplerenona',()=>assert.equal(calc('ic',{...eplCurrent,fevi:55,seq_ic_nyha:'I'},'eplerenona').proposal?.amount,50));
+test('no supone una indicación original de eplerenona a partir de la dosis',()=>assert.ok(!find(plan('ic',{...eplCurrent,seq_epl_indicacion_previa:'Otra indicación o sin confirmar'}),'eplerenona')));

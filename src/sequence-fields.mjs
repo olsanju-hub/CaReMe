@@ -24,6 +24,7 @@ export const SEQUENCE_FIELDS=[
  {id:'seq_fin_indicacion',label:'Indicación por la que ya recibe finerenona',type:'select',options:['ERC asociada a DM2','IC con FEVI ≥40 %','Sin confirmar']},
  {id:'seq_mra_control',label:'Control analítico utilizado para ajustar el ARM',type:'select',options:['Analítica actual revisada, sin deterioro agudo','Pendiente o no revisada']},
  {id:'seq_ic_nyha',label:'Clase funcional NYHA confirmada',type:'select',options:['I','II','III','IV','No confirmada']},
+ {id:'seq_epl_indicacion_previa',label:'Indicación original de eplerenona en esta vía',type:'select',options:['IC crónica NYHA II y FEVI ≤30 % al inicio, revisado','Otra indicación o sin confirmar']},
  {id:'seq_epl_frecuencia',label:'Frecuencia real de eplerenona',type:'select',options:['Cada 24 h','Cada 48 h','No confirmada']},
  {id:'seq_epl_cyp',label:'Interacciones CYP3A4 de eplerenona',type:'select',options:['Sin inhibidor relevante tras revisión','Inhibidor leve o moderado','Inhibidor potente o sin revisar']},
 

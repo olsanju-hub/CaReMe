@@ -1,4 +1,4 @@
-import {isFinerenoneContinuation} from './identidad-farmaco.mjs';
+import {isFinerenoneContinuation,isEplerenoneContinuation} from './identidad-farmaco.mjs';
 import {planFinerenoneControl} from './ajustes-seguros.mjs';
 /** Pautas por indicación, visibles en cada consulta. La propuesta numérica exige revisión asociada. */
 import {FIELDS,fieldState,therapeuticAssociationValid} from '../model.mjs';
@@ -33,10 +33,10 @@ const n=(d,k)=>get(d,k)===null?null:Number(get(d,k));
 const multi=(d,k)=>readMulti(get(d,k)||'[]');
 export function treatmentFields(d,key){
  const p=THERAPEUTIC_OPTIONS[key];if(!p)return [];
- const ids=['tx_operacion','tx_contexto',...p.needs.filter(id=>!(isFinerenoneContinuation(d)&&['cac','unidad_cac','ras_optimizado'].includes(id))&&!(key==='atorvastatina'&&get(d,'tx_operacion')==='Escalada del mismo producto, sin interrupciones'&&id==='tx_estatina_dosis'))];
+ const ids=['tx_operacion','tx_contexto',...p.needs.filter(id=>!(isEplerenoneContinuation(d)&&id==='seq_ic_nyha')&&!(isFinerenoneContinuation(d)&&['cac','unidad_cac','ras_optimizado'].includes(id))&&!(key==='atorvastatina'&&get(d,'tx_operacion')==='Escalada del mismo producto, sin interrupciones'&&id==='tx_estatina_dosis'))];
  if(get(d,'tx_operacion')==='Escalada del mismo producto, sin interrupciones')ids.push(key==='arni'?'tx_dosis_arni':'tx_dosis_actual','tx_semanas','tx_tolerancia');
  if(get(d,'tx_operacion')==='Reducción del mismo producto tras revisión')ids.push('tx_dosis_actual',...(['amlodipino','losartan'].includes(key)?['seq_dosis_'+key]:[]),'seq_hta_una_toma','seq_indicacion_solo_hta','seq_control_retirada');
- if(key==='eplerenona'&&get(d,'tx_operacion')==='Escalada del mismo producto, sin interrupciones')ids.push('seq_epl_frecuencia','seq_mra_control');
+ if(key==='eplerenona'&&get(d,'tx_operacion')==='Escalada del mismo producto, sin interrupciones')ids.push('seq_epl_frecuencia','seq_mra_control','seq_epl_indicacion_previa');
  if(key.startsWith('fine')&&get(d,'tx_operacion')==='Escalada del mismo producto, sin interrupciones')ids.push('seq_fin_indicacion','seq_dosis_finerenona','seq_semanas_finerenona','seq_mra_control','fin_tfge_previa',...(key==='fine_ic'?['fin_tfge_inicio']:[]));
  if(key==='metformina'&&get(d,'tx_operacion')==='Escalada del mismo producto, sin interrupciones'){ids.splice(ids.indexOf('tx_dosis_actual'),1);ids.push('seq_dosis_metformina','seq_metformina_forma');}
  ids.push('tx_revision');return [...new Set(ids)];
@@ -92,7 +92,7 @@ export function reviewModuleTreatment(d,key){
  if(key==='eplerenona'){
   if(e!==null&&e<30||n(d,'lip_aclaramiento')!==null&&n(d,'lip_aclaramiento')<30||k!==null&&k>5.4)blocks.push('Eplerenona: función renal o potasio fuera del ajuste rutinario.');
   if(g('tx_operacion')==='Inicio sin fármaco/clase equivalentes'&&k!==null&&k>5)blocks.push('No iniciar eplerenona con K >5.');
-  if(n(d,'fevi')!==null&&n(d,'fevi')>30||g('seq_ic_nyha')&&g('seq_ic_nyha')!=='II')blocks.push('Esta pauta de eplerenona requiere IC crónica NYHA II y FEVI ≤30 %.');
+  if(!isEplerenoneContinuation(d)&&(n(d,'fevi')!==null&&n(d,'fevi')>30||g('seq_ic_nyha')&&g('seq_ic_nyha')!=='II'))blocks.push('Esta pauta de eplerenona requiere IC crónica NYHA II y FEVI ≤30 %.');
   if(g('seq_epl_cyp')==='Inhibidor potente o sin revisar'||g('cyp3a4_fuerte')==='Sí')blocks.push('CYP3A4 potente o sin revisar: no calcular eplerenona.');
   if(g('ic')==='No'||g('ic_sintomatica')==='No')blocks.push('IC negada: conciliar indicación antes de eplerenona.');
  }
@@ -169,7 +169,7 @@ export function evaluateTreatmentDose(d,key){
  else if(key==='eplerenona'){
   amount=25;const cr=n(d,'lip_aclaramiento');frequency=cr<=60?'cada 48 h':'cada 24 h';
   if(escalating){
-   if(weeks<4||dose!==25||get(d,'seq_mra_control')!=='Analítica actual revisada, sin deterioro agudo'||Number(d.values.potasio)>=5)r.blocks.push('Eplerenona: confirmar 25 mg, 4 semanas, control actual y K <5 antes de subir.');
+   if(!isEplerenoneContinuation(d)||weeks<4||dose!==25||get(d,'seq_mra_control')!=='Analítica actual revisada, sin deterioro agudo'||Number(d.values.potasio)>=5)r.blocks.push('Eplerenona: confirmar 25 mg, 4 semanas, control actual y K <5 antes de subir.');
    else if(get(d,'seq_epl_frecuencia')==='Cada 48 h'){amount=25;frequency='cada 24 h';}
    else if(get(d,'seq_epl_frecuencia')==='Cada 24 h'&&cr>=50&&get(d,'seq_epl_cyp')==='Sin inhibidor relevante tras revisión'){amount=50;frequency='cada 24 h';}
    else r.blocks.push('No superar 25 mg/día con CrCl <50, inhibidor CYP3A4 leve/moderado o frecuencia sin confirmar.');
@@ -179,7 +179,7 @@ export function evaluateTreatmentDose(d,key){
  else if(key==='eplerenona'){
   if(e!==null&&e<30||n(d,'lip_aclaramiento')!==null&&n(d,'lip_aclaramiento')<30||k!==null&&k>5.4)blocks.push('Eplerenona: función renal o potasio fuera del ajuste rutinario.');
   if(g('tx_operacion')==='Inicio sin fármaco/clase equivalentes'&&k!==null&&k>5)blocks.push('No iniciar eplerenona con K >5.');
-  if(n(d,'fevi')!==null&&n(d,'fevi')>30||g('seq_ic_nyha')&&g('seq_ic_nyha')!=='II')blocks.push('Esta pauta de eplerenona requiere IC crónica NYHA II y FEVI ≤30 %.');
+  if(!isEplerenoneContinuation(d)&&(n(d,'fevi')!==null&&n(d,'fevi')>30||g('seq_ic_nyha')&&g('seq_ic_nyha')!=='II'))blocks.push('Esta pauta de eplerenona requiere IC crónica NYHA II y FEVI ≤30 %.');
   if(g('seq_epl_cyp')==='Inhibidor potente o sin revisar'||g('cyp3a4_fuerte')==='Sí')blocks.push('CYP3A4 potente o sin revisar: no calcular eplerenona.');
   if(g('ic')==='No'||g('ic_sintomatica')==='No')blocks.push('IC negada: conciliar indicación antes de eplerenona.');
  }
