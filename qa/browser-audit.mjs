@@ -135,7 +135,7 @@ try{
   await check(profile.id,'DM2 reciente: evaluación → pauta numérica → próxima analítica',async()=>{
    await reset();await home();await page.locator('[data-action="open-pathology"][data-pathology="dm2"]').click();await page.locator('[data-action="route-mode"][data-mode="recent"]').click();assert.match(await page.locator('#route-evaluation').innerText(),/HbA1c/);
    await stage(3);await completeSequence('dm2');await fill({tx_revision:'Indicación, contraindicaciones e interacciones revisadas'});assert.match(await page.locator('#module-dose-result').innerText(),/500 mg · cada 12 h/);
-   await stage(4);assert.match(await page.locator('#route-followup').innerText(),/3 meses/);assert.equal(await page.locator('main input,main select').count(),0);
+   await stage(4);assert.match(await page.locator('#route-followup').innerText(),/3 meses/);assert.equal(await page.locator('main input,main select').count(),0);await stage(3);assert.match(await page.locator('#module-dose-result').innerText(),/500 mg · cada 12 h/);await stage(5);assert.match(await page.locator('#module-dose-result').innerText(),/500 mg · cada 12 h/);
   });
   const showDose=async key=>{if(await page.locator('#sequence-dose-panel[data-key="'+key+'"]').count())return;await page.locator('[data-action="sequence-dose"][data-key="'+key+'"]').click();};
   const confirmed='Indicación, contraindicaciones e interacciones revisadas';
