@@ -40,7 +40,7 @@ try{
   page.on('request',request=>{if(!request.url().startsWith(origin+'/'))external.push(request.url());});
   const home=async()=>{await page.locator('button.brand[data-action="home"]').click();};
   const open=async id=>{await home();await page.locator('[data-action="open-pathology"][data-pathology="'+id+'"]').click();if(id!=='cv-risk'){if(await page.locator('[data-action="route-mode"]').count())await page.locator('[data-action="route-mode"][data-mode="known"]').click();await page.locator('[data-action="flow-stage"][data-stage="3"]').first().click();}};
-  const stage=async n=>{await page.locator('.flow-progress [data-stage="'+n+'"]').click();};
+  const stage=async n=>{if(n===2){await page.locator('.flow-progress [data-stage="1"]').click();await page.locator('[data-action="flow-stage"][data-stage="2"]').click();return;}await page.locator('.flow-progress [data-stage="'+n+'"]').click();};
   const module=async(id,mode='quick')=>{await open(id==='insulina'?'dm2':id);await page.locator('.flow-reference summary').click();await page.locator('[data-action="flow-context"]').click();if(id==='insulina'){await page.locator('[data-action="start-module"][data-module="insulina"]').first().click();}if(mode!=='detail')await page.locator('[data-action="module-mode"][data-mode="'+mode+'"]').first().click();};
   const action=async id=>{if(['cv-risk','ckm'].includes(id)){await open('cv-risk');await page.locator('[data-action="'+id+'"]').first().click();return;}await home();await page.locator('[data-action="'+id+'"]:visible').first().click();};
   const summary=async()=>{await module('dm2','review');await page.locator('[data-action="summary"]').first().click();};
