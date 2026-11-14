@@ -21,7 +21,7 @@ export const SEQUENCE_SOURCES={
 };
 export function sequenceCurrent(d,id){
  if(!(SEQUENCE_GROUPS[id]||[]).length)return {raw:[],ids:[],none:false,classes:[]};
- const legacy=[];if(g(d,'lip_estatina')==='Atorvastatina')legacy.push('atorvastatina');if(g(d,'lip_estatina')==='Rosuvastatina')legacy.push('rosuvastatina');if(g(d,'lip_ezetimiba')==='Sí')legacy.push('ezetimiba');if(g(d,'ob_farmaco_actual')==='Wegovy subcutáneo')legacy.push('wegovy');if(g(d,'ob_farmaco_actual')==='Tirzepatida')legacy.push('tirzepatida');if(['Solo basal','Basal y prandial','Premezclas','Otro esquema'].includes(g(d,'insulina_esquema')))legacy.push('insulina');
+ const legacy=[];if(g(d,'fin_estado')==='En tratamiento')legacy.push('finerenona');if(g(d,'lip_estatina')==='Atorvastatina')legacy.push('atorvastatina');if(g(d,'lip_estatina')==='Rosuvastatina')legacy.push('rosuvastatina');if(g(d,'lip_ezetimiba')==='Sí')legacy.push('ezetimiba');if(g(d,'ob_farmaco_actual')==='Wegovy subcutáneo')legacy.push('wegovy');if(g(d,'ob_farmaco_actual')==='Tirzepatida')legacy.push('tirzepatida');if(['Solo basal','Basal y prandial','Premezclas','Otro esquema'].includes(g(d,'insulina_esquema')))legacy.push('insulina');
  const raw=multi(d,'seq_actual_'+id),ids=(SEQUENCE_GROUPS[id]||[]).filter(k=>raw.includes(SEQUENCE_MEDS[k].label)||legacy.includes(k));
  return {raw,ids,none:raw.includes('Sin tratamiento para esta patología'),classes:[...new Set(ids.map(k=>SEQUENCE_MEDS[k].className).filter(Boolean))]};
 }

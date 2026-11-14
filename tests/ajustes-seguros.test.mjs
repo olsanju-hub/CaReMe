@@ -54,3 +54,5 @@ test('K 6 y eplerenona: alerta señala suspensión, sin reinicio automático',()
 test('dos ARM impiden interpretar una tabla aislada como suficiente',()=>{const r=plan('ic',{...ic,potasio:6,seq_actual_ic:['Finerenona','Eplerenona']});assert.equal(r.state,'blocked');assert.deepEqual(r.priorityGuidance,[]);});
 
 test('eplerenona en 50 mg diarios no se titula de nuevo',()=>assert.ok(!find(plan('ic',{...eplCurrent,seq_dosis_eplerenona:50}),'eplerenona')));
+test('finerenona registrada en la ficha previa no se ignora al declarar ausencia de tratamiento',()=>{const r=plan('ic',{...ic,seq_actual_ic:['Sin tratamiento para esta patología'],fin_estado:'En tratamiento',fin_dosis_actual:'20'});assert.equal(r.state,'blocked');});
+test('la identidad de finerenona heredada conserva la tabla de su indicación actual',()=>{const v={...ic,seq_actual_ic:['Empagliflozina'],fin_estado:'En tratamiento',fin_dosis_actual:'20'};assert.equal(calc('ic',v,'fine_ic').proposal?.amount,40);});
