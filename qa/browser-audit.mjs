@@ -55,15 +55,16 @@ try{
   };
   const inspect=async(name)=>{
    const state=await page.evaluate(()=>{
+    const skip=document.querySelector('.skip-link');const skipHidden=document.activeElement===skip||skip.getBoundingClientRect().bottom<=0;
     const ids=[...document.querySelectorAll('[id]')].map(x=>x.id);
     const dup=ids.filter((x,i)=>ids.indexOf(x)!==i);
     const missingLabels=[...document.querySelectorAll('input:not([type="hidden"]),select,textarea')].filter(el=>!el.labels?.length&&!el.getAttribute('aria-label')&&!el.getAttribute('aria-labelledby')).map(el=>el.dataset.field);
     const brokenLabels=[...document.querySelectorAll('label[for]')].filter(el=>!document.getElementById(el.htmlFor)).map(el=>el.htmlFor);
     const overflow=[...document.querySelectorAll('main *,#app section *,#app article *')].filter(el=>{const b=el.getBoundingClientRect();return b.width&&b.right>innerWidth+1&&getComputedStyle(el).visibility!=='hidden';}).slice(0,5).map(el=>({tag:el.tagName,cls:el.className,text:el.textContent.slice(0,80)}));
-    return {width:innerWidth,scrollWidth:document.documentElement.scrollWidth,duplicateIds:dup,missingLabels,brokenLabels,overflow};
+    return {skipHidden,width:innerWidth,scrollWidth:document.documentElement.scrollWidth,duplicateIds:dup,missingLabels,brokenLabels,overflow};
    });
    if(state.scrollWidth>state.width+1)await page.screenshot({path:fileURLToPath(new URL(profile.id+'-'+name+'-failure.png',output)),fullPage:false});
-   assert.deepEqual(state.duplicateIds,[],JSON.stringify(state));assert.deepEqual(state.missingLabels,[],JSON.stringify(state));assert.deepEqual(state.brokenLabels,[],JSON.stringify(state));
+   assert.equal(state.skipHidden,true,JSON.stringify(state));assert.deepEqual(state.duplicateIds,[],JSON.stringify(state));assert.deepEqual(state.missingLabels,[],JSON.stringify(state));assert.deepEqual(state.brokenLabels,[],JSON.stringify(state));
    assert.ok(state.scrollWidth<=state.width+1,JSON.stringify(state));
    if(['home','summary','obesidad-detail'].includes(name))await page.screenshot({path:fileURLToPath(new URL(profile.id+'-'+name+'.png',output)),fullPage:name==='obesidad-detail'});
   };

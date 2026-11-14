@@ -546,8 +546,8 @@ h2 { letter-spacing:-.025em }
 .text-link,.quiet-link { max-width:100%; white-space:normal; overflow-wrap:anywhere; }
 .wizard-layout>* { min-width:0; }
 .step-list { max-width:100%; min-width:0; }
-.skip-link { position:fixed; z-index:100; top:8px; left:8px; transform:translateY(-160%); padding:10px 16px; color:var(--ink); background:#fff; border:2px solid var(--teal); border-radius:8px; }
-.skip-link:focus { transform:translateY(0); }
+.skip-link { position:fixed; z-index:100; top:-10000px; left:8px; padding:10px 16px; color:var(--ink); background:#fff; border:2px solid var(--teal); border-radius:8px; }
+.skip-link:focus { top:8px; }
 
 /* Consulta progresiva: orientación y fichas accesibles antes de la captura completa. */
 .treatment-access,.consultation-actions { margin:16px 0; padding:18px; border:1px solid var(--line); border-radius:16px; background:#fff; }
