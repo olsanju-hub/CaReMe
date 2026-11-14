@@ -1,0 +1,20 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+test('CKM: bloques dirigidos, fechas condicionales, datos conservados y salida sin ficha completa',async()=>{
+ const handlers={},root={innerHTML:'',addEventListener:(name,fn)=>handlers[name]=fn};
+ globalThis.document={getElementById:id=>id==='app'?root:{textContent:'',remove(){}},querySelectorAll:()=>[]};globalThis.scrollTo=()=>{};globalThis.confirm=()=>true;
+ await import('../src/app.mjs');
+ const click=(action,data={})=>handlers.click({target:{closest:()=>({dataset:{action,...data}})}});
+ const set=(id,value)=>handlers.input({target:{closest:()=>({dataset:{field:id},value,type:'text'})}});
+ click('ckm');assert.equal((root.innerHTML.match(/class="field module-field"/g)||[]).length,6);assert.ok(root.innerHTML.indexOf('id="ckm-result"')<root.innerHTML.indexOf('class="form-card"'));
+ assert.doesNotMatch(root.innerHTML,/id="f-cac"/);
+ click('ckm-block',{block:'cardiovascular'});assert.doesNotMatch(root.innerHTML,/id="f-ckm_fecha_cvd"/);
+ set('ckm_cvd','Confirmada');assert.match(root.innerHTML,/id="f-ckm_fecha_cvd"/);set('ckm_fecha_cvd','2026-11-10');
+ click('ckm-block',{block:'factores'});set('dm2','Sí');
+ click('ckm-block',{block:'contexto'});
+ for(const [k,v] of Object.entries({edad:'60',embarazo:'No procede',dm1:'No',situacion_aguda:'Estable sin proceso agudo grave',lra_sospecha:'No',fecha_evaluacion:'2026-11-13'}))set(k,v);
+ click('ckm-result');assert.match(root.innerHTML,/al menos estadio 4/);assert.doesNotMatch(root.innerHTML,/data-block="subclinica"|data-block="glucemia"|data-block="lipidos"/);
+ click('ckm-block',{block:'confirmacion'});set('ckm_evaluacion_confirmada','Sí');assert.match(root.innerHTML,/Estadio CKM 4 · para revisión/);
+ click('ckm-block',{block:'factores'});assert.match(root.innerHTML,/value="Sí" selected/);set('dm2','');
+ click('ckm-result');assert.doesNotMatch(root.innerHTML,/Estadio CKM 4 · para revisión/);assert.match(root.innerHTML,/data-block="subclinica"/);
+});

@@ -14,6 +14,12 @@ La unidad de trabajo es **una evaluación de un paciente en una consulta**, no u
 
 Los términos y modelos CKM y hepatometabólicos se tratarán según su respaldo documental. No se fabricará una clasificación única denominada «CaHReMe» ni un índice numérico de riesgo multiorgánico no validado.
 
+## 1.1. Cobertura funcional de la referencia
+
+**Requisito confirmado por el propietario:** CaHReMe debe incluir como mínimo las seis consultas de GlucoGuía (DM2, insuficiencia cardíaca, ERC, sobrepeso/obesidad, enfermedad hepática metabólica e insulinización) con sus formularios rápidos, revisiones detalladas y tipos de resultados, además de la evaluación integral multiorgánica propuesta. No basta con un formulario general por dominio. Detalles y estado de brechas: [Matriz de equivalencia funcional](MATRIZ_EQUIVALENCIA_GLUCOGUIA.md).
+
+Se respetará la cobertura de la referencia, no se replicarán sin revisión sus umbrales o indicaciones si la evidencia vigente los modifica. Toda implementación será original; no se copiará el código de terceros.
+
 ## 2. Usuarios y contexto
 
 - Destinatarios: profesionales sanitarios, especialmente Medicina Familiar y Comunitaria.
@@ -154,3 +160,11 @@ Se requiere para cada módulo:
 6. Política de revisión y actualización científica.
 
 **Control de cambios:** 0.1 — documento rector inicial. Pendiente de aprobación como especificación congelada.
+
+
+
+## Control del alcance original · 12/11/2026
+
+La equivalencia con seis consultas de GlucoGuía no reduce el alcance original: riesgo cardiovascular, HTA, dislipemia, obesidad, DM2, ERC, IC y MASLD, con estadificación CKM como requisito transversal. El estado vigente se consulta en [ALCANCE_ORIGINAL.json](ALCANCE_ORIGINAL.json); las secciones históricas anteriores se conservan como planificación, no como evidencia de implementación o validación.
+
+Se incorpora el primer SCORE2 para el grupo elegible 40–69 años en España y elección de circuito para exclusiones. CKM, HTA y dislipemia siguen pendientes. [Contrato de riesgo y auditoría](RIESGO_CV_SCORE2.md). No se ha finalizado el MVP.

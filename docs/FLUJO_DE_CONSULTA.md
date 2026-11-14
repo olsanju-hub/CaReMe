@@ -1,0 +1,76 @@
+# Flujo de consulta — CaHReMe
+
+Interfaz vigente: [Recorrido por patología](RECORRIDO_POR_PATOLOGIA_2026-11-13.md). El contenido siguiente conserva el diseño inicial y su evolución como registro histórico.
+
+Estado: **prototipo de captura, cálculo G/A y FIB-4, con opciones multiorgánicas no prescriptivas**. No validado para uso asistencial.
+
+## Consultas de referencia añadidas (iteración A.2)
+
+La portada ofrece **siete rutas**: evaluación integral y seis consultas clínicas dirigidas (DM2, insuficiencia cardíaca, ERC, sobrepeso/obesidad, enfermedad hepática metabólica e insulinización). Cada consulta tiene tres vistas: **Rápida → Detallada → Resumen**. Se puede alternar entre ellas sin perder los datos. Los campos compartidos permanecen en memoria y se reutilizan entre módulos. Las entradas sin datos quedan «Sin registrar»; no se asigna resultado normal.
+
+**La vista «Resumen» solo recapitula información introducida, no es un resultado diagnóstico ni terapéutico.** Las salidas asistenciales permanecen desactivadas hasta contar con reglas y pruebas validadas.
+
+## Entrada dual
+- **Evaluación integral (predeterminada):** empieza en contexto y recorre cardiovascular, renal, hepático, metabólico y tratamientos.
+- **Consulta dirigida:** permite entrar directamente en el dominio solicitado. No se considera que el resto de dominios esté descartado; el resumen los mantiene visibles como pendientes.
+- Ninguna ruta genera automáticamente diagnóstico o prescripción.
+
+## Estados de captura
+- **Registrado:** valor aportado por el usuario, no verificado clínicamente.
+- **No disponible:** el profesional declara que no dispone del dato.
+- **Sin registrar:** campo todavía vacío.
+- **Revisar:** entrada incompatible con el contrato básico del formulario.
+
+Estos estados no equivalen a «normal», «patológico» o «descartado». Los estados clínicos del Documento rector no se activan en la iteración A.
+
+## Navegación
+1. Inicio: elegir integral o dirigida.
+2. Formulario: sección elegida, anterior/siguiente, acceso a resumen.
+3. Resumen: datos introducidos y faltantes, agrupados por dominio.
+4. Herramientas/Fuentes: secciones informativas con funciones pendientes y evidencia no validada.
+5. Borrado: nueva evaluación reinicia todos los datos; no hay persistencia, cookies ni almacenamiento identificativo.
+
+## Condiciones de aceptación
+- Un campo no disponible no se sustituye por cero ni por otro valor supuesto.
+- Los pasos mantienen los valores mientras la página está abierta.
+- El resumen muestra el estado de todos los campos sin clasificar riesgos.
+- La evaluación dirigida no elimina los datos contextuales ni oculta dominios.
+- No se usan datos clínicos reales en pruebas o capturas; los ejemplos son sintéticos.
+- No está publicado ni habilitado para uso asistencial.
+
+## Indicadores descriptivos por fuente (bloque B inicial)
+
+En la pantalla **Herramientas**, en el resumen integral y en las consultas renal/hepática se muestran:
+- **G/A KDIGO**: dos categorías independientes calculadas desde TFGe y CAC, con advertencia sobre cronicidad y causa no evaluadas.
+- **FIB-4**: fórmula aplicada a edad, AST, ALT y plaquetas cuando están presentes; la interpretación exige contexto adecuado y ausencia de enfermedad aguda y advierte rendimiento limitado <35 años. Ajuste de corte inferior >65 años.
+
+Los resultados no generan diagnósticos ni conductas terapéuticas. Están documentados en [Fuentes y reglas clínicas](FUENTES_CLINICAS.md), con pruebas automatizadas; la revisión profesional formal sigue pendiente.
+
+## Integración multiorgánica de revisión (bloque C preliminar)
+
+En resultados dirigidos, Herramientas y resumen integral se incorporan tres grupos: **revisiones de seguridad**, **opciones que requieren evaluación médica** y **contexto o datos pendientes**. Las tarjetas proceden de reglas identificadas y permiten abrir la fuente exacta.
+
+Se capturan situación clínica aguda, posible cetoacidosis, conciliación de tratamientos, revisión de alergias y datos de riesgo renal como condiciones explícitas. No se interpreta un campo vacío como «No» ni se registran cambios de tratamiento de forma automática.
+
+Reglas y limitaciones: [Integración terapéutica](INTEGRACION_TERAPEUTICA.md). Todas las dosis y prescripciones permanecen desactivadas.
+
+## Consulta farmacológica por molécula (bloque de CIMA)
+
+En «Herramientas» figura una biblioteca de empagliflozina y finerenona. La misma ficha puede tener distintas indicaciones, posología y requisitos; **la vía se elige explícitamente** y los datos de la consulta se reutilizan. Se muestran dosis de **referencia documental**, no recomendaciones personalizadas. Si hay bloqueos aparecen antes de la tabla de dosis y la página conserva una advertencia de no prescripción.
+
+Fuente y pruebas: [Farmacología CIMA](FARMACOLOGIA_CIMA.md). La aplicación no etiqueta al paciente como «apto» ni registra prescripción efectuada.
+
+## Acciones confirmadas y calendario (bloque 12/11/2026)
+
+La pantalla de farmacología permite consultar continuidad por **indicación y dosis actual**. El historial de actuaciones no se alimenta del motor de recomendaciones: requiere confirmación del médico, fecha efectiva y dosis administrada (salvo interrupción). Solo las actuaciones confirmadas generan controles programables. Las fechas sustituidas por un cambio posterior permanecen en el historial con estado «sustituido». Al borrar una evaluación, se borra también el historial temporal.
+
+Fuente, reglas y límites: [Continuidad y seguimiento](CONTINUIDAD_Y_SEGUIMIENTO.md).
+
+## Verificación previa a una decisión y procedencia analítica
+
+En las rutas integral y dirigidas se pueden registrar fechas de evaluación/analíticas. El CAC solo se categoriza automáticamente en **mg/g**; las cifras expresadas en otras unidades requieren conversión y validación fuera del motor vigente. FIB-4 no se construye con determinaciones fechadas de modo incompatible. La falta de fecha no se interpreta como actualidad.
+
+Las contradicciones críticas se muestran como alertas y **retienen** las opciones farmacológicas; no eliminan una alerta aguda ya identificada. El plan de verificación reúne los datos a revisar, las opciones aún no ejecutadas y los controles que derivan de actuaciones **expresamente confirmadas**. No registra automáticamente acciones ni sincroniza citas.
+
+Cobertura de pruebas y pendientes: [AUDITORIAS_3_BLOQUES.md](AUDITORIAS_3_BLOQUES.md).
+

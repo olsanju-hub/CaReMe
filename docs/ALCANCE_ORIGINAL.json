@@ -1,0 +1,128 @@
+{
+  "schema": "cahreme-original-scope-v1",
+  "reviewed_on": "2026-11-13",
+  "baseline_commit": "d3c539bbf88d14179579861de5f4d4fb81217820",
+  "acceptance": "Implementación no equivale a validación clínica; ningún bloque está aprobado para uso asistencial.",
+  "areas": [
+    {
+      "id": "riesgo_cv",
+      "status": "partial",
+      "evidence": "SCORE2 local 40–69 España; elección de circuito y registro SCORE2-OP externo 70–89 con procedencia/asociación",
+      "pending": "Cálculo interno SCORE2-OP: parámetros primarios pendientes de verificación; SCORE2-Diabetes, CKD Add-On y validación independiente"
+    },
+    {
+      "id": "hta",
+      "status": "partial",
+      "evidence": "src/clinical/hta.mjs: umbrales por método, patrones, confirmación, objetivo condicionado y revisión de tratamiento; alertas transversales; tratamientos-modulo.mjs: pautas visibles y propuesta numérica condicionada para productos incluidos",
+      "pending": "Catálogo completo/algoritmo de escalada combinada, HTA resistente/secundaria, validación clínica y dispositivos físicos"
+    },
+    {
+      "id": "dislipemia",
+      "status": "partial",
+      "evidence": "src/clinical/dislipemia.mjs: objetivos LDL absoluto/relativo, procedencia del riesgo, revisión de escalada y seguimiento confirmado; referencias CIMA y seguridad CrCl; tratamientos-modulo.mjs: pautas visibles y propuesta numérica condicionada para productos incluidos",
+      "pending": "Catálogo completo e interacciones exhaustivas, tratamientos especializados y TG específicos; validación independiente/física"
+    },
+    {
+      "id": "obesidad",
+      "status": "partial",
+      "evidence": "src/clinical/obesidad.mjs: recorrido rápido/detallado, antropometría, objetivos, hábitos, riesgo muscular, revisión CIMA, seguimiento confirmado y valoración bariátrica; tratamientos-modulo.mjs: pautas visibles y propuesta numérica condicionada para productos incluidos",
+      "pending": "Validación clínica y QA real; titulación individual y catálogo completo de fármacos, estadificación EOSS y escenarios específicos"
+    },
+    {
+      "id": "dm2",
+      "status": "partial",
+      "evidence": "dm2-rapida.mjs, dm2-detallada.mjs, insulinizacion.mjs, insulina-dosis.mjs: cálculo por presentación de inicio/ajuste basal/primer bolo/reducción; tratamientos-modulo.mjs: pautas visibles y propuesta numérica condicionada para productos incluidos",
+      "pending": "Titulación prandial posterior, simplificación compleja y situaciones especiales; otras presentaciones y validación independiente"
+    },
+    {
+      "id": "erc",
+      "status": "partial",
+      "evidence": "engine.mjs, renal.mjs y monitorización IECA/ARA-II; tratamientos-modulo.mjs: pautas visibles y propuesta numérica condicionada para productos incluidos; calculadoras.mjs: CKD-EPI 2021 y Cockcroft–Gault separados",
+      "pending": "KFRE, historial de actuaciones RAAS y ruta farmacológica completa"
+    },
+    {
+      "id": "ic",
+      "status": "partial",
+      "evidence": "insuficiencia-cardiaca.mjs; historial de FEVI previa exigido antes de IC-FEp, contrastado con ESC2026 sección5.2.2; tratamientos-modulo.mjs: pautas visibles y propuesta numérica condicionada para productos incluidos",
+      "pending": "Revalidación clínica/fuentes, titulación por producto y QA real"
+    },
+    {
+      "id": "masld",
+      "status": "partial",
+      "evidence": "src/clinical/masld.mjs: FIB-4 informado o calculado con procedencia, VCTE verificada por método/calidad y evaluación secuencial con derivación",
+      "pending": "Validación clínica/QA móvil, ELF/SWE/MRE automatizados y selección farmacológica específica de MASH"
+    }
+  ],
+  "cross_cutting": [
+    {
+      "id": "ckm",
+      "status": "partial",
+      "pending": "Revisión clínica independiente; discrepancia renal CAC 300; evidencia subclínica automatizada y cálculo PREVENT no implementados",
+      "evidence": "src/clinical/ckm.mjs; estadios 0–4 para revisión, mínimo documentado, 4a/4b y procedencia"
+    },
+    {
+      "id": "evaluacion_integral",
+      "status": "partial",
+      "pending": "Revisión clínica de cruces y QA real, junto a brechas de cada motor",
+      "evidence": "src/clinical/plan-integral.mjs: síntesis de diez recorridos con prioridades, objetivos y procedencia; áreas no evaluadas explícitas"
+    },
+    {
+      "id": "motor_terapeutico",
+      "status": "partial",
+      "pending": "Selección individual completa, ajustes y CIMA de todo el alcance"
+    },
+    {
+      "id": "seguimiento",
+      "status": "partial",
+      "pending": "Validación clínica y QA real; exportación no identificativa pendiente",
+      "evidence": "Controles nativos desde actuaciones confirmadas y referencias históricas conciliadas; orientación sin cita y coordinación sin sustituir plazos"
+    },
+    {
+      "id": "pwa",
+      "status": "partial",
+      "pending": "Instalación en dispositivos físicos, revisión completa de accesibilidad e icono definitivo",
+      "evidence": "Offline verificado en Chromium/WebKit con origen detenido; caché aislada por ámbito"
+    },
+    {
+      "id": "evidencia",
+      "status": "partial",
+      "pending": "Matriz completa de reglas, fuentes y conflictos; revisión independiente"
+    },
+    {
+      "id": "publicacion",
+      "status": "missing",
+      "pending": "GitHub Pages, versiones y política de cambios científicos"
+    }
+  ],
+  "release_gate": {
+    "clinical_review": "pending",
+    "device_qa": "pending",
+    "draft_pr": true,
+    "full_mvp": false
+  },
+  "next": [
+    "Revisión clínica independiente y QA en dispositivos físicos; auditoría automatizada inicial superada",
+    "Cálculo interno SCORE2-OP pendiente de parámetros primarios; variantes restantes",
+    "Completar dislipemia por producto y escenarios específicos",
+    "Completar HTA por producto y derivación",
+    "Publicación versionada"
+  ],
+  "browser_qa": {
+    "status": "passed",
+    "node_tests": 957,
+    "browser_checks": 156,
+    "failed": 0,
+    "evidence": "docs/AUDITORIA_SEGURIDAD_2026-11-13.md",
+    "physical_device": false
+  },
+  "safety_audit": {
+    "date": "2026-11-13",
+    "base_commit": "a9ac2d90d14488e272fcd5d6f5a7a27ae4d437ee",
+    "node_tests_passed": 957,
+    "new_browser_run": "43357982704",
+    "report": "docs/AUDITORIA_SEGURIDAD_2026-11-13.md",
+    "independent_clinical_validation": "pending",
+    "browser_checks_passed": 156,
+    "browser_failures": 0
+  }
+}
