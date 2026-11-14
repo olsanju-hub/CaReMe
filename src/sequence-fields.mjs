@@ -4,19 +4,29 @@ export const SEQUENCE_MEDS={
  empagliflozina:{label:'Empagliflozina',className:'iSGLT2',key:'empa_dm2'},dapagliflozina:{label:'Dapagliflozina',className:'iSGLT2',key:'dapa_dm2'},
  ozempic:{label:'Semaglutida para DM2 · Ozempic',className:'arGLP-1',key:'ozempic',weekly:true},wegovy:{label:'Semaglutida para peso · Wegovy',className:'arGLP-1',key:'wegovy',weekly:true},tirzepatida:{label:'Tirzepatida',className:'Agonista dual GIP/GLP-1',key:'tirze_dm2',weekly:true},
  losartan:{label:'Losartán',className:'ARA-II',key:'losartan'},amlodipino:{label:'Amlodipino',className:'Calcioantagonista dihidropiridínico',key:'amlodipino'},indapamida:{label:'Indapamida retard',className:'Diurético tiazídico o similar',key:'indapamida'},
- bisoprolol:{label:'Bisoprolol',className:'Betabloqueante',key:'bisoprolol'},arni:{label:'Sacubitrilo/valsartán',className:'INRA/ARNI',key:'arni'},espironolactona:{label:'Espironolactona',className:'ARM',key:'espironolactona'},finerenona:{label:'Finerenona',className:'ARM',key:'fine_erc'},furosemida:{label:'Furosemida',className:'Diurético de asa',key:'furosemida'},
+ bisoprolol:{label:'Bisoprolol',className:'Betabloqueante',key:'bisoprolol'},arni:{label:'Sacubitrilo/valsartán',className:'INRA/ARNI',key:'arni'},eplerenona:{label:'Eplerenona',className:'ARM',key:'eplerenona'},espironolactona:{label:'Espironolactona',className:'ARM',key:'espironolactona'},finerenona:{label:'Finerenona',className:'ARM',key:'fine_erc'},furosemida:{label:'Furosemida',className:'Diurético de asa',key:'furosemida'},
  atorvastatina:{label:'Atorvastatina',className:'Estatina',key:'atorvastatina'},rosuvastatina:{label:'Rosuvastatina',className:'Estatina',key:'rosuvastatina'},ezetimiba:{label:'Ezetimiba',className:'Ezetimiba',key:'ezetimiba'},
  ieca:{label:'IECA',className:'IECA'},otro_ara:{label:'Otro ARA-II',className:'ARA-II'},otro_diuretico:{label:'Otro diurético',className:'Diurético tiazídico o similar'},otro_beta:{label:'Otro betabloqueante',className:'Betabloqueante'},
  iddp4:{label:'iDPP-4',className:'iDPP-4'},su:{label:'Sulfonilurea o glinida',className:'Sulfonilurea'},insulina:{label:'Insulina',className:'Insulina'},otra_incretina:{label:'Otra incretina',className:'arGLP-1'},otro_sglt2:{label:'Otro iSGLT2',className:'iSGLT2'},otro:{label:'Otro tratamiento relevante',className:null}
 };
 export const SEQUENCE_GROUPS={
  dm2:['metformina','empagliflozina','dapagliflozina','ozempic','wegovy','tirzepatida','iddp4','su','insulina','otra_incretina','otro_sglt2','otro'],
- hta:['losartan','amlodipino','indapamida','ieca','otro_ara','otro_diuretico','bisoprolol','otro_beta','arni','espironolactona','furosemida','otro'],
+ hta:['losartan','amlodipino','indapamida','ieca','otro_ara','otro_diuretico','bisoprolol','otro_beta','arni','espironolactona','eplerenona','finerenona','furosemida','otro'],
  lipids:['atorvastatina','rosuvastatina','ezetimiba','otro'],obesidad:['wegovy','tirzepatida','ozempic','otra_incretina','otro'],
- ic:['empagliflozina','dapagliflozina','arni','bisoprolol','espironolactona','finerenona','furosemida','ieca','losartan','otro_ara','otro_beta','otro_sglt2','otro'],
- erc:['empagliflozina','dapagliflozina','losartan','ieca','otro_ara','arni','finerenona','espironolactona','otro_sglt2','otro'],hepatico:[]
+ ic:['empagliflozina','dapagliflozina','arni','bisoprolol','espironolactona','eplerenona','finerenona','furosemida','ieca','losartan','otro_ara','otro_beta','otro_sglt2','otro'],
+ erc:['empagliflozina','dapagliflozina','losartan','ieca','otro_ara','arni','finerenona','espironolactona','eplerenona','otro_sglt2','otro'],hepatico:[]
 };
 export const SEQUENCE_FIELDS=[
+ {id:'seq_retirada_motivo',label:'Motivo clínico para reducir antihipertensivos',type:'select',options:['PA baja u ortostatismo sintomático','Edema atribuido a amlodipino tras revisión','Carga terapéutica con PA en objetivo','Otra causa o sin aclarar']},
+ {id:'seq_hta_una_toma',label:'Pauta realmente tomada del candidato a reducir',type:'select',options:['Una toma diaria confirmada','Otra pauta o sin confirmar']},
+ {id:'seq_indicacion_solo_hta',label:'Otras indicaciones del candidato que señala la aplicación',type:'select',options:['Solo HTA, sin otra indicación del candidato','Tiene otra indicación o no revisado']},
+ {id:'seq_control_retirada',label:'Acuerdo y vigilancia del cambio',type:'select',options:['Cambio acordado y seguimiento disponible','Pendiente o no disponible']},
+ {id:'seq_fin_indicacion',label:'Indicación por la que ya recibe finerenona',type:'select',options:['ERC asociada a DM2','IC con FEVI ≥40 %','Sin confirmar']},
+ {id:'seq_mra_control',label:'Control analítico utilizado para ajustar el ARM',type:'select',options:['Analítica actual revisada, sin deterioro agudo','Pendiente o no revisada']},
+ {id:'seq_ic_nyha',label:'Clase funcional NYHA confirmada',type:'select',options:['I','II','III','IV','No confirmada']},
+ {id:'seq_epl_frecuencia',label:'Frecuencia real de eplerenona',type:'select',options:['Cada 24 h','Cada 48 h','No confirmada']},
+ {id:'seq_epl_cyp',label:'Interacciones CYP3A4 de eplerenona',type:'select',options:['Sin inhibidor relevante tras revisión','Inhibidor leve o moderado','Inhibidor potente o sin revisar']},
+
  {id:'seq_ambito',label:'Situación clínica de esta consulta',type:'select',options:['Adulto estable, sin embarazo ni lactancia, sin proceso agudo','Situación especial o sin confirmar']},
  {id:'seq_objetivo',label:'Decisión que necesitas resolver',type:'select',options:['Iniciar o ajustar tratamiento','Reducir o simplificar tratamiento']},
  {id:'seq_comorbilidades',label:'Condicionantes confirmados que modifican el tratamiento',type:'multi',options:['Ninguno de los siguientes','Insuficiencia cardíaca','Enfermedad renal crónica','Enfermedad cardiovascular aterosclerótica','Obesidad','HTA o dislipemia asociadas al peso','Fragilidad']},

@@ -1,3 +1,4 @@
+import {isFinerenoneContinuation} from './identidad-farmaco.mjs';
 /**
  * CaHReMe — catálogo farmacológico CIMA-AEMPS, revisión 2026-11-11.
  * NO PRESCRIPTOR: las pautas son transcripciones estructuradas de fichas técnicas
@@ -169,10 +170,10 @@ function reviewDrugUnverified(draft,drugId,routeId) {
     checks.push('Verificar indicación, cobertura y ficha CIMA del producto que se prescribiría.');
   } else {
     if(potassium===null) missing.push('Potasio sérico actual no disponible.');
-    if(egfr!==null && egfr<25) blocked.push('No iniciar finerenona con TFGe <25 (CIMA 4.2).');
-    if(potassium!==null && potassium>5)
+    if(!isFinerenoneContinuation(draft)&&egfr!==null && egfr<25) blocked.push('No iniciar finerenona con TFGe <25 (CIMA 4.2).');
+    if(!isFinerenoneContinuation(draft)&&potassium!==null && potassium>5)
       blocked.push('No iniciar finerenona con potasio >5,0 mmol/L (CIMA 4.2).');
-    if(medClasses.includes('ARM'))
+    if(medClasses.includes('ARM')&&!isFinerenoneContinuation(draft))
       blocked.push('ARM concomitante declarado: comprobar espironolactona/eplerenona/finerenona; no asociar.');
     if(present(draft,'cyp3a4_fuerte')==='Sí')
       blocked.push('Inhibidor potente CYP3A4 concomitante: contraindicación CIMA 4.3.');
@@ -193,7 +194,7 @@ function reviewDrugUnverified(draft,drugId,routeId) {
       checks.push('Potasio >4,8 a 5,0: considerar solo con monitorización adicional las primeras cuatro semanas.');
     if(routeId==='erc_dm2') {
       if(present(draft,'dm2')==='No' || present(draft,'erc')==='No' ||
-          present(draft,'persistencia')==='No' || (numerical(draft,'cac')!==null && numerical(draft,'cac')<30))
+          present(draft,'persistencia')==='No' || (!isFinerenoneContinuation(draft)&&numerical(draft,'cac')!==null && numerical(draft,'cac')<30))
         blocked.push('No consta la indicación ERC con albuminuria asociada a DM2 para esta vía.');
       else if(present(draft,'dm2')!=='Sí' || present(draft,'erc')!=='Sí' ||
           present(draft,'persistencia')!=='Sí' || numerical(draft,'cac')===null)
@@ -241,3 +242,4 @@ export function reviewDrug(draft,drugId,routeId) {
     notice:'Revisión retenida por incoherencias críticas. Corregir el formulario antes de cualquier decisión.'
   };
 }
+

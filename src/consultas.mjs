@@ -54,7 +54,7 @@ export const EXTRA_FIELDS = [
   {id:'calc_creat_unidad',label:'Unidad real de creatinina',type:'select',options:['mg/dL','µmol/L']},
   {id:'calc_estabilidad',label:'Aplicabilidad de la estimación renal',type:'select',options:['Creatinina estable, sin embarazo ni diálisis','No confirmada o fuera de ámbito']},
   {id:'tx_clave',label:'Producto e indicación seleccionados',type:'textarea'},
-  {id:'tx_operacion',label:'Situación real del tratamiento seleccionado',type:'select',options:['Inicio sin fármaco/clase equivalentes','Escalada del mismo producto, sin interrupciones']},
+  {id:'tx_operacion',label:'Situación real del tratamiento seleccionado',type:'select',options:['Inicio sin fármaco/clase equivalentes','Escalada del mismo producto, sin interrupciones','Reducción del mismo producto tras revisión']},
   {id:'tx_contexto',label:'Ámbito comprobado',type:'select',options:['Adulto estable, sin embarazo ni lactancia','Otro ámbito o sin confirmar']},
   {id:'tx_revision',label:'Revisión final para esta pauta',type:'select',options:['Indicación, contraindicaciones e interacciones revisadas','Pendiente']},
   {id:'tx_dosis_arni',label:'Pareja de dosis actual de sacubitrilo/valsartán cada 12 h',type:'select',options:['24/26 mg','49/51 mg','97/103 mg']},

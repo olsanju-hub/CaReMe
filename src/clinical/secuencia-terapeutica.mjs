@@ -1,3 +1,4 @@
+import {planHtaReduction,planFinerenoneControl,finerenoneControlDraft,mraPriorityGuidance} from './ajustes-seguros.mjs';
 /** Selección de conducta antes de concretar dosis. Sin administración ni cambios silenciosos. */
 import {fieldState,setValue} from '../model.mjs';
 import {readMulti} from '../consultas.mjs';
@@ -40,6 +41,12 @@ export function evaluateTherapySequence(d,id){
  const need=(...ids)=>{for(const k of ids)if(g(d,k)===null&&!r.missing.includes(k))r.missing.push(k);};
  const step=(action,title,reason,key=null,when='Ahora',extra={})=>r.steps.push({id:id+'-'+r.steps.length,action,title,reason,key,when,operation:'start',...extra});
  const hold=(title,why)=>step('review',title,why);
+ const mergeAdjustment=sub=>{
+  r.missing=[...new Set([...r.missing,...sub.missing])];r.questionContext=sub.questionContext||'';
+  r.steps.push(...sub.steps.map((s,i)=>({id:id+'-adjustment-'+i,...s})));r.followup.push(...sub.followup);r.sources=[...new Set([...r.sources,...sub.sources])];
+  if(r.missing.length){r.steps=[];r.state='missing';}else r.state=r.steps.some(x=>x.key)?'plan':r.steps.some(x=>x.action==='review')?'review':'maintain';
+  return r;
+ };
  const actual=sequenceCurrent(d,id),allCurrentIds=[...new Set(Object.keys(SEQUENCE_GROUPS).flatMap(k=>sequenceCurrent(d,k).ids))],has=k=>allCurrentIds.includes(k),cls=c=>classesForDose(d,id).includes(c),dose=k=>n(d,'seq_dosis_'+k);
  const flags=new Set(multi(d,'seq_comorbilidades').filter(x=>!x.startsWith('Ninguno')));
  for(const [field,label]of [['ic','Insuficiencia cardíaca'],['erc','Enfermedad renal crónica']])if(g(d,field)==='Sí')flags.add(label);
@@ -59,7 +66,7 @@ export function evaluateTherapySequence(d,id){
  for(const c of ['iSGLT2','Estatina','ARM'])if(allCurrentIds.filter(k=>SEQUENCE_MEDS[k].className===c).length>1)r.blocks.push('Posible duplicidad de '+c+': conciliar antes de modificar.');
  if(allCurrentIds.filter(k=>['arGLP-1','Agonista dual GIP/GLP-1'].includes(SEQUENCE_MEDS[k].className)).length>1)r.blocks.push('Varias incretinas registradas: no añadir ni escalar hasta conciliar.');
  if(allCurrentIds.filter(k=>['IECA','ARA-II','INRA/ARNI'].includes(SEQUENCE_MEDS[k].className)).length>1)r.blocks.push('Varios bloqueantes RAAS registrados: revisar combinación antes de modificar.');
- if(r.blocks.length){r.state='blocked';return r;}
+ if(r.blocks.length){r.priorityGuidance=mraPriorityGuidance(d,allCurrentIds);r.state='blocked';return r;}
  if(actual.ids.length)need('seq_adherencia','seq_tolerancia');
  if(actual.ids.some(k=>['otro','otro_sglt2','otra_incretina','otro_diuretico','otro_beta','otro_ara','ieca'].includes(k)))need('farmacos');
  if(r.missing.length)return r;
@@ -70,7 +77,7 @@ export function evaluateTherapySequence(d,id){
  if(id==='obesidad'&&g(d,'ob_tolerancia')==='Problemas de tolerancia'&&!reducing){r.state='review';hold('Revisar la tolerancia discordante','Constan problemas de tolerancia previos; conciliarlos antes de aumentar.');return r;}
  if(id==='dm2'&&g(d,'dm_adherencia')==='Dificultades o dosis omitidas'||id==='lipids'&&g(d,'lip_adherencia')==='Dudas o incumplimiento'){r.state='review';hold('Resolver la adherencia discordante','La dificultad de adherencia ya registrada tiene prioridad sobre una confirmación genérica posterior.');return r;}
  const add=(key,why,when='Ahora',extra={})=>{
-  const blocks=reviewModuleTreatment({...d,values:{...d.values,farmacos_clases:JSON.stringify(existingClasses)}},key);
+  const blocks=reviewModuleTreatment({...d,values:{...d.values,farmacos_clases:JSON.stringify(existingClasses),tx_operacion:'Inicio sin fármaco/clase equivalentes',tx_clave:key}},key);
   if(blocks.length){hold('Revisar '+THERAPEUTIC_OPTIONS[key].name,blocks.join(' '));return;}
   step('start','Iniciar '+THERAPEUTIC_OPTIONS[key].name,why,key,when,extra);
  };
@@ -82,7 +89,7 @@ export function evaluateTherapySequence(d,id){
   if(ladder&&current!==null&&current>ladder.at(-1)){hold('Revisar dosis y presentación actuales','Dosis fuera de los escalones verificados de esta vía; no convertir ni aumentar automáticamente.');return;}
   if(ladder&&current!==null&&current===ladder.at(-1)){if(id==='dm2')step('insulin','Valorar insulina tras alcanzar la dosis máxima tolerada','No seguir aumentando la incretina; revisar glucemias y alternativas antes de insulinizar.');else hold('Reevaluar respuesta en dosis máxima','No aumentar por encima de la dosis máxima de esta vía; revisar objetivo, alternativas y posible valoración especializada.');return;}
   if(key==='bisoprolol'&&current>=10){step('maintain','Mantener bisoprolol en la dosis objetivo tolerada','No aumentar por encima de 10 mg/día por esta vía.');return;}
-  const weeks=n(d,'seq_semanas_'+med),minWeeks=ladder?4:med==='metformina'?2:med==='losartan'?6:['amlodipino','atorvastatina','rosuvastatina'].includes(med)?4:med==='bisoprolol'?(current<5?1:4):0;
+  const weeks=n(d,'seq_semanas_'+med),minWeeks=ladder?4:med==='metformina'?2:med==='losartan'?6:['amlodipino','atorvastatina','rosuvastatina','eplerenona'].includes(med)?4:med==='bisoprolol'?(current<5?1:4):0;
   if(weeks!==null&&weeks<minWeeks){step('maintain','Mantener el escalón hasta completar su intervalo mínimo',`Completar al menos ${minWeeks} semanas con la dosis actual y reevaluar tolerancia/respuesta antes de aumentar.`);return;}
   step('titrate','Ajustar '+SEQUENCE_MEDS[med].label,why,key,when,{operation:'escalate',currentMed:med});
  };
@@ -144,7 +151,8 @@ export function evaluateTherapySequence(d,id){
  if(id==='hta'){
   need('hta_conocida','pas','pad','seq_pa_objetivo','seq_pad_objetivo','seq_pa_valida','seq_hta_vulnerable');if(r.missing.length)return r;
   if(g(d,'hta_conocida')!=='Sí'||g(d,'seq_pa_valida')!=='Media validada; control fuera de consulta revisado cuando corresponde'){hold('Confirmar diagnóstico y control de PA','No intensificar por una lectura aislada; revisar AMPA/MAPA cuando corresponda.');r.state='review';return r;}
-  if(reducing||g(d,'seq_hta_vulnerable')!=='Ninguno tras valoración'||n(d,'edad')>=85||g(d,'hta_fragilidad')==='Sí'||flags.has('Fragilidad')){hold('Individualizar pauta y objetivo por vulnerabilidad','Revisar ortostatismo, caídas, volemia y motivo de cada fármaco. Considerar inicio con monoterapia o reducción escalonada según el caso; no suspender un fármaco pronóstico por su efecto sobre la PA sin revisar la indicación.');r.state='review';return r;}
+  if(reducing)return mergeAdjustment(planHtaReduction(d,actual.ids));
+  if(g(d,'seq_hta_vulnerable')!=='Ninguno tras valoración'||n(d,'edad')>=85||g(d,'hta_fragilidad')==='Sí'||flags.has('Fragilidad')){hold('Individualizar pauta y objetivo por vulnerabilidad','Revisar ortostatismo, caídas, volemia y motivo de cada fármaco. Considerar inicio con monoterapia o reducción escalonada según el caso; no suspender un fármaco pronóstico por su efecto sobre la PA sin revisar la indicación.');r.state='review';return r;}
   if(n(d,'pas')<n(d,'seq_pa_objetivo')&&n(d,'pad')<n(d,'seq_pad_objetivo'))step('maintain','Mantener y vigilar tolerancia','PA dentro del límite sistólico individual y diastólico individualizados; comprobar ausencia de hipotensión sintomática.');
   else{
    const ras=cls('IECA')||cls('ARA-II')||cls('INRA/ARNI'),ccb=cls('Calcioantagonista dihidropiridínico'),thiazide=cls('Diurético tiazídico o similar');
@@ -202,8 +210,9 @@ export function evaluateTherapySequence(d,id){
   need('tfge','cac','unidad_cac','persistencia','dm2','ic','potasio');if(r.missing.length)return r;
   const a=n(d,'cac');
   if(g(d,'persistencia')!=='Sí'||g(d,'unidad_cac')!=='mg/g'||egfr>=60&&a<30){hold('Confirmar ERC y unidades antes del tratamiento renal','Esta vía requiere cronicidad y un marcador renal; una analítica aislada o G1/G2-A1 sin otros marcadores no confirma ERC.');r.state='review';return r;}
-  if(reducing){hold('Revisar motivo del ajuste y evolución renal','Hipotensión, hiperpotasemia o deterioro agudo requieren evaluar causa y cambios recientes. No retirar protección renal solo por un descenso inicial esperado de TFGe.');}
-  else{
+  if(has('finerenona')){const sub=planFinerenoneControl(d);r.missing.push(...sub.missing);r.steps.push(...sub.steps);r.followup.push(...sub.followup);r.sources=[...new Set([...r.sources,...sub.sources])];}
+  if(reducing&&!has('finerenona')){hold('Revisar motivo del ajuste y evolución renal','Hipotensión, hiperpotasemia o deterioro agudo requieren evaluar causa y cambios recientes. No retirar protección renal solo por un descenso inicial esperado de TFGe.');}
+  else if(!reducing){
    if(!cls('iSGLT2')&&egfr>=20&&(g(d,'dm2')==='Sí'||g(d,'ic')==='Sí'||a>=200||egfr<45))add('empa_erc','Protección renal según perfil, independiente de la necesidad de bajar glucosa; verificar ficha y estabilidad.');
    if(a>=30&&!['IECA','ARA-II','INRA/ARNI'].some(cls)){need('hta_conocida');if(g(d,'hta_conocida')==='Sí')add('losartan','Albuminuria con HTA: iniciar bloqueo RAAS y titular según PA, K y creatinina.');else hold('Revisar indicación de IECA/ARA-II por albuminuria','La protección renal puede indicar bloqueo RAAS según contexto; esta pauta numérica de losartán está verificada para HTA y no se extrapola automáticamente.');}
    if(g(d,'dm2')==='Sí'&&a>=30&&!cls('ARM')){need('ras_optimizado');if(g(d,'ras_optimizado')==='Sí'&&egfr>=25&&n(d,'potasio')<=5)add('fine_erc','Albuminuria persistente en ERC-DM2 pese a RAAS optimizado, con TFGe y K aptos.',r.steps.length?'Tras comprobar respuesta y tolerancia de la protección previa':'Ahora');else step('future','Valorar finerenona tras optimizar RAAS','Requiere ERC-DM2, albuminuria persistente, TFGe ≥25, K ≤5 y ausencia de otro ARM.',null,'Después de comprobar elegibilidad');}
@@ -214,6 +223,7 @@ export function evaluateTherapySequence(d,id){
  if(id==='ic'){
   need('ic','ic_sintomatica','ic_estabilidad','fevi','congestion','pas','tfge','potasio');if(r.missing.length)return r;
   if(g(d,'ic')!=='Sí'||g(d,'ic_sintomatica')!=='Sí'||g(d,'ic_estabilidad')!=='Estable evaluado'){hold('Confirmar IC sintomática estable','La FEVI aislada no establece diagnóstico ni permite iniciar la secuencia. Valorar descompensación antes de ajustar.');r.state='review';return r;}
+  if(has('finerenona')){const sub=planFinerenoneControl(d);r.missing.push(...sub.missing);r.steps.push(...sub.steps);r.followup.push(...sub.followup);r.sources=[...new Set([...r.sources,...sub.sources])];}
   if(reducing){hold('Revisar congestión y motivos de cada fármaco','Sin congestión puede revisarse primero la necesidad de diurético. No retirar terapia pronóstica por mejoría de FEVI sin revisar su trayectoria.');}
   else{
    if(!cls('iSGLT2')&&egfr>=20)add('empa_ic','Tratamiento con beneficio en IC sintomática a través del espectro de FEVI.');
@@ -221,8 +231,19 @@ export function evaluateTherapySequence(d,id){
     if(!cls('INRA/ARNI')){if(cls('IECA')||cls('ARA-II'))step('replace','Sustituir IECA/ARA-II por ARNI si es elegible','No asociar ambos; confirmar suspensión de ARA-II o lavado ≥36 h tras IECA antes de la primera dosis.','arni','Tras confirmar suspensión y lavado');else add('arni','Completar tratamiento pronóstico con FEVI reducida si PA, K y función renal lo permiten.');}
     if(!cls('Betabloqueante'))add('bisoprolol','Añadir betabloqueante con evidencia en IC estable, comprobando FC y conducción.');
     else if(has('bisoprolol'))currentStep('bisoprolol','Titular hacia dosis tolerada/objetivo tras comprobar FC, PA y estabilidad.');
-    if(!cls('ARM')){if(n(d,'fevi')>=40)add('fine_ic','ARM con indicación de IC y FEVI ≥40; comprobar K y TFGe.');else{need('tx_nyha');if(g(d,'tx_nyha')==='IC grave NYHA III-IV')add('espironolactona','Completar ARM en la indicación verificada, si K, creatinina y TFGe lo permiten.');else hold('Completar ARM según indicación y perfil','La clase está indicada en el tratamiento fundamental cuando corresponde. Esta pauta de espironolactona no extrapola su indicación verificada a otros perfiles; revisar eplerenona/valoración específica.');}}
+    if(!cls('ARM')){if(n(d,'fevi')>=40)add('fine_ic','ARM con indicación de IC y FEVI ≥40; comprobar K y TFGe.');else{if(g(d,'tx_nyha')==='IC grave NYHA III-IV'||['III','IV'].includes(g(d,'seq_ic_nyha')))add('espironolactona','Completar ARM en NYHA III–IV, si K, creatinina y TFGe lo permiten.');else{need('seq_ic_nyha');if(g(d,'seq_ic_nyha')==='II'&&n(d,'fevi')<=30)add('eplerenona','IC crónica NYHA II y FEVI ≤30 %: completar ARM con indicación CIMA verificada; calcular dosis por CrCl, K e interacciones.');else if(g(d,'seq_ic_nyha'))hold('Revisar ARM para el perfil concreto','No extrapolar la indicación CIMA de eplerenona NYHA II/FEVI ≤30 ni la de espironolactona NYHA III–IV a otros perfiles.');}}}
    }else if(!cls('ARM'))add('fine_ic','FEVI ≥50 con IC sintomática: valorar ARM por su indicación específica.');
+   if(has('eplerenona')){
+    need('seq_dosis_eplerenona','seq_semanas_eplerenona','seq_epl_frecuencia','lip_aclaramiento','seq_epl_cyp','seq_mra_control');
+    if(!r.missing.length){
+     const current=dose('eplerenona'),cr=n(d,'lip_aclaramiento'),daily=g(d,'seq_epl_frecuencia')==='Cada 24 h';
+     if(egfr<30||cr<30||g(d,'seq_epl_cyp')==='Inhibidor potente o sin revisar'||g(d,'seq_mra_control')!=='Analítica actual revisada, sin deterioro agudo')hold('Revisar seguridad de eplerenona antes de ajustar','Función renal, CYP3A4 o control analítico no aptos para una titulación rutinaria.');
+     else if(![25,50].includes(current)||g(d,'seq_epl_frecuencia')==='No confirmada'||current===50&&!daily)hold('Conciliar dosis y frecuencia de eplerenona','No calcular desde una frecuencia desconocida o un escalón no verificado.');
+     else if(current===50&&(cr<50||g(d,'seq_epl_cyp')==='Inhibidor leve o moderado'))hold('Revisar 50 mg de eplerenona con límite de 25 mg/día','La función renal o interacción declarada limita esta vía a 25 mg/día.');
+     else if(n(d,'potasio')>=5||current===50||current===25&&daily&&(cr<50||g(d,'seq_epl_cyp')==='Inhibidor leve o moderado'))step('maintain','Mantener el escalón de eplerenona y vigilar','El potasio, la dosis objetivo o el límite renal/interacción impiden una nueva subida por esta vía.');
+     else currentStep('eplerenona','Titular según K, CrCl, frecuencia actual e inhibidores CYP3A4.');
+    }
+   }
    if(g(d,'congestion')==='Presentes'){if(!cls('Diurético de asa'))add('furosemida','Tratar congestión en situación estable; no sustituye la terapia pronóstica.');else hold('Ajustar el diurético según respuesta','Revisar peso, volemia, dosis actual, PA y electrolitos; no duplicar automáticamente la dosis.');}
    step('future','Completar las clases fundamentales toleradas','La secuencia no obliga a alcanzar la dosis máxima de una clase antes de añadir las demás. Priorizar según PA, FC, TFGe, K y congestión.',null,'Reevaluación temprana e individualizada');
   }
@@ -245,8 +266,10 @@ export function prepareSequenceDose(d,id,step){
  let out=d;
  out=setValue(out,'farmacos_clases',JSON.stringify(classesForDose(d,id)));
  out=setValue(out,'tx_clave',step.key);
- out=setValue(out,'tx_operacion',step.operation==='escalate'?'Escalada del mismo producto, sin interrupciones':'Inicio sin fármaco/clase equivalentes');
+ out=setValue(out,'tx_operacion',step.operation==='escalate'?'Escalada del mismo producto, sin interrupciones':step.operation==='reduce'?'Reducción del mismo producto tras revisión':'Inicio sin fármaco/clase equivalentes');
  if(g(d,'seq_ambito')==='Adulto estable, sin embarazo ni lactancia, sin proceso agudo')out=setValue(out,'tx_contexto','Adulto estable, sin embarazo ni lactancia');
+ if(step.key==='espironolactona'&&['III','IV'].includes(g(d,'seq_ic_nyha')))out=setValue(out,'tx_nyha','IC grave NYHA III-IV');
+ if(step.key.startsWith('fine')&&step.operation==='escalate')out=finerenoneControlDraft(out);
  if(step.initialDose)out=setValue(out,'tx_estatina_dosis',step.initialDose+' mg');
  if(step.currentMed){
   const dose=n(d,'seq_dosis_'+step.currentMed),weeks=n(d,'seq_semanas_'+step.currentMed);
