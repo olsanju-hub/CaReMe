@@ -98,10 +98,10 @@ function syncDirectTreatment(){
  if(plan.missing.length||plan.blocks.length){current.sequenceDoseKey=null;current.directStamp=null;current.moduleDoseVisible=false;return;}
  const chosen=plan.steps.find(x=>x.key&&x.key===current.sequenceDoseKey)||plan.steps.find(x=>x.key);
  if(!chosen){current.sequenceDoseKey=null;return;}
- const changed=current.sequenceDoseKey!==chosen.key;
+ const changed=current.directDoseProfile!==chosen.key;
  if(changed||current.directStamp!==directStamp(chosen)){
   draft=prepareSequenceDose(draft,current.pathology,chosen);current.sequenceDoseKey=chosen.key;current.moduleDoseVisible=false;
-  if(changed)current.directDoseFields=[];
+  if(changed){current.directDoseFields=[];current.directDoseProfile=chosen.key;}
   current.directStamp=directStamp(chosen);
  }
  const needed=treatmentFields(draft,chosen.key).filter(k=>k!=='tx_revision'&&!DIRECT_DERIVED.includes(k)&&fieldState(draft,k)!=='registrado');
@@ -125,9 +125,10 @@ function directDosePanel(title,reason){
  const pending=(current.directDoseFields||[]).filter(k=>!DIRECT_DERIVED.includes(k)&&!(current.directEditing&&(current.directFields||[]).includes(k)));
  const approved=draft.values.tx_revision==='Indicación, contraindicaciones e interacciones revisadas';
  const list=xs=>xs.length?`<ul>${xs.map(x=>`<li>${escape(x)}</li>`).join('')}</ul>`:'';
- const html=moduleDoseView(),pos=html.indexOf('<section id="module-dose-result"');
- const result=pos>=0?html.slice(pos,-6):'';
- return `<section id="sequence-dose-panel" data-key="${key}" class="direct-dose" tabindex="-1"><h2>${escape(title||p.name)}</h2>${reason?`<p>${escape(reason)}</p>`:''}${pending.length?`<div class="form-card"><p>Para concretar esta pauta:</p><div class="field-grid">${pending.map(k=>fieldMarkup(FIELDS[k])).join('')}</div></div>`:''}<details><summary>Comprobaciones de esta pauta</summary>${list(p.checks)}<a href="${escape(p.source)}" target="_blank" rel="noopener noreferrer">Ficha CIMA</a></details><label class="direct-check"><input type="checkbox" data-direct-review ${approved?'checked':''}> He revisado la indicación, contraindicaciones e interacciones de esta pauta</label>${result||'<p class="direct-await">La dosis aparecerá aquí tras la comprobación.</p>'}${p.needs.includes('lip_aclaramiento')?'<button class="text-link" type="button" data-action="clinical-calculator" data-kind="crcl">Calcular aclaramiento con creatinina</button>':''}${p.needs.includes('tfge')?'<button class="text-link" type="button" data-action="clinical-calculator" data-kind="tfge">Calcular TFGe con creatinina</button>':''}</section>`;
+ const r=current.moduleDoseVisible?evaluateTreatmentDose(draft,key):null;
+ const result=r?`<section id="module-dose-result" class="direct-dose-output" aria-live="polite">${r.blocks.length?`<div role="alert">${list(r.blocks)}</div>`:''}${r.missing.length?'<h3>Información necesaria</h3>'+list(r.missing):''}${r.proposal?`<article class="dose-proposal"><p class="dose-number">${escape(r.proposal.amount)} ${escape(r.proposal.unit)} · ${escape(r.proposal.frequency)}</p><p>Vía ${escape(r.proposal.via)}.</p><p>${escape(r.proposal.detail)}</p><details><summary>Controles de esta pauta</summary>${list(r.proposal.monitoring)}</details></article>`:''}${p.drug==='finerenona'?`<button class="text-link" type="button" data-action="open-drug" data-drug-id="finerenona" data-route-id="${escape(p.route)}">Continuidad y ajustes de finerenona</button>`:''}</section>`:'';
+ const controls=`${pending.length?`<div class="form-card"><p>Datos de esta pauta:</p><div class="field-grid">${pending.map(k=>fieldMarkup(FIELDS[k])).join('')}</div></div>`:''}<details><summary>Comprobaciones de esta pauta</summary>${list([...p.checks,...p.monitoring])}<a href="${escape(p.source)}" target="_blank" rel="noopener noreferrer">Ficha CIMA</a></details><label class="direct-check"><input type="checkbox" data-direct-review ${approved?'checked':''}> He revisado la indicación, contraindicaciones e interacciones de esta pauta</label>${p.needs.includes('lip_aclaramiento')?'<button class="text-link" type="button" data-action="clinical-calculator" data-kind="crcl">Calcular aclaramiento con creatinina</button>':''}${p.needs.includes('tfge')?'<button class="text-link" type="button" data-action="clinical-calculator" data-kind="tfge">Calcular TFGe con creatinina</button>':''}`;
+ return `<section id="sequence-dose-panel" data-key="${key}" class="direct-dose" tabindex="-1"><h2>${escape(title||p.name)}</h2>${r?.proposal?`${result}<details class="direct-settings"><summary>Datos y comprobación de seguridad</summary>${controls}</details>${reason?`<details><summary>Motivo de elección</summary><p>${escape(reason)}</p></details>`:''}`:`${reason?`<p>${escape(reason)}</p>`:''}${controls}${result||'<p class="direct-await">La dosis aparecerá aquí tras la comprobación.</p>'}`}</section>`;
 }
 function therapySequenceView(id){
  if(current.flowInsulin&&id==='dm2')return '<button class="text-link" type="button" data-action="sequence-return">Volver al tratamiento de DM2</button>'+insulinSequenceView();

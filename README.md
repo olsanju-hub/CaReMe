@@ -4,6 +4,10 @@
 
 **Repositorio:** `olsanju-hub/CaReMe` · **Nombre de la aplicación:** CaHReMe
 
+## Tratamiento directo · interfaz vigente · 14/11/2026
+
+Cada patología abre directamente Tratamiento. Una sola pantalla recoge los datos necesarios y muestra la pauta propuesta automáticamente; se retiran las tandas de «Continuar» y el paso adicional de «Concretar pauta». La dosis aparece tras la comprobación explícita de seguridad, sin otro botón de cálculo. Diagnóstico y Clasificación quedan como consultas opcionales. [Cambio, validación y límites](docs/TRATAMIENTO_DIRECTO_2026-11-14.md).
+
 ## Ajustes y simplificación · 14/11/2026
 
 Se completa la reducción escalonada de antihipertensivos en escenarios delimitados, eplerenona en su indicación verificada de IC crónica y la continuidad de finerenona dentro del plan principal. Se conserva la información de ficha junto a alertas de hiperpotasemia, sin habilitar una pauta rutinaria ni reinicio automático. [Reglas, fuentes y auditoría](docs/AJUSTES_Y_SIMPLIFICACION_2026-11-14.md).
@@ -12,7 +16,7 @@ Se completa la reducción escalonada de antihipertensivos en escenarios delimita
 
 La aplicación pregunta qué toma el paciente y propone el siguiente paso, con escaladas condicionadas y comprobación de la pauta. El selector de tratamientos futuros se retira del recorrido principal. DM2, HTA, lípidos, obesidad, ERC e IC tienen selección por contexto; hígado dirige pruebas y comorbilidades. Insulina deriva la acción del esquema actual y las glucemias. [Criterios, evaluación por fases y límites](docs/SECUENCIAS_TERAPEUTICAS_2026-11-13.md).
 
-## Recorrido por patología · interfaz vigente
+## Recorrido por patología · interfaz anterior
 
 Ocho áreas clínicas. Entrada por diagnóstico, clasificación y tratamiento, con acceso directo al tratamiento cuando el diagnóstico está confirmado. Insulina dentro de DM2; cálculos y pautas en el contexto de cada patología. Se retiran de la navegación principal los niveles rápida/detallada/resumen y el menú Integral/Herramientas. [Contrato y auditoría de esta revisión](docs/RECORRIDO_POR_PATOLOGIA_2026-11-13.md).
 
