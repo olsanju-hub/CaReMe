@@ -1,7 +1,7 @@
 // Solo cachea recursos estáticos: nunca guarda información introducida en formularios.
 // El símbolo SVG incluido es provisional; el icono aprobado en la conversación aún debe subirse.
 const CACHE_PREFIX = 'cahreme-shell-' + encodeURIComponent(new URL(self.registration.scope).pathname) + '-';
-const CACHE = CACHE_PREFIX + 'v0-56';
+const CACHE = CACHE_PREFIX + 'v0-57';
 const ASSETS = [
   './', './index.html', './manifest.webmanifest',
   './src/sequence-fields.mjs', './src/clinical/ajustes-seguros.mjs', './src/clinical/identidad-farmaco.mjs', './src/clinical/secuencia-terapeutica.mjs', './src/clinical/secuencia-insulina.mjs', './src/app.mjs', './src/model.mjs', './src/consultas.mjs', './src/clinical/obesidad.mjs', './src/clinical/masld.mjs', './src/clinical/dislipemia.mjs', './src/clinical/hta.mjs', './src/clinical/ckm.mjs', './src/clinical/calculadoras.mjs', './src/clinical/tratamientos-modulo.mjs', './src/clinical/insulina-dosis.mjs', './src/clinical/consulta-breve.mjs', './src/clinical/riesgo-cv.mjs', './src/clinical/renal.mjs', './src/clinical/engine.mjs', './src/clinical/integracion.mjs', './src/clinical/farmacologia.mjs', './src/clinical/continuidad.mjs', './src/clinical/incretinas.mjs', './src/clinical/basales.mjs', './src/clinical/auditoria.mjs', './src/clinical/proveniencia.mjs', './src/clinical/plan-integral.mjs', './src/clinical/plan.mjs', './src/clinical/dm2-rapida.mjs', './src/clinical/dm2-detallada.mjs', './src/clinical/insulinizacion.mjs', './src/clinical/insuficiencia-cardiaca.mjs', './src/styles.css',
