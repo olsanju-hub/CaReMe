@@ -598,3 +598,6 @@ h2 { letter-spacing:-.025em }
 
 /* Tratamiento directo: una pantalla, sin tandas de Continuar. */
 .direct-check{display:flex;align-items:flex-start;gap:.65rem;margin:1rem 0;line-height:1.45;font-weight:600}.direct-check input{flex:0 0 auto;width:1.2rem;height:1.2rem;margin-top:.15rem}.direct-current{grid-column:1/-1}.direct-summary{margin:0 0 1rem}.direct-dose{padding:1rem;border:1px solid var(--line,#dce3e6);background:white;border-radius:16px}.direct-dose .form-card{padding:0;border:0;box-shadow:none}.direct-result>h2{margin-top:.75rem}.direct-dose .dm2-result{margin:1rem 0 0}.direct-await{color:var(--muted,#536975)}.direct-followup{margin:1rem 0}.direct-insulin{margin-bottom:1rem}.direct-escalation{margin:1rem 0}.direct-result{overflow-wrap:anywhere}
+
+/* Ruta completa por momento clínico. */
+.route-item{padding:.65rem 0;border-bottom:1px solid var(--line)}.route-item:last-child{border-bottom:0}.route-item h3{margin:.3rem 0}.route-item p{margin:.4rem 0}.route-context{font-size:.9rem;color:var(--muted);margin:.5rem 0 1rem}.route-task h2{margin:.5rem 0}.route-task p{margin:.5rem 0 1rem}.route-sources{margin-top:1.5rem}.route-entry .consultation-buttons>*{flex:1 1 180px}.flow-progress{gap:.3rem .7rem}.flow-progress button{font-size:.88rem}.route-task:has(+.direct-insulin){margin-bottom:.5rem}

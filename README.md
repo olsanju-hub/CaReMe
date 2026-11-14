@@ -4,7 +4,11 @@
 
 **Repositorio:** `olsanju-hub/CaReMe` · **Nombre de la aplicación:** CaHReMe
 
-## Tratamiento directo · interfaz vigente · 14/11/2026
+## Ruta completa por patología · interfaz vigente · 14/11/2026
+
+Entrada por diagnóstico reciente o enfermedad conocida. Cada una de las siete patologías tiene evaluación con pruebas a pedir/comprobar, tratamiento inicial, escaladas y seguimiento con controles. Evaluación y seguimiento se pueden consultar sin completar el formulario terapéutico. La elección del momento clínico no confirma diagnóstico ni registra pruebas realizadas. [Contrato y auditoría](docs/RUTA_COMPLETA_2026-11-14.md).
+
+## Tratamiento directo · interfaz anterior · 14/11/2026
 
 Cada patología abre directamente Tratamiento. Una sola pantalla recoge los datos necesarios y muestra la pauta propuesta automáticamente; se retiran las tandas de «Continuar» y el paso adicional de «Concretar pauta». La dosis aparece tras la comprobación explícita de seguridad, sin otro botón de cálculo. Diagnóstico y Clasificación quedan como consultas opcionales. [Cambio, validación y límites](docs/TRATAMIENTO_DIRECTO_2026-11-14.md).
 
