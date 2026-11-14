@@ -595,3 +595,6 @@ h2 { letter-spacing:-.025em }
 .home .module-content{width:100%;padding:0}
 
 .sequence-step{padding:1rem 0;border-bottom:1px solid var(--line,#dce3e6)}.sequence-step:last-child{border:0}.sequence-step details{margin:1rem 0}.sequence-data{margin:1rem 0}.sequence-data p{overflow-wrap:anywhere}.sequence-dose{margin-top:1.5rem}.sequence-dose .dose-number{overflow-wrap:anywhere}
+
+/* Tratamiento directo: una pantalla, sin tandas de Continuar. */
+.direct-check{display:flex;align-items:flex-start;gap:.65rem;margin:1rem 0;line-height:1.45;font-weight:600}.direct-check input{flex:0 0 auto;width:1.2rem;height:1.2rem;margin-top:.15rem}.direct-current{grid-column:1/-1}.direct-summary{margin:0 0 1rem}.direct-dose{padding:1rem;border:1px solid var(--line,#dce3e6);background:white;border-radius:16px}.direct-dose .form-card{padding:0;border:0;box-shadow:none}.direct-result>h2{margin-top:.75rem}.direct-dose .dm2-result{margin:1rem 0 0}.direct-await{color:var(--muted,#536975)}.direct-followup{margin:1rem 0}.direct-insulin{margin-bottom:1rem}.direct-escalation{margin:1rem 0}.direct-result{overflow-wrap:anywhere}
