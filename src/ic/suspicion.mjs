@@ -77,13 +77,7 @@ export function diagnosticNext(ctx){
 /** Presentación del próximo paso; no modifica ni sustituye las reglas clínicas. */
 export function diagnosticAction(ctx){
  const step=diagnosticNext(ctx);
- const actions={
-  study:{label:'Continuar a pruebas diagnósticas',action:'continue-study'},
-  review:{label:'Revisar pruebas diagnósticas',action:'continue-study'},
-  known:{label:'Elegir módulo de IC',action:'ic'},
-  urgent:{label:'Abrir IC descompensada (en desarrollo)',action:'open-urgent'},
-  safety:{label:'Completar valoración de seguridad',action:'complete-safety'},
-  incomplete:{label:'Completar evaluación clínica',action:'complete-review'}
- };
- return {...step,...actions[step.kind]};
+ // Navigation is not clinical authorization. Unknown stability remains unknown.
+ if(step.kind==='urgent')return {...step,label:'Abrir IC descompensada (en desarrollo)',action:'open-urgent'};
+ return {...step,route:'ic/diagnostico/pruebas',label:'Continuar a pruebas diagnósticas',action:'continue-study'};
 }

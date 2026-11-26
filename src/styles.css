@@ -775,3 +775,5 @@ body:has(.pearl-home) #app {
 .sus-next {margin-top:12px;padding-top:10px;border-top:1px solid #dce8ed;}
 .sus-next strong{display:block;color:#083748;margin-bottom:4px;}
 .sus-next .urgent-next{background:#92333b;}
+
+.study-page .study-safety{border-color:#e6cda1;}.study-safety .sus-check{margin-top:8px;}.sus-next>.text-link{white-space:normal;display:block;margin:4px auto 0;}
