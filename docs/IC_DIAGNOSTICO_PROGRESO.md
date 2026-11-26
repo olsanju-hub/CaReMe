@@ -5,7 +5,7 @@ Actualizado 2026-11-26. No iniciar clasificación hasta cierre completo de diagn
 | Apartado | Estado |
 |---|---|
 | Pantalla principal | Implementada; estructura aprobada |
-| Sospecha clínica | Prototipo interactivo implementado; pendiente de CI, revisión visual, revisión clínica independiente y aprobación |
+| Sospecha clínica | v0.1: CI, Chromium, WebKit y Pages superados (36f45bb). v0.2: refuerzo de seguridad y trazabilidad; pendiente de CI del nuevo commit, revisión clínica independiente y aprobación visual |
 | Pruebas diagnósticas | Pendiente |
 | BNP / NT-proBNP | Pendiente |
 | Ecocardiografía | Pendiente |
@@ -18,3 +18,10 @@ Fuente: ESC 2026, DOI 10.1093/eurheartj/ehag100, diagnóstico crónico, tabla 7 
 
 ## Cierre
 Cada apartado requiere pruebas, publicación, validación científica y aprobación visual del usuario. Mantener el estado explícito hasta verificar cada requisito.
+
+## Auditoría 2026-11-26 — v0.2
+- Fuente primaria: https://doi.org/10.1093/eurheartj/ehag100. Revisión de extractos de sección 5.1, tabla 7 y sección 7.2: síntomas y signos no específicos; evaluación precoz de estabilidad, congestión y perfusión. Las reglas cualitativas son una adaptación experimental, no clases de recomendación ESC ni escala validada.
+- Confirmación explícita de revisión de constantes y estabilidad antes de orientación ordinaria; no se permite marcar alarmas negativas en bloque. Las alarmas críticas prevalecen aunque existan datos desconocidos. Solo demostración con casos ficticios, no uso asistencial.
+- Identificador, versión y apartado de fuente en el resultado; nuevas pruebas de seguridad y trazabilidad.
+- Licencia: ESC declara que la integración en CDS y el despliegue operativo requieren licencia; comprobar condiciones aplicables también al desarrollo y al prototipo público: https://www.escardio.org/guidelines/clinical-practice-guidelines/esc-guidelines-licensing-for-ai-llms-and-cds-tools/. No se ha obtenido autorización ni determinado una excepción. No copiar tablas, algoritmos o contenido de guías. Evaluar finalidad prevista y clasificación de software sanitario bajo MDR UE 2017/745 antes de uso real.
+- Pendientes de cierre: revisión médica independiente documentada, resolución de licencia y evaluación regulatoria, revisión visual por el usuario. No iniciar clasificación hasta cierre del diagnóstico.
