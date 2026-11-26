@@ -801,3 +801,35 @@ body:has(.pearl-home) #app {
 .study-specific .study-row{display:flex;flex-direction:column;align-items:stretch;gap:5px;padding:6px 0;}
 .study-specific-title{margin:18px 0 10px!important;}
 .study-next{margin:14px 0 6px;}
+
+/* Pruebas diagnósticas: maqueta aprobada, cuatro filas y dos accesos sin tarjetas anidadas. */
+.study-compact{display:flex;flex-direction:column;gap:8px;}
+#app .study-compact h1{margin:0 0 4px;font-size:clamp(1.65rem,6vw,2.5rem);}
+.study-compact .ic-back{margin:0;min-height:44px;}
+.study-compact .study-context{padding:0 13px;margin:0;}
+.study-context>summary,.study-compact .study-block>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:10px;min-height:54px;color:#083748;}
+.study-context>summary::-webkit-details-marker{display:none;}
+.study-context>summary::after,.study-compact .study-block>summary::after{content:'';display:block;width:8px;height:8px;border-right:1.6px solid #176c86;border-bottom:1.6px solid #176c86;transform:rotate(45deg);margin:0 3px 4px auto;flex:0 0 8px;}
+.study-context[open]>summary::after,.study-compact .study-block[open]>summary::after{transform:rotate(225deg);margin-bottom:0;}
+.study-context>summary strong{font-size:.92rem;color:#176c86;}
+.study-context>summary small{display:block;font-size:.73rem;color:#526e7b;margin-top:3px;}
+.study-context .study-body ul{margin:8px 0;}
+.study-compact .study-blocks{gap:8px;}
+.study-compact .study-block{padding:0 13px;}
+.study-compact .study-block>summary strong{font-size:.92rem;line-height:1.2;}
+.study-compact .study-icon{width:24px;flex:0 0 24px;color:#176c86;}
+.study-compact .study-links{gap:8px;}
+.study-compact .study-specific-card{display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;gap:6px;min-height:82px;padding:8px 5px;}
+.study-compact .study-specific-card .pearl-icon{width:27px;}
+.study-compact .study-specific-card strong{font-size:clamp(.78rem,3.2vw,.95rem);}
+.study-compact .study-next{margin:2px 0 0;width:100%;}
+.study-compact .urgent-next{background:#92333b;}
+.study-foot{text-align:center;}
+.study-foot .text-link{min-height:36px;font-size:.8rem;}
+.study-foot .diagnosis-status{font-size:.67rem;margin:0;}
+.study-compact .study-alert{margin:0;padding:10px 13px;font-size:.8rem;}
+.study-compact .study-alert h2{font-size:.95rem;margin:0 0 4px;}
+.study-compact .study-alert p{margin:3px 0;font-size:.78rem;}
+.study-compact .study-alert .sus-check{margin:3px 0 0;padding:4px 0;min-height:44px;font-size:.8rem;}
+.study-compact .study-purpose{font-size:.8rem;margin:2px 0 8px;color:#365768;}
+@media(min-width:721px){.study-compact .study-specific-card{min-height:94px;}}

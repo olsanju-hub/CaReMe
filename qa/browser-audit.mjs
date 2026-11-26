@@ -10,7 +10,7 @@ try{
  for(const [name,engine,viewport] of [['chromium',chromium,{width:1280,height:800}],['webkit-mobile',webkit,{width:390,height:844}]]){
   const browser=await engine.launch();try{
    const ctx=await browser.newContext({viewport,serviceWorkers:'allow'});const page=await ctx.newPage();const errors=[];page.on('pageerror',e=>errors.push(String(e)));
-   await page.goto(url);await page.getByRole('heading',{name:'CaHReMe',exact:true}).waitFor();assert.match(await page.locator('footer').innerText(),/v0\.77/);await page.screenshot({path:'qa-results/'+name+'-home.png',fullPage:true});
+   await page.goto(url);await page.getByRole('heading',{name:'CaHReMe',exact:true}).waitFor();assert.match(await page.locator('footer').innerText(),/v0\.78/);await page.screenshot({path:'qa-results/'+name+'-home.png',fullPage:true});
    await page.getByRole('button',{name:'Insuficiencia cardíaca',exact:true}).click();await page.getByRole('heading',{name:'Insuficiencia cardiaca',exact:true}).waitFor();
    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'No horizontal overflow');
    await page.screenshot({path:'qa-results/'+name+'-ic.png',fullPage:true});
@@ -33,7 +33,7 @@ try{
      assert.equal(await page.locator('[data-review-group]').count(),0);
      await page.locator('[data-action="continue-study"]').click();await page.getByRole('heading',{name:'Pruebas diagnósticas',exact:true}).waitFor();await page.getByRole('heading',{name:'Seguridad pendiente'}).waitFor();
      await page.locator('[data-finding="vitalsReviewed"]').check();
-     await page.locator('[data-action="diagnostic-section"][data-section="sospecha"]').first().click();await page.getByRole('heading',{name:'Sospecha clínica',exact:true}).waitFor();
+     await page.locator('.study-context>summary').click();await page.locator('.study-context [data-action="diagnostic-section"][data-section="sospecha"]').click();await page.getByRole('heading',{name:'Sospecha clínica',exact:true}).waitFor();
      await page.getByRole('heading',{name:'Completar seguridad'}).waitFor();
      await page.locator('.sus-group').filter({has:page.getByText('Síntomas',{exact:true})}).locator('summary').click();
      await page.locator('[data-finding="dyspnea"]').check();
@@ -45,7 +45,14 @@ try{
      assert.match(await page.locator('#suspicion-result').innerText(),/Disnea de esfuerzo/);
      assert.equal(await page.locator('[data-finding="dyspnea"]').isChecked(),true);
      await page.locator('[data-action="continue-study"]').click();await page.getByRole('heading',{name:'Pruebas diagnósticas',exact:true}).waitFor();
-     assert.match(await page.locator('.study-page').innerText(),/Hallazgos compatibles con IC/);
+     assert.match(await page.locator('.study-context>summary').innerText(),/Hallazgos compatibles con IC/);
+     assert.equal(await page.locator('.study-block').count(),4);
+     assert.equal(await page.locator('.study-block[open]').count(),0);
+     assert.equal(await page.locator('.study-links .ic-card').count(),2);
+     assert.equal(await page.locator('[data-investigation="np"],[data-investigation="echo"]').count(),0);
+     assert.equal(await page.locator('.study-page input:visible,.study-page select:visible').count(),0);
+     if(name==='webkit-mobile')assert.ok(await page.locator('.study-next').evaluate(e=>e.getBoundingClientRect().bottom<=innerHeight),'Botón principal visible en pantalla inicial móvil');
+     await page.screenshot({path:'qa-results/'+name+'-study-compact.png',fullPage:true});
      await page.locator('.study-block').filter({has:page.getByText('Electrocardiograma',{exact:true})}).locator('summary').first().click();
      await page.locator('[data-investigation="ecg"]').selectOption('requested');
      await page.locator('[data-study-result="ecg"]').selectOption('af');
@@ -54,7 +61,7 @@ try{
      await page.locator('[data-study-result="egfr"]').fill('45');await page.locator('[data-study-result="egfr"]').press('Tab');
      assert.equal(await page.locator('[data-study-result="egfr"]').getAttribute('aria-invalid'),'false');
      assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'Pruebas sin desbordamiento');
-     await page.locator('[data-action="diagnostic-section"][data-section="sospecha"]').click();
+     await page.locator('.study-context>summary').click();await page.locator('.study-context [data-action="diagnostic-section"][data-section="sospecha"]').click();
      await page.getByRole('heading',{name:'Sospecha clínica',exact:true}).waitFor();
      await page.locator('.sus-group').filter({has:page.getByText('Síntomas',{exact:true})}).locator('summary').click();
      assert.equal(await page.locator('[data-finding="dyspnea"]').isChecked(),true);
