@@ -38,7 +38,7 @@ try{
   page.on('pageerror',error=>errors.push(error.message));
   page.on('dialog',dialog=>dialog.accept());
   page.on('request',request=>{if(!request.url().startsWith(origin+'/'))external.push(request.url());});
-  const home=async()=>{await page.locator('button.brand[data-action="home"]').click();};
+  const home=async()=>{const brand=page.locator('button.brand[data-action="home"]');if(await brand.count())await brand.click();};
   const open=async id=>{await home();await page.locator('[data-action="open-pathology"][data-pathology="'+id+'"]').click();if(id!=='cv-risk'){if(await page.locator('[data-action="route-mode"]').count())await page.locator('[data-action="route-mode"][data-mode="known"]').click();await page.locator('[data-action="flow-stage"][data-stage="3"]').first().click();}};
   const stage=async n=>{if(n===2){await page.locator('.flow-progress [data-stage="1"]').click();await page.locator('[data-action="flow-stage"][data-stage="2"]').click();return;}await page.locator('.flow-progress [data-stage="'+n+'"]').click();};
   const module=async(id,mode='quick')=>{await open(id==='insulina'?'dm2':id);await page.locator('.flow-reference summary').click();await page.locator('[data-action="flow-context"]').click();if(id==='insulina'){await page.locator('[data-action="start-module"][data-module="insulina"]').first().click();}if(mode!=='detail')await page.locator('[data-action="module-mode"][data-mode="'+mode+'"]').first().click();};
@@ -75,7 +75,7 @@ try{
    if(['home','summary','obesidad-detail'].includes(name))await page.screenshot({path:fileURLToPath(new URL(profile.id+'-'+name+'.png',output)),fullPage:name==='obesidad-detail'});
   };
 
-  await check(profile.id,'inicio: ocho patologías sin niveles de consulta',async()=>{await page.goto(origin);assert.equal(await page.locator('[data-action="open-pathology"]').count(),8);assert.equal(await page.locator('.bottom-nav,.integral-access,.task-card').count(),0);assert.ok(await page.locator('.home .module-content').evaluateAll(xs=>xs.every(x=>x.getBoundingClientRect().width>=180)));await inspect('home');});
+  await check(profile.id,'inicio: ocho patologías sin niveles de consulta',async()=>{await page.goto(origin);assert.equal(await page.locator('[data-action="open-pathology"]').count(),8);assert.equal(await page.locator('.bottom-nav,.integral-access,.task-card').count(),0);assert.ok(await page.locator('.home .module-content').evaluateAll(xs=>xs.every(x=>x.getBoundingClientRect().width>=75)));await inspect('home');});
   await check(profile.id,'teclado: acceso al contenido',async()=>{await page.keyboard.press('Tab');assert.ok(await page.locator('.skip-link').evaluate(el=>document.activeElement===el));await page.keyboard.press('Enter');assert.ok(await page.locator('#main-content').evaluate(el=>document.activeElement===el));});
   for(const id of ['dm2','hta','lipids','obesidad','erc','ic','hepatico']){
    await check(profile.id,id+': diagnóstico sin formulario extenso',async()=>{await open(id);assert.equal(await page.locator('.flow-progress [aria-current="step"]').innerText(),'Tratamiento inicial');assert.equal(await page.locator('[data-action="sequence-continue"]').count(),0);await stage(1);assert.equal(await page.locator('main input,main select').count(),0);assert.equal(await page.locator('.module-tabs,.medication-list').count(),0);await inspect(id+'-diagnosis');});

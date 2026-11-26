@@ -601,3 +601,36 @@ h2 { letter-spacing:-.025em }
 
 /* Ruta completa por momento clínico. */
 .route-item{padding:.65rem 0;border-bottom:1px solid var(--line)}.route-item:last-child{border-bottom:0}.route-item h3{margin:.3rem 0}.route-item p{margin:.4rem 0}.route-context{font-size:.9rem;color:var(--muted);margin:.5rem 0 1rem}.route-task h2{margin:.5rem 0}.route-task p{margin:.5rem 0 1rem}.route-sources{margin-top:1.5rem}.route-entry .consultation-buttons>*{flex:1 1 180px}.flow-progress{gap:.3rem .7rem}.flow-progress button{font-size:.88rem}.route-task:has(+.direct-insulin){margin-bottom:.5rem}
+
+/* Portada CaHReMe */
+body:has(.pearl-home) {
+  background:radial-gradient(ellipse at 88% 35%,#e5eef2 0%,transparent 64%),linear-gradient(145deg,#fff,#f5f8fa 58%,#edf3f5);
+}
+.pearl-home { max-width:900px; margin-inline:auto; padding-top:clamp(28px,6vw,58px); color:#083748; }
+.pearl-home h1 { font-size:clamp(2.25rem,7vw,3.25rem); margin:0 0 20px; letter-spacing:-.045em; }
+.pearl-home h2 { font-size:clamp(1.12rem,4vw,1.5rem); margin:26px 0 12px; }
+.pearl-home .pearl-card {
+  color:#083748; background:linear-gradient(150deg,rgba(255,255,255,.96),rgba(239,247,250,.76));
+  border:1px solid #fff; border-radius:20px;
+  box-shadow:inset 0 0 0 2px rgba(255,255,255,.75),inset 0 -3px 8px rgba(183,211,222,.32),0 5px 12px rgba(26,68,87,.13);
+  backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
+}
+.pearl-home .pearl-card:focus-visible { outline:3px solid #08647c; outline-offset:3px; }
+.pearl-home .pearl-card:active { transform:translateY(1px); }
+.pearl-home .pearl-integral { width:100%; min-height:96px; display:grid; grid-template-columns:36px minmax(0,1fr) auto; align-items:center; gap:12px; padding:15px; text-align:left; }
+.pearl-integral strong { display:block; font-size:clamp(1.08rem,4.6vw,1.45rem); }
+.pearl-integral small { display:block; margin-top:4px; color:#365768; line-height:1.35; }
+.home.pearl-home .module-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+.home.pearl-home .module-card { display:grid; grid-template-columns:25px minmax(0,1fr); gap:8px; min-height:76px; padding:10px; }
+.pearl-home .module-content strong { line-height:1.2; font-size:clamp(.84rem,3.5vw,1.03rem); }
+.pearl-icon { display:block; color:var(--icon,#086375); }
+.pearl-icon svg { display:block; width:100%; }
+.pearl-home [data-pathology="dm2"]{--icon:#007e87}
+.pearl-home [data-pathology="hta"]{--icon:#185cb5}
+.pearl-home [data-pathology="lipids"]{--icon:#4c65ac}
+.pearl-home [data-pathology="obesidad"]{--icon:#438225}
+.pearl-home [data-pathology="erc"]{--icon:#174776}
+.pearl-home [data-pathology="ic"]{--icon:#0076a2}
+.pearl-home [data-pathology="hepatico"]{--icon:#087047}
+.pearl-home [data-pathology="cv-risk"]{--icon:#4d7759}
+.pearl-links { display:flex; flex-wrap:wrap; justify-content:center; gap:16px; margin-top:18px; }

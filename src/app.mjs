@@ -37,6 +37,7 @@ function banner() {
   return '';
 }
 function header() {
+  if (current.page === 'home') return '';
   return `<header class="topbar"><div class="topbar-inner">
     <button class="brand" type="button" data-action="home" aria-label="Volver al inicio de CaHReMe">
       <span class="brand-mark" aria-hidden="true"><img src="./public/icon-concept.svg" alt="" /></span>
@@ -54,10 +55,33 @@ const PATHOLOGIES = [
  ['hepatico','Hígado metabólico','Riesgo de fibrosis'],['cv-risk','Prevención cardiovascular','Riesgo y estadio CKM']
 ];
 function nav() { return ''; }
+const homeIcons = {
+  "dm2": "M12 2C9 7 5 10 5 15a7 7 0 0 0 14 0c0-5-4-8-7-13ZM9 13h6v5H9z",
+  "hta": "M3 8h6v9H3z M9 13h4a3 3 0 0 0 3-3V8 M20 6a4 4 0 1 1-8 0 4 4 0 0 1 8 0ZM16 6l2-2",
+  "lipids": "M12 2C9 7 5 10 5 15a7 7 0 0 0 14 0c0-5-4-8-7-13ZM10 12h.01 M14 15h.01 M10 17h.01",
+  "obesidad": "M4 6q8-5 16 0l-2 14H6z M8 9q4-3 8 0 M12 12l2-4",
+  "erc": "M9 4C2 3 1 15 6 17c4 2 6-3 3-5-2-1 4-6 0-8ZM15 4c7-1 8 11 3 13-4 2-6-3-3-5 2-1-4-6 0-8ZM10 16v5m4-5v5",
+  "ic": "M12 21S2 15 2 8a5 5 0 0 1 10-1 5 5 0 0 1 10 1c0 7-10 13-10 13ZM4 12h4l2-4 3 7 2-3h5",
+  "hepatico": "M3 8c3-5 9-5 13-4l5 1c-2 7-7 8-11 9l-5 5c-3 1-3-7-2-11Z",
+  "cv-risk": "M12 2l8 4v6c0 5-8 10-8 10S4 17 4 12V6z M8 12l3 3 5-6",
+  "integral": "M12 3v5m0 8v5M3 12h5m8 0h5M9 9h6v6H9z M10 2h4m-4 20h4M2 10v4m20-4v4"
+};
+function homeIcon(id) {
+  return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${homeIcons[id]}"/></svg>`;
+}
 function home() {
- return `<div class="page home"><section class="quick-home"><h1>Elige la patología</h1><p>Diagnóstico reciente o enfermedad conocida: evaluación, tratamiento y próxima revisión.</p></section>
- <div class="module-grid">${PATHOLOGIES.map(([id,title,description])=>`<button type="button" class="module-card" data-action="open-pathology" data-pathology="${id}"><span class="module-content"><strong>${title}</strong><small>${description}</small></span><span class="module-arrow" aria-hidden="true">→</span></button>`).join('')}</div>
- ${counts().registrado?'<button class="ghost" type="button" data-action="new">Borrar datos para otro paciente</button>':''}</div>`;
+  return `<div class="page home pearl-home">
+    <h1>CaHReMe</h1>
+    <button type="button" class="pearl-card pearl-integral" data-action="start" data-focus="integral">
+      <span class="pearl-icon">${homeIcon('integral')}</span>
+      <span><strong>Valoración integral</strong><small>Perfil cardiorrenal, metabólico y hepático</small></span>
+      <span aria-hidden="true">→</span>
+    </button>
+    <h2>Consulta por área clínica</h2>
+    <div class="module-grid">${PATHOLOGIES.map(([id,title])=>`<button type="button" class="module-card pearl-card" data-action="open-pathology" data-pathology="${id}"><span class="pearl-icon">${homeIcon(id)}</span><span class="module-content"><strong>${title}</strong></span></button>`).join('')}</div>
+    <div class="pearl-links"><button type="button" class="text-link" data-action="sources">Fuentes</button>
+    ${counts().registrado?'<button class="text-link" type="button" data-action="new">Iniciar otro caso</button>':''}</div>
+  </div>`;
 }
 const DIAGNOSIS_GUIDANCE = {
  dm2:'Confirma el diagnóstico y el tipo de diabetes con los criterios clínicos y analíticos correspondientes. La HbA1c de seguimiento no sustituye esa evaluación. Si hay síntomas de descompensación, valora primero el contexto agudo.',
