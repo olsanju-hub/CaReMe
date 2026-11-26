@@ -691,3 +691,18 @@ body:has(.pearl-home) #app {
 .pending-card p { margin:0 0 10px; color:#365768; }
 @media (max-width:380px){.ic-page .ic-grid .ic-card { grid-template-columns:20px minmax(0,1fr); gap:5px; padding:8px; }.ic-page .ic-card small{font-size:.67rem}}
 @media (min-width:721px){.ic-page .ic-grid .ic-card{min-height:96px}.ic-page .ic-priority{grid-template-columns:1fr 1fr}.ic-page .ic-hero,.ic-page .ic-urgent{min-height:86px}}
+
+/* Diagnóstico: un acceso principal y cuatro consultas, sin otra jerarquía visual. */
+.diagnosis-page .diagnosis-primary { margin:2px 0 12px; }
+.diagnosis-page .diagnosis-primary .ic-hero { min-height:100px; }
+.diagnosis-page .diagnosis-grid { flex:0 0 auto; grid-auto-rows:minmax(108px,auto); gap:12px; }
+.diagnosis-page .diagnosis-grid .ic-card { display:flex; flex-direction:column; align-items:flex-start; justify-content:center; gap:9px; min-height:116px; padding:14px; }
+.diagnosis-page .diagnosis-grid .pearl-icon { width:32px; }
+.diagnosis-page .diagnosis-grid strong { font-size:clamp(.88rem,3.8vw,1.08rem); }
+.diagnosis-page .diagnosis-grid small { font-size:.76rem; }
+.diagnosis-links { display:flex; flex-wrap:wrap; justify-content:center; gap:4px 12px; margin:18px 0 4px; }
+.diagnosis-links button { min-height:44px; white-space:normal; }
+.diagnosis-links .diagnostic-urgent-link { color:#92333b; }
+.diagnosis-status { color:#526e7b; font-size:.73rem; text-align:center; margin:4px 0; }
+@media (max-width:380px){.diagnosis-page .diagnosis-grid .ic-card { padding:10px; min-height:112px; }.diagnosis-page .diagnosis-grid small { font-size:.7rem; }}
+@media (min-width:721px){.diagnosis-page .diagnosis-grid .ic-card { min-height:130px; }.diagnosis-page .diagnosis-grid .pearl-icon{width:36px;}}
