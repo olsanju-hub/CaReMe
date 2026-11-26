@@ -220,3 +220,28 @@ export function interpretSuspicion(ctx){
  const nextText=urgent?'Priorizar valoración urgente; no demorarla por el estudio programado.':known?'Revisar estudios disponibles y evolución de la IC.':symptoms||signs?'Completar estudio objetivo y considerar causas alternativas.':risks?'Revisar riesgo y cardiopatía previa; individualizar necesidad de pruebas.':'Completar datos si faltan y valorar pruebas si persiste sospecha.';
  return {id,title,interpretation,profile,reasoning,differential,pending,safety,next:{...navigation,text:nextText},source:{...SOURCE,version:'0.3',sections:'5.1; tabla 7; 7.2; definición universal 2026 (ehag500)'},ruleType:'Composición cualitativa local, no es escala validada ni diagnóstico confirmado'};
 }
+
+/* Solicitud orientativa y prioridades de entrada: no constituyen una orden ni umbrales terapéuticos. */
+export function labPlan(ctx){
+ const f=ctx?.findings??{},r=interpretSuspicion(ctx),p=investigationPlan(ctx);
+ const symptomatic=['nocturnal','nonspecific','fluidSymptoms','pulmonary','systemic','cardiacSigns'].some(k=>r.profile[k].length);
+ const known=f.knownHF==='yes',renal=['ckd','dm','htn'].some(k=>f[k]==='yes');
+ const congestion=['nocturnal','fluidSymptoms','pulmonary','systemic'].some(k=>r.profile[k].length);
+ const urgent=p.mode==='urgent',relevant=known||symptomatic;
+ const basal=[
+  'Hemograma completo','Creatinina, FG estimado y urea','Sodio y potasio',
+  'Cociente albúmina/creatinina urinario','Perfil hepático','Función tiroidea (TSH; ampliar según resultado)',
+  'Ferritina y saturación de transferrina','HbA1c y perfil lipídico'
+ ];
+ const emphasis=[];
+ if(renal)emphasis.push('Función renal y albuminuria: antecedentes cardiorrenales registrados.');
+ if(congestion)emphasis.push('Función renal y electrolitos: contextualizar la posible congestión.');
+ if(r.profile.nonspecific.length)emphasis.push('Hemograma y estudio férrico: valorar anemia y ferropenia en el contexto de disnea o fatiga.');
+ if(f.af==='yes')emphasis.push('Función tiroidea y electrolitos: revisar en el contexto de arritmia.');
+ if(f.dm==='yes')emphasis.push('HbA1c: revisar control glucémico y fecha del último resultado.');
+ const title=urgent?'Analítica: valoración urgente':known?'Revisar analítica previa de IC':symptomatic?'Analítica de estudio inicial de IC':'Analítica de referencia';
+ const note=urgent?'No retrasar la valoración urgente. Este listado de IC crónica no constituye un protocolo de urgencias.':!relevant?'No hay indicación individual de estudio completo de IC establecida. Usar el listado solo como referencia; valorar pruebas según riesgo y presentación.':p.mode==='incomplete'?'Estudio de referencia según hallazgos; completar la valoración pendiente antes de decidir el ámbito asistencial.':known?'Reutilizar resultados vigentes y actualizar solo los necesarios según evolución y tratamiento.':'Revisar resultados recientes antes de solicitar el estudio basal.';
+ // Priority is an interface choice, not a medical cutoff or a required test.
+ const priority=urgent?['egfr','potassium','sodium']:congestion||known?['egfr','potassium','sodium']:symptomatic?['egfr','potassium','hemoglobin']:renal?['egfr','potassium','uacr']:['egfr','potassium','sodium'];
+ return {title,note,basal,emphasis,priority,canCopy:!urgent&&relevant,source:{doi:SOURCE.doi,sections:'5.1.2 y tabla de recomendaciones 3',version:'0.1'}};
+}

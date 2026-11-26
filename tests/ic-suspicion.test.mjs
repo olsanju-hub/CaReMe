@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {GROUPS,createClinicalContext,updateFinding,evaluateSuspicion,setGroupReviewed,isGroupReviewed,toggleFinding,setEvaluationReviewed,isEvaluationReviewed,diagnosticNext,setInvestigation,diagnosticAction,setStudyResult,investigationPlan,interpretSuspicion,CLINICAL_DIMENSIONS} from '../src/ic/suspicion.mjs';
+import {GROUPS,createClinicalContext,updateFinding,evaluateSuspicion,setGroupReviewed,isGroupReviewed,toggleFinding,setEvaluationReviewed,isEvaluationReviewed,diagnosticNext,setInvestigation,diagnosticAction,setStudyResult,investigationPlan,interpretSuspicion,CLINICAL_DIMENSIONS,labPlan} from '../src/ic/suspicion.mjs';
 const allNo=()=>({findings:{...Object.fromEntries(GROUPS.flatMap(g=>g.fields.map(([id])=>[id,'no']))),vitalsReviewed:'yes'}});
 const result=(c)=>evaluateSuspicion(c).id;
 test('Datos ausentes no son negativos',()=>assert.equal(result(createClinicalContext()),'IC-SUS-03'));
@@ -65,4 +65,13 @@ test('Cobertura combinatoria por parejas de todos los ítems y estados; alarmas 
   else if(findings.worsening==='yes'){assert.equal(r.safety.level,'urgent');assert.equal(r.next.action,'open-urgent');}
   else{assert.equal(r.next.route,'ic/diagnostico/pruebas');if(findings.vitalsReviewed!=='yes')assert.equal(r.safety.level,'pending');}
  }
+});
+
+test('Analítica basal no omite albuminuria ni hierro; prioridad de entrada dinámica y limitada',()=>{
+ let c=setEvaluationReviewed(toggleFinding(createClinicalContext(),'dyspnea',true),true);c=toggleFinding(c,'vitalsReviewed',true);
+ let p=labPlan(c);assert.equal(p.priority.length,3);assert.ok(p.priority.includes('hemoglobin'));assert.ok(p.canCopy);assert.ok(p.basal.some(x=>x.includes('albúmina/creatinina')));assert.ok(p.basal.some(x=>x.includes('Ferritina')));
+ c=toggleFinding(c,'edema',true);p=labPlan(c);assert.ok(p.priority.includes('sodium'));assert.equal(p.priority.length,3);assert.equal(new Set(p.basal).size,p.basal.length);
+ c=toggleFinding(c,'dm',true);assert.ok(labPlan(c).emphasis.some(x=>x.includes('HbA1c')));
+ c=toggleFinding(c,'perfusion',true);assert.equal(labPlan(c).canCopy,false);
+ assert.equal(labPlan(createClinicalContext()).canCopy,false);
 });

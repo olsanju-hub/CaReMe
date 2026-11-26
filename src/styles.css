@@ -846,3 +846,24 @@ body:has(.pearl-home) #app {
 .sus-result .sus-next p{font-weight:400;font-size:.82rem;}
 .sus-evidence{margin-top:12px;font-size:.78rem;}
 .sus-bar-status .sus-bar-safety{margin:3px 0 0;font-size:.74rem;font-weight:600;}
+
+/* Analítica: solicitud plegada y tres datos opcionales, ampliación individual. */
+.lab-request,.lab-more{border:1px solid #dce8ed;border-radius:12px;padding:0 10px;margin:6px 0 10px;background:#ffffffa8;}
+.lab-request>summary,.lab-more>summary{cursor:pointer;min-height:44px;display:flex;flex-direction:column;justify-content:center;position:relative;padding:7px 22px 7px 0;list-style:none;color:#176c86;font-weight:650;}
+.lab-request>summary::-webkit-details-marker,.lab-more>summary::-webkit-details-marker{display:none;}
+.lab-request>summary:after,.lab-more>summary:after{content:'';position:absolute;right:4px;top:16px;width:7px;height:7px;border-right:1.6px solid #176c86;border-bottom:1.6px solid #176c86;transform:rotate(45deg);}
+.lab-request[open]>summary:after,.lab-more[open]>summary:after{transform:rotate(225deg);}
+.lab-request>summary small{font-weight:400;font-size:.73rem;color:#526e7b;margin-top:3px;}
+.lab-request ul{font-size:.82rem;}
+.lab-emphasis{border-top:1px solid #dce8ed;padding-top:6px;}
+.lab-emphasis p{font-size:.78rem;margin:3px 0!important;}
+.lab-copy-status{display:block;font-size:.74rem;color:#176c86;}
+.lab-priority h3{margin:8px 0 2px;font-size:.88rem;color:#083748;}
+.lab-priority h3 small{font-weight:400;color:#526e7b;font-size:.72rem;margin-left:6px;}
+.lab-compact-field{padding:4px 0;grid-template-columns:minmax(0,1fr) 88px;min-height:52px;}
+.lab-compact-field .study-value small:empty{display:none;}
+.lab-compact-field .study-value input{height:44px;text-align:right;padding:5px 8px;}
+.lab-choices{display:flex;flex-wrap:wrap;gap:6px;padding:4px 0 10px;}
+.lab-add-choice{min-height:44px;border:1px solid #bed3db;background:#fff;color:#176c86;padding:6px 10px;border-radius:10px;font-size:.76rem;}
+.lab-add-choice[hidden],.lab-extra-fields [hidden]{display:none!important;}
+.lab-note{font-size:.72rem!important;margin:4px 0!important;}
