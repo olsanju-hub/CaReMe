@@ -78,7 +78,7 @@ function home() {
       <span aria-hidden="true">→</span>
     </button>
     <h2>Consulta por área clínica</h2>
-    <div class="module-grid">${PATHOLOGIES.map(([id,title])=>`<button type="button" class="module-card pearl-card" data-action="open-pathology" data-pathology="${id}"><span class="pearl-icon">${homeIcon(id)}</span><span class="module-content"><strong>${title}</strong></span></button>`).join('')}</div>
+    <div class="module-grid">${PATHOLOGIES.map(([id,title])=>`<button type="button" class="module-card" data-action="open-pathology" data-pathology="${id}"><span class="pearl-icon">${homeIcon(id)}</span><span class="module-content"><strong>${title}</strong></span></button>`).join('')}</div>
     <div class="pearl-links"><button type="button" class="text-link" data-action="sources">Fuentes</button>
     ${counts().registrado?'<button class="text-link" type="button" data-action="new">Iniciar otro caso</button>':''}</div>
   </div>`;

@@ -609,14 +609,14 @@ body:has(.pearl-home) {
 .pearl-home { max-width:900px; margin-inline:auto; padding-top:clamp(28px,6vw,58px); color:#083748; }
 .pearl-home h1 { font-size:clamp(2.25rem,7vw,3.25rem); margin:0 0 20px; letter-spacing:-.045em; }
 .pearl-home h2 { font-size:clamp(1.12rem,4vw,1.5rem); margin:26px 0 12px; }
-.pearl-home .pearl-card {
+.pearl-home :is(.pearl-card,.module-card) {
   color:#083748; background:linear-gradient(150deg,rgba(255,255,255,.96),rgba(239,247,250,.76));
   border:1px solid #fff; border-radius:20px;
   box-shadow:inset 0 0 0 2px rgba(255,255,255,.75),inset 0 -3px 8px rgba(183,211,222,.32),0 5px 12px rgba(26,68,87,.13);
   backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
 }
-.pearl-home .pearl-card:focus-visible { outline:3px solid #08647c; outline-offset:3px; }
-.pearl-home .pearl-card:active { transform:translateY(1px); }
+.pearl-home :is(.pearl-card,.module-card):focus-visible { outline:3px solid #08647c; outline-offset:3px; }
+.pearl-home :is(.pearl-card,.module-card):active { transform:translateY(1px); }
 .pearl-home .pearl-integral { width:100%; min-height:96px; display:grid; grid-template-columns:36px minmax(0,1fr) auto; align-items:center; gap:12px; padding:15px; text-align:left; }
 .pearl-integral strong { display:block; font-size:clamp(1.08rem,4.6vw,1.45rem); }
 .pearl-integral small { display:block; margin-top:4px; color:#365768; line-height:1.35; }
