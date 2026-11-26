@@ -905,3 +905,32 @@ body:has(.pearl-home) #app {
 .echo-integration{border-top:1px solid #dce8ed;margin-top:8px;padding-top:8px;}
 .echo-integration h3{margin:2px 0 5px;color:#083748;font-size:.95rem;}
 .echo-integration details summary{color:#176c86;cursor:pointer;font-weight:600;}
+
+/* Echo: mutually exclusive form and conclusion, compact viewport layout. */
+#app .echo-page{gap:8px;padding-top:12px;padding-bottom:12px;}
+#app .echo-page h1{margin:0 0 3px;line-height:1.15;}
+.echo-page .ic-back{margin:0;}
+.echo-page .np-inputs,.echo-page .echo-result{padding:10px 14px;}
+.echo-form .echo-primary .echo-field{min-height:54px;}
+.echo-form .echo-optional{margin:0;padding:0;border-top:1px solid #dce8ed;}
+.echo-form .echo-optional>summary{min-height:44px;display:flex;align-items:center;justify-content:space-between;list-style:none;padding:7px 0;}
+.echo-form .echo-optional>summary::-webkit-details-marker{display:none;}
+.echo-form .echo-optional>summary:after,.echo-justification>summary:after{content:'';flex:0 0 7px;height:7px;border-right:1.5px solid #176c86;border-bottom:1.5px solid #176c86;transform:rotate(45deg);margin:0 4px 4px 8px;}
+.echo-form .echo-optional[open]>summary:after,.echo-justification[open]>summary:after{transform:rotate(225deg);}
+.echo-optional-note,.echo-disclaimer{margin:4px 0 0;font-size:.73rem;color:#526e7b;text-align:center;}
+.echo-skip{min-height:44px;align-self:center;}
+.echo-metric{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+.echo-metric small{color:#526e7b;font-size:.83rem;}
+.echo-metric strong{color:#176c86;font-size:1.8rem;line-height:1.15;}
+.echo-result h2{margin:5px 0 8px;font-size:1.13rem;line-height:1.2;}
+.echo-result .echo-integration{margin-top:5px;padding-top:7px;}
+.echo-result .echo-integration h3{margin:0 0 4px;line-height:1.25;}
+.echo-result .echo-integration p{margin:0 0 5px;line-height:1.4;}
+.echo-justification{margin:4px 0 0!important;}
+.echo-justification>summary{min-height:44px;display:flex;align-items:center;justify-content:space-between;list-style:none;color:#176c86;font-weight:650;}
+.echo-justification>summary::-webkit-details-marker{display:none;}
+.echo-safety{padding:7px 10px;border-radius:10px;background:#edf5f5;color:#365768;font-size:.8rem;line-height:1.35;}
+.echo-safety.pending{background:#fff8e9;color:#79581d;}
+.echo-safety.urgent{background:#fff0f0;color:#92333b;}
+.echo-safety p{margin:3px 0 0;font-size:.77rem;}
+#app:has(.echo-page)>.footer{padding:8px 12px;font-size:.65rem;}
