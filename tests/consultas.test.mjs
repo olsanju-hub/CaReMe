@@ -75,7 +75,7 @@ test('navegación rápida / detallada / resumen conserva los datos capturados', 
   click('home');
   assert.ok(root.innerHTML.includes('Borrar datos para otro paciente'));
   click('new');
-  assert.ok(root.innerHTML.includes('Elige la patología'));
+  assert.ok(root.innerHTML.includes('Consulta por área clínica'));
   assert.ok(!root.innerHTML.includes('Borrar datos para otro paciente'));
 });
 
