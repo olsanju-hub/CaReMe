@@ -31,3 +31,20 @@ export function evaluateSuspicion(ctx){
  if(!complete('risk'))return result('IC-SUS-09','pending','Completar antecedentes','Revisa los factores de riesgo restantes. No se puede asumir que están ausentes.');
  return result('IC-SUS-10','review','Sin hallazgos registrados compatibles','La evaluación no identifica los hallazgos seleccionados. Esto no excluye IC; si la sospecha persiste, completa el estudio clínico.');
 }
+
+// Una casilla vacía no equivale a un negativo hasta revisar el bloque explícitamente.
+export function setGroupReviewed(ctx,groupId,reviewed){
+ const group=GROUPS.find(g=>g.id===groupId);
+ if(!group||typeof reviewed!=='boolean')return ctx;
+ let next=ctx;
+ for(const [id] of group.fields)if(ctx.findings[id]!=='yes')next=updateFinding(next,id,reviewed?'no':'unknown');
+ return next;
+}
+export function isGroupReviewed(ctx,groupId){
+ const group=GROUPS.find(g=>g.id===groupId);
+ return !!group&&group.fields.every(([id])=>['yes','no'].includes(ctx.findings[id]));
+}
+export function toggleFinding(ctx,id,checked){
+ if(typeof checked!=='boolean')return ctx;
+ return updateFinding(ctx,id,checked?'yes':'unknown');
+}

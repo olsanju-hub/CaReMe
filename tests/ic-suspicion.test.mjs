@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {GROUPS,createClinicalContext,updateFinding,evaluateSuspicion} from '../src/ic/suspicion.mjs';
+import {GROUPS,createClinicalContext,updateFinding,evaluateSuspicion,setGroupReviewed,isGroupReviewed,toggleFinding} from '../src/ic/suspicion.mjs';
 const allNo=()=>({findings:{...Object.fromEntries(GROUPS.flatMap(g=>g.fields.map(([id])=>[id,'no']))),vitalsReviewed:'yes'}});
 const result=(c)=>evaluateSuspicion(c).id;
 test('Datos ausentes no son negativos',()=>assert.equal(result(createClinicalContext()),'IC-SUS-03'));
@@ -16,3 +16,7 @@ test('Dato desconocido y dato inválido',()=>{assert.equal(result(updateFinding(
 test('Constantes no valoradas bloquean orientación ordinaria',()=>{for(const v of ['unknown','no'])assert.equal(result(updateFinding(allNo(),'vitalsReviewed',v)),'IC-SUS-03');});
 test('Alarma crítica prevalece sobre constantes pendientes y empeoramiento',()=>assert.equal(result({findings:{respiratory:'yes',worsening:'yes',vitalsReviewed:'no'}}),'IC-SUS-01'));
 test('Trazabilidad de las salidas',()=>{for(const c of [allNo(),createClinicalContext(),{findings:{perfusion:'yes'}}]){const r=evaluateSuspicion(c);assert.ok(r.id&&r.source.doi&&r.source.sections&&r.source.version&&r.ruleType);}});
+
+test('Casilla vacía no implica ausencia',()=>{let c=toggleFinding(createClinicalContext(),'dyspnea',true);assert.equal(c.findings.dyspnea,'yes');c=toggleFinding(c,'dyspnea',false);assert.equal(c.findings.dyspnea,'unknown');assert.equal(isGroupReviewed(c,'symptoms'),false);});
+test('Confirmar revisión solo convierte no marcados en negativos',()=>{let c=toggleFinding(createClinicalContext(),'respiratory',true);c=setGroupReviewed(c,'alarms',true);assert.equal(c.findings.respiratory,'yes');assert.equal(c.findings.perfusion,'no');assert.equal(c.findings.vitalsReviewed,undefined);assert.equal(result(c),'IC-SUS-01');assert.equal(isGroupReviewed(c,'alarms'),true);c=setGroupReviewed(c,'alarms',false);assert.equal(c.findings.respiratory,'yes');assert.equal(c.findings.perfusion,'unknown');});
+test('Revisión de alarmas sin constantes mantiene bloqueo',()=>{let c=setGroupReviewed(createClinicalContext(),'alarms',true);assert.equal(result(c),'IC-SUS-03');c=toggleFinding(c,'vitalsReviewed',true);assert.equal(result(c),'IC-SUS-06');c=toggleFinding(c,'perfusion',true);assert.equal(result(c),'IC-SUS-01');c=toggleFinding(c,'perfusion',false);assert.equal(result(c),'IC-SUS-03');});

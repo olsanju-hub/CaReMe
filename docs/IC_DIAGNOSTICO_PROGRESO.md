@@ -5,7 +5,7 @@ Actualizado 2026-11-26. No iniciar clasificación hasta cierre completo de diagn
 | Apartado | Estado |
 |---|---|
 | Pantalla principal | Implementada; estructura aprobada |
-| Sospecha clínica | v0.1: CI, Chromium, WebKit y Pages superados (36f45bb). v0.2: refuerzo de seguridad y trazabilidad; pendiente de CI del nuevo commit, revisión clínica independiente y aprobación visual |
+| Sospecha clínica | v0.1: CI, Chromium, WebKit y Pages superados (36f45bb). v0.2: CI, Chromium, WebKit y Pages superados (396c7f3). Interfaz de casillas: implementada, pendiente de CI y publicación; revisión clínica independiente y aprobación visual pendientes |
 | Pruebas diagnósticas | Pendiente |
 | BNP / NT-proBNP | Pendiente |
 | Ecocardiografía | Pendiente |
@@ -25,3 +25,6 @@ Cada apartado requiere pruebas, publicación, validación científica y aprobaci
 - Identificador, versión y apartado de fuente en el resultado; nuevas pruebas de seguridad y trazabilidad.
 - Licencia: ESC declara que la integración en CDS y el despliegue operativo requieren licencia; comprobar condiciones aplicables también al desarrollo y al prototipo público: https://www.escardio.org/guidelines/clinical-practice-guidelines/esc-guidelines-licensing-for-ai-llms-and-cds-tools/. No se ha obtenido autorización ni determinado una excepción. No copiar tablas, algoritmos o contenido de guías. Evaluar finalidad prevista y clasificación de software sanitario bajo MDR UE 2017/745 antes de uso real.
 - Pendientes de cierre: revisión médica independiente documentada, resolución de licencia y evaluación regulatoria, revisión visual por el usuario. No iniciar clasificación hasta cierre del diagnóstico.
+
+## Interfaz de selección directa
+Se sustituyen desplegables Sí/No/Sin valorar por casillas. Marcado = presente; desmarcado = desconocido hasta confirmación expresa de revisión de cada bloque. La confirmación convierte exclusivamente los no marcados en ausentes; los positivos no se alteran. En alarmas se exige confirmación explícita de ausencia de las no marcadas y una casilla separada de constantes revisadas. Desmarcar un positivo vuelve a desconocido. Se mantiene la precedencia de alarmas y el bloqueo por datos de seguridad pendientes. La confirmación de revisión no es una inferencia automática de normalidad. No se modifica la lógica clínica ni el estado de validación.
