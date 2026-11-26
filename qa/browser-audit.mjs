@@ -24,13 +24,13 @@ try{
    for(const id of ['asistente','sospecha','pruebas','peptidos','ecocardiografia']){
     await page.locator('[data-action="diagnostic-section"][data-section="'+id+'"]').click();if(id==='sospecha'){
      await page.getByRole('heading',{name:'Sospecha clínica',exact:true}).waitFor();await page.getByRole('heading',{name:'Completar seguridad'}).waitFor();
-     await page.locator('[data-finding="respiratory"]').check();await page.getByRole('heading',{name:'Alarma clínica'}).waitFor();
+     await page.locator('[data-finding="respiratory"]').check();await page.getByRole('heading',{name:'Alarma clínica'}).waitFor();assert.match(await page.locator('.sus-bar').innerText(),/Alarma clínica/);
      await page.locator('[data-finding="respiratory"]').uncheck();
      await page.getByRole('heading',{name:'Completar seguridad'}).waitFor();
      await page.locator('[data-review-group="alarms"]').check();await page.getByRole('heading',{name:'Completar seguridad'}).waitFor();
      await page.locator('[data-finding="vitalsReviewed"]').check();await page.getByRole('heading',{name:'Evaluación clínica incompleta'}).waitFor();
      await page.locator('.sus-group').filter({has:page.getByText('Síntomas',{exact:true})}).locator('summary').click();
-     await page.locator('[data-finding="dyspnea"]').check();await page.getByRole('heading',{name:'Hallazgos compatibles con IC'}).waitFor();
+     await page.locator('[data-finding="dyspnea"]').check();await page.getByRole('heading',{name:'Hallazgos compatibles con IC'}).waitFor();assert.match(await page.locator('.sus-bar').innerText(),/Hallazgos compatibles con IC/);await page.locator('[data-action="show-suspicion-result"]').click();assert.equal(await page.evaluate(()=>document.activeElement.id),'suspicion-conclusion');assert.match(await page.locator('#suspicion-result').innerText(),/Disnea de esfuerzo/);
      await page.locator('[data-review-group="symptoms"]').check();assert.equal(await page.locator('[data-finding="dyspnea"]').isChecked(),true);
      await page.locator('[data-finding="dyspnea"]').uncheck();assert.equal(await page.locator('[data-review-group="symptoms"]').isChecked(),false);
      await page.getByRole('heading',{name:'Evaluación clínica incompleta'}).waitFor();

@@ -28,3 +28,6 @@ Cada apartado requiere pruebas, publicación, validación científica y aprobaci
 
 ## Interfaz de selección directa
 Se sustituyen desplegables Sí/No/Sin valorar por casillas. Marcado = presente; desmarcado = desconocido hasta confirmación expresa de revisión de cada bloque. La confirmación convierte exclusivamente los no marcados en ausentes; los positivos no se alteran. En alarmas se exige confirmación explícita de ausencia de las no marcadas y una casilla separada de constantes revisadas. Desmarcar un positivo vuelve a desconocido. Se mantiene la precedencia de alarmas y el bloqueo por datos de seguridad pendientes. La confirmación de revisión no es una inferencia automática de normalidad. No se modifica la lógica clínica ni el estado de validación.
+
+## Conclusión visible
+Versión de casillas (2402069): CI, Chromium, WebKit y Pages superados. Se mueve la conclusión al final y se añade barra fija con estado actualizado, aviso de alarma y acceso directo a la conclusión. El resultado muestra hallazgos presentes, datos pendientes y siguiente paso si procede; no enlaza a un estudio aún no implementado como si fuera operativo. Sin cambios en reglas clínicas. Nueva publicación y revisión visual pendientes.
