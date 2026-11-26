@@ -10,7 +10,7 @@ try{
  for(const [name,engine,viewport] of [['chromium',chromium,{width:1280,height:800}],['webkit-mobile',webkit,{width:390,height:844}]]){
   const browser=await engine.launch();try{
    const ctx=await browser.newContext({viewport,serviceWorkers:'allow'});const page=await ctx.newPage();const errors=[];page.on('pageerror',e=>errors.push(String(e)));
-   await page.goto(url);await page.getByRole('heading',{name:'CaHReMe',exact:true}).waitFor();assert.match(await page.locator('footer').innerText(),/v0\.76/);await page.screenshot({path:'qa-results/'+name+'-home.png',fullPage:true});
+   await page.goto(url);await page.getByRole('heading',{name:'CaHReMe',exact:true}).waitFor();assert.match(await page.locator('footer').innerText(),/v0\.77/);await page.screenshot({path:'qa-results/'+name+'-home.png',fullPage:true});
    await page.getByRole('button',{name:'Insuficiencia cardíaca',exact:true}).click();await page.getByRole('heading',{name:'Insuficiencia cardiaca',exact:true}).waitFor();
    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'No horizontal overflow');
    await page.screenshot({path:'qa-results/'+name+'-ic.png',fullPage:true});
@@ -46,7 +46,14 @@ try{
      assert.equal(await page.locator('[data-finding="dyspnea"]').isChecked(),true);
      await page.locator('[data-action="continue-study"]').click();await page.getByRole('heading',{name:'Pruebas diagnósticas',exact:true}).waitFor();
      assert.match(await page.locator('.study-page').innerText(),/Hallazgos compatibles con IC/);
+     await page.locator('.study-block').filter({has:page.getByText('Electrocardiograma',{exact:true})}).locator('summary').first().click();
      await page.locator('[data-investigation="ecg"]').selectOption('requested');
+     await page.locator('[data-study-result="ecg"]').selectOption('af');
+     await page.locator('.study-block').filter({has:page.getByText('Analítica',{exact:true})}).locator('summary').first().click();
+     await page.getByText('Hemograma y riñón',{exact:true}).click();
+     await page.locator('[data-study-result="egfr"]').fill('45');await page.locator('[data-study-result="egfr"]').press('Tab');
+     assert.equal(await page.locator('[data-study-result="egfr"]').getAttribute('aria-invalid'),'false');
+     assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'Pruebas sin desbordamiento');
      await page.locator('[data-action="diagnostic-section"][data-section="sospecha"]').click();
      await page.getByRole('heading',{name:'Sospecha clínica',exact:true}).waitFor();
      await page.locator('.sus-group').filter({has:page.getByText('Síntomas',{exact:true})}).locator('summary').click();
@@ -63,7 +70,7 @@ try{
      assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'Sospecha sin desbordamiento horizontal');
      await page.screenshot({path:'qa-results/'+name+'-suspicion.png',fullPage:true});
     }else if(id==='asistente'){await page.getByRole('heading',{name:'Recorrido guiado'}).waitFor();await page.locator('[data-action="ic"]').first().click();await page.locator('[data-action="ic-section"][data-section="diagnostico"]').click();continue;}
-    else if(id==='pruebas'){await page.getByRole('heading',{name:'Pruebas diagnósticas',exact:true}).waitFor();assert.equal(await page.locator('[data-investigation="ecg"]').inputValue(),'requested');}
+    else if(id==='pruebas'){await page.getByRole('heading',{name:'Pruebas diagnósticas',exact:true}).waitFor();assert.equal(await page.locator('[data-investigation="ecg"]').inputValue(),'requested');assert.equal(await page.locator('[data-study-result="ecg"]').inputValue(),'af');assert.equal(await page.locator('[data-study-result="egfr"]').inputValue(),'45');}
     else await page.getByRole('heading',{name:'Pendiente de desarrollo'}).waitFor();
     await page.locator('[data-action="diagnosis"]').click();await page.getByRole('heading',{name:'Diagnóstico',exact:true}).waitFor();
    }

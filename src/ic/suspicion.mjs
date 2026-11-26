@@ -11,7 +11,7 @@ export const GROUPS=[
  ['knownHF','Diagnóstico previo de IC'],['cardiac','Cardiopatía isquémica, valvulopatía o miocardiopatía'],['htn','Hipertensión arterial'],['dm','Diabetes'],['ckd','Enfermedad renal crónica'],['obesity','Obesidad'],['af','Fibrilación auricular u otra arritmia relevante'],['toxins','Exposición a cardiotóxicos o consumo perjudicial de alcohol'],['family','Antecedentes familiares de miocardiopatía']]}
 ];
 const fields=[...GROUPS.flatMap(g=>g.fields.map(([id])=>id)),'vitalsReviewed'];
-export function createClinicalContext(){return {findings:{},investigations:{},updatedAt:null};}
+export function createClinicalContext(){return {findings:{},investigations:{},results:{},updatedAt:null};}
 export function updateFinding(ctx,id,value){if(!fields.includes(id)||!['yes','no','unknown'].includes(value))return ctx;return {...ctx,findings:{...ctx.findings,[id]:value},updatedAt:new Date().toISOString()};}
 export function evaluateSuspicion(ctx){
  const f=ctx?.findings??{},val=id=>['yes','no'].includes(f[id])?f[id]:'unknown';
@@ -80,4 +80,65 @@ export function diagnosticAction(ctx){
  // Navigation is not clinical authorization. Unknown stability remains unknown.
  if(step.kind==='urgent')return {...step,label:'Abrir IC descompensada (en desarrollo)',action:'open-urgent'};
  return {...step,route:'ic/diagnostico/pruebas',label:'Continuar a pruebas diagnósticas',action:'continue-study'};
+}
+
+/* Educational work-up planning. No lab cutoffs, diagnostic confirmation or prescribing. */
+export const LAB_FIELDS=[
+ ['hemoglobin','Hemoglobina','g/dL','Anemia y causas alternativas de disnea'],
+ ['creatinine','Creatinina','mg/dL','Función renal y seguridad de medicación'],
+ ['egfr','FG estimado','mL/min/1,73 m²','Clasificación renal y elegibilidad terapéutica'],
+ ['uacr','Cociente albúmina/creatinina','mg/g','Daño renal y riesgo cardiorrenal'],
+ ['potassium','Potasio','mmol/L','Seguridad de tratamientos que modifican el potasio'],
+ ['sodium','Sodio','mmol/L','Balance hidroelectrolítico'],
+ ['urea','Urea','mg/dL','Evaluación renal y estado de volumen'],
+ ['hba1c','HbA1c','%','Contexto glucémico'],
+ ['ferritin','Ferritina','µg/L','Reservas de hierro'],
+ ['tsat','Saturación de transferrina','%','Disponibilidad de hierro'],
+ ['tsh','TSH','mUI/L','Posible contribución tiroidea'],
+ ['alt','ALT','U/L','Valoración hepática'],
+ ['ast','AST','U/L','Valoración hepática'],
+ ['bilirubin','Bilirrubina total','mg/dL','Valoración hepática'],
+ ['ldl','LDL','mg/dL','Riesgo aterosclerótico'],
+ ['hdl','HDL','mg/dL','Perfil lipídico'],
+ ['totalChol','Colesterol total','mg/dL','Perfil lipídico'],
+ ['triglycerides','Triglicéridos','mg/dL','Perfil lipídico']
+];
+export const REPORT_FIELDS={
+ ecg:{label:'Hallazgo principal del ECG',options:[['unknown','Sin interpretar'],['normal','Sin alteraciones relevantes descritas'],['af','Fibrilación auricular'],['conduction','Alteración de conducción'],['ischemia','Alteraciones sugestivas de isquemia'],['other','Otras alteraciones']]},
+ rx:{label:'Hallazgo principal de radiografía',options:[['unknown','Sin interpretar'],['normal','Sin alteraciones relevantes descritas'],['congestion','Signos de congestión'],['effusion','Derrame pleural'],['pulmonary','Alteración pulmonar alternativa'],['other','Otros hallazgos']]}
+};
+export function setStudyResult(ctx,id,raw){
+ const lab=LAB_FIELDS.find(x=>x[0]===id),report=REPORT_FIELDS[id];
+ if(!lab&&!report)return ctx;
+ let value;
+ if(lab){
+  if(typeof raw!=='string'&&typeof raw!=='number')return ctx;
+  const s=String(raw).trim().replace(',','.');
+  if(!s)value=null;
+  else if(!/^\d+(?:\.\d+)?$/.test(s)||!Number.isFinite(Number(s))||Number(s)<0||(id==='tsat'&&Number(s)>100)||(id==='hba1c'&&Number(s)>100))return ctx;
+  else value=Number(s);
+ }else{
+  if(!report.options.some(x=>x[0]===raw))return ctx;
+  value=raw==='unknown'?null:raw;
+ }
+ const results={...ctx.results};
+ if(value===null)delete results[id];else results[id]={value,unit:lab?.[2]??null,recordedAt:new Date().toISOString(),source:'Introducción manual; fecha de muestra no registrada'};
+ return {...ctx,results,updatedAt:new Date().toISOString()};
+}
+export function investigationPlan(ctx){
+ const f=ctx?.findings??{},step=diagnosticNext(ctx);
+ const symptomatic=GROUPS.filter(g=>['symptoms','signs'].includes(g.id)).some(g=>g.fields.some(([id])=>f[id]==='yes'));
+ const known=f.knownHF==='yes';
+ const mode=step.kind==='urgent'?'urgent':step.kind==='safety'||step.kind==='incomplete'?'incomplete':known?'known':symptomatic?'suspected':'review';
+ const basal=mode==='suspected'?'Estudio inicial de sospecha':mode==='known'?'Revisar estudios previos y necesidad de actualización':mode==='urgent'?'No demorar la valoración urgente por este registro':'Consultar estudio de referencia; valoración clínica pendiente o sin indicación individual establecida';
+ const targeted=[];
+ if(f.cardiac==='yes')targeted.push({id:'cardiac',text:'Precisar la cardiopatía previa y revisar informes: valorar estudios de isquemia o valvulopatía según etiología concreta.'});
+ if(f.af==='yes'||ctx?.results?.ecg?.value==='af')targeted.push({id:'rhythm',text:'Documentar ritmo y frecuencia; valorar monitorización adicional si existe sospecha de arritmia intermitente.'});
+ if(f.toxins==='yes')targeted.push({id:'toxins',text:'Identificar exposición, dosis acumulada y cronología; valorar estudio dirigido y coordinación especializada.'});
+ if(f.family==='yes')targeted.push({id:'family',text:'Revisar historia familiar y fenotipo; valorar estudio especializado de miocardiopatía.'});
+ if(f.ckd==='yes'||f.dm==='yes'||f.htn==='yes')targeted.push({id:'renal',text:'Revisar FG y albuminuria por antecedentes cardiorrenales.'});
+ if(f.obesity==='yes')targeted.push({id:'obesity',text:'Tener presente la obesidad al interpretar péptidos natriuréticos y causas de disnea.'});
+ if(ctx?.results?.ecg?.value==='ischemia')targeted.push({id:'ischemia',text:'Aclarar si los cambios son nuevos y si hay síntomas agudos; valorar urgencia antes de estudio etiológico electivo.'});
+ if(ctx?.results?.rx?.value==='pulmonary')targeted.push({id:'pulmonary',text:'Revisar el hallazgo pulmonar y dirigir las pruebas a la causa alternativa sospechada.'});
+ return {mode,basal,targeted,source:{doi:SOURCE.doi,sections:'5.1.2 y 5.3; tabla de recomendaciones 3',version:'0.1',type:'Adaptación educativa, pendiente de validación'}};
 }

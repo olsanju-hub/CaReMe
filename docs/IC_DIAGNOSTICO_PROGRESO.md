@@ -6,7 +6,7 @@ Actualizado 2026-11-26. No iniciar clasificación hasta cierre completo de diagn
 |---|---|
 | Pantalla principal | Implementada; estructura aprobada |
 | Sospecha clínica | v0.1: CI, Chromium, WebKit y Pages superados (36f45bb). v0.2: CI, Chromium, WebKit y Pages superados (396c7f3). Interfaz de casillas: implementada, pendiente de CI y publicación; revisión clínica independiente y aprobación visual pendientes |
-| Pruebas diagnósticas | Registro inicial conectado; indicaciones específicas e interpretación pendientes |
+| Pruebas diagnósticas | v0.77: plan contextual, registro ECG/Rx/analítica y accesos específicos implementados; revisión técnica, clínica y visual pendientes |
 | BNP / NT-proBNP | Pendiente |
 | Ecocardiografía | Pendiente |
 | Asistente diagnóstico integrado | Entrada guiada disponible; integración completa pendiente |
@@ -46,3 +46,6 @@ v0.74 (5b8f66e) superó CI, navegador y publicación. v0.75 añade una acción v
 
 ## Continuidad sin bloqueo de navegación (v0.76)
 Se distingue acceso a pruebas de autorización de manejo ambulatorio. El botón principal en la conclusión abre pruebas diagnósticas incluso si falta revisión de seguridad o existe IC conocida, conservando todos los datos. El registro de pruebas muestra contexto, advertencia de seguridad y permite comprobar las constantes sin regresar; las alarmas no revisadas se mantienen desconocidas. La alarma positiva conserva prioridad urgente y no ofrece continuación ambulatoria como paso recomendado. Se prueba el caso de la captura del usuario. No se implementan nuevas indicaciones ni se confirma IC por síntomas; validación y licencia pendientes.
+
+## Pruebas diagnósticas v0.77
+v0.76 superó CI, navegador y Pages. Fuente primaria consultada: ESC 2026, DOI 10.1093/eurheartj/ehag100, sección 5.1.2 y tabla de recomendaciones 3; la radiografía se incluye en el estudio inicial, no solo ante hallazgos condicionantes. Se separa sospecha, IC conocida, información incompleta y urgencia. Se incorporan registros manuales ECG y Rx, analítica numérica con unidades, estado de pruebas y estudio etiológico contextual. BNP/NT-proBNP y ecocardiografía conservan sus propios accesos; no se duplican valores ni interpretación. El registro no es prescripción ni confirma IC. Fecha de muestra, interpretación de valores, recomendaciones individualizadas, licencia y validación independiente quedan pendientes; la app sigue en modo educativo. Revisión bibliográfica parcial de publicación original, no acceso verificado al texto íntegro. Pendiente aprobación del usuario antes de avanzar a los asistentes específicos.
