@@ -11,7 +11,7 @@ export const GROUPS=[
  ['knownHF','Diagnóstico previo de IC'],['cardiac','Cardiopatía isquémica, valvulopatía o miocardiopatía'],['htn','Hipertensión arterial'],['dm','Diabetes'],['ckd','Enfermedad renal crónica'],['obesity','Obesidad'],['af','Fibrilación auricular u otra arritmia relevante'],['toxins','Exposición a cardiotóxicos o consumo perjudicial de alcohol'],['family','Antecedentes familiares de miocardiopatía']]}
 ];
 const fields=[...GROUPS.flatMap(g=>g.fields.map(([id])=>id)),'vitalsReviewed'];
-export function createClinicalContext(){return {findings:{},investigations:{},results:{},peptides:{},updatedAt:null};}
+export function createClinicalContext(){return {findings:{},investigations:{},results:{},peptides:{},echo:{},updatedAt:null};}
 export function updateFinding(ctx,id,value){if(!fields.includes(id)||!['yes','no','unknown'].includes(value))return ctx;return {...ctx,findings:{...ctx.findings,[id]:value},updatedAt:new Date().toISOString()};}
 export function evaluateSuspicion(ctx){
  const f=ctx?.findings??{},val=id=>['yes','no'].includes(f[id])?f[id]:'unknown';
@@ -300,6 +300,69 @@ export function interpretPeptide(ctx){
   if(kind==='nt'&&!Number.isFinite(age)&&v>=low)notes.push('Falta edad para aplicar el umbral orientativo ajustado.');
  }
  if(known&&id==='NP-01'){title='Valor bajo en IC conocida';text='No excluye ni revoca la IC previa. Interpretar según situación basal, tratamiento y evolución.';}
- const next=urgent?{label:'IC descompensada (en desarrollo)',section:'descompensada',text:'Priorizar valoración urgente; el resultado no modifica esa prioridad.'}:{label:'Continuar a ecocardiografía',section:'ecocardiografia',text:id==='NP-01'?'Valorar ecocardiografía si persiste sospecha o existe indicación clínica.':'Integrar el resultado con la evaluación objetiva. La ecocardiografía todavía está en desarrollo.'};
+ const next=urgent?{label:'IC descompensada (en desarrollo)',section:'descompensada',text:'Priorizar valoración urgente; el resultado no modifica esa prioridad.'}:{label:'Continuar a ecocardiografía',section:'ecocardiografia',text:id==='NP-01'?'Valorar ecocardiografía si persiste sospecha o existe indicación clínica.':'Integrar el resultado con la evaluación objetiva. Continuar al módulo de ecocardiografía.'};
  return {id,title,text,kind,context,age,value:v,low,high,notes,factors,urgent,next,source};
+}
+
+/* Echo values are entered from a report, never inferred from missing data. */
+export const ECHO_FINDINGS=[
+ ['diastolic','Disfunción diastólica'],['lvh','Hipertrofia ventricular izquierda'],
+ ['la','Dilatación auricular izquierda'],['filling','Presiones de llenado elevadas'],
+ ['valve','Valvulopatía significativa'],['rv','Disfunción ventricular derecha'],
+ ['regional','Alteraciones segmentarias de la contractilidad'],['ph','Hipertensión pulmonar']
+];
+export const ECHO_NUMERIC=[
+ ['ef','FEVI actual','%'],['priorEf','FEVI previa','%'],
+ ['ee','E/e′ medio',''],['lavi','Volumen auricular izquierdo indexado','mL/m²'],
+ ['lvmi','Masa ventricular izquierda indexada','g/m²'],['tapse','TAPSE','mm'],
+ ['trv','Velocidad máxima de regurgitación tricuspídea','m/s']
+];
+export function setEcho(ctx,key,raw){
+ const next={...(ctx.echo||{})};
+ if(ECHO_FINDINGS.some(x=>x[0]===key)||key==='priorReduced'){
+  if(!['yes','no','unknown'].includes(raw))return ctx;
+  next[key]=raw;
+ }else if(ECHO_NUMERIC.some(x=>x[0]===key)){
+  const s=String(raw).trim().replace(',','.');
+  if(!s)delete next[key];
+  else if(!/^\d+(?:\.\d+)?$/.test(s)||!Number.isFinite(Number(s))||Number(s)<=0||(['ef','priorEf'].includes(key)&&Number(s)>100))return ctx;
+  else next[key]=Number(s);
+ }else return ctx;
+ return {...ctx,echo:next,updatedAt:new Date().toISOString()};
+}
+export function interpretEcho(ctx){
+ const e=ctx.echo||{},s=interpretSuspicion(ctx),np=interpretPeptide(ctx),f=ctx.findings||{};
+ const ef=Number.isFinite(e.ef)&&e.ef>0&&e.ef<=100?e.ef:null;
+ const prior=Number.isFinite(e.priorEf)&&e.priorEf>0&&e.priorEf<=100?e.priorEf:null;
+ const known=f.knownHF==='yes';
+ const clinical=['nocturnal','nonspecific','fluidSymptoms','pulmonary','systemic','cardiacSigns'].some(k=>s.profile[k].length>0);
+ const positive=ECHO_FINDINGS.filter(([id])=>e[id]==='yes');
+ const unknown=ECHO_FINDINGS.filter(([id])=>!['yes','no'].includes(e[id]));
+ const priorReduced=prior!==null&&prior<50||e.priorReduced==='yes';
+ const discordant=e.priorReduced==='no'&&prior!==null&&prior<50;
+ const filling=e.filling==='yes';
+ const objective=ef!==null&&ef<50||positive.length>0;
+ const npRecorded=np.id!=='NP-00';
+ let title=ef===null?'FEVI pendiente':ef<50?'FEVI reducida':'FEVI preservada';
+ let phenotype=ef===null?'Pendiente de FEVI':ef<50?'FEVI <50%':'FEVI ≥50%';
+ const trajectory=prior!==null?'FEVI previa '+prior+'%; actual '+(ef===null?'pendiente':ef+'%; variación '+(ef-prior>0?'+':'')+Math.round((ef-prior)*100)/100+' puntos porcentuales.'):'FEVI previa no registrada.';
+ const notes=[];
+ if(discordant)notes.push('Datos discordantes sobre FEVI previa: revisar el informe y la historia.');
+ if(ef!==null&&ef>=50&&priorReduced){title='FEVI actualmente preservada con antecedente de reducción';phenotype='Valorar IC con FEVI mejorada si existía IC previa; no etiquetar como IC-FEp de novo.';}
+ else if(ef!==null&&ef>=50&&e.priorReduced!=='no'&&prior===null)notes.push('No consta si hubo FEVI previamente reducida. Aclarar antes de asignar fenotipo de IC-FEp.');
+ else if(ef!==null&&ef>=50&&prior!==null&&prior>=50&&e.priorReduced!=='no')notes.push('Una medición previa preservada no descarta otras FEVI reducidas en la historia.');
+ if(known&&ef!==null&&prior!==null&&ef>prior&&prior<50&&ef<50)notes.push('FEVI en ascenso, todavía inferior al 50%. Valorar trayectoria, sin asignar automáticamente IC con FEVI mejorada.');
+ if(positive.length)notes.push('Los hallazgos ecocardiográficos deben relacionarse con los síntomas y la etiología; no todos demuestran presiones de llenado elevadas.');
+ if(unknown.length)notes.push('Hay '+unknown.length+' hallazgos no evaluados o no descritos; no equivalen a normales.');
+ if(ECHO_NUMERIC.slice(2).some(([id])=>Number.isFinite(e[id])))notes.push('Parámetros cuantitativos registrados: interpretar con el informe completo; sin umbrales automáticos en esta versión.');
+ if(npRecorded&&np.id==='NP-01')notes.push('Péptido por debajo del umbral orientativo: no excluye IC aisladamente.');
+ const npLabel=npRecorded?(np.kind==='nt'?'NT-proBNP':'BNP')+' '+np.value+' pg/mL · '+np.title:'Péptidos pendientes de interpretación.';
+ let integratedTitle,integrated;
+ if(known){integratedTitle='IC previamente diagnosticada';integrated='Conservar el diagnóstico referido y revisar fenotipo, evolución y hallazgos actuales.';}
+ else if(clinical&&objective){integratedTitle='Sospecha de IC con hallazgos objetivos';integrated=ef!==null&&ef>=50&&!filling?'Con FEVI preservada, precisar evidencia de disfunción o presiones de llenado elevadas y atribución de los síntomas.':'Valorar si las alteraciones cardiacas explican el cuadro clínico; los datos no confirman automáticamente IC.';}
+ else if(objective){integratedTitle='Alteración cardiaca registrada';integrated='Aclarar clínica actual y previa y atribución de los hallazgos; no asignar estadio ni diagnosticar IC por ecocardiografía aislada.';}
+ else if(clinical){integratedTitle='Sospecha clínica pendiente de confirmación';integrated='La FEVI preservada o los datos ecocardiográficos ausentes no excluyen IC. Completar estudio si persiste sospecha.';}
+ else {integratedTitle='Información insuficiente para concluir IC';integrated='Revisar antecedentes, síntomas y pruebas disponibles; no asumir normalidad ni excluir IC.';}
+ const urgent=np.urgent;
+ return {ef,prior,title,phenotype,trajectory,positive,unknown,notes,integratedTitle,integrated,npLabel,clinicalTitle:s.title,safety:s.safety,urgent,next:urgent?'descompensada':'clasificacion',source:{doi:SOURCE.doi,sections:'Clasificación por FEVI y diagnóstico de IC; adaptación educativa',version:'0.1'}};
 }

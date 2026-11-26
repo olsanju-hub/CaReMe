@@ -10,7 +10,7 @@ try{
  for(const [name,engine,viewport] of [['chromium',chromium,{width:1280,height:800}],['webkit-mobile',webkit,{width:390,height:844}]]){
   const browser=await engine.launch();try{
    const ctx=await browser.newContext({viewport,serviceWorkers:'allow'});const page=await ctx.newPage();const errors=[];page.on('pageerror',e=>errors.push(String(e)));
-   await page.goto(url);await page.getByRole('heading',{name:'CaHReMe',exact:true}).waitFor();assert.match(await page.locator('footer').innerText(),/v0\.81/);await page.screenshot({path:'qa-results/'+name+'-home.png',fullPage:true});
+   await page.goto(url);await page.getByRole('heading',{name:'CaHReMe',exact:true}).waitFor();assert.match(await page.locator('footer').innerText(),/v0\.82/);await page.screenshot({path:'qa-results/'+name+'-home.png',fullPage:true});
    await page.getByRole('button',{name:'Insuficiencia cardíaca',exact:true}).click();await page.getByRole('heading',{name:'Insuficiencia cardiaca',exact:true}).waitFor();
    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'No horizontal overflow');
    await page.screenshot({path:'qa-results/'+name+'-ic.png',fullPage:true});
@@ -98,6 +98,22 @@ try{
      await page.locator('[data-np-key="context"][data-np-value="acute"]').click();
      assert.match(await page.locator('#np-result').innerText(),/Priorizar valoración urgente/);
      assert.equal(await page.locator('#np-result [data-section="descompensada"]').count(),1);
+    }
+    else if(id==='ecocardiografia'){
+     await page.getByRole('heading',{name:'Ecocardiografía',exact:true}).waitFor();
+     assert.equal(await page.locator('[data-echo-input]:visible').count(),1);
+     await page.locator('[data-echo-input="ef"]').fill('70');await page.locator('[data-action="interpret-echo"]').click();
+     await page.getByRole('heading',{name:'FEVI preservada',exact:true}).waitFor();
+     await page.locator('[data-echo-input="ef"]').fill('49.9');await page.locator('[data-action="interpret-echo"]').click();
+     await page.getByRole('heading',{name:'FEVI reducida',exact:true}).waitFor();
+     await page.locator('[data-echo-input="ef"]').fill('110');await page.locator('[data-action="interpret-echo"]').click();
+     assert.equal(await page.locator('[data-echo-input="ef"]').getAttribute('aria-invalid'),'true');
+     await page.locator('[data-echo-input="ef"]').fill('55');await page.getByText('FEVI previa y evolución',{exact:true}).click();
+     await page.locator('[data-echo-input="priorEf"]').fill('30');await page.locator('[data-action="interpret-echo"]').click();
+     await page.getByRole('heading',{name:'FEVI actualmente preservada con antecedente de reducción'}).waitFor();
+     assert.equal(await page.locator('#echo-result [data-section="descompensada"]').count(),1);
+     assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'Ecocardiografía sin desbordamiento');
+     await page.screenshot({path:'qa-results/'+name+'-echo.png',fullPage:true});
     }
     else await page.getByRole('heading',{name:'Pendiente de desarrollo'}).waitFor();
     await page.locator('[data-action="diagnosis"]').click();await page.getByRole('heading',{name:'Diagnóstico',exact:true}).waitFor();

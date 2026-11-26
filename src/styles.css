@@ -892,3 +892,16 @@ body:has(.pearl-home) #app {
 .np-alert{background:#fff8e9;color:#79581d;padding:8px 10px;border-radius:9px;font-size:.8rem;}
 .np-page .urgent-next{background:#92333b;}
 .np-page .sus-result-button{width:100%;}
+
+/* Echo: one main value, progressive optional data. */
+.echo-primary{display:grid;grid-template-columns: minmax(0,1fr);gap:2px;}
+.echo-primary .echo-field{display:grid;grid-template-columns:minmax(0,1fr) 100px;align-items:center;font-weight:650;}
+.echo-primary .echo-field .np-error{grid-column:1/-1;}
+.echo-primary .np-entry input{text-align:right;}
+.echo-primary .sus-hint{margin:4px 0 8px;font-size:.74rem;}
+.echo-optional{margin:4px 0 8px;}
+.echo-optional .echo-factor{min-height:44px;}
+.echo-advanced{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;}
+.echo-integration{border-top:1px solid #dce8ed;margin-top:8px;padding-top:8px;}
+.echo-integration h3{margin:2px 0 5px;color:#083748;font-size:.95rem;}
+.echo-integration details summary{color:#176c86;cursor:pointer;font-weight:600;}

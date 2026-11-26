@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {GROUPS,createClinicalContext,updateFinding,evaluateSuspicion,setGroupReviewed,isGroupReviewed,toggleFinding,setEvaluationReviewed,isEvaluationReviewed,diagnosticNext,setInvestigation,diagnosticAction,setStudyResult,investigationPlan,interpretSuspicion,CLINICAL_DIMENSIONS,labPlan,setPeptide,interpretPeptide,peptideFactors} from '../src/ic/suspicion.mjs';
+import {GROUPS,createClinicalContext,updateFinding,evaluateSuspicion,setGroupReviewed,isGroupReviewed,toggleFinding,setEvaluationReviewed,isEvaluationReviewed,diagnosticNext,setInvestigation,diagnosticAction,setStudyResult,investigationPlan,interpretSuspicion,CLINICAL_DIMENSIONS,labPlan,setPeptide,interpretPeptide,peptideFactors,ECHO_FINDINGS,ECHO_NUMERIC,setEcho,interpretEcho} from '../src/ic/suspicion.mjs';
 const allNo=()=>({findings:{...Object.fromEntries(GROUPS.flatMap(g=>g.fields.map(([id])=>[id,'no']))),vitalsReviewed:'yes'}});
 const result=(c)=>evaluateSuspicion(c).id;
 test('Datos ausentes no son negativos',()=>assert.equal(result(createClinicalContext()),'IC-SUS-03'));
@@ -95,4 +95,21 @@ test('NP: recupera modificadores, no los inventa; alarma y IC conocida prevalece
  c=updateFinding(c,'perfusion','yes');assert.equal(interpretPeptide(c).next.section,'descompensada');
  assert.equal(setPeptide(c,'age','17'),c);assert.equal(setPeptide(c,'nt','-1'),c);
  c=setPeptide(c,'nt','');assert.equal(interpretPeptide(c).id,'NP-00');
+});
+
+test('FEVI libre: cobertura de todas las décimas de 0,1 a 100',()=>{
+ for(let x=1;x<=1000;x++){const c=setEcho(createClinicalContext(),'ef',String(x/10)),r=interpretEcho(c);assert.equal(r.ef,x/10);assert.equal(r.title,x<500?'FEVI reducida':'FEVI preservada');}
+ const c=createClinicalContext();for(const invalid of ['-5','0','110','NaN','Infinity'])assert.equal(setEcho(c,'ef',invalid),c);
+ assert.equal(interpretEcho(setEcho(c,'ef','49,9')).ef,49.9);
+ assert.equal(interpretEcho(c).ef,null);
+});
+test('Eco: FEVI previa y hallazgos opcionales no confirman IC',()=>{
+ let c=setEcho(createClinicalContext(),'ef','55');c=setEcho(c,'priorEf','30');
+ let r=interpretEcho(c);assert.match(r.title,/antecedente de reducción/);assert.match(r.phenotype,/no etiquetar/);assert.equal(r.integratedTitle,'Alteración cardiaca registrada'.replace('Alteración cardiaca registrada','Información insuficiente para concluir IC'));
+ c=setEcho(c,'filling','yes');assert.equal(interpretEcho(c).integratedTitle,'Alteración cardiaca registrada');
+ c=updateFinding(c,'dyspnea','yes');r=interpretEcho(c);assert.equal(r.integratedTitle,'Sospecha de IC con hallazgos objetivos');
+ c=setPeptide(c,'context','acute');assert.equal(interpretEcho(c).next,'descompensada');
+});
+test('Eco: combinaciones de hallazgos y estados, sin valores implícitos',()=>{
+ for(let mask=0;mask<256;mask++){let c=setEcho(createClinicalContext(),'ef','70');for(let i=0;i<8;i++)if(mask&(1<<i))c=setEcho(c,ECHO_FINDINGS[i][0],'yes');const r=interpretEcho(c);assert.equal(r.positive.length+ r.unknown.length,8);assert.ok(r.integrated);assert.notEqual(r.integratedTitle,'IC confirmada');}
 });
