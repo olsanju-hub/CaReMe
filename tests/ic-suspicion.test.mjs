@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {GROUPS,createClinicalContext,updateFinding,evaluateSuspicion,setGroupReviewed,isGroupReviewed,toggleFinding,setEvaluationReviewed,isEvaluationReviewed,diagnosticNext,setInvestigation} from '../src/ic/suspicion.mjs';
+import {GROUPS,createClinicalContext,updateFinding,evaluateSuspicion,setGroupReviewed,isGroupReviewed,toggleFinding,setEvaluationReviewed,isEvaluationReviewed,diagnosticNext,setInvestigation,diagnosticAction} from '../src/ic/suspicion.mjs';
 const allNo=()=>({findings:{...Object.fromEntries(GROUPS.flatMap(g=>g.fields.map(([id])=>[id,'no']))),vitalsReviewed:'yes'}});
 const result=(c)=>evaluateSuspicion(c).id;
 test('Datos ausentes no son negativos',()=>assert.equal(result(createClinicalContext()),'IC-SUS-03'));
@@ -26,3 +26,5 @@ test('Retirar confirmación única vuelve a desconocidos sin borrar positivos',(
 
 test('Siguiente paso no fuerza secuencia y prioriza seguridad',()=>{let c=createClinicalContext();assert.equal(diagnosticNext(c).kind,'safety');c=toggleFinding(c,'dyspnea',true);c=setEvaluationReviewed(c,true);c=toggleFinding(c,'vitalsReviewed',true);assert.equal(diagnosticNext(c).route,'ic/diagnostico/pruebas');c=toggleFinding(c,'respiratory',true);assert.equal(diagnosticNext(c).kind,'urgent');});
 test('Registro de pruebas independiente conserva hallazgos y no presupone resultados',()=>{let c=toggleFinding(createClinicalContext(),'dyspnea',true);c=setInvestigation(c,'ecg','requested');assert.equal(c.findings.dyspnea,'yes');assert.equal(c.investigations.ecg.status,'requested');assert.equal(c.investigations.np,undefined);assert.equal(diagnosticNext(c).kind,'safety');assert.equal(setInvestigation(c,'invalid','requested'),c);assert.equal(setInvestigation(c,'ecg','normal'),c);});
+
+test('Cada resultado tiene una acción; las alarmas y la seguridad no conducen a pruebas ambulatorias',()=>{let c=createClinicalContext();assert.equal(diagnosticAction(c).action,'complete-safety');c=toggleFinding(c,'respiratory',true);assert.equal(diagnosticAction(c).action,'open-urgent');c=toggleFinding(c,'respiratory',false);c=setGroupReviewed(c,'alarms',true);c=toggleFinding(c,'vitalsReviewed',true);assert.equal(diagnosticAction(c).action,'complete-review');c=setEvaluationReviewed(toggleFinding(c,'dyspnea',true),true);assert.equal(diagnosticAction(c).action,'continue-study');c=toggleFinding(c,'knownHF',true);assert.equal(diagnosticAction(c).action,'ic');});

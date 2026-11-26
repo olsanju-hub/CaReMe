@@ -770,3 +770,8 @@ body:has(.pearl-home) #app {
 .study-links{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;}
 .study-page .study-critical{color:#92333b;border-color:#e8c1c1;background:#fff0f0;}
 .sus-next .sus-result-button{margin-top:9px;}
+
+/* Una acción visible para cada conclusión, con acceso a los datos pendientes. */
+.sus-next {margin-top:12px;padding-top:10px;border-top:1px solid #dce8ed;}
+.sus-next strong{display:block;color:#083748;margin-bottom:4px;}
+.sus-next .urgent-next{background:#92333b;}

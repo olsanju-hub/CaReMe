@@ -10,7 +10,7 @@ try{
  for(const [name,engine,viewport] of [['chromium',chromium,{width:1280,height:800}],['webkit-mobile',webkit,{width:390,height:844}]]){
   const browser=await engine.launch();try{
    const ctx=await browser.newContext({viewport,serviceWorkers:'allow'});const page=await ctx.newPage();const errors=[];page.on('pageerror',e=>errors.push(String(e)));
-   await page.goto(url);await page.getByRole('heading',{name:'CaHReMe',exact:true}).waitFor();assert.match(await page.locator('footer').innerText(),/v0\.74/);await page.screenshot({path:'qa-results/'+name+'-home.png',fullPage:true});
+   await page.goto(url);await page.getByRole('heading',{name:'CaHReMe',exact:true}).waitFor();assert.match(await page.locator('footer').innerText(),/v0\.75/);await page.screenshot({path:'qa-results/'+name+'-home.png',fullPage:true});
    await page.getByRole('button',{name:'Insuficiencia cardíaca',exact:true}).click();await page.getByRole('heading',{name:'Insuficiencia cardiaca',exact:true}).waitFor();
    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'No horizontal overflow');
    await page.screenshot({path:'qa-results/'+name+'-ic.png',fullPage:true});
@@ -25,9 +25,10 @@ try{
    for(const id of ['asistente','sospecha','pruebas','peptidos','ecocardiografia']){
     await page.locator('[data-action="diagnostic-section"][data-section="'+id+'"]').click();if(id==='sospecha'){
      await page.getByRole('heading',{name:'Sospecha clínica',exact:true}).waitFor();await page.getByRole('heading',{name:'Completar seguridad'}).waitFor();
-     await page.locator('[data-finding="respiratory"]').check();await page.getByRole('heading',{name:'Alarma clínica'}).waitFor();assert.match(await page.locator('.sus-bar').innerText(),/Alarma clínica/);
+     await page.locator('[data-finding="respiratory"]').check();await page.getByRole('heading',{name:'Alarma clínica'}).waitFor();assert.match(await page.locator('.sus-bar').innerText(),/Alarma clínica/);assert.equal(await page.locator('[data-action="open-urgent"]').count(),1);assert.equal(await page.locator('[data-action="continue-study"]').count(),0);
      await page.locator('[data-finding="respiratory"]').uncheck();
      await page.getByRole('heading',{name:'Completar seguridad'}).waitFor();
+     await page.locator('[data-action="complete-safety"]').click();assert.equal(await page.evaluate(()=>document.activeElement.dataset.finding),'vitalsReviewed');
      assert.equal(await page.locator('[data-review-all]').count(),1);
      assert.equal(await page.locator('[data-review-group]').count(),0);
      await page.locator('[data-finding="vitalsReviewed"]').check();
@@ -51,6 +52,7 @@ try{
      await page.locator('[data-finding="dyspnea"]').uncheck();
      assert.equal(await page.locator('[data-review-all]').isChecked(),false);
      await page.getByRole('heading',{name:'Evaluación clínica incompleta'}).waitFor();
+     await page.locator('[data-action="complete-review"]').click();assert.equal(await page.evaluate(()=>document.activeElement.closest('details').dataset.suspicionGroup),'symptoms');
      await page.locator('[data-review-all]').check();
      await page.getByRole('heading',{name:'Sin hallazgos registrados compatibles'}).waitFor();
      await page.locator('[data-review-all]').uncheck();

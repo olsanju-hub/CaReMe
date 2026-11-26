@@ -40,3 +40,6 @@ La versión de confirmación única (fe25066) superó CI, navegador y Pages. Se 
 
 ## Actualización de PWA
 La versión de navegación 26deb28 superó CI, auditorías y publicación. Se detecta riesgo de servir archivos desactualizados por la estrategia cache-first con ignoreSearch. v0.74: HTML en línea con prioridad de red y fallback offline; JS/CSS versionados y coincidencia exacta de caché; versión visible en pie; recarga al cambiar controlador solo sin datos introducidos, en otro caso aviso. Sin cambios clínicos. La URL pública no pudo verificarse directamente desde el entorno; pendiente comprobar el nuevo despliegue y Safari físico.
+
+## Siguiente actuación accesible desde cada conclusión
+v0.74 (5b8f66e) superó CI, navegador y publicación. v0.75 añade una acción visible para todos los resultados: completar seguridad (abre el bloque y enfoca constantes o alarmas pendientes), completar evaluación (abre el bloque pendiente), continuar a pruebas, elegir módulo de IC conocida o acceso al apartado de IC descompensada expresamente rotulado como no operativo. No se altera la lógica clínica ni se obliga a seguir el circuito. La navegación a pruebas se mantiene bloqueada como recomendación guiada si faltan datos de seguridad o hay alarma. Pendientes: verificación de v0.75, validación independiente y licencia.

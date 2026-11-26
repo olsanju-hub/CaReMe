@@ -73,3 +73,17 @@ export function diagnosticNext(ctx){
  if(r.id==='IC-SUS-04')return {kind:'known',route:'ic'};
  return {kind:'review',route:'ic/diagnostico/pruebas'};
 }
+
+/** Presentación del próximo paso; no modifica ni sustituye las reglas clínicas. */
+export function diagnosticAction(ctx){
+ const step=diagnosticNext(ctx);
+ const actions={
+  study:{label:'Continuar a pruebas diagnósticas',action:'continue-study'},
+  review:{label:'Revisar pruebas diagnósticas',action:'continue-study'},
+  known:{label:'Elegir módulo de IC',action:'ic'},
+  urgent:{label:'Abrir IC descompensada (en desarrollo)',action:'open-urgent'},
+  safety:{label:'Completar valoración de seguridad',action:'complete-safety'},
+  incomplete:{label:'Completar evaluación clínica',action:'complete-review'}
+ };
+ return {...step,...actions[step.kind]};
+}
