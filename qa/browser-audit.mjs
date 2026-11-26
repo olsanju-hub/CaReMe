@@ -14,9 +14,10 @@ try{
    await page.getByRole('button',{name:'Insuficiencia cardíaca',exact:true}).click();await page.getByRole('heading',{name:'Insuficiencia cardiaca',exact:true}).waitFor();
    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'No horizontal overflow');
    await page.screenshot({path:'qa-results/'+name+'-ic.png',fullPage:true});
-   for(const id of ['valoracion','clasificacion','tratamiento','optimizacion','seguimiento','comorbilidades','derivacion','avanzada','calculadoras','farmacoteca','evidencia','descompensada']){
+   for(const id of ['clasificacion','tratamiento','optimizacion','seguimiento','comorbilidades','derivacion','avanzada','calculadoras','farmacoteca','evidencia','descompensada']){
     await page.locator('[data-section="'+id+'"]').first().click();await page.getByRole('heading',{name:'Pendiente de desarrollo'}).waitFor();await page.getByRole('button',{name:'Insuficiencia cardiaca',exact:false}).first().click();await page.getByRole('heading',{name:'Insuficiencia cardiaca',exact:true}).waitFor();
    }
+   await page.locator('[data-action="ic-section"][data-section="valoracion"]').click();await page.getByRole('heading',{name:'Recorrido guiado'}).waitFor();await page.locator('[data-action="ic"]').first().click();
    await page.locator('[data-action="ic-section"][data-section="diagnostico"]').click();await page.getByRole('heading',{name:'Diagnóstico',exact:true}).waitFor();
    assert.equal(await page.locator('[data-action="diagnostic-section"]').count(),5);
    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'Diagnosis has no horizontal overflow');
@@ -40,6 +41,13 @@ try{
      assert.match(await page.locator('.sus-bar').innerText(),/Hallazgos compatibles con IC/);
      assert.match(await page.locator('#suspicion-result').innerText(),/Disnea de esfuerzo/);
      assert.equal(await page.locator('[data-finding="dyspnea"]').isChecked(),true);
+     await page.locator('[data-action="continue-study"]').click();await page.getByRole('heading',{name:'Pruebas diagnósticas',exact:true}).waitFor();
+     assert.match(await page.locator('.study-page').innerText(),/Sospecha clínica de IC/);
+     await page.locator('[data-investigation="ecg"]').selectOption('requested');
+     await page.locator('[data-action="diagnostic-section"][data-section="sospecha"]').click();
+     await page.getByRole('heading',{name:'Sospecha clínica',exact:true}).waitFor();
+     await page.locator('.sus-group').filter({has:page.getByText('Síntomas',{exact:true})}).locator('summary').click();
+     assert.equal(await page.locator('[data-finding="dyspnea"]').isChecked(),true);
      await page.locator('[data-finding="dyspnea"]').uncheck();
      assert.equal(await page.locator('[data-review-all]').isChecked(),false);
      await page.getByRole('heading',{name:'Evaluación clínica incompleta'}).waitFor();
@@ -50,7 +58,9 @@ try{
      assert.equal(await page.locator('select[data-finding]').count(),0);
      assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'Sospecha sin desbordamiento horizontal');
      await page.screenshot({path:'qa-results/'+name+'-suspicion.png',fullPage:true});
-    }else await page.getByRole('heading',{name:'Pendiente de desarrollo'}).waitFor();
+    }else if(id==='asistente'){await page.getByRole('heading',{name:'Recorrido guiado'}).waitFor();await page.locator('[data-action="ic"]').first().click();await page.locator('[data-action="ic-section"][data-section="diagnostico"]').click();continue;}
+    else if(id==='pruebas'){await page.getByRole('heading',{name:'Pruebas diagnósticas',exact:true}).waitFor();assert.equal(await page.locator('[data-investigation="ecg"]').inputValue(),'requested');}
+    else await page.getByRole('heading',{name:'Pendiente de desarrollo'}).waitFor();
     await page.locator('[data-action="diagnosis"]').click();await page.getByRole('heading',{name:'Diagnóstico',exact:true}).waitFor();
    }
    await page.locator('[data-action="diagnostic-evidence"]').click();await page.getByRole('heading',{name:'Referencias científicas',exact:true}).waitFor();

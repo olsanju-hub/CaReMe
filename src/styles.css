@@ -764,3 +764,9 @@ body:has(.pearl-home) #app {
 
 .suspicion-page .sus-final-review{margin:14px 0 0;padding:4px 14px;}
 .sus-final-review .sus-check{border-top:0;font-size:.86rem;}
+
+.study-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:center;gap:8px;min-height:54px;border-top:1px solid #dce8ed;font-size:.86rem;}
+.study-row select{width:100%;min-width:0;min-height:44px;background:white;border:1px solid #bed3db;color:#083748;border-radius:9px;padding:5px;font-size:.8rem;}
+.study-links{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;}
+.study-page .study-critical{color:#92333b;border-color:#e8c1c1;background:#fff0f0;}
+.sus-next .sus-result-button{margin-top:9px;}

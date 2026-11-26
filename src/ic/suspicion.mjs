@@ -11,7 +11,7 @@ export const GROUPS=[
  ['knownHF','Diagnóstico previo de IC'],['cardiac','Cardiopatía isquémica, valvulopatía o miocardiopatía'],['htn','Hipertensión arterial'],['dm','Diabetes'],['ckd','Enfermedad renal crónica'],['obesity','Obesidad'],['af','Fibrilación auricular u otra arritmia relevante'],['toxins','Exposición a cardiotóxicos o consumo perjudicial de alcohol'],['family','Antecedentes familiares de miocardiopatía']]}
 ];
 const fields=[...GROUPS.flatMap(g=>g.fields.map(([id])=>id)),'vitalsReviewed'];
-export function createClinicalContext(){return {findings:{},updatedAt:null};}
+export function createClinicalContext(){return {findings:{},investigations:{},updatedAt:null};}
 export function updateFinding(ctx,id,value){if(!fields.includes(id)||!['yes','no','unknown'].includes(value))return ctx;return {...ctx,findings:{...ctx.findings,[id]:value},updatedAt:new Date().toISOString()};}
 export function evaluateSuspicion(ctx){
  const f=ctx?.findings??{},val=id=>['yes','no'].includes(f[id])?f[id]:'unknown';
@@ -55,3 +55,21 @@ export function setEvaluationReviewed(ctx,reviewed){
  return GROUPS.reduce((next,g)=>setGroupReviewed(next,g.id,reviewed),ctx);
 }
 export function isEvaluationReviewed(ctx){return GROUPS.every(g=>isGroupReviewed(ctx,g.id));}
+
+export const INVESTIGATIONS=[
+ ['ecg','ECG de 12 derivaciones'],['np','BNP / NT-proBNP'],['lab','Analítica basal'],['rx','Radiografía de tórax'],['echo','Ecocardiografía']
+];
+export function setInvestigation(ctx,id,status){
+ if(!INVESTIGATIONS.some(x=>x[0]===id)||!['unknown','requested','available','notIndicated'].includes(status))return ctx;
+ return {...ctx,investigations:{...ctx.investigations,[id]:{status,updatedAt:new Date().toISOString()}},updatedAt:new Date().toISOString()};
+}
+// Solo controla la transición sugerida, nunca el acceso directo a módulos.
+export function diagnosticNext(ctx){
+ const r=evaluateSuspicion(ctx);
+ if(r.level==='critical'||r.level==='urgent')return {kind:'urgent',route:'ic/descompensada'};
+ if(r.id==='IC-SUS-03')return {kind:'safety',route:'ic/diagnostico/sospecha'};
+ if(!isEvaluationReviewed(ctx))return {kind:'incomplete',route:'ic/diagnostico/sospecha'};
+ if(r.id==='IC-SUS-05')return {kind:'study',route:'ic/diagnostico/pruebas'};
+ if(r.id==='IC-SUS-04')return {kind:'known',route:'ic'};
+ return {kind:'review',route:'ic/diagnostico/pruebas'};
+}

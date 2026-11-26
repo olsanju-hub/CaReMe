@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {GROUPS,createClinicalContext,updateFinding,evaluateSuspicion,setGroupReviewed,isGroupReviewed,toggleFinding,setEvaluationReviewed,isEvaluationReviewed} from '../src/ic/suspicion.mjs';
+import {GROUPS,createClinicalContext,updateFinding,evaluateSuspicion,setGroupReviewed,isGroupReviewed,toggleFinding,setEvaluationReviewed,isEvaluationReviewed,diagnosticNext,setInvestigation} from '../src/ic/suspicion.mjs';
 const allNo=()=>({findings:{...Object.fromEntries(GROUPS.flatMap(g=>g.fields.map(([id])=>[id,'no']))),vitalsReviewed:'yes'}});
 const result=(c)=>evaluateSuspicion(c).id;
 test('Datos ausentes no son negativos',()=>assert.equal(result(createClinicalContext()),'IC-SUS-03'));
@@ -23,3 +23,6 @@ test('Revisión de alarmas sin constantes mantiene bloqueo',()=>{let c=setGroupR
 
 test('Confirmación única conserva positivos y no presupone constantes',()=>{let c=toggleFinding(createClinicalContext(),'dyspnea',true);c=setEvaluationReviewed(c,true);assert.equal(c.findings.dyspnea,'yes');assert.equal(c.findings.perfusion,'no');assert.equal(c.findings.knownHF,'no');assert.equal(c.findings.vitalsReviewed,undefined);assert.equal(result(c),'IC-SUS-03');assert.equal(isEvaluationReviewed(c),true);c=toggleFinding(c,'vitalsReviewed',true);assert.equal(result(c),'IC-SUS-05');c=toggleFinding(c,'dyspnea',false);assert.equal(isEvaluationReviewed(c),false);assert.equal(result(c),'IC-SUS-06');});
 test('Retirar confirmación única vuelve a desconocidos sin borrar positivos',()=>{let c=setEvaluationReviewed(toggleFinding(createClinicalContext(),'perfusion',true),true);c=setEvaluationReviewed(c,false);assert.equal(c.findings.perfusion,'yes');assert.equal(c.findings.dyspnea,'unknown');assert.equal(result(c),'IC-SUS-01');assert.equal(isEvaluationReviewed(c),false);});
+
+test('Siguiente paso no fuerza secuencia y prioriza seguridad',()=>{let c=createClinicalContext();assert.equal(diagnosticNext(c).kind,'safety');c=toggleFinding(c,'dyspnea',true);c=setEvaluationReviewed(c,true);c=toggleFinding(c,'vitalsReviewed',true);assert.equal(diagnosticNext(c).route,'ic/diagnostico/pruebas');c=toggleFinding(c,'respiratory',true);assert.equal(diagnosticNext(c).kind,'urgent');});
+test('Registro de pruebas independiente conserva hallazgos y no presupone resultados',()=>{let c=toggleFinding(createClinicalContext(),'dyspnea',true);c=setInvestigation(c,'ecg','requested');assert.equal(c.findings.dyspnea,'yes');assert.equal(c.investigations.ecg.status,'requested');assert.equal(c.investigations.np,undefined);assert.equal(diagnosticNext(c).kind,'safety');assert.equal(setInvestigation(c,'invalid','requested'),c);assert.equal(setInvestigation(c,'ecg','normal'),c);});

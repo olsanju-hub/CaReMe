@@ -6,10 +6,10 @@ Actualizado 2026-11-26. No iniciar clasificación hasta cierre completo de diagn
 |---|---|
 | Pantalla principal | Implementada; estructura aprobada |
 | Sospecha clínica | v0.1: CI, Chromium, WebKit y Pages superados (36f45bb). v0.2: CI, Chromium, WebKit y Pages superados (396c7f3). Interfaz de casillas: implementada, pendiente de CI y publicación; revisión clínica independiente y aprobación visual pendientes |
-| Pruebas diagnósticas | Pendiente |
+| Pruebas diagnósticas | Registro inicial conectado; indicaciones específicas e interpretación pendientes |
 | BNP / NT-proBNP | Pendiente |
 | Ecocardiografía | Pendiente |
-| Asistente diagnóstico integrado | Pendiente |
+| Asistente diagnóstico integrado | Entrada guiada disponible; integración completa pendiente |
 | Referencias científicas | Pendiente de consolidación |
 | Validación integral | Pendiente |
 
@@ -34,3 +34,6 @@ Versión de casillas (2402069): CI, Chromium, WebKit y Pages superados. Se mueve
 
 ## Confirmación única
 La versión de conclusión visible (e791d10) superó CI, auditorías de navegador y Pages. Por preferencia del usuario, se retiran las confirmaciones por bloque y se agrega una sola confirmación explícita de todos los apartados al final. No cambia la precedencia de alarmas, ni se presupone la revisión de constantes. Si se desmarca un hallazgo positivo, vuelve a desconocido y la confirmación deja de estar completa. Nueva verificación y aprobación visual pendientes.
+
+## Navegación libre y continuidad
+La versión de confirmación única (fe25066) superó CI, navegador y Pages. Se añade transición desde sospecha al registro de pruebas, condicionada a seguridad y revisión en recorrido guiado. El acceso directo sigue disponible sin completar pasos anteriores. El contexto en memoria conserva hallazgos y estados de pruebas; un estado disponible no equivale a resultado normal. La entrada Valoración del paciente y Asistente diagnóstico permiten iniciar el recorrido, no constituyen todavía asistentes completos. El registro de pruebas es una lista de trabajo, no una indicación personalizada; fuentes de referencia: ESC 2026 DOI ehag100, tabla de recomendaciones 3 (https://academic.oup.com/view-large/578907370). No se implementan todavía interpretación de péptidos, ecocardiografía ni clasificación; no se cierra diagnóstico. Licencia y validación clínica independiente pendientes.
