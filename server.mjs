@@ -4,11 +4,21 @@ import { resolve, extname } from 'node:path';
 
 const root = resolve('.');
 const allow = new Set([
-  'index.html', 'actualizar.html', 'src/styles.css', 'src/clinical/rutas-patologia.mjs', 'src/sequence-fields.mjs', 'src/clinical/ajustes-seguros.mjs', 'src/clinical/identidad-farmaco.mjs', 'src/clinical/secuencia-terapeutica.mjs', 'src/clinical/secuencia-insulina.mjs', 'src/app.mjs', 'src/model.mjs', 'src/consultas.mjs', 'src/clinical/obesidad.mjs', 'src/clinical/masld.mjs', 'src/clinical/dislipemia.mjs', 'src/clinical/hta.mjs', 'src/clinical/ckm.mjs', 'src/clinical/calculadoras.mjs', 'src/clinical/tratamientos-modulo.mjs', 'src/clinical/insulina-dosis.mjs', 'src/clinical/consulta-breve.mjs', 'src/clinical/riesgo-cv.mjs', 'src/clinical/renal.mjs', 'src/clinical/engine.mjs', 'src/clinical/integracion.mjs', 'src/clinical/farmacologia.mjs', 'src/clinical/continuidad.mjs', 'src/clinical/incretinas.mjs', 'src/clinical/basales.mjs', 'src/clinical/auditoria.mjs', 'src/clinical/proveniencia.mjs', 'src/clinical/plan-integral.mjs', 'src/clinical/plan.mjs', 'src/clinical/dm2-rapida.mjs', 'src/clinical/dm2-detallada.mjs', 'src/clinical/insulinizacion.mjs', 'src/clinical/insuficiencia-cardiaca.mjs',
-  'manifest.webmanifest', 'service-worker.js',
-  'public/icon-180.png', 'public/icon-192.png', 'public/icon-512.png', 'public/icon-maskable-512.png', 'public/icon-concept.svg', 'public/domain-cardiovascular.svg',
-  'public/domain-renal.svg', 'public/domain-hepatico.svg',
-  'public/domain-metabolico.svg'
+  "index.html",
+  "actualizar.html",
+  "manifest.webmanifest",
+  "service-worker.js",
+  "src/app.mjs",
+  "src/styles.css",
+  "public/domain-cardiovascular.svg",
+  "public/domain-hepatico.svg",
+  "public/domain-metabolico.svg",
+  "public/domain-renal.svg",
+  "public/icon-180.png",
+  "public/icon-192.png",
+  "public/icon-512.png",
+  "public/icon-concept.svg",
+  "public/icon-maskable-512.png"
 ]);
 const contentTypes = {
   '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8',

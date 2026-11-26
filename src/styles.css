@@ -663,3 +663,31 @@ body:has(.pearl-home) #app {
     padding-bottom: max(20px, env(safe-area-inset-bottom));
   }
 }
+
+/* IC: mismos materiales, fondo y proporciones que la portada aprobada. */
+.ic-page { padding-top:clamp(16px,4vw,36px); }
+.ic-page h1 { font-size:clamp(1.7rem,6.2vw,2.7rem); margin:9px 0 5px; }
+.ic-page h2 { margin:20px 0 10px; }
+.ic-back { align-self:flex-start; display:inline-flex; align-items:center; gap:7px; min-height:44px; padding:0 6px 0 0; font-size:.94rem; }
+.ic-back span { font-size:1.75rem; line-height:1; }
+.ic-subtitle { color:#526e7b; font-size:.86rem; margin:0 0 15px; }
+.ic-priority { display:grid; gap:10px; }
+.ic-page .ic-card { text-align:left; display:grid; grid-template-columns:30px minmax(0,1fr); align-items:center; gap:10px; padding:12px; min-height:76px; width:100%; }
+.ic-page .ic-card .module-content { min-width:0; margin:0; padding:0; }
+.ic-page .ic-card strong { display:block; line-height:1.2; overflow-wrap:normal; }
+.ic-page .ic-card small { display:block; font-size:.72rem; color:#526e7b; margin:4px 0 0; line-height:1.3; }
+.ic-page .ic-hero { min-height:86px; grid-template-columns:36px minmax(0,1fr); }
+.ic-page .ic-hero strong { font-size:1.15rem; }
+.ic-page .ic-urgent { min-height:64px; color:#92333b; background:linear-gradient(150deg,#fff,#fbefef); border-color:#fff; box-shadow:inset 0 0 0 1px #f4d8da,0 5px 12px #812f3912; }
+.ic-page .ic-urgent small { color:#794b50; }
+.ic-page .ic-grid { gap:10px; }
+.ic-page .ic-grid .ic-card { min-height:78px; grid-template-columns:26px minmax(0,1fr); }
+.ic-tools { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; margin:15px 0 0; }
+.ic-page .ic-tool { grid-template-columns:minmax(0,1fr); justify-items:center; text-align:center; gap:5px; min-height:65px; padding:9px 4px; }
+.ic-page .ic-tool .pearl-icon { width:21px; }
+.ic-page .ic-tool strong { font-size:clamp(.65rem,2.8vw,.9rem); }
+.pending-card { padding:20px; margin:15px 0; }
+.pending-card h2 { margin:0 0 8px; }
+.pending-card p { margin:0 0 10px; color:#365768; }
+@media (max-width:380px){.ic-page .ic-grid .ic-card { grid-template-columns:20px minmax(0,1fr); gap:5px; padding:8px; }.ic-page .ic-card small{font-size:.67rem}}
+@media (min-width:721px){.ic-page .ic-grid .ic-card{min-height:96px}.ic-page .ic-priority{grid-template-columns:1fr 1fr}.ic-page .ic-hero,.ic-page .ic-urgent{min-height:86px}}
