@@ -22,7 +22,12 @@ try{
    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'Diagnosis has no horizontal overflow');
    await page.screenshot({path:'qa-results/'+name+'-diagnosis.png',fullPage:true});
    for(const id of ['asistente','sospecha','pruebas','peptidos','ecocardiografia']){
-    await page.locator('[data-action="diagnostic-section"][data-section="'+id+'"]').click();await page.getByRole('heading',{name:'Pendiente de desarrollo'}).waitFor();
+    await page.locator('[data-action="diagnostic-section"][data-section="'+id+'"]').click();if(id==='sospecha'){
+     await page.getByRole('heading',{name:'Sospecha clínica',exact:true}).waitFor();await page.getByRole('heading',{name:'Completar seguridad'}).waitFor();
+     await page.locator('[data-finding="respiratory"]').selectOption('yes');await page.getByRole('heading',{name:'Alarma clínica'}).waitFor();
+     await page.locator('[data-finding="respiratory"]').selectOption('no');
+     await page.screenshot({path:'qa-results/'+name+'-suspicion.png',fullPage:true});
+    }else await page.getByRole('heading',{name:'Pendiente de desarrollo'}).waitFor();
     await page.locator('[data-action="diagnosis"]').click();await page.getByRole('heading',{name:'Diagnóstico',exact:true}).waitFor();
    }
    await page.locator('[data-action="diagnostic-evidence"]').click();await page.getByRole('heading',{name:'Referencias científicas',exact:true}).waitFor();

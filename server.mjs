@@ -9,6 +9,7 @@ const allow = new Set([
   "manifest.webmanifest",
   "service-worker.js",
   "src/app.mjs",
+  "src/ic/suspicion.mjs",
   "src/styles.css",
   "public/domain-cardiovascular.svg",
   "public/domain-hepatico.svg",
