@@ -1,4 +1,5 @@
-import {GROUPS,SOURCE,createClinicalContext,updateFinding,evaluateSuspicion,setEvaluationReviewed,isEvaluationReviewed,isGroupReviewed,toggleFinding,INVESTIGATIONS,setInvestigation,diagnosticNext} from './ic/suspicion.mjs';
+import {GROUPS,SOURCE,createClinicalContext,updateFinding,evaluateSuspicion,setEvaluationReviewed,isEvaluationReviewed,isGroupReviewed,toggleFinding,INVESTIGATIONS,setInvestigation,diagnosticNext} from './ic/suspicion.mjs?v=74';
+const BUILD='0.74';
 const app=document.getElementById('app');
 const PATHOLOGIES = [
  ['dm2','Diabetes tipo 2','Incluye insulinización'],['hta','Hipertensión arterial','Confirmación y control'],
@@ -118,9 +119,22 @@ function guidedEntry(title){
  return '<div class="page pearl-home ic-page">'+back('Insuficiencia cardiaca','ic')+'<h1>'+title+'</h1><section class="pearl-card pending-card"><h2>Recorrido guiado</h2><p>Comienza por sospecha o continúa el estudio registrado en esta sesión. El recorrido completo sigue en desarrollo.</p><button type="button" class="sus-result-button" data-action="diagnostic-section" data-section="sospecha">Evaluar sospecha clínica</button><button type="button" class="text-link" data-action="diagnostic-section" data-section="pruebas">Abrir pruebas diagnósticas</button></section><button class="text-link" type="button" data-action="ic">Elegir otro módulo</button></div>';
 }
 function route(){const hash=location.hash.slice(1);if(hash==='ic')return ic();if(hash==='ic/diagnostico')return diagnosis();if(hash==='ic/diagnostico/sospecha')return suspicion();if(hash==='ic/diagnostico/pruebas')return studyView();if(hash==='ic/diagnostico/asistente')return guidedEntry('Asistente diagnóstico');if(hash==='ic/valoracion')return guidedEntry('Valoración del paciente');if(hash==='ic/diagnostico/referencias')return pending('Referencias científicas','diagnosis','Diagnóstico',true);if(hash.startsWith('ic/diagnostico/')){const item=diagnosticItems.find(x=>x[0]===hash.slice('ic/diagnostico/'.length));if(item)return pending(item[1],'diagnosis','Diagnóstico',true);return diagnosis();}if(hash.startsWith('ic/')){const item=all.find(x=>x[0]===hash.slice(3));if(item)return pending(item[1],'ic','Insuficiencia cardiaca',item[0]!=='descompensada');}if(hash==='integral')return pending('Valoración integral');if(hash==='sources')return pending('Fuentes');if(hash.startsWith('area/')){const item=PATHOLOGIES.find(x=>x[0]===hash.slice(5));if(item)return pending(item[1]);}return home();}
-function render(focus=false){app.innerHTML='<a class="skip-link" href="#main-content">Saltar al contenido</a><main id="main-content" tabindex="-1">'+route()+'</main><footer class="footer">CaHReMe · Salud cardiorrenal-hepatometabólica</footer>';if(focus){document.getElementById('main-content').focus({preventScroll:true});window.scrollTo(0,0);}}
+function render(focus=false){app.innerHTML='<a class="skip-link" href="#main-content">Saltar al contenido</a><main id="main-content" tabindex="-1">'+route()+'</main><footer class="footer">CaHReMe · Salud cardiorrenal-hepatometabólica · v'+BUILD+'</footer>';if(focus){document.getElementById('main-content').focus({preventScroll:true});window.scrollTo(0,0);}}
 function go(hash){if(location.hash==='#'+hash||(!hash&&!location.hash))render(true);else location.hash=hash;}
 app.addEventListener('click',event=>{const btn=event.target.closest('button[data-action]');if(!btn)return;switch(btn.dataset.action){case 'continue-study':{const step=diagnosticNext(clinicalContext);if(['study','review'].includes(step.kind))go(step.route);break;}case 'show-suspicion-result':{const target=document.getElementById('suspicion-conclusion');if(target){target.focus({preventScroll:true});target.scrollIntoView({block:'start',behavior:'auto'});}break;}case 'reset-context':if(confirm('¿Borrar la evaluación clínica de esta sesión?')){clinicalContext=createClinicalContext();render(true);}break;case 'home':go('');break;case 'ic':go('ic');break;case 'diagnosis':go('ic/diagnostico');break;case 'diagnostic-evidence':go('ic/diagnostico/referencias');break;case 'diagnostic-section':if(diagnosticItems.some(x=>x[0]===btn.dataset.section))go('ic/diagnostico/'+btn.dataset.section);break;case 'start':go('integral');break;case 'sources':go('sources');break;case 'open-pathology':go(btn.dataset.pathology==='ic'?'ic':'area/'+btn.dataset.pathology);break;case 'ic-section':if(all.some(x=>x[0]===btn.dataset.section))go('ic/'+btn.dataset.section);break;}});
 window.addEventListener('hashchange',()=>render(true));
 render();
-if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost'))window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js',{updateViaCache:'none'}).then(reg=>reg.update()).catch(()=>{}));
+if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost')){
+ let hadController=!!navigator.serviceWorker.controller, updateNotice=false;
+ navigator.serviceWorker.addEventListener('controllerchange',()=>{
+  if(!hadController){hadController=true;return;}
+  if(updateNotice)return;updateNotice=true;
+  const hasData=Object.keys(clinicalContext.findings).length||Object.keys(clinicalContext.investigations||{}).length;
+  if(!hasData){location.reload();return;}
+  const notice=document.createElement('div');notice.setAttribute('role','status');
+  notice.style.cssText='position:relative;padding:10px 16px;background:#fff;color:#173347;text-align:center;border-bottom:1px solid #d6e6e8;font-size:.85rem';
+  notice.textContent='Nueva versión disponible. Termina tu evaluación antes de recargar; los datos de sesión no se conservan.';
+  const refresh=document.createElement('button');refresh.className='text-link';refresh.textContent='Actualizar ahora';refresh.addEventListener('click',()=>{if(confirm('¿Actualizar y borrar los datos de esta sesión?'))location.reload();});notice.append(refresh);document.body.prepend(notice);
+ });
+ window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js',{updateViaCache:'none'}).then(reg=>reg.update()).catch(()=>{}));
+}
