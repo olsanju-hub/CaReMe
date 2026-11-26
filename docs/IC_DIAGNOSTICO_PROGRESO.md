@@ -31,3 +31,6 @@ Se sustituyen desplegables Sí/No/Sin valorar por casillas. Marcado = presente; 
 
 ## Conclusión visible
 Versión de casillas (2402069): CI, Chromium, WebKit y Pages superados. Se mueve la conclusión al final y se añade barra fija con estado actualizado, aviso de alarma y acceso directo a la conclusión. El resultado muestra hallazgos presentes, datos pendientes y siguiente paso si procede; no enlaza a un estudio aún no implementado como si fuera operativo. Sin cambios en reglas clínicas. Nueva publicación y revisión visual pendientes.
+
+## Confirmación única
+La versión de conclusión visible (e791d10) superó CI, auditorías de navegador y Pages. Por preferencia del usuario, se retiran las confirmaciones por bloque y se agrega una sola confirmación explícita de todos los apartados al final. No cambia la precedencia de alarmas, ni se presupone la revisión de constantes. Si se desmarca un hallazgo positivo, vuelve a desconocido y la confirmación deja de estar completa. Nueva verificación y aprobación visual pendientes.

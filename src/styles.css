@@ -761,3 +761,6 @@ body:has(.pearl-home) #app {
 .sus-bar.critical .sus-result-button{background:#92333b;}
 .sus-bar.urgent{border-color:#e6cda1;background:#fff9ed;}
 @media(min-width:721px){.sus-bar{flex-direction:row;align-items:center;justify-content:space-between;}.sus-result-button{width:auto;min-width:150px;}.suspicion-page{padding-bottom:130px!important;}}
+
+.suspicion-page .sus-final-review{margin:14px 0 0;padding:4px 14px;}
+.sus-final-review .sus-check{border-top:0;font-size:.86rem;}

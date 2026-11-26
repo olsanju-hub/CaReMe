@@ -1,4 +1,4 @@
-import {GROUPS,SOURCE,createClinicalContext,updateFinding,evaluateSuspicion,setGroupReviewed,isGroupReviewed,toggleFinding} from './ic/suspicion.mjs';
+import {GROUPS,SOURCE,createClinicalContext,updateFinding,evaluateSuspicion,setEvaluationReviewed,isEvaluationReviewed,isGroupReviewed,toggleFinding} from './ic/suspicion.mjs';
 const app=document.getElementById('app');
 const PATHOLOGIES = [
  ['dm2','Diabetes tipo 2','Incluye insulinización'],['hta','Hipertensión arterial','Confirmación y control'],
@@ -86,22 +86,22 @@ function groupFields(g){
  const count=g.fields.filter(([id])=>clinicalContext.findings[id]==='yes').length;
  const reviewed=isGroupReviewed(clinicalContext,g.id);
  const field=([id,label])=>'<label class="sus-check"><input type="checkbox" data-finding="'+id+'" '+(clinicalContext.findings[id]==='yes'?'checked':'')+'><span>'+label+'</span></label>';
- const reviewLabel=g.id==='alarms'?'He comprobado que las alarmas no marcadas están ausentes':'He comprobado que los hallazgos no marcados están ausentes';
- return '<details class="pearl-card sus-group" '+(g.id==='alarms'?'open':'')+'><summary><strong>'+g.label+'</strong><span data-count="'+g.id+'">'+count+' positivos · '+(reviewed?'Revisado':'Pendiente')+'</span></summary><p class="sus-hint">'+g.hint+'</p>'+g.fields.map(field).join('')+'<label class="sus-check sus-review"><input type="checkbox" data-review-group="'+g.id+'" '+(reviewed?'checked':'')+'><span>'+reviewLabel+'</span></label>'+(g.id==='alarms'?field(['vitalsReviewed','Constantes revisadas y estabilidad valorada']):'')+'</details>';
+ return '<details class="pearl-card sus-group" '+(g.id==='alarms'?'open':'')+'><summary><strong>'+g.label+'</strong><span data-count="'+g.id+'">'+count+' positivos · '+(reviewed?'Revisado':'Pendiente')+'</span></summary><p class="sus-hint">'+g.hint+'</p>'+g.fields.map(field).join('')+(g.id==='alarms'?field(['vitalsReviewed','Constantes revisadas y estabilidad valorada']):'')+'</details>';
 }
-function suspicion(){return '<div class="page pearl-home ic-page suspicion-page">'+back('Diagnóstico','diagnosis')+'<h1>Sospecha clínica</h1><p class="ic-subtitle">Demostración educativa · Solo casos ficticios. No utilizar en asistencia clínica.</p><p class="sus-hint sus-check-help">Marca los hallazgos presentes. Confirma los ausentes al terminar cada bloque.</p><div class="sus-groups">'+GROUPS.map(groupFields).join('')+'</div><details class="pearl-card sus-group"><summary><strong>Diagnóstico diferencial</strong></summary><p class="sus-hint">Valorar según presentación; pueden coexistir con IC.</p><dl class="sus-diff"><dt>Disnea</dt><dd>EPOC/asma, infección respiratoria, anemia, tromboembolismo pulmonar, obesidad o desacondicionamiento.</dd><dt>Edema</dt><dd>Insuficiencia venosa, enfermedad renal, hepatopatía o causas farmacológicas.</dd><dt>Inicio brusco o inestabilidad</dt><dd>Considera causas tiempo-dependientes como síndrome coronario agudo, TEP o arritmia grave.</dd></dl></details><section id="suspicion-conclusion" tabindex="-1" class="sus-conclusion"><h2 class="sus-conclusion-heading">Conclusión clínica</h2><div id="suspicion-result">'+suspicionResult()+'</div></section><div id="suspicion-bar">'+suspicionBar()+'</div><div class="diagnosis-links"><a class="text-link" href="'+SOURCE.url+'" target="_blank" rel="noopener noreferrer">ESC 2026 · Evidencia</a><button type="button" class="text-link" data-action="reset-context">Nueva evaluación</button></div><p class="diagnosis-status">Prototipo no validado: no confirma ni descarta IC. No introducir datos de pacientes reales. Datos de demostración en memoria de sesión.</p></div>';}
+function suspicion(){return '<div class="page pearl-home ic-page suspicion-page">'+back('Diagnóstico','diagnosis')+'<h1>Sospecha clínica</h1><p class="ic-subtitle">Demostración educativa · Solo casos ficticios. No utilizar en asistencia clínica.</p><p class="sus-hint sus-check-help">Marca los hallazgos presentes. Confirma los ausentes una sola vez al final.</p><div class="sus-groups">'+GROUPS.map(groupFields).join('')+'</div><details class="pearl-card sus-group"><summary><strong>Diagnóstico diferencial</strong></summary><p class="sus-hint">Valorar según presentación; pueden coexistir con IC.</p><dl class="sus-diff"><dt>Disnea</dt><dd>EPOC/asma, infección respiratoria, anemia, tromboembolismo pulmonar, obesidad o desacondicionamiento.</dd><dt>Edema</dt><dd>Insuficiencia venosa, enfermedad renal, hepatopatía o causas farmacológicas.</dd><dt>Inicio brusco o inestabilidad</dt><dd>Considera causas tiempo-dependientes como síndrome coronario agudo, TEP o arritmia grave.</dd></dl></details><div class="pearl-card sus-final-review"><label class="sus-check sus-review"><input type="checkbox" data-review-all '+(isEvaluationReviewed(clinicalContext)?'checked':'')+'><span>He revisado todos los apartados. Los hallazgos no marcados están ausentes.</span></label></div><section id="suspicion-conclusion" tabindex="-1" class="sus-conclusion"><h2 class="sus-conclusion-heading">Conclusión clínica</h2><div id="suspicion-result">'+suspicionResult()+'</div></section><div id="suspicion-bar">'+suspicionBar()+'</div><div class="diagnosis-links"><a class="text-link" href="'+SOURCE.url+'" target="_blank" rel="noopener noreferrer">ESC 2026 · Evidencia</a><button type="button" class="text-link" data-action="reset-context">Nueva evaluación</button></div><p class="diagnosis-status">Prototipo no validado: no confirma ni descarta IC. No introducir datos de pacientes reales. Datos de demostración en memoria de sesión.</p></div>';}
 function refreshSuspicion(){
  const box=document.getElementById('suspicion-result');if(!box)return;box.innerHTML=suspicionResult();const bar=document.getElementById('suspicion-bar');if(bar){const focused=bar.contains(document.activeElement);bar.innerHTML=suspicionBar();if(focused)bar.querySelector('button').focus({preventScroll:true});}
  for(const g of GROUPS){
   const reviewed=isGroupReviewed(clinicalContext,g.id);
   const el=document.querySelector('[data-count="'+g.id+'"]');if(el)el.textContent=g.fields.filter(([id])=>clinicalContext.findings[id]==='yes').length+' positivos · '+(reviewed?'Revisado':'Pendiente');
-  const control=document.querySelector('[data-review-group="'+g.id+'"]');if(control)control.checked=reviewed;
+
  }
+ const control=document.querySelector('[data-review-all]');if(control)control.checked=isEvaluationReviewed(clinicalContext);
 }
 app.addEventListener('change',e=>{
- const id=e.target.dataset.finding,group=e.target.dataset.reviewGroup;
+ const id=e.target.dataset.finding;
  if(id)clinicalContext=toggleFinding(clinicalContext,id,e.target.checked);
- else if(group)clinicalContext=setGroupReviewed(clinicalContext,group,e.target.checked);
+ else if(e.target.hasAttribute('data-review-all'))clinicalContext=setEvaluationReviewed(clinicalContext,e.target.checked);
  else return;
  refreshSuspicion();
 });

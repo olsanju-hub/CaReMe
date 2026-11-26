@@ -48,3 +48,10 @@ export function toggleFinding(ctx,id,checked){
  if(typeof checked!=='boolean')return ctx;
  return updateFinding(ctx,id,checked?'yes':'unknown');
 }
+
+// Confirmación única de todos los bloques; nunca confirma las constantes por inferencia.
+export function setEvaluationReviewed(ctx,reviewed){
+ if(typeof reviewed!=='boolean')return ctx;
+ return GROUPS.reduce((next,g)=>setGroupReviewed(next,g.id,reviewed),ctx);
+}
+export function isEvaluationReviewed(ctx){return GROUPS.every(g=>isGroupReviewed(ctx,g.id));}

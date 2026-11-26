@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {GROUPS,createClinicalContext,updateFinding,evaluateSuspicion,setGroupReviewed,isGroupReviewed,toggleFinding} from '../src/ic/suspicion.mjs';
+import {GROUPS,createClinicalContext,updateFinding,evaluateSuspicion,setGroupReviewed,isGroupReviewed,toggleFinding,setEvaluationReviewed,isEvaluationReviewed} from '../src/ic/suspicion.mjs';
 const allNo=()=>({findings:{...Object.fromEntries(GROUPS.flatMap(g=>g.fields.map(([id])=>[id,'no']))),vitalsReviewed:'yes'}});
 const result=(c)=>evaluateSuspicion(c).id;
 test('Datos ausentes no son negativos',()=>assert.equal(result(createClinicalContext()),'IC-SUS-03'));
@@ -20,3 +20,6 @@ test('Trazabilidad de las salidas',()=>{for(const c of [allNo(),createClinicalCo
 test('Casilla vacía no implica ausencia',()=>{let c=toggleFinding(createClinicalContext(),'dyspnea',true);assert.equal(c.findings.dyspnea,'yes');c=toggleFinding(c,'dyspnea',false);assert.equal(c.findings.dyspnea,'unknown');assert.equal(isGroupReviewed(c,'symptoms'),false);});
 test('Confirmar revisión solo convierte no marcados en negativos',()=>{let c=toggleFinding(createClinicalContext(),'respiratory',true);c=setGroupReviewed(c,'alarms',true);assert.equal(c.findings.respiratory,'yes');assert.equal(c.findings.perfusion,'no');assert.equal(c.findings.vitalsReviewed,undefined);assert.equal(result(c),'IC-SUS-01');assert.equal(isGroupReviewed(c,'alarms'),true);c=setGroupReviewed(c,'alarms',false);assert.equal(c.findings.respiratory,'yes');assert.equal(c.findings.perfusion,'unknown');});
 test('Revisión de alarmas sin constantes mantiene bloqueo',()=>{let c=setGroupReviewed(createClinicalContext(),'alarms',true);assert.equal(result(c),'IC-SUS-03');c=toggleFinding(c,'vitalsReviewed',true);assert.equal(result(c),'IC-SUS-06');c=toggleFinding(c,'perfusion',true);assert.equal(result(c),'IC-SUS-01');c=toggleFinding(c,'perfusion',false);assert.equal(result(c),'IC-SUS-03');});
+
+test('Confirmación única conserva positivos y no presupone constantes',()=>{let c=toggleFinding(createClinicalContext(),'dyspnea',true);c=setEvaluationReviewed(c,true);assert.equal(c.findings.dyspnea,'yes');assert.equal(c.findings.perfusion,'no');assert.equal(c.findings.knownHF,'no');assert.equal(c.findings.vitalsReviewed,undefined);assert.equal(result(c),'IC-SUS-03');assert.equal(isEvaluationReviewed(c),true);c=toggleFinding(c,'vitalsReviewed',true);assert.equal(result(c),'IC-SUS-05');c=toggleFinding(c,'dyspnea',false);assert.equal(isEvaluationReviewed(c),false);assert.equal(result(c),'IC-SUS-06');});
+test('Retirar confirmación única vuelve a desconocidos sin borrar positivos',()=>{let c=setEvaluationReviewed(toggleFinding(createClinicalContext(),'perfusion',true),true);c=setEvaluationReviewed(c,false);assert.equal(c.findings.perfusion,'yes');assert.equal(c.findings.dyspnea,'unknown');assert.equal(result(c),'IC-SUS-01');assert.equal(isEvaluationReviewed(c),false);});
