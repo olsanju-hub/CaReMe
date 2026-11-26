@@ -867,3 +867,28 @@ body:has(.pearl-home) #app {
 .lab-add-choice{min-height:44px;border:1px solid #bed3db;background:#fff;color:#176c86;padding:6px 10px;border-radius:10px;font-size:.76rem;}
 .lab-add-choice[hidden],.lab-extra-fields [hidden]{display:none!important;}
 .lab-note{font-size:.72rem!important;margin:4px 0!important;}
+
+/* Asistente de péptidos: compacto, sin formularios redundantes. */
+.np-page{display:flex;flex-direction:column;gap:8px;}
+.np-page h1{font-size:clamp(1.65rem,6vw,2.5rem);}
+.np-page .np-inputs,.np-page .np-result{padding:12px 14px;margin:0;}
+.np-segment{display:flex;gap:4px;padding:3px;background:#edf4f6;border-radius:11px;margin:5px 0;}
+.np-segment button{flex:1;min-width:0;min-height:44px;border:0;border-radius:8px;color:#365768;background:transparent;font-weight:600;font-size:.82rem;}
+.np-segment button[aria-pressed=true]{background:white;color:#176c86;box-shadow:0 1px 5px #17334719;}
+.np-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:10px 0;}
+.np-field{display:flex;flex-direction:column;gap:4px;font-size:.83rem;color:#083748;}
+.np-entry{display:flex;flex-direction:column;gap:2px;}
+.np-entry input{min-width:0;width:100%;height:44px;font-size:16px;border:1px solid #bed3db;border-radius:9px;padding:6px;color:#083748;background:white;}
+.np-entry small{font-size:.72rem;color:#526e7b;}
+.np-error{color:#92333b;min-height:0;}
+.np-modifiers{margin:8px 0 12px;border-top:1px solid #dce8ed;padding-top:5px;}
+.np-modifiers summary{font-weight:650;color:#176c86;cursor:pointer;padding:9px 0;}
+.np-factor{display:grid;grid-template-columns:minmax(0,1fr) 135px;align-items:center;font-size:.8rem;gap:5px;}
+.np-factor .np-segment button{font-size:.72rem;}
+.np-result h2{margin:2px 0 6px;font-size:1.15rem;color:#176c86;}
+.np-result p,.np-result li{font-size:.82rem;}
+.np-result .np-threshold{color:#526e7b;font-size:.75rem;}
+.np-result details{font-size:.79rem;margin:6px 0;}
+.np-alert{background:#fff8e9;color:#79581d;padding:8px 10px;border-radius:9px;font-size:.8rem;}
+.np-page .urgent-next{background:#92333b;}
+.np-page .sus-result-button{width:100%;}

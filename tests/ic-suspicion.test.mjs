@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {GROUPS,createClinicalContext,updateFinding,evaluateSuspicion,setGroupReviewed,isGroupReviewed,toggleFinding,setEvaluationReviewed,isEvaluationReviewed,diagnosticNext,setInvestigation,diagnosticAction,setStudyResult,investigationPlan,interpretSuspicion,CLINICAL_DIMENSIONS,labPlan} from '../src/ic/suspicion.mjs';
+import {GROUPS,createClinicalContext,updateFinding,evaluateSuspicion,setGroupReviewed,isGroupReviewed,toggleFinding,setEvaluationReviewed,isEvaluationReviewed,diagnosticNext,setInvestigation,diagnosticAction,setStudyResult,investigationPlan,interpretSuspicion,CLINICAL_DIMENSIONS,labPlan,setPeptide,interpretPeptide,peptideFactors} from '../src/ic/suspicion.mjs';
 const allNo=()=>({findings:{...Object.fromEntries(GROUPS.flatMap(g=>g.fields.map(([id])=>[id,'no']))),vitalsReviewed:'yes'}});
 const result=(c)=>evaluateSuspicion(c).id;
 test('Datos ausentes no son negativos',()=>assert.equal(result(createClinicalContext()),'IC-SUS-03'));
@@ -74,4 +74,25 @@ test('Analítica basal no omite albuminuria ni hierro; prioridad de entrada din�
  c=toggleFinding(c,'dm',true);assert.ok(labPlan(c).emphasis.some(x=>x.includes('HbA1c')));
  c=toggleFinding(c,'perfusion',true);assert.equal(labPlan(c).canCopy,false);
  assert.equal(labPlan(createClinicalContext()).canCopy,false);
+});
+
+test('NP: límites, contexto explícito y edad exacta de 75 años',()=>{
+ const run=(age,v,context='outpatient',kind='nt')=>interpretPeptide({findings:{},peptides:{age,context,kind,[kind]:v}});
+ assert.equal(run(68,124).id,'NP-01');assert.equal(run(68,125).id,'NP-02');assert.equal(run(68,250).id,'NP-03');
+ assert.equal(run(49,125).id,'NP-03');assert.equal(run(75,250).id,'NP-02');assert.equal(run(75,500).id,'NP-03');
+ assert.equal(run(68,2001).id,'NP-04');assert.equal(run(68,299,'acute').id,'NP-01');assert.equal(run(68,900,'acute').id,'NP-02');assert.equal(run(68,901,'acute').id,'NP-03');
+ assert.equal(run(75,1801,'acute').id,'NP-03');assert.equal(run(68,5001,'acute').id,'NP-05');
+ assert.equal(run(68,34,'outpatient','bnp').id,'NP-01');assert.equal(run(68,35,'outpatient','bnp').id,'NP-02');assert.equal(run(68,99,'acute','bnp').id,'NP-01');assert.equal(run(68,100,'acute','bnp').id,'NP-02');
+ assert.equal(run(68,850,'unknown').id,'NP-00');assert.equal(run(undefined,850).id,'NP-02');
+ assert.equal(run(68,20,'acute').next.section,'descompensada');
+});
+test('NP: recupera modificadores, no los inventa; alarma y IC conocida prevalecen',()=>{
+ let c=createClinicalContext();c=updateFinding(c,'obesity','yes');c=setStudyResult(c,'egfr','45');c=setStudyResult(c,'ecg','af');
+ c=setPeptide(c,'context','outpatient');c=setPeptide(c,'nt','100');
+ assert.equal(peptideFactors(c).obesity,'yes');assert.equal(peptideFactors(c).renal,'yes');assert.equal(peptideFactors(c).af,'yes');
+ assert.match(interpretPeptide(c).notes.join(' '),/no excluye/);
+ c=updateFinding(c,'knownHF','yes');assert.equal(interpretPeptide(c).title,'Valor bajo en IC conocida');
+ c=updateFinding(c,'perfusion','yes');assert.equal(interpretPeptide(c).next.section,'descompensada');
+ assert.equal(setPeptide(c,'age','17'),c);assert.equal(setPeptide(c,'nt','-1'),c);
+ c=setPeptide(c,'nt','');assert.equal(interpretPeptide(c).id,'NP-00');
 });
