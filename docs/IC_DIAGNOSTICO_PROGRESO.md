@@ -5,7 +5,7 @@ Actualizado 2026-11-26. No iniciar clasificación hasta cierre completo de diagn
 | Apartado | Estado |
 |---|---|
 | Pantalla principal | Implementada; estructura aprobada |
-| Sospecha clínica | v0.1: CI, Chromium, WebKit y Pages superados (36f45bb). v0.2: CI, Chromium, WebKit y Pages superados (396c7f3). Interfaz de casillas: implementada, pendiente de CI y publicación; revisión clínica independiente y aprobación visual pendientes |
+| Sospecha clínica | v0.79: interpretación por dimensiones y seguridad independiente; pruebas y aprobación pendientes |
 | Pruebas diagnósticas | v0.77: plan contextual, registro ECG/Rx/analítica y accesos específicos implementados; revisión técnica, clínica y visual pendientes |
 | BNP / NT-proBNP | Pendiente |
 | Ecocardiografía | Pendiente |
@@ -52,3 +52,6 @@ v0.76 superó CI, navegador y Pages. Fuente primaria consultada: ESC 2026, DOI 1
 
 ## Pruebas diagnósticas: interfaz compacta v0.78
 v0.77 superó CI, navegador y Pages. Por aprobación expresa del usuario, se ajusta la pantalla a la maqueta de cuatro filas desplegables, contexto plegado, dos accesos específicos sin controles de estado duplicados, botón de continuación y evidencia. Se conservan datos, funciones de registro y reglas clínicas. Seguridad y alarmas siguen visibles cuando proceden; la alarma positiva no propone continuar a péptidos. Prueba móvil verifica que el botón principal es visible en el estado estable inicial y que no se muestran formularios cerrados. No se inicia BNP/NT-proBNP ni ecocardiografía; pendientes de autorización, validación clínica y licencia.
+
+## Interpretación por dimensiones v0.79
+v0.78 superó CI, auditorías y Pages. Autorizado por el usuario: motor de conclusión cualitativa independiente de seguridad. Cada ítem se asigna a una dimensión, con justificación componible; no se usan puntuaciones, probabilidades, clasificaciones ni combinaciones cerradas. Se conserva la lógica previa de seguridad y navegación; la conclusión clínica no se oculta por constantes pendientes. Los síntomas típicos pueden ser inespecíficos; no se confirma ni se excluye IC sin evaluación objetiva. Las reglas son locales y experimentales. Fuentes: ESC 2026 DOI ehag100, apartado 5.1/tabla 7 y descompensación; definición universal 2026 DOI ehag500. Se pudieron consultar extractos indexados; acceso directo al texto y tabla íntegros falló. Pruebas de cobertura de todos los ítems y estados por parejas, escenarios conocidos y caso aportado. No se afirma exhaustividad de todas las combinaciones posibles ni validación clínica. Licencia y revisión independiente pendientes. Sin cambios en cuestionario ni en módulos de péptidos o ecocardiografía. Se reutiliza título clínico en contexto de pruebas para evitar resultados discordantes.

@@ -833,3 +833,16 @@ body:has(.pearl-home) #app {
 .study-compact .study-alert .sus-check{margin:3px 0 0;padding:4px 0;min-height:44px;font-size:.8rem;}
 .study-compact .study-purpose{font-size:.8rem;margin:2px 0 8px;color:#365768;}
 @media(min-width:721px){.study-compact .study-specific-card{min-height:94px;}}
+
+/* Interpretación y seguridad son ejes visuales independientes. */
+.sus-result .sus-clinical-title{color:#083748;}
+.sus-interpretation{border-top:1px solid #dce8ed;padding-top:9px;margin-top:8px;font-size:.81rem;color:#365768;}
+.sus-interpretation>strong{color:#083748;}
+.sus-interpretation p{margin:4px 0!important;font-size:.81rem;}
+.sus-safety-axis{margin:12px 0 0;padding:9px 10px;border-radius:10px;background:#edf5f5;color:#365768;font-size:.8rem;}
+.sus-safety-axis.pending,.sus-safety-axis.urgent{background:#fff8e9;color:#79581d;}
+.sus-safety-axis.critical{background:#fff0f0;color:#92333b;}
+.sus-safety-axis p{font-size:.77rem;margin:3px 0 0!important;}
+.sus-result .sus-next p{font-weight:400;font-size:.82rem;}
+.sus-evidence{margin-top:12px;font-size:.78rem;}
+.sus-bar-status .sus-bar-safety{margin:3px 0 0;font-size:.74rem;font-weight:600;}

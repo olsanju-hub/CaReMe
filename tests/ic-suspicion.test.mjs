@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {GROUPS,createClinicalContext,updateFinding,evaluateSuspicion,setGroupReviewed,isGroupReviewed,toggleFinding,setEvaluationReviewed,isEvaluationReviewed,diagnosticNext,setInvestigation,diagnosticAction,setStudyResult,investigationPlan} from '../src/ic/suspicion.mjs';
+import {GROUPS,createClinicalContext,updateFinding,evaluateSuspicion,setGroupReviewed,isGroupReviewed,toggleFinding,setEvaluationReviewed,isEvaluationReviewed,diagnosticNext,setInvestigation,diagnosticAction,setStudyResult,investigationPlan,interpretSuspicion,CLINICAL_DIMENSIONS} from '../src/ic/suspicion.mjs';
 const allNo=()=>({findings:{...Object.fromEntries(GROUPS.flatMap(g=>g.fields.map(([id])=>[id,'no']))),vitalsReviewed:'yes'}});
 const result=(c)=>evaluateSuspicion(c).id;
 test('Datos ausentes no son negativos',()=>assert.equal(result(createClinicalContext()),'IC-SUS-03'));
@@ -34,3 +34,35 @@ test('Caso captura: IC conocida, disnea y congestión con constantes pendientes 
 test('Plan distingue sospecha, IC conocida, datos pendientes y urgencia',()=>{let c=createClinicalContext();assert.equal(investigationPlan(c).mode,'incomplete');c=setEvaluationReviewed(toggleFinding(c,'dyspnea',true),true);c=toggleFinding(c,'vitalsReviewed',true);assert.equal(investigationPlan(c).mode,'suspected');c=toggleFinding(c,'knownHF',true);assert.equal(investigationPlan(c).mode,'known');c=toggleFinding(c,'perfusion',true);assert.equal(investigationPlan(c).mode,'urgent');});
 test('Resultados numéricos conservan unidad y desconocidos',()=>{let c=createClinicalContext();c=setStudyResult(c,'egfr','45,5');assert.equal(c.results.egfr.value,45.5);assert.equal(c.results.egfr.unit,'mL/min/1,73 m²');assert.equal(setStudyResult(c,'egfr','-1'),c);assert.equal(setStudyResult(c,'tsat','101'),c);assert.equal(setStudyResult(c,'egfr','abc'),c);c=setStudyResult(c,'egfr','');assert.equal(c.results.egfr,undefined);});
 test('Hallazgos registrados orientan estudio etiológico sin diagnosticar',()=>{let c=toggleFinding(createClinicalContext(),'family',true);c=setStudyResult(c,'ecg','af');assert.ok(investigationPlan(c).targeted.some(x=>x.id==='family'));assert.ok(investigationPlan(c).targeted.some(x=>x.id==='rhythm'));assert.equal(investigationPlan(c).mode,'incomplete');assert.equal(c.results.np,undefined);});
+
+test('Cobertura de cada ítem del formulario por las dimensiones',()=>{
+ const ids=[...GROUPS.flatMap(g=>g.fields.map(([id])=>id)),'vitalsReviewed'];
+ assert.deepEqual([...new Set(Object.values(CLINICAL_DIMENSIONS).flat())].sort(),ids.sort());
+});
+test('Caso de la captura: sospecha, congestión y riesgo sin constantes no se ocultan',()=>{
+ let c=createClinicalContext();for(const id of ['pnd','swelling','crackles','htn','dm'])c=toggleFinding(c,id,true);
+ c=setEvaluationReviewed(c,true);const r=interpretSuspicion(c);
+ assert.equal(r.title,'Sospecha clínica de insuficiencia cardiaca');assert.equal(r.safety.level,'pending');
+ assert.deepEqual(r.profile.nocturnal,['pnd']);assert.deepEqual(r.profile.pulmonary,['crackles']);
+ assert.deepEqual(r.profile.predisposition,['htn','dm']);assert.equal(r.next.route,'ic/diagnostico/pruebas');
+ const s=interpretSuspicion(toggleFinding(c,'vitalsReviewed',true));assert.equal(s.title,r.title);assert.equal(s.safety.level,'review');
+});
+test('IC conocida, síntomas, datos desconocidos y factores de riesgo no son equivalentes',()=>{
+ assert.equal(interpretSuspicion(createClinicalContext()).id,'IC-PROF-05');
+ assert.equal(interpretSuspicion(toggleFinding(createClinicalContext(),'dyspnea',true)).id,'IC-PROF-03');
+ assert.equal(interpretSuspicion(updateFinding(allNo(),'htn','yes')).id,'IC-PROF-07');
+ assert.match(interpretSuspicion(updateFinding(allNo(),'knownHF','yes')).title,/IC conocida sin manifestaciones/);
+ assert.equal(interpretSuspicion(allNo()).id,'IC-PROF-09');
+});
+test('Cobertura combinatoria por parejas de todos los ítems y estados; alarmas prevalecen sin borrar interpretación',()=>{
+ const ids=[...GROUPS.flatMap(g=>g.fields.map(([id])=>id)),'vitalsReviewed'];
+ for(let i=0;i<ids.length;i++)for(let j=i+1;j<ids.length;j++)for(const a of ['yes','no','unknown'])for(const b of ['yes','no','unknown'])for(const base of ['unknown','no']){
+  const findings=Object.fromEntries(ids.map(id=>[id,base]));findings[ids[i]]=a;findings[ids[j]]=b;
+  const c={findings},r=interpretSuspicion(c);
+  assert.ok(r.title&&r.interpretation&&r.next.text&&r.safety.title);
+  assert.deepEqual(Object.values(r.profile).flat().sort(),ids.filter(id=>findings[id]==='yes').sort());
+  if(CLINICAL_DIMENSIONS.urgent.some(id=>findings[id]==='yes')){assert.equal(r.safety.level,'critical');assert.equal(r.next.action,'open-urgent');}
+  else if(findings.worsening==='yes'){assert.equal(r.safety.level,'urgent');assert.equal(r.next.action,'open-urgent');}
+  else{assert.equal(r.next.route,'ic/diagnostico/pruebas');if(findings.vitalsReviewed!=='yes')assert.equal(r.safety.level,'pending');}
+ }
+});

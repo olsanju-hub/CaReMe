@@ -142,3 +142,81 @@ export function investigationPlan(ctx){
  if(ctx?.results?.rx?.value==='pulmonary')targeted.push({id:'pulmonary',text:'Revisar el hallazgo pulmonar y dirigir las pruebas a la causa alternativa sospechada.'});
  return {mode,basal,targeted,source:{doi:SOURCE.doi,sections:'5.1.2 y 5.3; tabla de recomendaciones 3',version:'0.1',type:'Adaptación educativa, pendiente de validación'}};
 }
+
+/* Composición cualitativa de dimensiones independientes.
+ * No estima probabilidad, no confirma IC, no clasifica FEVI ni prescribe.
+ * La prioridad asistencial preexistente se evalúa por separado.
+ */
+export const CLINICAL_DIMENSIONS={
+ nocturnal:['orthopnea','pnd'],
+ nonspecific:['dyspnea','fatigue'],
+ fluidSymptoms:['swelling','weight'],
+ pulmonary:['crackles'],
+ systemic:['jvp','edema','ascites'],
+ cardiacSigns:['s3'],
+ predisposition:['htn','dm','ckd','obesity'],
+ substrate:['cardiac','af','toxins','family'],
+ history:['knownHF'],
+ deterioration:['worsening'],
+ urgent:['respiratory','perfusion','chestPain','arrhythmia'],
+ assessment:['vitalsReviewed']
+};
+export function interpretSuspicion(ctx){
+ const f=ctx?.findings??{},val=id=>['yes','no'].includes(f[id])?f[id]:'unknown';
+ const labels=Object.fromEntries(GROUPS.flatMap(g=>g.fields));
+ labels.vitalsReviewed='Constantes y estabilidad valoradas';
+ const profile=Object.fromEntries(Object.entries(CLINICAL_DIMENSIONS).map(([key,ids])=>[key,ids.filter(id=>val(id)==='yes')]));
+ const has=key=>profile[key].length>0;
+ const named=ids=>ids.map(id=>labels[id]);
+ const complete=(...ids)=>ids.every(id=>isGroupReviewed(ctx, id));
+ const known=has('history'), symptoms=has('nocturnal')||has('nonspecific')||has('fluidSymptoms');
+ const signs=has('pulmonary')||has('systemic')||has('cardiacSigns');
+ const suggestive=has('nocturnal')||has('fluidSymptoms')||signs;
+ const risks=has('predisposition')||has('substrate');
+ const pending=GROUPS.filter(g=>!isGroupReviewed(ctx,g.id)).map(g=>g.label);
+ if(val('vitalsReviewed')!=='yes')pending.push('Constantes y estabilidad');
+ const safetyRule=evaluateSuspicion(ctx);
+ const safety=safetyRule.id==='IC-SUS-01'?{level:'critical',title:'Alarma clínica',text:safetyRule.action}:safetyRule.id==='IC-SUS-02'?{level:'urgent',title:'Empeoramiento reciente',text:safetyRule.action}:safetyRule.id==='IC-SUS-03'?{level:'pending',title:'Estabilidad pendiente de valorar',text:'Completar alarmas y constantes antes de decidir el ámbito asistencial.'}:{level:'review',title:'Seguridad revisada',text:'Sin alarmas marcadas; estabilidad valorada según el registro. Reevaluar si cambia la situación.'};
+ let id,title,interpretation;
+ if(known){
+  id='IC-PROF-01';title=has('deterioration')?'IC conocida con posible descompensación':symptoms||signs?'IC conocida con manifestaciones clínicas':complete('symptoms','signs')?'IC conocida sin manifestaciones registradas':'IC conocida; situación clínica no determinada';
+  interpretation=has('deterioration')?'El empeoramiento requiere valoración de la causa y la situación clínica.':symptoms||signs?'Valorar congestión, evolución respecto al estado basal y otras causas.':'El antecedente registrado se mantiene; la ausencia de hallazgos actuales no invalida el diagnóstico previo.';
+ }else if(suggestive){
+  id='IC-PROF-02';title='Sospecha clínica de insuficiencia cardiaca';interpretation='Los hallazgos son compatibles con IC, pero no específicos. Precisa confirmación objetiva y diagnóstico diferencial.';
+ }else if(symptoms){
+  id='IC-PROF-03';title='Síntomas inespecíficos: considerar IC';interpretation='La clínica puede corresponder a IC u otras causas. Integrar antecedentes y exploración para decidir el estudio.';
+ }else if(has('deterioration')||has('urgent')){
+  id='IC-PROF-04';title='Etiología clínica indeterminada';interpretation='Los datos de alarma o empeoramiento requieren valoración; no determinan por sí mismos que la causa sea IC.';
+ }else if(!complete('symptoms','signs')){
+  id='IC-PROF-05';title='Evaluación clínica incompleta';interpretation=risks?'Hay antecedentes predisponentes; faltan síntomas o exploración para valorar manifestaciones de IC.':'No se dispone de información suficiente para orientar la sospecha.';
+ }else if(val('knownHF')==='unknown'){
+  id='IC-PROF-06';title='Antecedente de IC no aclarado';interpretation='Sin síntomas o signos positivos registrados; aclarar diagnóstico previo antes de interpretar el perfil.';
+ }else if(risks){
+  id='IC-PROF-07';title='Factores predisponentes sin manifestaciones registradas';interpretation='Los factores de riesgo o la cardiopatía previa no establecen por sí solos IC ni su estadio.';
+ }else if(!complete('risk')){
+  id='IC-PROF-08';title='Sin manifestaciones registradas; antecedentes incompletos';interpretation='Completar antecedentes para contextualizar el riesgo. La IC no queda excluida.';
+ }else{
+  id='IC-PROF-09';title='Sin hallazgos registrados compatibles';interpretation='No se identifican manifestaciones en los ítems revisados. Esto no excluye IC si persiste sospecha clínica.';
+ }
+ const reasoning=[];
+ const line=(keys,label)=>{const ids=keys.flatMap(k=>profile[k]);if(ids.length)reasoning.push({label,findings:named(ids)});};
+ line(['nocturnal'],'Síntomas orientadores de IC');
+ line(['nonspecific'],'Síntomas de baja especificidad');
+ line(['fluidSymptoms'],'Síntomas compatibles con retención de líquido');
+ line(['pulmonary'],'Posible congestión pulmonar');
+ line(['systemic'],'Posible congestión sistémica');
+ line(['cardiacSigns'],'Hallazgo de exploración cardiaca');
+ line(['predisposition'],'Factores predisponentes');
+ line(['substrate'],'Antecedentes cardiacos o etiológicos');
+ line(['history'],'Diagnóstico previo referido');
+ line(['deterioration','urgent'],'Empeoramiento o alarmas registradas');
+ const differential=[];
+ if(has('nocturnal')||has('nonspecific')||has('pulmonary'))differential.push('Causas respiratorias de disnea; anemia si hay disnea o fatiga.');
+ if(has('fluidSymptoms')||has('systemic'))differential.push('Causas venosas, renales, hepáticas o farmacológicas de retención de líquido.');
+ if(has('cardiacSigns')||has('substrate'))differential.push('Precisar cardiopatía estructural, valvulopatía o arritmia según antecedentes y exploración.');
+ if(has('urgent'))differential.push('Descartar causas tiempo-dependientes según el signo de alarma.');
+ const navigation=diagnosticAction(ctx);
+ const urgent=safety.level==='critical'||safety.level==='urgent';
+ const nextText=urgent?'Priorizar valoración urgente; no demorarla por el estudio programado.':known?'Revisar estudios disponibles y evolución de la IC.':symptoms||signs?'Completar estudio objetivo y considerar causas alternativas.':risks?'Revisar riesgo y cardiopatía previa; individualizar necesidad de pruebas.':'Completar datos si faltan y valorar pruebas si persiste sospecha.';
+ return {id,title,interpretation,profile,reasoning,differential,pending,safety,next:{...navigation,text:nextText},source:{...SOURCE,version:'0.3',sections:'5.1; tabla 7; 7.2; definición universal 2026 (ehag500)'},ruleType:'Composición cualitativa local, no es escala validada ni diagnóstico confirmado'};
+}

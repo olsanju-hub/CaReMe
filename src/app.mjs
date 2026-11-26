@@ -1,5 +1,5 @@
-import {GROUPS,SOURCE,createClinicalContext,updateFinding,evaluateSuspicion,setEvaluationReviewed,isEvaluationReviewed,isGroupReviewed,toggleFinding,INVESTIGATIONS,setInvestigation,diagnosticNext,diagnosticAction,LAB_FIELDS,REPORT_FIELDS,setStudyResult,investigationPlan} from './ic/suspicion.mjs?v=78';
-const BUILD='0.78';
+import {GROUPS,SOURCE,createClinicalContext,updateFinding,evaluateSuspicion,setEvaluationReviewed,isEvaluationReviewed,isGroupReviewed,toggleFinding,INVESTIGATIONS,setInvestigation,diagnosticNext,diagnosticAction,LAB_FIELDS,REPORT_FIELDS,setStudyResult,investigationPlan,interpretSuspicion} from './ic/suspicion.mjs?v=79';
+const BUILD='0.79';
 const app=document.getElementById('app');
 const PATHOLOGIES = [
  ['dm2','Diabetes tipo 2','Incluye insulinización'],['hta','Hipertensión arterial','Confirmación y control'],
@@ -72,25 +72,16 @@ function diagnosticCard(item,extra=''){return card(item,extra).replace('data-act
 function diagnosis(){return '<div class="page home pearl-home ic-page diagnosis-page">'+back('Insuficiencia cardiaca','ic')+'<h1>Diagnóstico</h1><p class="ic-subtitle">Sospecha y confirmación de IC</p><div class="diagnosis-primary">'+diagnosticCard(diagnosticItems[0],'ic-hero')+'</div><div class="module-grid ic-grid diagnosis-grid">'+diagnosticItems.slice(1).map(x=>diagnosticCard(x)).join('')+'</div><div class="diagnosis-links"><button class="text-link" type="button" data-action="diagnostic-evidence">Referencias científicas</button><button class="text-link diagnostic-urgent-link" type="button" data-action="ic-section" data-section="descompensada">IC descompensada</button></div><p class="diagnosis-status">En desarrollo · Sin recomendaciones clínicas activas</p></div>';}
 let clinicalContext=createClinicalContext();
 function suspicionResult(){
- const r=evaluateSuspicion(clinicalContext), step=diagnosticAction(clinicalContext);
- const explanations={
-  study:'Sospecha de IC pendiente de confirmación objetiva. Continuar el estudio.',
-  known:'IC previamente conocida: revisar las pruebas pertinentes o acceder directamente a otro módulo.',
-  urgent:'No demorar la valoración urgente. El módulo de IC descompensada todavía no está operativo; abrirlo no sustituye la atención urgente.',
-  safety:'Los hallazgos pasan al estudio diagnóstico. La estabilidad sigue pendiente de comprobar; no se autoriza manejo ambulatorio.',
-  incomplete:'Continuar con los datos disponibles. La información pendiente seguirá identificada.',
-  review:'No se confirma ni se excluye IC. Si persiste sospecha, revisar el estudio objetivo.'
- };
- const next='<div class="sus-next"><strong>Siguiente paso</strong><p>'+explanations[step.kind]+'</p><button class="sus-result-button'+(step.kind==='urgent'?' urgent-next':'')+'" type="button" data-action="'+step.action+'">'+step.label+' ›</button>'+(step.kind==='safety'?'<button class="text-link" type="button" data-action="complete-safety">Revisar seguridad</button>':step.kind==='incomplete'?'<button class="text-link" type="button" data-action="complete-review">Revisar datos pendientes</button>':step.kind==='known'?'<button class="text-link" type="button" data-action="ic">Otros módulos de IC</button>':'')+'</div>';
-
- const positives=GROUPS.flatMap(g=>g.fields.filter(([id])=>clinicalContext.findings[id]==='yes').map(([,label])=>label));
- const pending=GROUPS.filter(g=>!isGroupReviewed(clinicalContext,g.id)).map(g=>g.label);
- if(clinicalContext.findings.vitalsReviewed!=='yes')pending.push('Constantes y estabilidad');
- return '<section class="pearl-card sus-result '+r.level+'" aria-live="polite"><h2>'+r.title+'</h2><p>'+r.action+'</p>'+next+'<div class="sus-summary"><strong>Hallazgos presentes: '+positives.length+'</strong>'+(positives.length?'<ul>'+positives.map(x=>'<li>'+x+'</li>').join('')+'</ul>':'<p>Ningún hallazgo marcado. Esto no equivale a ausencia confirmada.</p>')+(pending.length?'<p><strong>Pendiente de revisar:</strong> '+pending.join(' · ')+'</p>':'<p>Todos los bloques revisados.</p>')+'</div><details><summary>Justificación y fuente</summary><p>'+r.id+' · v'+r.source.version+' · '+r.source.sections+'</p><p>'+r.ruleType+'</p><a class="text-link" href="'+r.source.url+'" target="_blank" rel="noopener noreferrer">Consultar publicación original</a></details></section>';
+ const r=interpretSuspicion(clinicalContext), step=r.next,safety=r.safety;
+ const reasoning=r.reasoning.length?'<div class="sus-interpretation"><strong>Justificación clínica</strong>'+r.reasoning.map(g=>'<p><strong>'+g.label+':</strong> '+g.findings.join(' · ')+'</p>').join('')+'</div>':'';
+ const secondary=step.kind==='safety'?'<button class="text-link" type="button" data-action="complete-safety">Revisar seguridad</button>':step.kind==='incomplete'?'<button class="text-link" type="button" data-action="complete-review">Revisar datos pendientes</button>':step.kind==='known'?'<button class="text-link" type="button" data-action="ic">Otros módulos de IC</button>':'';
+ const next='<div class="sus-next"><strong>Siguiente actuación</strong><p>'+step.text+'</p><button class="sus-result-button'+(step.kind==='urgent'?' urgent-next':'')+'" type="button" data-action="'+step.action+'">'+step.label+' ›</button>'+secondary+'</div>';
+ const detail=(r.pending.length?'<p><strong>Datos pendientes:</strong> '+r.pending.join(' · ')+'</p>':'')+(r.differential.length?'<p><strong>Diagnóstico diferencial:</strong> '+r.differential.join(' ')+'</p>':'');
+ return '<section class="pearl-card sus-result '+safety.level+'" aria-live="polite"><h2 class="sus-clinical-title">'+r.title+'</h2><p>'+r.interpretation+'</p>'+reasoning+'<div class="sus-safety-axis '+safety.level+'"><strong>'+safety.title+'</strong><p>'+safety.text+'</p></div>'+next+'<details class="sus-evidence"><summary>Justificación ampliada y fuente</summary>'+detail+'<p>'+r.id+' · v'+r.source.version+' · '+r.source.sections+'</p><p>'+r.ruleType+'</p><a class="text-link" href="'+r.source.url+'" target="_blank" rel="noopener noreferrer">Consultar publicación original</a> · <a class="text-link" href="https://doi.org/10.1093/eurheartj/ehag500" target="_blank" rel="noopener noreferrer">Definición universal 2026</a></details></section>';
 }
 function suspicionBar(){
- const r=evaluateSuspicion(clinicalContext);
- return '<div class="sus-bar '+r.level+'"><div class="sus-bar-status" role="status"><small>Resultado de la evaluación</small><strong>'+r.title+'</strong>'+(['critical','urgent'].includes(r.level)?'<p>'+r.action+'</p>':'')+'</div><button type="button" class="sus-result-button" data-action="show-suspicion-result">Ver conclusión <span aria-hidden="true">↓</span></button></div>';
+ const r=interpretSuspicion(clinicalContext),safety=r.safety;
+ return '<div class="sus-bar '+safety.level+'"><div class="sus-bar-status" role="status"><small>Resultado de la evaluación</small><strong>'+r.title+'</strong>'+(safety.level!=='review'?'<p class="sus-bar-safety">'+safety.title+'</p>':'')+'</div><button type="button" class="sus-result-button" data-action="show-suspicion-result">Ver conclusión <span aria-hidden="true">↓</span></button></div>';
 }
 function groupFields(g){
  const count=g.fields.filter(([id])=>clinicalContext.findings[id]==='yes').length;
@@ -129,9 +120,7 @@ app.addEventListener('change',e=>{
 function studyView(){
  const step=diagnosticNext(clinicalContext),plan=investigationPlan(clinicalContext);
  const recorded=GROUPS.flatMap(g=>g.fields.filter(([id])=>clinicalContext.findings[id]==='yes').map(([,label])=>label));
- const known=clinicalContext.findings.knownHF==='yes';
- const clinicalFindings=GROUPS.filter(g=>['symptoms','signs'].includes(g.id)).some(g=>g.fields.some(([id])=>clinicalContext.findings[id]==='yes'));
- const summary=known?'IC previamente conocida':clinicalFindings?'Hallazgos compatibles con IC':'Diagnóstico no determinado';
+ const summary=interpretSuspicion(clinicalContext).title;
  const safetyPending=step.kind==='safety';
  const safety=safetyPending?'<section class="pearl-card study-safety study-alert"><h2>Seguridad pendiente</h2><p>Estabilidad pendiente. No implica autorización de manejo ambulatorio.</p><label class="sus-check"><input type="checkbox" data-finding="vitalsReviewed" '+(clinicalContext.findings.vitalsReviewed==='yes'?'checked':'')+'><span>Constantes revisadas y estabilidad valorada</span></label>'+(!isGroupReviewed(clinicalContext,'alarms')?'<p>Alarmas pendientes de revisar.</p><button class="text-link" type="button" data-action="diagnostic-section" data-section="sospecha">Revisar alarmas en sospecha clínica</button>':'')+'</section>':'';
  const message=step.kind==='urgent'?'Hay una alarma registrada. No utilizar el circuito ambulatorio para resolver la urgencia.':step.kind==='safety'||step.kind==='incomplete'?'Valoración clínica incompleta. Puedes consultar y registrar pruebas, pero no se emite un plan individualizado.':step.kind==='study'?'Sospecha clínica de IC. Pendiente de confirmación objetiva.':step.kind==='known'?'IC conocida según antecedente registrado. Revisar pruebas en su contexto.':'No se confirma ni se descarta IC con la información disponible.';
