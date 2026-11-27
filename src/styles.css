@@ -967,3 +967,13 @@ body:has(.pearl-home) #app {
 .stage-hint{margin:7px 0 0;font-size:.73rem;color:#526e7b;}
 .stage-result h2{margin:3px 0 6px;font-size:1.25rem;color:#176c86;}
 .stage-result p,.stage-result li{font-size:.84rem;line-height:1.4;}
+
+/* Fenotipo: reuse echo values, one card, optional trajectory. */
+.phenotype-context{display:flex;flex-direction:column;gap:2px;padding:8px 0;border-bottom:1px solid #dce8ed;}
+.phenotype-context small{font-size:.75rem;color:#526e7b;}
+.phenotype-context strong{font-size:.9rem;color:#083748;}
+.phenotype-context p{margin:2px 0;font-size:.8rem;}
+.phenotype-links{display:flex;flex-wrap:wrap;gap:4px 12px;}
+.phenotype-links button{min-height:44px;font-size:.78rem;}
+.phenotype-page .echo-field{display:grid;grid-template-columns:minmax(0,1fr) 100px;align-items:center;}
+.phenotype-page .echo-field .np-error{grid-column:1/-1;}

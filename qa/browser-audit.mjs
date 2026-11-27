@@ -10,7 +10,7 @@ try{
  for(const [name,engine,viewport] of [['chromium',chromium,{width:1280,height:800}],['webkit-mobile',webkit,{width:390,height:844}]]){
   const browser=await engine.launch();try{
    const ctx=await browser.newContext({viewport,serviceWorkers:'allow'});const page=await ctx.newPage();const errors=[];page.on('pageerror',e=>errors.push(String(e)));
-   await page.goto(url);await page.getByRole('heading',{name:'CaHReMe',exact:true}).waitFor();assert.match(await page.locator('footer').innerText(),/v0\.87/);await page.screenshot({path:'qa-results/'+name+'-home.png',fullPage:true});
+   await page.goto(url);await page.getByRole('heading',{name:'CaHReMe',exact:true}).waitFor();assert.match(await page.locator('footer').innerText(),/v0\.88/);await page.screenshot({path:'qa-results/'+name+'-home.png',fullPage:true});
    await page.getByRole('button',{name:'Insuficiencia cardíaca',exact:true}).click();await page.getByRole('heading',{name:'Insuficiencia cardiaca',exact:true}).waitFor();
    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'No horizontal overflow');
    await page.screenshot({path:'qa-results/'+name+'-ic.png',fullPage:true});
@@ -35,7 +35,13 @@ try{
    await page.screenshot({path:'qa-results/'+name+'-stage.png',fullPage:true});
    await page.locator('.stage-page .sus-result-button').click();await page.getByRole('heading',{name:'Clasificación',exact:true}).waitFor();
    assert.match(await page.locator('[data-section="estadio"]').innerText(),/Riesgo de IC/);
-   for(const id of ['fenotipo','nyha','situacion','evolucion']){
+   await page.locator('[data-action="classification-section"][data-section="fenotipo"]').click();
+   await page.getByRole('heading',{name:'Fenotipo',exact:true}).waitFor();
+   assert.equal(await page.locator('[data-echo-input="ef"]:visible').count(),1);
+   if(name==='webkit-mobile')assert.ok(await page.locator('[data-action="phenotype-result"]').evaluate(e=>e.getBoundingClientRect().bottom<=innerHeight),'Fenotipo: acción visible');
+   await page.locator('[data-action="phenotype-result"]').click();await page.getByRole('heading',{name:'FEVI pendiente',exact:true}).waitFor();
+   await page.locator('.phenotype-page .sus-result-button').click();await page.getByRole('heading',{name:'Clasificación',exact:true}).waitFor();
+   for(const id of ['nyha','situacion','evolucion']){
     await page.locator('[data-action="classification-section"][data-section="'+id+'"]').click();await page.getByRole('heading',{name:'Pendiente de desarrollo'}).waitFor();
     await page.locator('[data-action="classification"]').click();await page.getByRole('heading',{name:'Clasificación',exact:true}).waitFor();
    }
@@ -171,6 +177,7 @@ try{
      await page.getByRole('heading',{name:'Clasificación',exact:true}).waitFor();
      assert.match(await page.locator('.class-grid').innerText(),/55 %/);
      assert.match(await page.locator('.class-evolution').innerText(),/30 % → 55 %/);
+     await page.locator('[data-action="classification-section"][data-section="fenotipo"]').click();await page.getByRole('heading',{name:'Fenotipo',exact:true}).waitFor();assert.equal(await page.locator('[data-echo-input="ef"]').count(),0);assert.match(await page.locator('.echo-metric').innerText(),/55 %/);await page.locator('[data-action="phenotype-result"]').click();await page.getByRole('heading',{name:'Conclusión',exact:true}).waitFor();await page.screenshot({path:'qa-results/'+name+'-phenotype.png',fullPage:true});await page.locator('.phenotype-page .sus-result-button').click();await page.getByRole('heading',{name:'Clasificación',exact:true}).waitFor();
      await page.screenshot({path:'qa-results/'+name+'-classification-context.png',fullPage:true});
      await page.locator('[data-action="ic"]').click();await page.getByRole('heading',{name:'Insuficiencia cardiaca',exact:true}).waitFor();
      await page.locator('[data-action="ic-section"][data-section="diagnostico"]').click();await page.getByRole('heading',{name:'Diagnóstico',exact:true}).waitFor();

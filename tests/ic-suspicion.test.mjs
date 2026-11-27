@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {GROUPS,createClinicalContext,updateFinding,evaluateSuspicion,setGroupReviewed,isGroupReviewed,toggleFinding,setEvaluationReviewed,isEvaluationReviewed,diagnosticNext,diagnosticAction,setStudyResult,investigationPlan,interpretSuspicion,CLINICAL_DIMENSIONS,labPlan,setPeptide,interpretPeptide,peptideFactors,ECHO_FINDINGS,ECHO_NUMERIC,setEcho,interpretEcho,setStageAssessment,interpretStage} from '../src/ic/suspicion.mjs';
+import {GROUPS,createClinicalContext,updateFinding,evaluateSuspicion,setGroupReviewed,isGroupReviewed,toggleFinding,setEvaluationReviewed,isEvaluationReviewed,diagnosticNext,diagnosticAction,setStudyResult,investigationPlan,interpretSuspicion,CLINICAL_DIMENSIONS,labPlan,setPeptide,interpretPeptide,peptideFactors,ECHO_FINDINGS,ECHO_NUMERIC,setEcho,interpretEcho,setStageAssessment,interpretStage,setPhenotypeAssessment,interpretPhenotype} from '../src/ic/suspicion.mjs';
 const allNo=()=>({findings:{...Object.fromEntries(GROUPS.flatMap(g=>g.fields.map(([id])=>[id,'no']))),vitalsReviewed:'yes'}});
 const result=(c)=>evaluateSuspicion(c).id;
 test('Datos ausentes no son negativos',()=>assert.equal(result(createClinicalContext()),'IC-SUS-03'));
@@ -156,4 +156,24 @@ test('Estadio: contradicciones pueden revisarse y una FEVI previamente reducida 
  assert.equal(interpretStage(c).stage,'C');
  c={findings:{},echo:{ef:60,priorEf:30},stageAssessment:{manifestations:'no',objective:'no',risk:'yes'}};
  r=interpretStage(c);assert.equal(r.stage,null);assert.ok(r.questions.includes('objective'));assert.match(r.contradictions.join(' '),/previamente reducida/);
+});
+
+test('Fenotipo: FEVI aislada no establece IC; cortes ESC y antecedentes',()=>{
+ const make=(ef,extra={})=>({findings:{knownHF:'yes'},echo:{ef,...extra},phenotypeAssessment:{diastolicEvidence:'yes'}});
+ assert.equal(interpretPhenotype({findings:{},echo:{ef:35}}).code,'ef-only');
+ for(const ef of [0.1,35,40,49.9])assert.equal(interpretPhenotype(make(ef)).code,'href');
+ for(const ef of [50,55,70,100])assert.equal(interpretPhenotype(make(ef,{priorReduced:'no'})).code,'hfpef');
+ assert.equal(interpretPhenotype(make(70)).code,'preserved-pending');
+ assert.equal(interpretPhenotype(make(55,{priorEf:30})).code,'prior-reduced');
+ assert.equal(interpretPhenotype(make(55,{priorEf:30,priorReduced:'no'})).conflict,true);
+ assert.equal(interpretPhenotype({findings:{knownHF:'yes'},echo:{ef:70,priorReduced:'no'}}).code,'preserved-pending');
+});
+test('Trayectoria: patrón de mejoría requiere IC clínica previa atribuida, conserva fenotipo actual',()=>{
+ let c={findings:{knownHF:'yes'},echo:{ef:45,priorEf:30}};
+ let r=interpretPhenotype(c);assert.equal(r.trajectoryPattern,true);assert.equal(r.improved,false);
+ c=setPhenotypeAssessment(c,'priorClinical','yes');r=interpretPhenotype(c);assert.equal(r.improved,true);assert.equal(r.code,'href');
+ c=setEcho(c,'ef','55');r=interpretPhenotype(c);assert.equal(r.improved,true);assert.equal(r.code,'prior-reduced');
+ c=setEcho(c,'ef','40');assert.equal(interpretPhenotype(c).improved,false);
+ c=setEcho(c,'ef','39');assert.equal(interpretPhenotype(c).trajectoryPattern,false);
+ c=updateFinding(c,'perfusion','yes');assert.equal(interpretPhenotype(c).urgent,true);
 });

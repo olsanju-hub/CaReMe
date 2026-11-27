@@ -11,7 +11,7 @@ export const GROUPS=[
  ['knownHF','Diagnóstico previo de IC'],['cardiac','Cardiopatía isquémica, valvulopatía o miocardiopatía'],['htn','Hipertensión arterial'],['dm','Diabetes'],['ckd','Enfermedad renal crónica'],['obesity','Obesidad'],['af','Fibrilación auricular u otra arritmia relevante'],['toxins','Exposición a cardiotóxicos o consumo perjudicial de alcohol'],['family','Antecedentes familiares de miocardiopatía']]}
 ];
 const fields=[...GROUPS.flatMap(g=>g.fields.map(([id])=>id)),'vitalsReviewed'];
-export function createClinicalContext(){return {findings:{},results:{},peptides:{},echo:{},stageAssessment:{},updatedAt:null};}
+export function createClinicalContext(){return {findings:{},results:{},peptides:{},echo:{},stageAssessment:{},phenotypeAssessment:{},updatedAt:null};}
 export function updateFinding(ctx,id,value){if(!fields.includes(id)||!['yes','no','unknown'].includes(value))return ctx;return {...ctx,findings:{...ctx.findings,[id]:value},updatedAt:new Date().toISOString()};}
 export function evaluateSuspicion(ctx){
  const f=ctx?.findings??{},val=id=>['yes','no'].includes(f[id])?f[id]:'unknown';
@@ -422,4 +422,47 @@ export function interpretStage(ctx){
  for(const [k,v] of [['manifestations',manifests],['objective',objective],['risk',risk],['advancedConfirmed',advanced]])if(v!=='unknown')reason.push(STAGE_QUESTIONS[k]+' '+(v==='yes'?'Sí.':'No.'));
  if(flags.length)reason.push('Señales de posible IC avanzada: '+flags.map(k=>STAGE_QUESTIONS[k]).join(' · '));
  return {stage,title,text,questions,advancedQuestions,reason,contradictions,flags,urgent:r.urgent,safety:r.safety,source:{doi:'10.1093/eurheartj/ehag500',sections:'Tabla 1; ESC 2026 sección 3.3',version:'0.1'}};
+}
+
+/* Educational phenotyping: distinguish current EF, clinical HF and longitudinal trajectory. */
+export function setPhenotypeAssessment(ctx,key,value){
+ if(!['priorClinical','diastolicEvidence'].includes(key)||!['yes','no','unknown'].includes(value))return ctx;
+ return {...ctx,phenotypeAssessment:{...ctx.phenotypeAssessment,[key]:value},updatedAt:new Date().toISOString()};
+}
+export function interpretPhenotype(ctx){
+ const r=interpretEcho(ctx),st=interpretStage(ctx),e=ctx.echo||{},a=ctx.phenotypeAssessment||{};
+ const ef=r.ef,prior=r.prior,delta=ef!==null&&prior!==null?Math.round((ef-prior)*1000000)/1000000:null;
+ const priorReduced=prior!==null&&prior<50||e.priorReduced==='yes';
+ const historicalNo=e.priorReduced==='no'&&!priorReduced;
+ const conflict=e.priorReduced==='no'&&priorReduced||st.contradictions.length>0;
+ const clinicalHF=['C','D'].includes(st.stage)&&!conflict;
+ const current=ef===null?'pending':ef<50?'reduced':'preserved';
+ const titleCurrent=ef===null?'FEVI pendiente':ef<50?'FEVI reducida':'FEVI preservada';
+ const priorClinical=a.priorClinical||'unknown',diastolic=a.diastolicEvidence||'unknown';
+ // Universal 2026 trajectory section describes a >=10-point gain to >40%;
+ // the general phenotype definition is not a rigid numeric threshold.
+ const trajectoryPattern=delta!==null&&prior<50&&delta>=10&&ef>40;
+ const improved=clinicalHF&&priorClinical==='yes'&&trajectoryPattern&&!conflict;
+ const notes=[];
+ if(delta!==null)notes.push('FEVI previa '+prior+'%; actual '+ef+'%; variación '+(delta>0?'+':'')+delta+' puntos porcentuales.');
+ if(priorReduced)notes.push('Antecedente de FEVI inferior al 50%; no corresponde etiquetar IC-FEp de novo.');
+ if(trajectoryPattern)notes.push('La variación cumple el patrón cuantitativo descrito en la sección de trayectorias del consenso universal 2026. Requiere contexto de IC clínica previa con FEVI reducida.');
+ if(priorClinical==='yes'&&!priorReduced)notes.push('Antecedente de IC con FEVI reducida referido; completar las mediciones previas.');
+ if(improved)notes.push('La mejoría de FEVI no equivale a resolución de la IC ni justifica retirar tratamiento por sí sola.');
+ if(ef!==null&&ef>=50&&!priorReduced&&!historicalNo)notes.push('No consta una revisión suficiente de FEVI histórica; no asignar IC-FEp de novo.');
+ if(ef!==null&&ef>=50&&diastolic!=='yes')notes.push('Precisar evidencia objetiva de disfunción diastólica o presiones de llenado elevadas y revisar los péptidos. No se diagnostica IC-FEp por FEVI aislada.');
+ if(st.contradictions.length)notes.push(...st.contradictions);
+ if(e.priorReduced==='no'&&priorReduced)notes.push('Discordancia entre FEVI histórica y respuesta sobre reducción previa.');
+ let title=titleCurrent,short=titleCurrent,text='Clasificación pendiente de FEVI actual.',code='pending';
+ if(conflict){title='Datos discordantes';short='Revisar datos';text='Revisar antecedentes y mediciones antes de asignar el fenotipo.';}
+ else if(ef!==null&&!clinicalHF){
+  code='ef-only';text=['0','A','B'].includes(st.stage)?'No consta IC clínica en el estadio registrado. Describir la función ventricular sin etiquetar un fenotipo de IC.':'La FEVI orienta la función ventricular. Completar la evaluación clínica antes de asignar fenotipo de IC.';
+ }else if(clinicalHF&&ef!==null){
+  if(current==='reduced'){code='href';title='IC con FEVI reducida';short='IC-FEr';text='IC clínica registrada y FEVI inferior al 50%. Conservar también la trayectoria de FEVI.';}
+  else if(priorReduced||priorClinical==='yes'){code='prior-reduced';title='IC con FEVI actualmente preservada';short='FEVI previa reducida';text='Antecedente de reducción: no clasificar como IC-FEp de novo. Revisar la trayectoria.';}
+  else if(historicalNo&&diastolic==='yes'){code='hfpef';title='IC con FEVI preservada';short='IC-FEp';text='IC clínica registrada, FEVI igual o superior al 50%, sin reducción previa referida y evidencia diastólica confirmada por el médico.';}
+  else{code='preserved-pending';title='FEVI preservada; fenotipo pendiente';short='Fenotipo pendiente';text='Aclarar FEVI histórica y evidencia objetiva compatible con IC-FEp antes de asignar el fenotipo.';}
+ }
+ const trajectory=improved?'IC con FEVI mejorada':trajectoryPattern?'Mejoría cuantitativa; atribución pendiente':delta===null?'Evolución pendiente':delta>0?'FEVI en ascenso':delta<0?'FEVI en descenso':'FEVI sin cambio registrado';
+ return {ef,prior,delta,current,clinicalHF,priorReduced,historicalNo,conflict,code,title,short,text,trajectory,trajectoryPattern,improved,notes,urgent:r.urgent,safety:r.safety,stage:st.stage,source:{doi:SOURCE.doi,sections:'5.2.1–5.2.2; consenso universal 2026, trayectorias',version:'0.1'}};
 }
