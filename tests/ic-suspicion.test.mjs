@@ -366,3 +366,50 @@ test('Finerenona: no asociar otro ARM y no extrapolar dosis de ERC-DM2',()=>{
 test('FEVI 45% no extrapola automáticamente inicio de ARNI o betabloqueante',()=>{
  const p=treatmentProposal(proposalFixture(45));assert.equal(p.status,'conditional',JSON.stringify(p.blockers));assert.ok(!p.actions.some(a=>a.kind==='start'&&/bisoprolol|sacubitrilo/i.test(a.title)));
 });
+
+
+test('Auditoría: trimetoprim/cotrimoxazol con cada ARM registrado',()=>{
+ for(const [drug,code] of [['Espironolactona','SPI-TMP'],['Eplerenona','EPL-TMP'],['Finerenona','FIN-TMP']]){
+  let c=addNamedMedication(createClinicalContext(),drug);
+  assert.ok(!medicationSafety(c).some(a=>a.id===code));
+  c=addNamedMedication(c,'other');c=setMedicationField(c,'extra-2','name','Cotrimoxazol');
+  assert.ok(medicationSafety(c).some(a=>a.id===code&&a.level==='amber'),drug);
+  c=deleteRecordedMedication(c,'extra-2');assert.ok(!medicationSafety(c).some(a=>a.id===code));
+ }
+});
+test('Auditoría: inhibidores fuertes CYP3A4 con eplerenona y finerenona',()=>{
+ for(const [drug,code] of [['Eplerenona','EPL-CYP3A4'],['Finerenona','FIN-CYP3A4']]){
+  let c=addNamedMedication(createClinicalContext(),drug);c=addNamedMedication(c,'other');
+  c=setMedicationField(c,'extra-2','name','Claritromicina');
+  assert.ok(medicationSafety(c).some(a=>a.id===code&&a.level==='red'));
+  c=setMedicationField(c,'extra-2','name','Fármaco desconocido');
+  assert.ok(!medicationSafety(c).some(a=>a.id===code));
+  assert.equal(medicationSummary(c).reconciled,false);
+ }
+});
+test('Auditoría: espironolactona, potasio confirmado y límites',()=>{
+ let c=addNamedMedication(createClinicalContext(),'Espironolactona');
+ c=setStudyResult(c,'egfr','65');c=setStudyResult(c,'potassium','5');
+ c=confirmTreatmentLabs(c,true);
+ assert.ok(!medicationSafety(c).some(a=>a.id==='SPI-K5'||a.id==='SPI-K6'));
+ c=setStudyResult(c,'potassium','5,1');
+ assert.ok(!medicationSafety(c).some(a=>a.id==='SPI-K5'));
+ c=confirmTreatmentLabs(c,true);assert.ok(medicationSafety(c).some(a=>a.id==='SPI-K5'&&a.level==='amber'));
+ c=setStudyResult(c,'potassium','6');c=confirmTreatmentLabs(c,true);
+ assert.ok(medicationSafety(c).some(a=>a.id==='SPI-K6'&&a.level==='red'));
+});
+test('Auditoría: ARNI y aliskireno, FG confirmado inferior a 60',()=>{
+ let c=addNamedMedication(createClinicalContext(),'Sacubitrilo/valsartán');
+ c=addNamedMedication(c,'other');c=setMedicationField(c,'extra-2','name','Aliskireno');
+ assert.ok(medicationSafety(c).some(a=>a.id==='ARNI-ALISK'&&a.level==='amber'));
+ c=setStudyResult(c,'egfr','59');c=setStudyResult(c,'potassium','4,5');c=confirmTreatmentLabs(c,true);
+ assert.ok(medicationSafety(c).some(a=>a.id==='ARNI-ALISK'&&a.level==='red'));
+ c=setStudyResult(c,'egfr','60');c=confirmTreatmentLabs(c,true);
+ assert.ok(medicationSafety(c).some(a=>a.id==='ARNI-ALISK'&&a.level==='amber'));
+});
+test('Auditoría: no extrapolar automáticamente indicaciones de ARM esteroideos a NYHA II',()=>{
+ const p=treatmentProposal(proposalFixture(32));
+ assert.equal(p.status,'conditional');
+ assert.ok(p.actions.some(a=>a.kind==='review'&&a.title.includes('ARM esteroideo')));
+ assert.ok(!p.actions.some(a=>a.kind==='start'&&/espironolactona|ARM esteroideo/i.test(a.title+' '+a.detail)));
+});
