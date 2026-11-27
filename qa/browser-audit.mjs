@@ -10,7 +10,7 @@ try{
  for(const [name,engine,viewport] of [['chromium',chromium,{width:1280,height:800}],['webkit-mobile',webkit,{width:390,height:844}]]){
   const browser=await engine.launch();try{
    const ctx=await browser.newContext({viewport,serviceWorkers:'allow'});const page=await ctx.newPage();const errors=[];page.on('pageerror',e=>errors.push(String(e)));
-   await page.goto(url);await page.getByRole('heading',{name:'CaHReMe',exact:true}).waitFor();assert.match(await page.locator('footer').innerText(),/v0\.84/);await page.screenshot({path:'qa-results/'+name+'-home.png',fullPage:true});
+   await page.goto(url);await page.getByRole('heading',{name:'CaHReMe',exact:true}).waitFor();assert.match(await page.locator('footer').innerText(),/v0\.85/);await page.screenshot({path:'qa-results/'+name+'-home.png',fullPage:true});
    await page.getByRole('button',{name:'Insuficiencia cardíaca',exact:true}).click();await page.getByRole('heading',{name:'Insuficiencia cardiaca',exact:true}).waitFor();
    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'No horizontal overflow');
    await page.screenshot({path:'qa-results/'+name+'-ic.png',fullPage:true});
@@ -22,7 +22,20 @@ try{
    assert.equal(await page.locator('.class-tile').count(),4);assert.match(await page.locator('.class-grid').innerText(),/FEVI pendiente/);
    if(name==='webkit-mobile')assert.ok(await page.locator('.class-page .sus-result-button').evaluate(e=>e.getBoundingClientRect().bottom<=innerHeight),'Portada clasificación compacta');
    await page.screenshot({path:'qa-results/'+name+'-classification.png',fullPage:true});
-   for(const id of ['estadio','fenotipo','nyha','situacion','evolucion']){
+   await page.locator('[data-action="classification-section"][data-section="estadio"]').click();
+   await page.getByRole('heading',{name:'Estadio evolutivo',exact:true}).waitFor();
+   assert.equal(await page.locator('.stage-question:visible').count(),1);
+   await page.locator('[data-action="stage-result"]').click();await page.getByRole('heading',{name:'Estadio indeterminado'}).waitFor();
+   await page.locator('[data-action="stage-edit"]').click();
+   await page.locator('[data-stage-key="manifestations"][data-stage-value="no"]').click();
+   await page.locator('[data-stage-key="objective"][data-stage-value="no"]').click();
+   await page.locator('[data-stage-key="risk"][data-stage-value="yes"]').click();
+   if(name==='webkit-mobile')assert.ok(await page.locator('[data-action="stage-result"]').evaluate(e=>e.getBoundingClientRect().bottom<=innerHeight),'Estadio: acción visible');
+   await page.locator('[data-action="stage-result"]').click();await page.getByRole('heading',{name:'Estadio A · Riesgo de IC'}).waitFor();
+   await page.screenshot({path:'qa-results/'+name+'-stage.png',fullPage:true});
+   await page.locator('.stage-page .sus-result-button').click();await page.getByRole('heading',{name:'Clasificación',exact:true}).waitFor();
+   assert.match(await page.locator('[data-section="estadio"]').innerText(),/Riesgo de IC/);
+   for(const id of ['fenotipo','nyha','situacion','evolucion']){
     await page.locator('[data-action="classification-section"][data-section="'+id+'"]').click();await page.getByRole('heading',{name:'Pendiente de desarrollo'}).waitFor();
     await page.locator('[data-action="classification"]').click();await page.getByRole('heading',{name:'Clasificación',exact:true}).waitFor();
    }

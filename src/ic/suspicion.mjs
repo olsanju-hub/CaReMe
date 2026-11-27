@@ -11,7 +11,7 @@ export const GROUPS=[
  ['knownHF','Diagnóstico previo de IC'],['cardiac','Cardiopatía isquémica, valvulopatía o miocardiopatía'],['htn','Hipertensión arterial'],['dm','Diabetes'],['ckd','Enfermedad renal crónica'],['obesity','Obesidad'],['af','Fibrilación auricular u otra arritmia relevante'],['toxins','Exposición a cardiotóxicos o consumo perjudicial de alcohol'],['family','Antecedentes familiares de miocardiopatía']]}
 ];
 const fields=[...GROUPS.flatMap(g=>g.fields.map(([id])=>id)),'vitalsReviewed'];
-export function createClinicalContext(){return {findings:{},investigations:{},results:{},peptides:{},echo:{},updatedAt:null};}
+export function createClinicalContext(){return {findings:{},investigations:{},results:{},peptides:{},echo:{},stageAssessment:{},updatedAt:null};}
 export function updateFinding(ctx,id,value){if(!fields.includes(id)||!['yes','no','unknown'].includes(value))return ctx;return {...ctx,findings:{...ctx.findings,[id]:value},updatedAt:new Date().toISOString()};}
 export function evaluateSuspicion(ctx){
  const f=ctx?.findings??{},val=id=>['yes','no'].includes(f[id])?f[id]:'unknown';
@@ -365,4 +365,64 @@ export function interpretEcho(ctx){
  else {integratedTitle='Información insuficiente para concluir IC';integrated='Revisar antecedentes, síntomas y pruebas disponibles; no asumir normalidad ni excluir IC.';}
  const urgent=np.urgent;
  return {ef,prior,title,phenotype,trajectory,positive,unknown,notes,integratedTitle,integrated,npLabel,clinicalTitle:s.title,safety:s.safety,urgent,next:urgent?'descompensada':'clasificacion',source:{doi:SOURCE.doi,sections:'Clasificación por FEVI y diagnóstico de IC; adaptación educativa',version:'0.1'}};
+}
+
+/* Staging: Second Universal Definition 2026, Table 1; ESC 2026 §3.3.
+ * Clinician attribution is required; the module does not diagnose HF or advanced HF independently.
+ */
+export const STAGE_QUESTIONS={
+ manifestations:'¿Síntomas o signos actuales o previos atribuibles a IC?',
+ objective:'¿Existe alteración cardiaca estructural, funcional o de biomarcadores interpretada como evidencia de enfermedad cardiaca?',
+ risk:'¿Existen otros factores predisponentes de IC?',
+ advancedConfirmed:'¿IC avanzada establecida tras evaluación clínica especializada?',
+ severe:'¿Síntomas graves persistentes en reposo o con mínimo esfuerzo?',
+ admissions:'¿Ingresos recurrentes por IC pese al tratamiento?',
+ refractory:'¿IC refractaria o intolerancia relevante al tratamiento optimizado?'
+};
+export function setStageAssessment(ctx,key,value){
+ if(!Object.hasOwn(STAGE_QUESTIONS,key)||!['yes','no','unknown'].includes(value))return ctx;
+ return {...ctx,stageAssessment:{...ctx.stageAssessment,[key]:value},updatedAt:new Date().toISOString()};
+}
+export function interpretStage(ctx){
+ const a=ctx.stageAssessment||{},f=ctx.findings||{},e=ctx.echo||{},r=interpretEcho(ctx);
+ const val=k=>['yes','no'].includes(a[k])?a[k]:'unknown';
+ const known=f.knownHF==='yes';
+ const risks=GROUPS.find(g=>g.id==='risk').fields.filter(([id])=>id!=='knownHF'&&f[id]==='yes');
+ const findings=ECHO_FINDINGS.filter(([id])=>id!=='ph'&&e[id]==='yes');
+ const objectiveEvidence=(r.ef!==null&&r.ef<50)||findings.length>0;
+ const manifests=known?'yes':val('manifestations');
+ const objective=objectiveEvidence?'yes':val('objective');
+ const risk=risks.length?'yes':val('risk');
+ const advanced=val('advancedConfirmed'),flags=['severe','admissions','refractory'].filter(k=>val(k)==='yes');
+ const contradictions=[];
+ if(known&&val('manifestations')==='no')contradictions.push('El diagnóstico previo de IC contradice la ausencia de manifestaciones actuales y previas atribuibles.');
+ if(objectiveEvidence&&val('objective')==='no')contradictions.push('El informe ecocardiográfico registra alteraciones; revisar la respuesta de ausencia de alteración.');
+ if(risks.length&&val('risk')==='no')contradictions.push('Hay factores predisponentes ya registrados; revisar la respuesta.');
+ if(advanced==='yes'&&manifests==='no')contradictions.push('IC avanzada referida sin manifestaciones actuales o previas atribuibles.');
+ const questions=[];
+ if(!known)questions.push('manifestations');
+ if(!known&&manifests!=='unknown'&&!objectiveEvidence)questions.push('objective');
+ if(!known&&manifests==='no'&&objective==='no'&&!risks.length)questions.push('risk');
+ const established=known||(manifests==='yes'&&objective==='yes');
+ if(established)questions.push('advancedConfirmed');
+ const advancedQuestions=established&&advanced!=='yes'?['severe','admissions','refractory']:[];
+ let stage=null,title='Estadio indeterminado',text='Completar los datos necesarios; ausencia de registro no equivale a ausencia de enfermedad.';
+ if(contradictions.length){text='Existen datos discordantes. Revisar la historia y las respuestas antes de asignar el estadio.';}
+ else if(established){
+  if(advanced==='yes'){stage='D';title='Estadio D · IC avanzada';text='IC avanzada según valoración especializada registrada. Mantener evaluación y planificación especializada.';}
+  else{stage='C';title=advanced==='no'&&!flags.length?'Estadio C · IC clínica':'Estadio C · IC clínica (al menos)';text=flags.length?'Hay señales de posible IC avanzada. Valorar con el equipo especializado; los datos no bastan para asignar D.':advanced==='unknown'?'IC clínica actual o previa; falta valorar criterios de IC avanzada.':'IC clínica actual o previa, sin IC avanzada establecida según el registro.';}
+ }else if(manifests==='no'&&objective==='yes'){stage='B';title='Estadio B · Pre-IC';text='Alteración cardiaca objetiva sin manifestaciones actuales ni previas atribuibles a IC.';}
+ else if(manifests==='no'&&objective==='no'&&risk==='yes'){stage='A';title='Estadio A · Riesgo de IC';text='Factores predisponentes sin manifestaciones actuales o previas de IC ni alteración cardiaca registrada tras evaluación.';}
+ else if(manifests==='no'&&objective==='no'&&risk==='no'){stage='0';title='Estadio 0 · Sin riesgo identificado';text='Sin factores predisponentes ni alteraciones cardiacas o manifestaciones según evaluación registrada. Categoría del consenso universal, fuera de A–D de la ESC.';}
+ else if(manifests==='yes'){text='Manifestaciones atribuidas a IC, pero falta corroborar la alteración cardiaca o documentar el diagnóstico previo.';}
+ const reason=[];
+ if(known)reason.push('Diagnóstico previo de IC registrado.');
+ if(risks.length)reason.push('Factores registrados: '+risks.map(x=>x[1]).join(' · ')+'.');
+ if(r.ef!==null)reason.push('FEVI actual: '+r.ef+' %.');
+ if(findings.length)reason.push('Hallazgos ecocardiográficos: '+findings.map(x=>x[1]).join(' · ')+'.');
+ if(e.ph==='yes')reason.push('Hipertensión pulmonar registrada: no demuestra por sí sola enfermedad cardiaca causal.');
+ reason.push('Péptidos: '+r.npLabel+' No asignan el estadio por sí solos.');
+ for(const [k,v] of [['manifestations',manifests],['objective',objective],['risk',risk],['advancedConfirmed',advanced]])if(v!=='unknown')reason.push(STAGE_QUESTIONS[k]+' '+(v==='yes'?'Sí.':'No.'));
+ if(flags.length)reason.push('Señales de posible IC avanzada: '+flags.map(k=>STAGE_QUESTIONS[k]).join(' · '));
+ return {stage,title,text,questions,advancedQuestions,reason,contradictions,flags,urgent:r.urgent,safety:r.safety,source:{doi:'10.1093/eurheartj/ehag500',sections:'Tabla 1; ESC 2026 sección 3.3',version:'0.1'}};
 }

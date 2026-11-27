@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {GROUPS,createClinicalContext,updateFinding,evaluateSuspicion,setGroupReviewed,isGroupReviewed,toggleFinding,setEvaluationReviewed,isEvaluationReviewed,diagnosticNext,setInvestigation,diagnosticAction,setStudyResult,investigationPlan,interpretSuspicion,CLINICAL_DIMENSIONS,labPlan,setPeptide,interpretPeptide,peptideFactors,ECHO_FINDINGS,ECHO_NUMERIC,setEcho,interpretEcho} from '../src/ic/suspicion.mjs';
+import {GROUPS,createClinicalContext,updateFinding,evaluateSuspicion,setGroupReviewed,isGroupReviewed,toggleFinding,setEvaluationReviewed,isEvaluationReviewed,diagnosticNext,setInvestigation,diagnosticAction,setStudyResult,investigationPlan,interpretSuspicion,CLINICAL_DIMENSIONS,labPlan,setPeptide,interpretPeptide,peptideFactors,ECHO_FINDINGS,ECHO_NUMERIC,setEcho,interpretEcho,setStageAssessment,interpretStage} from '../src/ic/suspicion.mjs';
 const allNo=()=>({findings:{...Object.fromEntries(GROUPS.flatMap(g=>g.fields.map(([id])=>[id,'no']))),vitalsReviewed:'yes'}});
 const result=(c)=>evaluateSuspicion(c).id;
 test('Datos ausentes no son negativos',()=>assert.equal(result(createClinicalContext()),'IC-SUS-03'));
@@ -112,4 +112,39 @@ test('Eco: FEVI previa y hallazgos opcionales no confirman IC',()=>{
 });
 test('Eco: combinaciones de hallazgos y estados, sin valores implícitos',()=>{
  for(let mask=0;mask<256;mask++){let c=setEcho(createClinicalContext(),'ef','70');for(let i=0;i<8;i++)if(mask&(1<<i))c=setEcho(c,ECHO_FINDINGS[i][0],'yes');const r=interpretEcho(c);assert.equal(r.positive.length+ r.unknown.length,8);assert.ok(r.integrated);assert.notEqual(r.integratedTitle,'IC confirmada');}
+});
+
+test('Estadio: riesgo, pre-IC, IC clínica, IC avanzada documentada y estadio 0',()=>{
+ const make=(a={},findings={},echo={})=>({findings,echo,stageAssessment:a});
+ const no={manifestations:'no',objective:'no'};
+ assert.equal(interpretStage(make()).stage,null);
+ assert.equal(interpretStage(make({...no,risk:'yes'})).stage,'A');
+ assert.equal(interpretStage(make({...no,risk:'no'})).stage,'0');
+ assert.equal(interpretStage(make({manifestations:'no'},{},{ef:38})).stage,'B');
+ assert.equal(interpretStage(make({manifestations:'yes'},{},{ef:38})).stage,'C');
+ assert.equal(interpretStage(make({advancedConfirmed:'yes'},{knownHF:'yes'})).stage,'D');
+ assert.equal(interpretStage(make({advancedConfirmed:'no'},{knownHF:'yes'})).stage,'C');
+ assert.equal(interpretStage(make({manifestations:'no'},{knownHF:'yes'})).stage,null);
+ assert.equal(interpretStage(make({...no,risk:'yes'},{},{ef:38})).stage,null);
+ assert.equal(interpretStage(make({manifestations:'no'},{},{ef:70,ph:'yes'})).stage,null);
+ assert.equal(interpretStage(make({manifestations:'yes'})).stage,null);
+ assert.equal(interpretStage(make({advancedConfirmed:'yes'})).stage,null);
+});
+test('Estadio: señales de avanzada y alarmas no equivalen a D',()=>{
+ let c=updateFinding(createClinicalContext(),'knownHF','yes');
+ c=setStageAssessment(c,'admissions','yes');assert.equal(interpretStage(c).stage,'C');assert.match(interpretStage(c).text,/posible IC avanzada/);
+ c=setStageAssessment(c,'severe','yes');c=setStageAssessment(c,'refractory','yes');assert.equal(interpretStage(c).stage,'C');
+ c=updateFinding(c,'perfusion','yes');assert.equal(interpretStage(c).urgent,true);
+ assert.equal(interpretStage(c).stage,'C');
+ assert.equal(setStageAssessment(c,'bogus','yes'),c);
+});
+test('Estadio: combinaciones de estados ternarios no fuerzan A/B/C/D',()=>{
+ const vals=['yes','no','unknown'];
+ for(const manifestations of vals)for(const objective of vals)for(const risk of vals)for(const advancedConfirmed of vals){
+  const c={findings:{},stageAssessment:{manifestations,objective,risk,advancedConfirmed}};
+  const r=interpretStage(c);
+  if(r.stage==='D')assert.ok(manifestations==='yes'&&objective==='yes'&&advancedConfirmed==='yes');
+  if(['A','B','0'].includes(r.stage))assert.equal(manifestations,'no');
+  if(r.stage==='0')assert.ok(objective==='no'&&risk==='no');
+ }
 });

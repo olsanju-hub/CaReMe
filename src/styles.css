@@ -952,3 +952,18 @@ body:has(.pearl-home) #app {
 .class-status{text-align:center;color:#526e7b;font-size:.7rem;margin:2px 0;}
 .class-page .urgent-next{background:#92333b;}
 #app:has(.class-page)>.footer{padding:8px 12px;font-size:.65rem;}
+
+/* Stage assistant: progressive questions, separate conclusion. */
+.stage-page .stage-card{padding:10px 14px;}
+.stage-context{margin:0;border-bottom:1px solid #dce8ed;font-size:.81rem;}
+.stage-context summary{min-height:44px;display:flex;align-items:center;color:#176c86;font-weight:650;cursor:pointer;list-style:none;}
+.stage-context summary::-webkit-details-marker{display:none;}
+.stage-context summary:after{content:'';margin-left:auto;width:7px;height:7px;border-right:1.5px solid #176c86;border-bottom:1.5px solid #176c86;transform:rotate(45deg);}
+.stage-context[open] summary:after{transform:rotate(225deg);}
+.stage-context ul{padding-left:18px;margin:6px 0;}
+.stage-question{padding:6px 0;border-bottom:1px solid #dce8ed;}
+.stage-question p{font-size:.86rem;color:#083748;font-weight:600;line-height:1.35;margin:3px 0;}
+.stage-question .np-segment{margin:4px 0;}
+.stage-hint{margin:7px 0 0;font-size:.73rem;color:#526e7b;}
+.stage-result h2{margin:3px 0 6px;font-size:1.25rem;color:#176c86;}
+.stage-result p,.stage-result li{font-size:.84rem;line-height:1.4;}
