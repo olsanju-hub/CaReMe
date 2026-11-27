@@ -10,13 +10,23 @@ try{
  for(const [name,engine,viewport] of [['chromium',chromium,{width:1280,height:800}],['webkit-mobile',webkit,{width:390,height:844}]]){
   const browser=await engine.launch();try{
    const ctx=await browser.newContext({viewport,serviceWorkers:'allow'});const page=await ctx.newPage();const errors=[];page.on('pageerror',e=>errors.push(String(e)));
-   await page.goto(url);await page.getByRole('heading',{name:'CaHReMe',exact:true}).waitFor();assert.match(await page.locator('footer').innerText(),/v0\.83/);await page.screenshot({path:'qa-results/'+name+'-home.png',fullPage:true});
+   await page.goto(url);await page.getByRole('heading',{name:'CaHReMe',exact:true}).waitFor();assert.match(await page.locator('footer').innerText(),/v0\.84/);await page.screenshot({path:'qa-results/'+name+'-home.png',fullPage:true});
    await page.getByRole('button',{name:'Insuficiencia cardíaca',exact:true}).click();await page.getByRole('heading',{name:'Insuficiencia cardiaca',exact:true}).waitFor();
    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'No horizontal overflow');
    await page.screenshot({path:'qa-results/'+name+'-ic.png',fullPage:true});
-   for(const id of ['clasificacion','tratamiento','optimizacion','seguimiento','comorbilidades','derivacion','avanzada','calculadoras','farmacoteca','evidencia','descompensada']){
+   for(const id of ['tratamiento','optimizacion','seguimiento','comorbilidades','derivacion','avanzada','calculadoras','farmacoteca','evidencia','descompensada']){
     await page.locator('[data-section="'+id+'"]').first().click();await page.getByRole('heading',{name:'Pendiente de desarrollo'}).waitFor();await page.getByRole('button',{name:'Insuficiencia cardiaca',exact:false}).first().click();await page.getByRole('heading',{name:'Insuficiencia cardiaca',exact:true}).waitFor();
    }
+   await page.locator('[data-action="ic-section"][data-section="clasificacion"]').click();
+   await page.getByRole('heading',{name:'Clasificación',exact:true}).waitFor();
+   assert.equal(await page.locator('.class-tile').count(),4);assert.match(await page.locator('.class-grid').innerText(),/FEVI pendiente/);
+   if(name==='webkit-mobile')assert.ok(await page.locator('.class-page .sus-result-button').evaluate(e=>e.getBoundingClientRect().bottom<=innerHeight),'Portada clasificación compacta');
+   await page.screenshot({path:'qa-results/'+name+'-classification.png',fullPage:true});
+   for(const id of ['estadio','fenotipo','nyha','situacion','evolucion']){
+    await page.locator('[data-action="classification-section"][data-section="'+id+'"]').click();await page.getByRole('heading',{name:'Pendiente de desarrollo'}).waitFor();
+    await page.locator('[data-action="classification"]').click();await page.getByRole('heading',{name:'Clasificación',exact:true}).waitFor();
+   }
+   await page.locator('[data-action="ic"]').click();await page.getByRole('heading',{name:'Insuficiencia cardiaca',exact:true}).waitFor();
    await page.locator('[data-action="ic-section"][data-section="valoracion"]').click();await page.getByRole('heading',{name:'Recorrido guiado'}).waitFor();await page.locator('[data-action="ic"]').first().click();
    await page.locator('[data-action="ic-section"][data-section="diagnostico"]').click();await page.getByRole('heading',{name:'Diagnóstico',exact:true}).waitFor();
    assert.equal(await page.locator('[data-action="diagnostic-section"]').count(),5);
@@ -136,10 +146,18 @@ try{
      if(name==='webkit-mobile')assert.ok(await page.locator('.echo-form .echo-skip').evaluate(e=>e.getBoundingClientRect().bottom<=innerHeight),'Formulario inicial completo visible');
      await page.screenshot({path:'qa-results/'+name+'-echo-form.png',fullPage:true});
      await page.locator('[data-action="interpret-echo"]').first().click();
+     await page.getByRole('heading',{name:'Conclusión',exact:true}).waitFor();
      assert.equal(await page.locator('[data-echo-input]').count(),0);
      if(name==='webkit-mobile')assert.ok(await page.locator('.echo-conclusion .sus-result-button').evaluate(e=>e.getBoundingClientRect().bottom<=innerHeight),'Conclusión y acción visibles sin desplazamiento');
      await page.screenshot({path:'qa-results/'+name+'-echo-conclusion.png',fullPage:true});
-     await page.locator('[data-action="edit-echo"]').click();
+     await page.locator('.echo-conclusion [data-section="clasificacion"]').click();
+     await page.getByRole('heading',{name:'Clasificación',exact:true}).waitFor();
+     assert.match(await page.locator('.class-grid').innerText(),/55 %/);
+     assert.match(await page.locator('.class-evolution').innerText(),/30 % → 55 %/);
+     await page.screenshot({path:'qa-results/'+name+'-classification-context.png',fullPage:true});
+     await page.locator('[data-action="ic"]').click();await page.getByRole('heading',{name:'Insuficiencia cardiaca',exact:true}).waitFor();
+     await page.locator('[data-action="ic-section"][data-section="diagnostico"]').click();await page.getByRole('heading',{name:'Diagnóstico',exact:true}).waitFor();
+     continue;
     }
     else await page.getByRole('heading',{name:'Pendiente de desarrollo'}).waitFor();
     await page.locator('[data-action="diagnosis"]').click();await page.getByRole('heading',{name:'Diagnóstico',exact:true}).waitFor();

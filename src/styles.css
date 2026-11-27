@@ -934,3 +934,21 @@ body:has(.pearl-home) #app {
 .echo-safety.urgent{background:#fff0f0;color:#92333b;}
 .echo-safety p{margin:3px 0 0;font-size:.77rem;}
 #app:has(.echo-page)>.footer{padding:8px 12px;font-size:.65rem;}
+
+/* Classification landing: four compact tiles and one trajectory row. */
+#app .class-page{display:flex;flex-direction:column;gap:8px;padding-top:12px;padding-bottom:12px;}
+#app .class-page h1{margin:0 0 2px;font-size:clamp(1.7rem,6.2vw,2.7rem);line-height:1.15;}
+.class-context{font-size:.8rem;color:#526e7b;margin:0 0 2px;}
+.class-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;}
+.class-page .class-tile{min-width:0;min-height:120px;padding:12px;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;text-align:left;gap:4px;}
+.class-icon{width:24px;height:24px;display:inline-flex;color:var(--icon,#176c86);flex:0 0 24px;}
+.class-icon svg{width:100%;height:100%;}
+.class-label{font-size:.77rem;color:#526e7b;line-height:1.2;}
+.class-tile strong{font-size:clamp(1.05rem,4.2vw,1.4rem);line-height:1.15;color:var(--icon,#176c86);overflow-wrap:anywhere;}
+.class-tile small{font-size:.73rem;line-height:1.3;color:#526e7b;}
+.class-page .class-evolution{width:100%;min-height:64px;display:grid;grid-template-columns:24px minmax(0,1fr) 12px;align-items:center;text-align:left;gap:10px;padding:10px 12px;}
+.class-evolution strong{display:block;color:#083748;font-size:.88rem;}
+.class-evolution small{display:block;color:#526e7b;font-size:.73rem;}
+.class-status{text-align:center;color:#526e7b;font-size:.7rem;margin:2px 0;}
+.class-page .urgent-next{background:#92333b;}
+#app:has(.class-page)>.footer{padding:8px 12px;font-size:.65rem;}
