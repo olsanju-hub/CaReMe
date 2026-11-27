@@ -11,7 +11,7 @@ export const GROUPS=[
  ['knownHF','Diagnóstico previo de IC'],['cardiac','Cardiopatía isquémica, valvulopatía o miocardiopatía'],['htn','Hipertensión arterial'],['dm','Diabetes'],['ckd','Enfermedad renal crónica'],['obesity','Obesidad'],['af','Fibrilación auricular u otra arritmia relevante'],['toxins','Exposición a cardiotóxicos o consumo perjudicial de alcohol'],['family','Antecedentes familiares de miocardiopatía']]}
 ];
 const fields=[...GROUPS.flatMap(g=>g.fields.map(([id])=>id)),'vitalsReviewed'];
-export function createClinicalContext(){return {findings:{},results:{},peptides:{},echo:{},stageAssessment:{},phenotypeAssessment:{},nyhaAssessment:{},situationAssessment:{},treatmentAssessment:{},updatedAt:null};}
+export function createClinicalContext(){return {findings:{},results:{},peptides:{},echo:{},stageAssessment:{},phenotypeAssessment:{},nyhaAssessment:{},situationAssessment:{},treatmentAssessment:{},medicationAssessment:{groups:{},additional:[],reviewed:false,nextId:1},updatedAt:null};}
 export function updateFinding(ctx,id,value){
  if(!fields.includes(id)||!['yes','no','unknown'].includes(value))return ctx;
  const a={...ctx.situationAssessment};
@@ -634,4 +634,98 @@ export function treatmentSafetyData(ctx){
  const labsConfirmed=labsAvailable&&a.labConfirmation?.snapshot===labSnapshot(ctx);
  const pressureDiscordant=values.sbp!==null&&values.dbp!==null&&values.sbp<values.dbp;
  return {profile:r,values,missing,labsAvailable,labsConfirmed,pressureDiscordant,urgent:r.urgent,classificationNeedsReview:r.next.kind==='review'||r.next.kind==='preclinical',readyForFurtherAssessment:!r.urgent&&r.next.kind==='treatment'&&!missing.length&&labsConfirmed&&!pressureDiscordant};
+}
+
+/* Step 2: medication reconciliation, not prescribing. Actual regimens may differ from
+ * licensed doses; no default dose or frequency and no therapeutic eligibility implied. */
+export const MEDICATION_GROUPS=[
+ ['raas','ARNI / IECA / ARA-II',['Sacubitrilo/valsartán','Enalapril','Ramipril','Candesartán','Valsartán']],
+ ['bb','Betabloqueantes',['Bisoprolol','Carvedilol','Metoprolol succinato','Nebivolol']],
+ ['mra','ARM',['Espironolactona','Eplerenona']],
+ ['sglt2','iSGLT2',['Dapagliflozina','Empagliflozina']],
+ ['diuretic','Diuréticos',['Furosemida','Torasemida']]
+];
+export const MEDICATION_FREQUENCIES=[['24','Cada 24 h'],['12','Cada 12 h'],['8','Cada 8 h'],['other','Otra pauta']];
+export const MEDICATION_ABSENCE_REASONS=[['unknown','Sin precisar'],['notStarted','No iniciado'],['intolerance','Intolerancia previa'],['contraindication','Contraindicación referida'],['notIndicated','No indicado según valoración previa'],['other','Otro motivo']];
+export const MEDICATION_TOLERANCE=[['unknown','Sin valorar'],['well','Sin problemas referidos'],['problem','Problemas de tolerancia']];
+const medicationState=ctx=>({groups:{},additional:[],reviewed:false,nextId:1,...ctx.medicationAssessment});
+const medicationCatalog=MEDICATION_GROUPS.flatMap(g=>g[2]);
+const newMedication=(drug='unknown')=>({drug,name:'',dose:'',dose2:'',frequency:'',customFrequency:'',reason:'unknown',tolerance:'unknown',note:''});
+const normalizeMedication=s=>String(s??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/\s*\/\s*/g,'/').replace(/\s+/g,' ').trim();
+const namedMedication=m=>m.drug==='other'?m.name:m.drug;
+const medicationGroupFor=m=>MEDICATION_GROUPS.find(g=>g[2].some(x=>normalizeMedication(x)===normalizeMedication(namedMedication(m))))?.[0]??null;
+export function setMedicationField(ctx,id,key,raw){
+ const a=medicationState(ctx),group=MEDICATION_GROUPS.find(g=>g[0]===id),index=a.additional.findIndex(m=>m.id===id);
+ if(!group&&index<0||typeof raw!=='string')return ctx;
+ const old=group?a.groups[id]||newMedication():a.additional[index];
+ let m={...old};
+ if(key==='drug'){
+  const allowed=group?['unknown','none','other',...group[2]]:['unknown','other',...medicationCatalog];
+  if(!allowed.includes(raw)||old.drug===raw)return ctx;
+  m={...newMedication(raw),...(group?{}:{id})};
+ }else{
+  if(key==='reason'){
+   if(old.drug!=='none'||!MEDICATION_ABSENCE_REASONS.some(x=>x[0]===raw))return ctx;
+  }else if(key==='tolerance'){
+   if(['none','unknown'].includes(old.drug)||!MEDICATION_TOLERANCE.some(x=>x[0]===raw))return ctx;
+  }else if(key==='frequency'){
+   if(['none','unknown'].includes(old.drug)||!['',...MEDICATION_FREQUENCIES.map(x=>x[0])].includes(raw))return ctx;
+  }else if(['name','dose','dose2','customFrequency','note'].includes(key)){
+   if(key==='name'&&old.drug!=='other'||['dose','dose2','customFrequency'].includes(key)&&['none','unknown'].includes(old.drug))return ctx;
+   if(key==='dose2'&&old.drug!=='Sacubitrilo/valsartán'||key==='customFrequency'&&old.frequency!=='other')return ctx;
+   if(raw.length>(key==='note'?240:80))return ctx;
+  }else return ctx;
+  if(old[key]===raw)return ctx;
+  m[key]=raw;
+  if(key==='frequency'&&raw!=='other')m.customFrequency='';
+  if(key==='reason'&&raw==='unknown'||key==='tolerance'&&raw!=='problem')m.note='';
+ }
+ const groups=group?{...a.groups,[id]:m}:a.groups;
+ const additional=group?a.additional:a.additional.map((x,i)=>i===index?m:x);
+ return {...ctx,medicationAssessment:{...a,groups,additional,reviewed:false},updatedAt:new Date().toISOString()};
+}
+export function addMedication(ctx){
+ const a=medicationState(ctx);
+ if(a.additional.length>=30)return ctx;
+ const id='extra-'+a.nextId;
+ return {...ctx,medicationAssessment:{...a,additional:[...a.additional,{...newMedication(),id}],nextId:a.nextId+1,reviewed:false},updatedAt:new Date().toISOString()};
+}
+export function removeMedication(ctx,id){
+ const a=medicationState(ctx);
+ if(!a.additional.some(m=>m.id===id))return ctx;
+ return {...ctx,medicationAssessment:{...a,additional:a.additional.filter(m=>m.id!==id),reviewed:false},updatedAt:new Date().toISOString()};
+}
+export function medicationSummary(ctx){
+ const a=medicationState(ctx);
+ const groups=MEDICATION_GROUPS.map(([id,label,options])=>({id,label,options,...(a.groups[id]||newMedication())}));
+ const unknown=groups.filter(m=>m.drug==='unknown').map(m=>m.label);
+ const rows=[...groups,...a.additional];
+ const active=rows.filter(m=>!['unknown','none'].includes(m.drug));
+ const missing=[];
+ const doseValid=s=>/^\d+(?:[.,]\d+)?$/.test(String(s).trim())&&Number(String(s).replace(',','.'))>0;
+ for(const m of active){
+  const name=namedMedication(m)?.trim();
+  if(!name)missing.push({id:m.id,label:'Principio activo por identificar'});
+  const validDose=m.drug==='other'?!!m.dose.trim():doseValid(m.dose);
+  if(!validDose||m.drug==='Sacubitrilo/valsartán'&&!doseValid(m.dose2)||!m.frequency||m.frequency==='other'&&!m.customFrequency.trim())missing.push({id:m.id,label:(name||m.label||'Medicación adicional')+': pauta incompleta'});
+ }
+ for(const m of a.additional.filter(m=>m.drug==='unknown'))missing.push({id:m.id,label:'Medicación adicional sin identificar'});
+ const duplicates=[];
+ const names=new Map(),classes=new Map();
+ for(const m of active){
+  const name=normalizeMedication(namedMedication(m));if(!name)continue;
+  const previous=names.get(name);
+  if(previous)duplicates.push('Principio activo repetido: '+namedMedication(m)+'. Revisar si es una misma pauta o un registro duplicado.');
+  else names.set(name,m);
+  const family=medicationGroupFor(m);
+  if(family&&family!=='diuretic'){const list=classes.get(family)||[];list.push(name);classes.set(family,list);}
+ }
+ for(const [family,list] of classes)if(new Set(list).size>1)duplicates.push('Posible duplicidad en '+MEDICATION_GROUPS.find(g=>g[0]===family)[1]+'. Revisar la combinación registrada.');
+ const complete=unknown.length===0&&missing.length===0;
+ return {groups,additional:a.additional,active,unknown,missing,duplicates:[...new Set(duplicates)],reviewed:a.reviewed===true,complete,reconciled:complete&&a.reviewed===true&&duplicates.length===0};
+}
+export function confirmMedicationReview(ctx,checked){
+ if(typeof checked!=='boolean')return ctx;
+ const a=medicationState(ctx);
+ return {...ctx,medicationAssessment:{...a,reviewed:checked},updatedAt:new Date().toISOString()};
 }

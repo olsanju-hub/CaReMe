@@ -1075,3 +1075,19 @@ body:has(.pearl-home) #app {
 .therapy-error{display:block;color:#a93c43;font-size:.72rem;}
 .therapy-card .therapy-confirm{margin:4px 0;min-height:44px;font-size:.78rem;}
 .therapy-card .stage-hint{margin:4px 0;}
+
+/* Medication reconciliation: five compact rows, details only for the selected drug. */
+.medication-page .med-card{padding:9px 12px;}
+.med-row{padding:6px 0;border-bottom:1px solid #dce8ed;}
+.med-field{display:block;min-width:0;font-size:.77rem;color:#365768;margin:3px 0;}
+.med-field>span{display:block;margin:0 0 3px;font-weight:600;}
+.med-field select,.med-field input{display:block;width:100%;min-width:0;box-sizing:border-box;min-height:44px;background:#ffffffb5;color:#083748;border:1px solid #d6e6e8;border-radius:9px;font:inherit;font-size:.9rem;padding:8px;}
+.med-dose-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 8px;}
+.med-dose-grid>.med-field:last-child:nth-child(3){grid-column:1/-1;}
+.med-context{border:0!important;margin:0!important;padding:0!important;}
+.med-context summary,.med-pending summary{font-size:.77rem;min-height:44px;display:flex;align-items:center;}
+.med-extra-head{display:flex;align-items:center;justify-content:space-between;font-size:.8rem;color:#083748;}
+.med-extra-head button,.med-add{min-height:44px;font-size:.8rem;}
+.med-card .therapy-confirm{margin:4px 0;font-size:.78rem;}
+#med-status .np-alert ul{margin:4px 0;padding-left:17px;}
+#med-status .med-pending ul{font-size:.78rem;}

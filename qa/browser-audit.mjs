@@ -10,7 +10,7 @@ try{
  for(const [name,engine,viewport] of [['chromium',chromium,{width:1280,height:800}],['webkit-mobile',webkit,{width:390,height:844}]]){
   const browser=await engine.launch();try{
    const ctx=await browser.newContext({viewport,serviceWorkers:'allow'});const page=await ctx.newPage();const errors=[];page.on('pageerror',e=>errors.push(String(e)));
-   await page.goto(url);await page.getByRole('heading',{name:'CaHReMe',exact:true}).waitFor();assert.match(await page.locator('footer').innerText(),/v0\.96/);await page.screenshot({path:'qa-results/'+name+'-home.png',fullPage:true});
+   await page.goto(url);await page.getByRole('heading',{name:'CaHReMe',exact:true}).waitFor();assert.match(await page.locator('footer').innerText(),/v0\.97/);await page.screenshot({path:'qa-results/'+name+'-home.png',fullPage:true});
    await page.getByRole('button',{name:'Insuficiencia cardíaca',exact:true}).click();await page.getByRole('heading',{name:'Insuficiencia cardiaca',exact:true}).waitFor();
    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'No horizontal overflow');
    await page.screenshot({path:'qa-results/'+name+'-ic.png',fullPage:true});
@@ -32,6 +32,28 @@ try{
    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'Asistente sin desbordamiento horizontal');
    await page.screenshot({path:'qa-results/'+name+'-therapy-step1.png',fullPage:true});
    await page.locator('[data-action="therapy-next"]').click();await page.getByRole('heading',{name:'Medicación actual',exact:true}).waitFor();
+   assert.equal(await page.locator('[data-med-field="drug"]').count(),5);
+   assert.equal(await page.locator('[data-med-field="dose"]').count(),0);
+   await page.screenshot({path:'qa-results/'+name+'-therapy-step2-empty.png',fullPage:true});
+   const med=(id,field)=>page.locator('[data-med-id="'+id+'"][data-med-field="'+field+'"]');
+   await med('raas','drug').selectOption('Sacubitrilo/valsartán');
+   await med('raas','dose').fill('24');await med('raas','dose2').fill('26');await med('raas','frequency').selectOption('12');
+   await med('bb','drug').selectOption('Bisoprolol');await med('bb','dose').fill('2,5');await med('bb','frequency').selectOption('24');
+   await med('mra','drug').selectOption('none');await page.locator('[data-panel="med-context-mra"]>summary').click();await med('mra','reason').selectOption('intolerance');
+   assert.equal(await page.locator('[data-panel="med-context-mra"]').evaluate(e=>e.open),true);
+   await med('mra','note').fill('Intolerancia registrada');
+   await page.locator('[data-action="med-add"]').click();await med('extra-1','drug').selectOption('Bisoprolol');
+   assert.match(await page.locator('#med-status').innerText(),/Principio activo repetido/);
+   await page.locator('[data-action="med-remove"][data-med-id="extra-1"]').click();
+   assert.doesNotMatch(await page.locator('#med-status').innerText(),/Principio activo repetido/);
+   await page.locator('[data-med-confirm]').check();await med('bb','dose').fill('5');assert.equal(await page.locator('[data-med-confirm]').isChecked(),false);
+   await page.locator('[data-med-confirm]').check();
+   assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'Medicación sin desbordamiento horizontal');
+   await page.screenshot({path:'qa-results/'+name+'-therapy-step2-filled.png',fullPage:true});
+   await page.locator('[data-action="therapy-proposal"]').click();await page.getByRole('heading',{name:'Propuesta de tratamiento',exact:true}).waitFor();await page.getByRole('heading',{name:'Pendiente de desarrollo'}).waitFor();
+   await page.locator('[data-action="therapy-medication"]').click();await page.getByRole('heading',{name:'Medicación actual',exact:true}).waitFor();
+   assert.equal(await med('raas','dose2').inputValue(),'26');assert.equal(await med('bb','dose').inputValue(),'5');assert.equal(await page.locator('[data-med-confirm]').isChecked(),true);
+   assert.equal(await med('sglt2','drug').inputValue(),'unknown');
    await page.locator('[data-action="therapy-first"]').click();await page.getByRole('heading',{name:'Asistente terapéutico',exact:true}).waitFor();
    assert.equal(await page.locator('[data-therapy-input="sbp"]').inputValue(),'120');assert.equal(await page.locator('[data-therapy-confirm]').isChecked(),true);
    await page.locator('.therapy-page .ic-back').click();await page.getByRole('heading',{name:'Tratamiento',exact:true}).waitFor();
