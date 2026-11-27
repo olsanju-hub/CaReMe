@@ -1,7 +1,7 @@
 name: Verificación del prototipo
 on:
   push:
-    branches: [main, feat/prototipo-interfaz]
+    branches: [main, feat/prototipo-interfaz, audit/ic-validacion-clinica]
   pull_request:
     branches: [main]
 
