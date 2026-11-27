@@ -11,7 +11,7 @@ export const GROUPS=[
  ['knownHF','Diagnóstico previo de IC'],['cardiac','Cardiopatía isquémica, valvulopatía o miocardiopatía'],['htn','Hipertensión arterial'],['dm','Diabetes'],['ckd','Enfermedad renal crónica'],['obesity','Obesidad'],['af','Fibrilación auricular u otra arritmia relevante'],['toxins','Exposición a cardiotóxicos o consumo perjudicial de alcohol'],['family','Antecedentes familiares de miocardiopatía']]}
 ];
 const fields=[...GROUPS.flatMap(g=>g.fields.map(([id])=>id)),'vitalsReviewed'];
-export function createClinicalContext(){return {findings:{},results:{},peptides:{},echo:{},stageAssessment:{},phenotypeAssessment:{},nyhaAssessment:{},situationAssessment:{},updatedAt:null};}
+export function createClinicalContext(){return {findings:{},results:{},peptides:{},echo:{},stageAssessment:{},phenotypeAssessment:{},nyhaAssessment:{},situationAssessment:{},treatmentAssessment:{},updatedAt:null};}
 export function updateFinding(ctx,id,value){
  if(!fields.includes(id)||!['yes','no','unknown'].includes(value))return ctx;
  const a={...ctx.situationAssessment};
@@ -593,4 +593,45 @@ export function classificationSummary(ctx){
  else if(preclinical)next={kind:'preclinical',label:'Volver a insuficiencia cardiaca',section:null};
  else if(clinicalHF&&['href','hfpef','prior-reduced'].includes(ph.code))next={kind:'treatment',label:'Continuar a tratamiento',section:'tratamiento'};
  return {title,ef:ph.ef,prior:ph.prior,delta:ph.delta,stage:st.stage,stageLabel,phenotype:ph.code,phenotypeLabel:ph.title,clinicalHF,preclinical,nyha:ny.functionalClass,situation:sit.code,trajectory:ph.trajectory,improved:ph.improved,rows,narrative:lines.join(' '),contradictions,pending,optional,urgent:sit.urgent,safety:sit.safety,next,advancedFlags:st.flags,nyhaWarning:ny.warning};
+}
+
+/* Treatment assistant, step 1: data collection only. No drug eligibility, clinical cutoffs or prescribing.
+ * Renal function and potassium are read from the shared laboratory record. */
+export const TREATMENT_VITALS=[
+ ['sbp','Sistólica','mmHg'],['dbp','Diastólica','mmHg'],['hr','Frecuencia cardiaca','lpm']
+];
+const treatmentLabs=['egfr','potassium'];
+function labSnapshot(ctx){
+ return JSON.stringify(treatmentLabs.map(k=>[k,ctx.results?.[k]?.value??null,ctx.results?.[k]?.recordedAt??null]));
+}
+export function setTreatmentValue(ctx,key,raw){
+ if(!TREATMENT_VITALS.some(x=>x[0]===key)&&!treatmentLabs.includes(key))return ctx;
+ if(!['string','number'].includes(typeof raw))return ctx;
+ const s=String(raw).trim().replace(',','.');
+ if(s&&(!/^\d+(?:\.\d+)?$/.test(s)||!Number.isFinite(Number(s))||(key!=='egfr'&&Number(s)<=0)))return ctx;
+ const v=s?Number(s):null;
+ if(treatmentLabs.includes(key)){
+  if((ctx.results?.[key]?.value??null)===v)return {...ctx};
+  return setStudyResult(ctx,key,s);
+ }
+ const a={...ctx.treatmentAssessment};
+ if(v===null)delete a[key];else a[key]=v;
+ return {...ctx,treatmentAssessment:a,updatedAt:new Date().toISOString()};
+}
+export function confirmTreatmentLabs(ctx,checked){
+ if(typeof checked!=='boolean')return ctx;
+ const a={...ctx.treatmentAssessment};
+ if(checked&&treatmentLabs.every(k=>Number.isFinite(ctx.results?.[k]?.value)))a.labConfirmation={snapshot:labSnapshot(ctx),confirmedAt:new Date().toISOString()};
+ else delete a.labConfirmation;
+ return {...ctx,treatmentAssessment:a,updatedAt:new Date().toISOString()};
+}
+export function treatmentSafetyData(ctx){
+ const a=ctx.treatmentAssessment||{},r=classificationSummary(ctx);
+ const values=Object.fromEntries(TREATMENT_VITALS.map(([key])=>[key,a[key]??null]));
+ for(const k of treatmentLabs)values[k]=ctx.results?.[k]?.value??null;
+ const missing=Object.entries(values).filter(([,v])=>v===null).map(([k])=>k);
+ const labsAvailable=treatmentLabs.every(k=>Number.isFinite(values[k]));
+ const labsConfirmed=labsAvailable&&a.labConfirmation?.snapshot===labSnapshot(ctx);
+ const pressureDiscordant=values.sbp!==null&&values.dbp!==null&&values.sbp<values.dbp;
+ return {profile:r,values,missing,labsAvailable,labsConfirmed,pressureDiscordant,urgent:r.urgent,classificationNeedsReview:r.next.kind==='review'||r.next.kind==='preclinical',readyForFurtherAssessment:!r.urgent&&r.next.kind==='treatment'&&!missing.length&&labsConfirmed&&!pressureDiscordant};
 }

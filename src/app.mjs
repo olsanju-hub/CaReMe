@@ -1,5 +1,5 @@
-import {GROUPS,SOURCE,createClinicalContext,updateFinding,evaluateSuspicion,setEvaluationReviewed,isEvaluationReviewed,isGroupReviewed,toggleFinding,diagnosticNext,diagnosticAction,LAB_FIELDS,REPORT_FIELDS,setStudyResult,investigationPlan,interpretSuspicion,labPlan,setPeptide,interpretPeptide,peptideFactors,ECHO_FINDINGS,ECHO_NUMERIC,setEcho,interpretEcho,STAGE_QUESTIONS,setStageAssessment,interpretStage,setPhenotypeAssessment,interpretPhenotype,NYHA_OPTIONS,setNyha,interpretNyha,SITUATION_QUESTIONS,setSituation,interpretSituation,classificationSummary} from './ic/suspicion.mjs?v=95';
-const BUILD='0.95';
+import {GROUPS,SOURCE,createClinicalContext,updateFinding,evaluateSuspicion,setEvaluationReviewed,isEvaluationReviewed,isGroupReviewed,toggleFinding,diagnosticNext,diagnosticAction,LAB_FIELDS,REPORT_FIELDS,setStudyResult,investigationPlan,interpretSuspicion,labPlan,setPeptide,interpretPeptide,peptideFactors,ECHO_FINDINGS,ECHO_NUMERIC,setEcho,interpretEcho,STAGE_QUESTIONS,setStageAssessment,interpretStage,setPhenotypeAssessment,interpretPhenotype,NYHA_OPTIONS,setNyha,interpretNyha,SITUATION_QUESTIONS,setSituation,interpretSituation,classificationSummary,TREATMENT_VITALS,setTreatmentValue,confirmTreatmentLabs,treatmentSafetyData} from './ic/suspicion.mjs?v=96';
+const BUILD='0.96';
 const app=document.getElementById('app');
 const PATHOLOGIES = [
  ['dm2','Diabetes tipo 2','Incluye insulinización'],['hta','Hipertensión arterial','Confirmación y control'],
@@ -105,6 +105,12 @@ function refreshSuspicion(){
 }
 app.addEventListener('change',e=>{
  const id=e.target.dataset.finding;
+ if(e.target.dataset.therapyInput){
+  const before=clinicalContext;clinicalContext=setTreatmentValue(clinicalContext,e.target.dataset.therapyInput,e.target.value);
+  const invalid=before===clinicalContext;e.target.setAttribute('aria-invalid',String(invalid));const err=e.target.closest('label').querySelector('.therapy-error');if(err)err.textContent=invalid?'Valor inválido':'';
+  if(invalid){clinicalContext=confirmTreatmentLabs(clinicalContext,false);}refreshTherapySafety();if(invalid&&['egfr','potassium'].includes(e.target.dataset.therapyInput))document.querySelector('[data-therapy-confirm]').disabled=true;return;
+ }
+ if(e.target.hasAttribute('data-therapy-confirm')){clinicalContext=confirmTreatmentLabs(clinicalContext,e.target.checked);refreshTherapySafety();return;}
  if(e.target.dataset.nyha){
   clinicalContext=setNyha(clinicalContext,e.target.dataset.nyha);render();const selected=document.querySelector('[data-nyha="'+e.target.dataset.nyha+'"]');if(selected)selected.focus({preventScroll:true});return;
  }
@@ -317,7 +323,41 @@ function treatmentHome(){
  // Clinical profile is informative, not permission to prescribe. Direct reference always remains accessible.
  return '<div class="page home pearl-home ic-page treatment-page">'+back('Insuficiencia cardiaca','ic')+'<h1>Tratamiento</h1>'+safety+profile+'<div class="treatment-primary">'+treatmentCard(treatmentPrimary,'ic-hero')+'</div><h2 class="treatment-direct-title">Consulta directa</h2><div class="module-grid ic-grid treatment-grid">'+treatmentItems.map(x=>treatmentCard(x)).join('')+'</div><div class="treatment-foot"><button type="button" class="text-link" data-action="treatment-evidence">Evidencia científica</button><p class="class-status">En desarrollo · Sin recomendaciones terapéuticas activas</p></div></div>';
 }
+function therapyStepHeader(n,label){
+ return '<div class="therapy-progress"><div><strong>Paso '+n+' de 3</strong><span>'+label+'</span></div><div class="therapy-track" role="progressbar" aria-label="Progreso del asistente" aria-valuemin="0" aria-valuemax="3" aria-valuenow="'+n+'"><span style="width:'+(n/3*100)+'%"></span></div></div>';
+}
+function therapyProfile(r){
+ const title=r.contradictions.length?'Datos discordantes':r.improved?'IC con FEVI mejorada':r.clinicalHF?r.phenotypeLabel:r.preclinical?'Sin IC clínica establecida':'Perfil clínico pendiente';
+ const meta=[r.stage!==null?'Estadio '+r.stageLabel:'Estadio pendiente',r.nyha?'NYHA '+r.nyha:'',r.situation==='compensated'?'Compensada':r.situation==='congested'?'Congestión':r.urgent?'Valoración urgente':r.clinicalHF?'Situación pendiente':''].filter(Boolean).join(' · ');
+ return '<section class="pearl-card treatment-profile"><div><small>Perfil clínico recuperado</small><h2>'+title+(r.ef===null?'':' · '+String(r.ef).replace('.',',')+' %')+'</h2><p>'+meta+'</p></div><button class="text-link" type="button" data-action="classification-summary">Revisar ›</button></section>';
+}
+function therapySafetyStatus(d){
+ const messages=[];
+ if(d.pressureDiscordant)messages.push('<p class="np-alert">Revisar presión arterial: la sistólica es inferior a la diastólica.</p>');
+ if(d.missing.length)messages.push('<p class="stage-hint">Datos no disponibles: '+d.missing.map(k=>({sbp:'PAS',dbp:'PAD',hr:'FC',egfr:'FG',potassium:'potasio'}[k])).join(', ')+'. Se podrán registrar después.</p>');
+ if(!d.labsConfirmed&&d.labsAvailable)messages.push('<p class="stage-hint">Confirma la vigencia de los resultados antes de utilizarlos en una decisión farmacológica.</p>');
+ return messages.join('');
+}
+function therapyStepOne(){
+ const d=treatmentSafetyData(clinicalContext),r=d.profile;
+ const field=(key,label,unit)=>'<label class="therapy-field"><span>'+label+'</span><span class="therapy-entry"><input type="text" inputmode="decimal" autocomplete="off" data-therapy-input="'+key+'" aria-label="'+label+'" value="'+(d.values[key]===null?'':String(d.values[key]).replace('.',','))+'" placeholder="—"><small>'+unit+'</small></span><small class="therapy-error" role="status"></small></label>';
+ const urgent=r.urgent?'<div class="echo-safety urgent" role="alert"><strong>'+r.safety.title+'</strong><p>'+r.safety.text+'</p></div>':d.classificationNeedsReview?'<div class="echo-safety pending"><strong>Perfil clínico por revisar</strong><p>No se puede orientar una propuesta individual hasta completar la clasificación y la seguridad.</p></div>':r.next.kind==='advanced'?'<div class="echo-safety pending"><strong>Valoración especializada</strong><p>El perfil recuperado requiere revisar IC avanzada.</p></div>':'';
+ const next=r.urgent?'<button class="sus-result-button urgent-next" type="button" data-action="ic-section" data-section="descompensada">IC descompensada (en desarrollo) ›</button>':'<button class="sus-result-button" type="button" data-action="therapy-next">Medicación actual ›</button>';
+ const checked=d.labsConfirmed?'checked':'';
+ return '<div class="page pearl-home ic-page class-page stage-page therapy-page">'+back('Tratamiento','treatment-home')+'<h1>Asistente terapéutico</h1>'+therapyStepHeader(1,'Perfil clínico y seguridad')+urgent+therapyProfile(r)+'<section class="pearl-card stage-card therapy-card"><h2>Constantes</h2><div class="therapy-bp"><span>Presión arterial</span><div>'+field('sbp','Sistólica','mmHg')+field('dbp','Diastólica','mmHg')+'</div></div>'+field('hr','Frecuencia cardiaca','lpm')+'<h2>Función renal y potasio</h2><div class="therapy-labs">'+field('egfr','FG estimado','mL/min/1,73 m²')+field('potassium','Potasio','mmol/L')+'</div><p class="stage-hint">Datos compartidos con Diagnóstico. Fecha de muestra no registrada; comprueba que son vigentes.</p><label class="sus-check therapy-confirm"><input type="checkbox" data-therapy-confirm '+checked+(d.labsAvailable?'':' disabled')+'><span>FG y potasio revisados y vigentes para esta evaluación.</span></label><div id="therapy-data-status">'+therapySafetyStatus(d)+'</div></section>'+next+'<p class="class-status">Registro educativo · Sin recomendaciones farmacológicas activas</p></div>';
+}
+function therapyStepTwoPending(){
+ const r=classificationSummary(clinicalContext);
+ return '<div class="page pearl-home ic-page class-page stage-page therapy-page">'+back('Perfil clínico y seguridad','therapy-first')+'<h1>Medicación actual</h1>'+therapyStepHeader(2,'Medicación actual')+(r.urgent?situationSafety(r):'')+'<section class="pearl-card pending-card"><h2>Pendiente de desarrollo</h2><p>Los datos del paso anterior se conservan durante esta sesión.</p><p>El tercer paso será la propuesta de tratamiento. Todavía no se generan recomendaciones farmacológicas.</p></section>'+(r.urgent?card(special[1],'ic-urgent'):'')+'</div>';
+}
+function refreshTherapySafety(){
+ const d=treatmentSafetyData(clinicalContext),c=document.querySelector('[data-therapy-confirm]'),status=document.getElementById('therapy-data-status');
+ if(c){c.disabled=!d.labsAvailable;c.checked=d.labsConfirmed;}
+ if(status)status.innerHTML=therapySafetyStatus(d);
+}
 function treatmentDetail(id){
+ if(id==='asistente')return therapyStepOne();
+ if(id==='asistente/medicacion')return therapyStepTwoPending();
  const item=[treatmentPrimary,...treatmentItems,['referencias','Evidencia científica']].find(x=>x[0]===id);
  if(!item)return treatmentHome();
  return pending(item[1],'treatment-home','Tratamiento',false);
@@ -363,7 +403,11 @@ app.addEventListener('click',event=>{const btn=event.target.closest('button[data
  }case 'phenotype-result':{
  let valid=true;for(const field of document.querySelectorAll('[data-echo-input]')){const before=clinicalContext;clinicalContext=setEcho(clinicalContext,field.dataset.echoInput,field.value);const invalid=before===clinicalContext;field.setAttribute('aria-invalid',String(invalid));const err=field.closest('label').querySelector('.np-error');if(err)err.textContent=invalid?'Valor inválido':'';if(invalid)valid=false;}
  if(valid)go('ic/clasificacion/fenotipo/conclusion');else{const first=document.querySelector('[data-echo-input][aria-invalid="true"]');if(first){const details=first.closest('details');if(details)details.open=true;first.focus();}}break;
- }case 'stage-edit':go('ic/clasificacion/estadio');break;case 'stage-result':go('ic/clasificacion/estadio/conclusion');break;case 'stage-select':{clinicalContext=setStageAssessment(clinicalContext,btn.dataset.stageKey,btn.dataset.stageValue);render();const target=document.querySelector('[data-stage-key="'+btn.dataset.stageKey+'"][data-stage-value="'+btn.dataset.stageValue+'"]');if(target)target.focus({preventScroll:true});break;}case 'treatment-home':go('ic/tratamiento');break;case 'treatment-section':if([treatmentPrimary,...treatmentItems].some(x=>x[0]===btn.dataset.section))go('ic/tratamiento/'+btn.dataset.section);break;case 'treatment-evidence':go('ic/tratamiento/referencias');break;case 'classification-summary':go('ic/clasificacion/conclusion');break;case 'classification':go('ic/clasificacion');break;case 'classification-section':if(classificationItems.some(x=>x[0]===btn.dataset.section))go('ic/clasificacion/'+btn.dataset.section);break;case 'edit-echo':go('ic/diagnostico/ecocardiografia');break;case 'echo-select':{
+ }case 'stage-edit':go('ic/clasificacion/estadio');break;case 'stage-result':go('ic/clasificacion/estadio/conclusion');break;case 'stage-select':{clinicalContext=setStageAssessment(clinicalContext,btn.dataset.stageKey,btn.dataset.stageValue);render();const target=document.querySelector('[data-stage-key="'+btn.dataset.stageKey+'"][data-stage-value="'+btn.dataset.stageValue+'"]');if(target)target.focus({preventScroll:true});break;}case 'therapy-first':go('ic/tratamiento/asistente');break;case 'therapy-next':{
+ const inputs=[...document.querySelectorAll('[data-therapy-input]')];let valid=true;
+ for(const field of inputs){const before=clinicalContext;clinicalContext=setTreatmentValue(clinicalContext,field.dataset.therapyInput,field.value);const invalid=before===clinicalContext;field.setAttribute('aria-invalid',String(invalid));const err=field.closest('label').querySelector('.therapy-error');if(err)err.textContent=invalid?'Valor inválido':'';if(invalid)valid=false;}
+ const d=treatmentSafetyData(clinicalContext);refreshTherapySafety();if(d.urgent){go('ic/descompensada');break;}if(!valid){document.querySelector('[data-therapy-input][aria-invalid="true"]')?.focus();break;}if(d.pressureDiscordant){document.querySelector('[data-therapy-input="sbp"]')?.focus();break;}go('ic/tratamiento/asistente/medicacion');break;
+ }case 'treatment-home':go('ic/tratamiento');break;case 'treatment-section':if([treatmentPrimary,...treatmentItems].some(x=>x[0]===btn.dataset.section))go('ic/tratamiento/'+btn.dataset.section);break;case 'treatment-evidence':go('ic/tratamiento/referencias');break;case 'classification-summary':go('ic/clasificacion/conclusion');break;case 'classification':go('ic/clasificacion');break;case 'classification-section':if(classificationItems.some(x=>x[0]===btn.dataset.section))go('ic/clasificacion/'+btn.dataset.section);break;case 'edit-echo':go('ic/diagnostico/ecocardiografia');break;case 'echo-select':{
  clinicalContext=setEcho(clinicalContext,btn.dataset.echoKey,btn.dataset.echoValue);
  const group=btn.closest('.np-segment');for(const b of group.querySelectorAll('button'))b.setAttribute('aria-pressed',String(b===btn));
  break;
@@ -402,7 +446,7 @@ if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostnam
  navigator.serviceWorker.addEventListener('controllerchange',()=>{
   if(!hadController){hadController=true;return;}
   if(updateNotice)return;updateNotice=true;
-  const hasData=Object.keys(clinicalContext.findings).length||Object.keys(clinicalContext.results||{}).length||Object.keys(clinicalContext.peptides||{}).length||Object.keys(clinicalContext.echo||{}).length||Object.keys(clinicalContext.stageAssessment||{}).length||Object.keys(clinicalContext.phenotypeAssessment||{}).length||Object.keys(clinicalContext.nyhaAssessment||{}).length||Object.keys(clinicalContext.situationAssessment||{}).length;
+  const hasData=Object.keys(clinicalContext.findings).length||Object.keys(clinicalContext.results||{}).length||Object.keys(clinicalContext.peptides||{}).length||Object.keys(clinicalContext.echo||{}).length||Object.keys(clinicalContext.stageAssessment||{}).length||Object.keys(clinicalContext.phenotypeAssessment||{}).length||Object.keys(clinicalContext.nyhaAssessment||{}).length||Object.keys(clinicalContext.situationAssessment||{}).length||Object.keys(clinicalContext.treatmentAssessment||{}).length;
   if(!hasData){location.reload();return;}
   const notice=document.createElement('div');notice.setAttribute('role','status');
   notice.style.cssText='position:relative;padding:10px 16px;background:#fff;color:#173347;text-align:center;border-bottom:1px solid #d6e6e8;font-size:.85rem';

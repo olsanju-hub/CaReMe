@@ -10,7 +10,7 @@ try{
  for(const [name,engine,viewport] of [['chromium',chromium,{width:1280,height:800}],['webkit-mobile',webkit,{width:390,height:844}]]){
   const browser=await engine.launch();try{
    const ctx=await browser.newContext({viewport,serviceWorkers:'allow'});const page=await ctx.newPage();const errors=[];page.on('pageerror',e=>errors.push(String(e)));
-   await page.goto(url);await page.getByRole('heading',{name:'CaHReMe',exact:true}).waitFor();assert.match(await page.locator('footer').innerText(),/v0\.95/);await page.screenshot({path:'qa-results/'+name+'-home.png',fullPage:true});
+   await page.goto(url);await page.getByRole('heading',{name:'CaHReMe',exact:true}).waitFor();assert.match(await page.locator('footer').innerText(),/v0\.96/);await page.screenshot({path:'qa-results/'+name+'-home.png',fullPage:true});
    await page.getByRole('button',{name:'Insuficiencia cardíaca',exact:true}).click();await page.getByRole('heading',{name:'Insuficiencia cardiaca',exact:true}).waitFor();
    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'No horizontal overflow');
    await page.screenshot({path:'qa-results/'+name+'-ic.png',fullPage:true});
@@ -21,7 +21,26 @@ try{
    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'Tratamiento sin desbordamiento horizontal');
    if(name==='webkit-mobile')assert.ok(await page.locator('.treatment-grid').evaluate(e=>e.getBoundingClientRect().bottom<=innerHeight),'Consulta directa visible');
    await page.screenshot({path:'qa-results/'+name+'-treatment-home.png',fullPage:true});
-   for(const id of ['asistente','fer','fep','mejorada','diureticos','ajustes','seguridad']){
+   await page.locator('[data-action="treatment-section"][data-section="asistente"]').click();await page.getByRole('heading',{name:'Asistente terapéutico',exact:true}).waitFor();
+   assert.equal(await page.locator('[data-therapy-input]').count(),5);
+   assert.equal(await page.locator('[data-therapy-confirm]').isDisabled(),true);
+   for(const [k,v] of [['sbp','120'],['dbp','75'],['hr','68'],['egfr','48'],['potassium','4,5']]){await page.locator('[data-therapy-input="'+k+'"]').fill(v);await page.locator('[data-therapy-input="'+k+'"]').press('Tab');}
+   await page.locator('[data-therapy-confirm]').check();
+   await page.locator('[data-therapy-input="potassium"]').fill('4,6');await page.locator('[data-therapy-input="potassium"]').press('Tab');
+   assert.equal(await page.locator('[data-therapy-confirm]').isChecked(),false);
+   await page.locator('[data-therapy-confirm]').check();
+   assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'Asistente sin desbordamiento horizontal');
+   await page.screenshot({path:'qa-results/'+name+'-therapy-step1.png',fullPage:true});
+   await page.locator('[data-action="therapy-next"]').click();await page.getByRole('heading',{name:'Medicación actual',exact:true}).waitFor();
+   await page.locator('[data-action="therapy-first"]').click();await page.getByRole('heading',{name:'Asistente terapéutico',exact:true}).waitFor();
+   assert.equal(await page.locator('[data-therapy-input="sbp"]').inputValue(),'120');assert.equal(await page.locator('[data-therapy-confirm]').isChecked(),true);
+   await page.locator('.therapy-page .ic-back').click();await page.getByRole('heading',{name:'Tratamiento',exact:true}).waitFor();
+   // Reset the isolated demonstration before the existing diagnostic audit.
+   await page.locator('.treatment-page .app-home-link').click();await page.getByRole('heading',{name:'CaHReMe',exact:true}).waitFor();
+   await page.reload();await page.getByRole('heading',{name:'CaHReMe',exact:true}).waitFor();
+   await page.locator('[data-pathology="ic"]').click();await page.getByRole('heading',{name:'Insuficiencia cardiaca',exact:true}).waitFor();
+   await page.locator('[data-action="ic-section"][data-section="tratamiento"]').click();await page.getByRole('heading',{name:'Tratamiento',exact:true}).waitFor();
+   for(const id of ['fer','fep','mejorada','diureticos','ajustes','seguridad']){
     await page.locator('[data-action="treatment-section"][data-section="'+id+'"]').click();await page.getByRole('heading',{name:'Pendiente de desarrollo'}).waitFor();
     await page.locator('[data-action="treatment-home"]').click();await page.getByRole('heading',{name:'Tratamiento',exact:true}).waitFor();
    }

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {GROUPS,createClinicalContext,updateFinding,evaluateSuspicion,setGroupReviewed,isGroupReviewed,toggleFinding,setEvaluationReviewed,isEvaluationReviewed,diagnosticNext,diagnosticAction,setStudyResult,investigationPlan,interpretSuspicion,CLINICAL_DIMENSIONS,labPlan,setPeptide,interpretPeptide,peptideFactors,ECHO_FINDINGS,ECHO_NUMERIC,setEcho,interpretEcho,setStageAssessment,interpretStage,setPhenotypeAssessment,interpretPhenotype,NYHA_OPTIONS,setNyha,interpretNyha,SITUATION_QUESTIONS,setSituation,interpretSituation,classificationSummary} from '../src/ic/suspicion.mjs';
+import {GROUPS,createClinicalContext,updateFinding,evaluateSuspicion,setGroupReviewed,isGroupReviewed,toggleFinding,setEvaluationReviewed,isEvaluationReviewed,diagnosticNext,diagnosticAction,setStudyResult,investigationPlan,interpretSuspicion,CLINICAL_DIMENSIONS,labPlan,setPeptide,interpretPeptide,peptideFactors,ECHO_FINDINGS,ECHO_NUMERIC,setEcho,interpretEcho,setStageAssessment,interpretStage,setPhenotypeAssessment,interpretPhenotype,NYHA_OPTIONS,setNyha,interpretNyha,SITUATION_QUESTIONS,setSituation,interpretSituation,classificationSummary,TREATMENT_VITALS,setTreatmentValue,confirmTreatmentLabs,treatmentSafetyData} from '../src/ic/suspicion.mjs';
 const allNo=()=>({findings:{...Object.fromEntries(GROUPS.flatMap(g=>g.fields.map(([id])=>[id,'no']))),vitalsReviewed:'yes'}});
 const result=(c)=>evaluateSuspicion(c).id;
 test('Datos ausentes no son negativos',()=>assert.equal(result(createClinicalContext()),'IC-SUS-03'));
@@ -247,4 +247,23 @@ test('Resumen integrado: prioridad de seguridad, discordancia, pre-IC y avanzada
 test('Resumen integrado: no confunde trayectoria mejorada con IC-FEp de novo',()=>{
  let c=updateFinding(createClinicalContext(),'knownHF','yes');c=setEcho(c,'ef','55');c=setEcho(c,'priorEf','30');c=setPhenotypeAssessment(c,'priorClinical','yes');const r=classificationSummary(c);
  assert.equal(r.improved,true);assert.equal(r.phenotype,'prior-reduced');assert.match(r.narrative,/no equivale a curación/);
+});
+
+test('Asistente terapéutico: laboratorio compartido y confirmación de vigencia',()=>{
+ let c=createClinicalContext();c=setStudyResult(c,'egfr','48');c=setStudyResult(c,'potassium','4,5');
+ let d=treatmentSafetyData(c);assert.equal(d.values.egfr,48);assert.equal(d.values.potassium,4.5);assert.equal(d.labsConfirmed,false);
+ c=confirmTreatmentLabs(c,true);assert.equal(treatmentSafetyData(c).labsConfirmed,true);
+ c=setTreatmentValue(c,'egfr','48');assert.equal(treatmentSafetyData(c).labsConfirmed,true);
+ c=setTreatmentValue(c,'potassium','5,2');assert.equal(c.results.potassium.value,5.2);assert.equal(treatmentSafetyData(c).labsConfirmed,false);
+ c=confirmTreatmentLabs(c,true);c=setStudyResult(c,'egfr','51');assert.equal(treatmentSafetyData(c).labsConfirmed,false);
+ c=setTreatmentValue(c,'potassium','');assert.equal(treatmentSafetyData(c).labsAvailable,false);c=confirmTreatmentLabs(c,true);assert.equal(treatmentSafetyData(c).labsConfirmed,false);
+});
+test('Asistente terapéutico: constantes, datos ausentes e incoherencia de presión',()=>{
+ let c=createClinicalContext();assert.equal(treatmentSafetyData(c).missing.length,5);assert.equal(treatmentSafetyData(c).readyForFurtherAssessment,false);
+ for(const [k,v] of [['sbp','120'],['dbp','75'],['hr','68']])c=setTreatmentValue(c,k,v);
+ assert.equal(treatmentSafetyData(c).values.hr,68);assert.equal(treatmentSafetyData(c).pressureDiscordant,false);
+ assert.equal(setTreatmentValue(c,'hr','-3'),c);assert.equal(setTreatmentValue(c,'potassium','abc'),c);
+ c=setTreatmentValue(c,'dbp','130');assert.equal(treatmentSafetyData(c).pressureDiscordant,true);
+ c=setTreatmentValue(c,'hr','');assert.equal(treatmentSafetyData(c).values.hr,null);
+ c=updateFinding(c,'perfusion','yes');assert.equal(treatmentSafetyData(c).urgent,true);
 });

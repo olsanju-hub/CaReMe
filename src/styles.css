@@ -1055,3 +1055,23 @@ body:has(.pearl-home) #app {
 .treatment-foot{text-align:center;}
 .treatment-foot .text-link{min-height:44px;font-size:.82rem;}
 .treatment-foot .class-status{margin:0;}
+
+/* Therapeutic assistant: one short step, no duplicated laboratory form. */
+.therapy-progress{font-size:.77rem;color:#526e7b;margin:0 0 2px;}
+.therapy-progress>div:first-child{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:5px;}
+.therapy-progress strong{color:#176c86;}
+.therapy-track{height:5px;border-radius:8px;background:#dce8ed;overflow:hidden;}
+.therapy-track>span{display:block;height:100%;background:#176c86;border-radius:8px;}
+.therapy-page .therapy-card{padding:10px 12px;}
+.therapy-card h2{color:#083748;font-size:.96rem;margin:5px 0 5px;}
+.therapy-card h2:not(:first-child){border-top:1px solid #dce8ed;padding-top:8px;margin-top:8px;}
+.therapy-bp>span{font-size:.8rem;color:#526e7b;}
+.therapy-bp>div,.therapy-labs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;}
+.therapy-field{display:block;min-width:0;font-size:.77rem;color:#365768;margin:3px 0;}
+.therapy-entry{display:flex;gap:5px;align-items:center;border:1px solid #d6e6e8;border-radius:9px;background:#ffffffa8;padding:0 7px;min-height:44px;}
+.therapy-entry input{min-width:0;width:100%;border:0;background:transparent;color:#083748;font-size:1rem;font-weight:650;padding:7px 0;}
+.therapy-entry small{font-size:.65rem;color:#526e7b;line-height:1.2;max-width:65px;}
+.therapy-entry:has(input[aria-invalid="true"]){border-color:#a93c43;}
+.therapy-error{display:block;color:#a93c43;font-size:.72rem;}
+.therapy-card .therapy-confirm{margin:4px 0;min-height:44px;font-size:.78rem;}
+.therapy-card .stage-hint{margin:4px 0;}
