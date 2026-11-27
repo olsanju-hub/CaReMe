@@ -29,3 +29,11 @@ Abordar cardiovascular, renal, hepático y metabólico como dominios relacionado
 
 ## Regla de avance
 El desarrollo visual no autoriza inventar criterios clínicos; toda recomendación con efecto asistencial requiere especificación clínica revisada y casos de prueba.
+
+## Avance técnico del prototipo (2026-11-11)
+
+- Se han incorporado SVG vectoriales originales de cuatro dominios como recursos **provisionales** para validar el layout, no como diseños finales aprobados.
+- Se ha incorporado un símbolo provisional de PWA `public/icon-concept.svg`. **No se debe confundir con la tercera versión del icono A aprobada en conversación**, cuyo archivo de producción sigue pendiente de integrar.
+- Se ha configurado un manifiesto web y un service worker que solo guarda recursos estáticos; los datos de formulario se mantienen en memoria, sin persistencia.
+- Se ha restringido el servidor de desarrollo a una lista explícita de archivos públicos para evitar exponer archivos del repositorio.
+- Todos los cambios siguen en una rama de revisión; no se han fusionado automáticamente con `main`.

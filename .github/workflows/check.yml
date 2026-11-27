@@ -1,0 +1,17 @@
+name: Verificación del prototipo
+on:
+  push:
+    branches: [main, feat/prototipo-interfaz]
+  pull_request:
+    branches: [main]
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Pruebas y sintaxis
+        run: npm run check

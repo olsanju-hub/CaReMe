@@ -1,0 +1,330 @@
+{
+  "schema": "cahreme-functional-coverage-v1",
+  "audited_on": "2026-11-13",
+  "basis": {
+    "reference_repo": "aarnal80/diabetes-congreso-mobile",
+    "reference_version": "GlucoGuía 1.6",
+    "reference_files": [
+      "README.md",
+      "app.js",
+      "flow.js",
+      "mobile.js",
+      "drug-legend.js",
+      "sw.js",
+      "index.html",
+      "manifest.webmanifest"
+    ],
+    "reference_app_js_blob": "c60bf8bc72db8a0a4b863b8e50c0a8d04dfb3705",
+    "target_repo": "olsanju-hub/CaReMe",
+    "target_branch": "feat/prototipo-interfaz",
+    "method": "Inspección de código y 152 comprobaciones Chromium/WebKit; sin prueba de equivalencia clínica ni dispositivo físico"
+  },
+  "status_meanings": {
+    "implemented": "Capture or behavior present and identifiable in source, not clinical approval",
+    "partial": "One or more expected functions exist but core result is not equivalent",
+    "missing": "No equivalent operational behavior verified"
+  },
+  "modules": [
+    {
+      "id": "dm2",
+      "reference_quick": [
+        "clinical_priority",
+        "glycemic_control_relative_to_target"
+      ],
+      "reference_detail": [
+        "hba1c",
+        "individualized_target",
+        "egfr",
+        "bmi",
+        "symptoms",
+        "comorbidities",
+        "medications"
+      ],
+      "capture": "implemented",
+      "quick_clinical_result": "partial",
+      "detailed_decision": "partial",
+      "priority": "P0",
+      "gap": "Consulta rápida y detallada ya tienen salida técnica no prescriptiva, con HbA1c y objetivo numérico individual, conciliación y condiciones de seguridad. Aún sin selección por producto validada, financiación, revisión clínica externa ni pruebas en móvil.",
+      "note": "DM2 rápida: src/clinical/dm2-rapida.mjs; detallada: src/clinical/dm2-detallada.mjs; la paridad final no ha sido demostrada."
+    },
+    {
+      "id": "ic",
+      "reference_quick": [
+        "fevi_category",
+        "congestion"
+      ],
+      "reference_detail": [
+        "fevi_exact",
+        "egfr",
+        "congestion",
+        "medications"
+      ],
+      "capture": "implemented",
+      "quick_clinical_result": "partial",
+      "detailed_decision": "partial",
+      "priority": "P1",
+      "gap": "Consulta rápida y detallada ESC 2026 (<50/≥50 con evidencia), congestión y conciliación con fechas; distingue ARM genérico de vía CIMA finerenona (FEVI ≥40, TFGe ≥25, K ≤5) y contraindicaciones. No existe validación clínica independiente, titulación por producto ni QA real en móvil.",
+      "note": "Motor src/clinical/insuficiencia-cardiaca.mjs, auditoría transversal y pruebas de umbral (tests/ic-finerenona-esc2026.test.mjs). Finerenona: indicación CIMA diferente del fenotipo ESC. Sin prescripción."
+    },
+    {
+      "id": "erc",
+      "reference_quick": [
+        "egfr",
+        "uacr_mg_per_g",
+        "chronicity"
+      ],
+      "reference_detail": [
+        "egfr",
+        "uacr",
+        "chronicity",
+        "potassium",
+        "medications"
+      ],
+      "capture": "implemented",
+      "quick_clinical_result": "partial",
+      "detailed_decision": "partial",
+      "priority": "P1",
+      "gap": "Primera orientación renal y revisión de IECA/ARA-II ya administrado con cronología y controles PA/creatinina/K (KDIGO 2024). Pendientes KFRE, evolución longitudinal completa, historial RAAS y decisiones por producto/dosis, validación clínica y QA móvil.",
+      "note": "src/clinical/renal.mjs: evaluateKidney y evaluateRenalTreatment. Ventana orientativa solo tras cambio confirmado; no es cita ni prescripción."
+    },
+    {
+      "id": "obesidad",
+      "reference_quick": [
+        "bmi",
+        "dm2",
+        "dominant_comorbidity"
+      ],
+      "reference_detail": [
+        "bmi",
+        "dm2",
+        "comorbidities",
+        "medications"
+      ],
+      "capture": "implemented",
+      "quick_clinical_result": "partial",
+      "detailed_decision": "partial",
+      "priority": "P1",
+      "gap": "Recorrido rápido/detallado con hábitos, función muscular, objetivos documentados, respuesta ponderal y revisión de fármacos CIMA; valoración especializada y cirugía con criterios diferenciados. Pendientes validación clínica, titulación individual, catálogo completo y QA móvil real.",
+      "note": "src/clinical/obesidad.mjs; no diagnóstico, prescripción ni autorización quirúrgica automáticos."
+    },
+    {
+      "id": "hepatico",
+      "reference_quick": [
+        "age",
+        "reported_fib4",
+        "initial_assessment",
+        "optional_elastography"
+      ],
+      "reference_detail": [
+        "age",
+        "reported_fib4",
+        "initial_assessment",
+        "optional_elastography"
+      ],
+      "capture": "implemented",
+      "quick_clinical_result": "partial",
+      "detailed_decision": "partial",
+      "priority": "P1",
+      "gap": "Primer circuito propio de FIB-4 informado/calculado con procedencia, VCTE según método/calidad y derivación. Faltan validación clínica, pruebas móviles reales, alternativas ELF/SWE/MRE automatizadas y tratamiento específico de MASH.",
+      "note": "src/clinical/masld.mjs; rápida, detallada y resumen. No diagnóstico automático ni paridad clínica demostrada."
+    },
+    {
+      "id": "insulina",
+      "reference_quick": [
+        "start_intensify_deintensify",
+        "clinical_profile"
+      ],
+      "reference_detail": [
+        "insulin_stage",
+        "bmi",
+        "egfr",
+        "frailty",
+        "special_situations",
+        "medications"
+      ],
+      "capture": "implemented",
+      "quick_clinical_result": "partial",
+      "detailed_decision": "partial",
+      "priority": "P0",
+      "gap": "Cálculo inicial, ajuste basal, primer bolo y reducción basal por hipoglucemia leve implementados para presentaciones específicas. Pendientes simplificación compleja, titulación prandial posterior, corticoides, otras formulaciones y validación independiente/física.",
+      "note": "insulinizacion.mjs conserva orientación. insulina-dosis.mjs calcula propuesta explícita con confirmación asociada y sin administración registrada. ADA/redGDPS 2026 y CIMA individual."
+    }
+  ],
+  "shared": [
+    {
+      "id": "six_modules",
+      "status": "implemented",
+      "evidence": "src/consultas.mjs MODULES; src/app.mjs moduleView"
+    },
+    {
+      "id": "integral_route",
+      "status": "implemented",
+      "evidence": "src/app.mjs evaluation; summary"
+    },
+    {
+      "id": "shared_session_values",
+      "status": "implemented",
+      "evidence": "src/model.mjs createDraft and setValue; src/app.mjs shared draft"
+    },
+    {
+      "id": "g_a_and_calculated_fib4",
+      "status": "implemented",
+      "evidence": "src/clinical/engine.mjs"
+    },
+    {
+      "id": "drug_monographs",
+      "status": "partial",
+      "evidence": "src/clinical/farmacologia.mjs seven product entries, without patient-specific prescriptions"
+    },
+    {
+      "id": "reference_pdf_library",
+      "status": "missing",
+      "evidence": "src/app.mjs sources() has GitHub documentation links, not original algorithm PDFs"
+    },
+    {
+      "id": "drug_class_legend",
+      "status": "missing",
+      "evidence": "No equivalent contextual pharmacological class/principle-active legend in directed results"
+    },
+    {
+      "id": "reading_settings",
+      "status": "missing",
+      "evidence": "No user-facing reading size/contrast controls verified"
+    },
+    {
+      "id": "offline_pwa",
+      "status": "partial",
+      "evidence": "Offline con origen detenido verificado en Chromium/WebKit: docs/AUDITORIA_GLOBAL_2026-11-13.md; instalación real pendiente"
+    },
+    {
+      "id": "real_device_review",
+      "status": "missing",
+      "evidence": "QA automatizado Chromium/WebKit superado; sin validación manual en dispositivo físico"
+    },
+    {
+      "id": "individualized_therapeutic_plan",
+      "status": "partial",
+      "evidence": "src/clinical/plan-integral.mjs: objetivos documentados, prioridades y seguimiento para revisión. No prescriptor ni plan terapéutico validado."
+    },
+    {
+      "id": "clinical_safety_audit",
+      "status": "implemented",
+      "evidence": "src/clinical/auditoria.mjs and src/clinical/plan.mjs; independent addition"
+    },
+    {
+      "id": "dm2_quick_clinical_result",
+      "status": "partial",
+      "evidence": "src/clinical/dm2-rapida.mjs, UI en src/app.mjs, tests/dm2-rapida.test.mjs; no equivale a paridad del módulo detallado"
+    },
+    {
+      "id": "dm2_detailed_clinical_result",
+      "status": "partial",
+      "evidence": "src/clinical/dm2-detallada.mjs, src/app.mjs, tests/dm2-detallada.test.mjs, tests/dm2-transversal.test.mjs; no equivalente prescriptivo validado"
+    },
+    {
+      "id": "insulin_three_phase_result",
+      "status": "partial",
+      "evidence": "src/clinical/insulinizacion.mjs; src/app.mjs; tests/insulinizacion.test.mjs; tests/insulinizacion-ui.test.mjs"
+    },
+    {
+      "id": "hf_esc2026_directed_result",
+      "status": "partial",
+      "evidence": "src/clinical/insuficiencia-cardiaca.mjs, src/app.mjs, tests/insuficiencia-cardiaca.test.mjs, docs/IC_ESC_2026.md"
+    },
+    {
+      "id": "hf_2026_provenance_and_safety",
+      "status": "partial",
+      "evidence": "Motor IC por fenotipo ESC 2026, barreras fechas/RAAS/K, y tests/insuficiencia-cardiaca-seguridad.test.mjs; sin validación externa"
+    },
+    {
+      "id": "hf_mra_by_indication",
+      "status": "partial",
+      "evidence": "src/clinical/insuficiencia-cardiaca.mjs, tests/ic-finerenona-esc2026.test.mjs; consulta de CIMA por indicación; sin dosis personalizadas ni validación independiente"
+    },
+    {
+      "id": "kidney_directed_result",
+      "status": "partial",
+      "evidence": "src/clinical/renal.mjs; rápida, detallada y resumen renal; KDIGO 2024, sin paridad completa."
+    },
+    {
+      "id": "renal_ras_monitoring",
+      "status": "partial",
+      "evidence": "evaluateRenalTreatment, tests/renal-tratamiento.test.mjs y renal-ui.test.mjs; sin dosis o administración automática."
+    },
+    {
+      "id": "masld_sequential_result",
+      "status": "partial",
+      "evidence": "src/clinical/masld.mjs; FIB-4 externo/calculado, VCTE verificada y derivación; validación clínica/QA real pendientes."
+    },
+    {
+      "id": "obesity_directed_result",
+      "status": "partial",
+      "evidence": "src/clinical/obesidad.mjs y tests/obesidad*.test.mjs; hábitos, objetivos, músculo y valoración bariátrica con seguimiento desde plan confirmado."
+    },
+    {
+      "id": "integrated_goals_followup",
+      "status": "partial",
+      "evidence": "Plan integral con procedencia, seguridad, activación por datos y controles confirmados; tests/plan-integral*.test.mjs."
+    }
+  ],
+  "blockers": [
+    {
+      "id": "CAC_UNIT_ABSENT_ASSUMED_MG_G",
+      "priority": "P0",
+      "owner_area": "src/clinical/engine.mjs and src/clinical/proveniencia.mjs",
+      "finding": "Renal engine accepts CAC when unidad_cac is missing; source description implies missing unit is not validated. Restrict downstream interpretation until unit is explicit.",
+      "status": "resolved_in_branch",
+      "resolution": "src/clinical/engine.mjs exige mg/g explícito para clasificar; src/clinical/proveniencia.mjs marca CAC_UNIT_MISSING como crítico y src/clinical/integracion.mjs usa solo CAC validado.",
+      "tests": [
+        "tests/cac-unidad.test.mjs"
+      ]
+    },
+    {
+      "id": "REPORTED_FIB4_NOT_USED",
+      "priority": "P1",
+      "owner_area": "src/clinical/engine.mjs",
+      "finding": "fib4_informado is parsed but reported.value is not used by decision/status; quick hepatic route cannot evaluate entered FIB-4 alone.",
+      "status": "resolved_in_branch",
+      "resolution": "evaluateMasld utiliza FIB-4 externo positivo, fechado, con fuente y confirmación asociada; se invalida al cambiar edad/datos de origen. El calculador descriptivo evaluateFib4 mantiene su contrato anterior.",
+      "tests": [
+        "tests/masld.test.mjs",
+        "tests/masld-ui.test.mjs"
+      ]
+    },
+    {
+      "id": "NO_MODULE_SPECIFIC_RESULT",
+      "priority": "P0",
+      "owner_area": "src/app.mjs consultationReview",
+      "finding": "Directed module shows capture summary and clinical-lock, not equivalent quick/detailed decision flow.",
+      "status": "partially_resolved",
+      "resolution": "Las seis consultas dirigidas ya tienen primera salida propia, incluida MASLD y obesidad. La paridad clínica completa y validación por módulo no han sido demostradas; se mantiene parcialmente resuelto."
+    },
+    {
+      "id": "MANIFEST_DESCRIPTION_STALE",
+      "priority": "P2",
+      "owner_area": "manifest.webmanifest",
+      "finding": "Manifest still describes 'sin cálculos', although renal G/A and FIB-4 are implemented.",
+      "status": "resolved_in_branch",
+      "resolution": "manifest.webmanifest actualizado para reconocer categorías G/A, FIB-4 y DM2 rápida."
+    }
+  ],
+  "release_gate": {
+    "verified_full_parity": false,
+    "clinical_validation": "pending",
+    "mobile_qa": "pending",
+    "keep_pr_draft": true,
+    "no_prescription": true,
+    "browser_qa": "156_passed_0_failed"
+  },
+  "updated_on": "2026-11-13",
+  "safety_audit": {
+    "date": "2026-11-13",
+    "base_commit": "a9ac2d90d14488e272fcd5d6f5a7a27ae4d437ee",
+    "node_tests_passed": 957,
+    "new_browser_run": "43357982704",
+    "report": "docs/AUDITORIA_SEGURIDAD_2026-11-13.md",
+    "independent_clinical_validation": "pending",
+    "browser_checks_passed": 156,
+    "browser_failures": 0
+  }
+}
