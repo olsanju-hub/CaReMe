@@ -82,7 +82,7 @@ test('NP: límites, contexto explícito y edad exacta de 75 años',()=>{
  assert.equal(run(49,125).id,'NP-03');assert.equal(run(75,250).id,'NP-02');assert.equal(run(75,500).id,'NP-03');
  assert.equal(run(68,2001).id,'NP-04');assert.equal(run(68,299,'acute').id,'NP-01');assert.equal(run(68,900,'acute').id,'NP-02');assert.equal(run(68,901,'acute').id,'NP-03');
  assert.equal(run(75,1801,'acute').id,'NP-03');assert.equal(run(68,5001,'acute').id,'NP-05');
- assert.equal(run(68,34,'outpatient','bnp').id,'NP-01');assert.equal(run(68,35,'outpatient','bnp').id,'NP-02');assert.equal(run(68,99,'acute','bnp').id,'NP-01');assert.equal(run(68,100,'acute','bnp').id,'NP-02');
+ assert.equal(run(68,34,'outpatient','bnp').id,'NP-01');assert.equal(run(68,35,'outpatient','bnp').id,'NP-03');assert.equal(run(68,99,'acute','bnp').id,'NP-01');assert.equal(run(68,100,'acute','bnp').id,'NP-02');
  assert.equal(run(68,850,'unknown').id,'NP-00');assert.equal(run(undefined,850).id,'NP-02');
  assert.equal(run(68,20,'acute').next.section,'descompensada');
 });
@@ -363,8 +363,13 @@ test('Finerenona: no asociar otro ARM y no extrapolar dosis de ERC-DM2',()=>{
  let c=proposalFixture();c=addNamedMedication(c,'Finerenona');c=addNamedMedication(c,'Espironolactona');assert.ok(medicationSafety(c).some(a=>a.id==='FIN-MRA'&&a.level==='red'));assert.equal(treatmentProposal(c).actions.length,0);
  assert.equal(medicationFamilyLabel({drug:'Finerenona'}),'ARM');
 });
-test('FEVI 45% no extrapola automáticamente inicio de ARNI o betabloqueante',()=>{
- const p=treatmentProposal(proposalFixture(45));assert.equal(p.status,'conditional',JSON.stringify(p.blockers));assert.ok(!p.actions.some(a=>a.kind==='start'&&/bisoprolol|sacubitrilo/i.test(a.title)));
+test('ESC 2026: FEVI 45% mantiene recomendación FMT aunque pauta concreta pendiente de auditoría',()=>{
+ const p=treatmentProposal(proposalFixture(45));assert.equal(p.status,'conditional',JSON.stringify(p.blockers));
+ assert.ok(p.actions.some(a=>a.title.includes('revisar tratamiento SRAA')&&a.detail.includes('clase I A')));
+ assert.ok(p.actions.some(a=>a.title.includes('revisar betabloqueante')&&a.detail.includes('clase I A')));
+ assert.ok(p.actions.some(a=>a.title.includes('ARM esteroideo')&&a.detail.includes('clase I A')));
+ assert.ok(p.actions.some(a=>a.title.includes('Dapagliflozina')));
+ assert.ok(!p.actions.some(a=>a.kind==='start'&&/bisoprolol|sacubitrilo/i.test(a.title)));
 });
 
 
@@ -412,4 +417,20 @@ test('Auditoría: no extrapolar automáticamente indicaciones de ARM esteroideos
  assert.equal(p.status,'conditional');
  assert.ok(p.actions.some(a=>a.kind==='review'&&a.title.includes('ARM esteroideo')));
  assert.ok(!p.actions.some(a=>a.kind==='start'&&/espironolactona|ARM esteroideo/i.test(a.title+' '+a.detail)));
+});
+
+test('ESC 2026 figura 4: BNP y prioridad por NT-proBNP superior a 2000',()=>{
+ let c=setPeptide(createClinicalContext(),'context','outpatient');
+ c=setPeptide(c,'nt','2001');assert.equal(interpretPeptide(c).id,'NP-04');assert.match(interpretPeptide(c).text,/2 semanas/);
+ c=setPeptide(c,'nt','2000');assert.notEqual(interpretPeptide(c).id,'NP-04');
+ c=setPeptide(c,'kind','bnp');c=setPeptide(c,'bnp','35');assert.equal(interpretPeptide(c).id,'NP-03');
+});
+test('ESC 2026 tabla 8: NYHA IV no exige síntomas en reposo',()=>{
+ const choice=NYHA_OPTIONS.find(x=>x[0]==='IV');
+ assert.match(choice[2],/Puede presentar síntomas en reposo/);
+});
+test('ESC 2026 tabla de recomendaciones 5: IC-FEp y SRAA como opción IIb C',()=>{
+ const p=treatmentProposal(proposalFixture(55));assert.equal(p.status,'conditional',JSON.stringify(p.blockers));
+ assert.ok(p.actions.some(a=>a.title.includes('valorar IECA, ARA-II o ARNI')&&a.detail.includes('IIb C')));
+ assert.ok(p.actions.some(a=>a.title.includes('revisar elección de ARM')&&a.detail.includes('clase I A')));
 });
