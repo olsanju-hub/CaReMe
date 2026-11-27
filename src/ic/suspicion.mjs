@@ -373,7 +373,7 @@ export function interpretEcho(ctx){
 export const STAGE_QUESTIONS={
  manifestations:'¿Síntomas o signos actuales o previos atribuibles a IC?',
  objective:'¿Existe alteración cardiaca estructural, funcional o de biomarcadores interpretada como evidencia de enfermedad cardiaca?',
- risk:'¿Existen otros factores predisponentes de IC?',
+ risk:'¿Existen factores predisponentes de IC tras revisar los antecedentes?',
  advancedConfirmed:'¿IC avanzada establecida tras evaluación clínica especializada?',
  severe:'¿Síntomas graves persistentes en reposo o con mínimo esfuerzo?',
  admissions:'¿Ingresos recurrentes por IC pese al tratamiento?',
@@ -394,17 +394,20 @@ export function interpretStage(ctx){
  const objective=objectiveEvidence?'yes':val('objective');
  const risk=risks.length?'yes':val('risk');
  const advanced=val('advancedConfirmed'),flags=['severe','admissions','refractory'].filter(k=>val(k)==='yes');
- const contradictions=[];
- if(known&&val('manifestations')==='no')contradictions.push('El diagnóstico previo de IC contradice la ausencia de manifestaciones actuales y previas atribuibles.');
- if(objectiveEvidence&&val('objective')==='no')contradictions.push('El informe ecocardiográfico registra alteraciones; revisar la respuesta de ausencia de alteración.');
- if(risks.length&&val('risk')==='no')contradictions.push('Hay factores predisponentes ya registrados; revisar la respuesta.');
- if(advanced==='yes'&&manifests==='no')contradictions.push('IC avanzada referida sin manifestaciones actuales o previas atribuibles.');
+ const contradictions=[],reviewKeys=[];
+ if(known&&val('manifestations')==='no'){reviewKeys.push('manifestations');contradictions.push('El diagnóstico previo de IC contradice la ausencia de manifestaciones actuales y previas atribuibles.');}
+ if(objectiveEvidence&&val('objective')==='no'){reviewKeys.push('objective');contradictions.push('El informe ecocardiográfico registra alteraciones; revisar la respuesta de ausencia de alteración.');}
+ if(risks.length&&val('risk')==='no'){reviewKeys.push('risk');contradictions.push('Hay factores predisponentes ya registrados; revisar la respuesta.');}
+ if(advanced==='yes'&&manifests!=='yes'){reviewKeys.push('advancedConfirmed');contradictions.push('IC avanzada referida sin manifestaciones actuales o previas confirmadas.');}
+ const previousReduced=r.prior!==null&&r.prior<50||e.priorReduced==='yes';
+ if(!known&&previousReduced&&objective==='no'){reviewKeys.push('objective','manifestations');contradictions.push('FEVI previamente reducida: revisar historia de IC y persistencia de alteración cardiaca antes de clasificar como A o 0.');}
  const questions=[];
  if(!known)questions.push('manifestations');
  if(!known&&manifests!=='unknown'&&!objectiveEvidence)questions.push('objective');
  if(!known&&manifests==='no'&&objective==='no'&&!risks.length)questions.push('risk');
  const established=known||(manifests==='yes'&&objective==='yes');
  if(established)questions.push('advancedConfirmed');
+ for(const key of reviewKeys)if(!questions.includes(key))questions.push(key);
  const advancedQuestions=established&&advanced!=='yes'?['severe','admissions','refractory']:[];
  let stage=null,title='Estadio indeterminado',text='Completar los datos necesarios; ausencia de registro no equivale a ausencia de enfermedad.';
  if(contradictions.length){text='Existen datos discordantes. Revisar la historia y las respuestas antes de asignar el estadio.';}
@@ -419,6 +422,7 @@ export function interpretStage(ctx){
  if(known)reason.push('Diagnóstico previo de IC registrado.');
  if(risks.length)reason.push('Factores registrados: '+risks.map(x=>x[1]).join(' · ')+'.');
  if(r.ef!==null)reason.push('FEVI actual: '+r.ef+' %.');
+ if(r.prior!==null)reason.push('FEVI previa: '+r.prior+' %.');
  if(findings.length)reason.push('Hallazgos ecocardiográficos: '+findings.map(x=>x[1]).join(' · ')+'.');
  if(e.ph==='yes')reason.push('Hipertensión pulmonar registrada: no demuestra por sí sola enfermedad cardiaca causal.');
  reason.push('Péptidos: '+r.npLabel+' No asignan el estadio por sí solos.');

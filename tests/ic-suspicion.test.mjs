@@ -148,3 +148,12 @@ test('Estadio: combinaciones de estados ternarios no fuerzan A/B/C/D',()=>{
   if(r.stage==='0')assert.ok(objective==='no'&&risk==='no');
  }
 });
+
+test('Estadio: contradicciones pueden revisarse y una FEVI previamente reducida impide A/0 sin aclarar',()=>{
+ let c={findings:{knownHF:'yes',htn:'yes'},echo:{ef:35},stageAssessment:{manifestations:'no',objective:'no',risk:'no'}};
+ let r=interpretStage(c);assert.equal(r.stage,null);for(const k of ['manifestations','objective','risk'])assert.ok(r.questions.includes(k));
+ for(const k of ['manifestations','objective','risk'])c=setStageAssessment(c,k,'unknown');
+ assert.equal(interpretStage(c).stage,'C');
+ c={findings:{},echo:{ef:60,priorEf:30},stageAssessment:{manifestations:'no',objective:'no',risk:'yes'}};
+ r=interpretStage(c);assert.equal(r.stage,null);assert.ok(r.questions.includes('objective'));assert.match(r.contradictions.join(' '),/previamente reducida/);
+});
