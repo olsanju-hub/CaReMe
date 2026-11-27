@@ -8,8 +8,10 @@ test('Todos los recursos PWA existen',async()=>{const sw=await readFile(new URL(
 
 test('Diagnóstico condensado y sin recomendaciones activas',()=>{for(const title of ['Asistente diagnóstico','Sospecha clínica','Pruebas diagnósticas','BNP / NT-proBNP','Ecocardiografía','Referencias científicas'])assert.ok(app.includes(title),title);assert.ok(app.includes('Sin recomendaciones clínicas activas'));assert.ok(app.includes("if(hash==='ic/diagnostico')return diagnosis()"));});
 
-test('Versión de recursos y caché coherente',async()=>{const html=await readFile(new URL('../index.html',import.meta.url),'utf8');const sw=await readFile(new URL('../service-worker.js',import.meta.url),'utf8');assert.match(html,/app\.mjs\?v=92/);assert.match(html,/styles\.css\?v=92/);assert.match(app,/suspicion\.mjs\?v=92/);assert.match(sw,/v0-92/);assert.doesNotMatch(sw,/ignoreSearch:\s*true/);assert.match(sw,/cache:'no-store'/);});
+test('Versión de recursos y caché coherente',async()=>{const html=await readFile(new URL('../index.html',import.meta.url),'utf8');const sw=await readFile(new URL('../service-worker.js',import.meta.url),'utf8');assert.match(html,/app\.mjs\?v=93/);assert.match(html,/styles\.css\?v=93/);assert.match(app,/suspicion\.mjs\?v=93/);assert.match(sw,/v0-93/);assert.doesNotMatch(sw,/ignoreSearch:\s*true/);assert.match(sw,/cache:'no-store'/);});
 
 test('Sin selectores de estado administrativo de pruebas',()=>{assert.doesNotMatch(app,/data-investigation|setInvestigation|<span>Estado<\/span>/);});
 
 test('Navegación común: marca de inicio y acceso a evolución',()=>{assert.match(app,/class="app-home-link" data-action="home"/);assert.match(app,/if\(hash==='ic\/clasificacion\/evolucion'\)return evolutionView\(\)/);assert.match(app,/function evolutionView\(\)/);});
+
+test('Los desplegables tienen identidad estable y conservan su apertura en renderizado local',()=>{assert.match(app,/function capturePanels\(/);assert.match(app,/function restorePanels\(/);assert.doesNotMatch(app,/<details(?![^>]*data-panel=)[^>]*>/);assert.match(app,/restorePanels\(app,state\)/);});

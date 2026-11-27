@@ -10,7 +10,7 @@ try{
  for(const [name,engine,viewport] of [['chromium',chromium,{width:1280,height:800}],['webkit-mobile',webkit,{width:390,height:844}]]){
   const browser=await engine.launch();try{
    const ctx=await browser.newContext({viewport,serviceWorkers:'allow'});const page=await ctx.newPage();const errors=[];page.on('pageerror',e=>errors.push(String(e)));
-   await page.goto(url);await page.getByRole('heading',{name:'CaHReMe',exact:true}).waitFor();assert.match(await page.locator('footer').innerText(),/v0\.92/);await page.screenshot({path:'qa-results/'+name+'-home.png',fullPage:true});
+   await page.goto(url);await page.getByRole('heading',{name:'CaHReMe',exact:true}).waitFor();assert.match(await page.locator('footer').innerText(),/v0\.93/);await page.screenshot({path:'qa-results/'+name+'-home.png',fullPage:true});
    await page.getByRole('button',{name:'Insuficiencia cardíaca',exact:true}).click();await page.getByRole('heading',{name:'Insuficiencia cardiaca',exact:true}).waitFor();
    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'No horizontal overflow');
    await page.screenshot({path:'qa-results/'+name+'-ic.png',fullPage:true});
@@ -136,6 +136,20 @@ try{
      await page.locator('[data-np-key="context"][data-np-value="outpatient"]').click();
      await page.locator('[data-np-input="age"]').fill('68');
      await page.locator('[data-np-input="nt"]').fill('850');
+     await page.locator('[data-np-input="nt"]').press('Tab');
+     await page.locator('.np-modifiers>summary').click();
+     for(const [key,value] of [['obesity','yes'],['af','yes'],['renal','yes'],['arni','no']]){
+      await page.locator('[data-np-key="'+key+'"][data-np-value="'+value+'"]').click();
+      assert.equal(await page.locator('.np-modifiers').evaluate(e=>e.open),true,'Modifiers remain open: '+key);
+      assert.equal(await page.locator('[data-np-key="'+key+'"][data-np-value="'+value+'"]').getAttribute('aria-pressed'),'true');
+     }
+     for(const [key,value] of [['obesity','yes'],['af','yes'],['renal','yes'],['arni','no']])assert.equal(await page.locator('[data-np-key="'+key+'"][data-np-value="'+value+'"]').getAttribute('aria-pressed'),'true');
+     assert.equal(await page.locator('[data-np-input="age"]').inputValue(),'68');
+     assert.equal(await page.locator('[data-np-input="nt"]').inputValue(),'850');
+     await page.screenshot({path:'qa-results/'+name+'-np-modifiers-open.png',fullPage:true});
+     await page.locator('.np-modifiers>summary').click();
+     await page.locator('[data-np-key="context"][data-np-value="outpatient"]').click();
+     assert.equal(await page.locator('.np-modifiers').evaluate(e=>e.open),false,'Manually closed panel stays closed');
      await page.locator('[data-action="interpret-np"]').click();
      await page.getByRole('heading',{name:'Resultado que apoya la sospecha de IC'}).waitFor();
      assert.match(await page.locator('#np-result').innerText(),/250/);
