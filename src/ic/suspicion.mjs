@@ -645,7 +645,7 @@ export const MEDICATION_GROUPS=[
  ['sglt2','iSGLT2',['Dapagliflozina','Empagliflozina']],
  ['diuretic','Diuréticos',['Furosemida','Torasemida']]
 ];
-export const MEDICATION_FREQUENCIES=[['24','Cada 24 h'],['12','Cada 12 h'],['8','Cada 8 h'],['other','Otra pauta']];
+export const MEDICATION_FREQUENCIES=[['24','Cada 24 h'],['12','Cada 12 h'],['8','Cada 8 h'],['48','Días alternos'],['other','Otra pauta']];
 export const MEDICATION_ABSENCE_REASONS=[['unknown','Sin precisar'],['notStarted','No iniciado'],['intolerance','Intolerancia previa'],['contraindication','Contraindicación referida'],['notIndicated','No indicado según valoración previa'],['other','Otro motivo']];
 export const MEDICATION_TOLERANCE=[['unknown','Sin valorar'],['well','Sin problemas referidos'],['problem','Problemas de tolerancia']];
 const medicationState=ctx=>({groups:{},additional:[],reviewed:false,nextId:1,...ctx.medicationAssessment});
@@ -793,4 +793,72 @@ export function deleteRecordedMedication(ctx,id){
   return setMedicationField(ctx,id,'drug','unknown');
  }
  return removeMedication(ctx,id);
+}
+
+/* First bounded medication-safety layer. References: CIMA sections 4.2–4.5.
+ * Reference schedules for adult oral chronic HF, not a prescription or a complete interaction checker.
+ * Never infer an actual patient's frequency from a reference schedule. */
+const cima=(id,file='FT_'+id+'.html')=>'https://cima.aemps.es/cima/dochtml/ft/'+id+'/'+file;
+export const HF_MEDICATION_REFERENCE={
+ 'Sacubitrilo/valsartán':{f:['12'],max:194,max2:206,source:cima('91063')},
+ 'Enalapril':{f:['12','24'],max:40,source:cima('83712')},
+ 'Ramipril':{f:['12','24'],max:10,source:cima('76966'),note:'En IC sintomática se recomiendan dos tomas; el inicio puede ser en una toma.'},
+ 'Candesartán':{f:['24'],max:32,source:cima('74643')},
+ 'Valsartán':{f:['12'],max:320,source:cima('72856','ft_72856.html')},
+ 'Bisoprolol':{f:['24'],max:10,source:cima('81432')},
+ 'Carvedilol':{f:['12'],max:100,source:cima('66923','FichaTecnica_66923.html'),note:'Más de 50 mg/día exige comprobar peso >85 kg y ausencia de IC grave.'},
+ 'Metoprolol succinato':{f:['24'],max:190,source:cima('61506','FichaTecnica_61506.html'),note:'Liberación prolongada; expresar en mg de succinato.'},
+ 'Nebivolol':{f:['24'],max:10,source:cima('83604')},
+ 'Espironolactona':{f:['24','48'],reference:50,source:cima('81034','FichaTecnica_81034.html')},
+ 'Eplerenona':{f:['24','48'],max:50,source:cima('77916')},
+ 'Dapagliflozina':{f:['24'],reference:10,source:cima('91132')},
+ 'Empagliflozina':{f:['24'],reference:10,source:cima('114930014',''),note:'25 mg/día puede corresponder a DM2, no a la dosis de IC.'},
+ 'Furosemida':{f:['24','12','8'],variable:true,source:cima('39969','fichatecnica_39969.html')},
+ 'Torasemida':{f:['24'],variable:true,source:cima('60802','FichaTecnica_60802.html')}
+};
+HF_MEDICATION_REFERENCE.Empagliflozina.source='https://cima.aemps.es/cima/dochtml/ft/114930014';
+function knownDrug(m){return medicationCatalog.find(x=>normalizeMedication(x)===normalizeMedication(namedMedication(m)));}
+export function medicationFrequencyOptions(m){
+ const ref=HF_MEDICATION_REFERENCE[knownDrug(m)];
+ const options=ref?MEDICATION_FREQUENCIES.filter(([k])=>ref.f.includes(k)||k==='other'||k===m.frequency):MEDICATION_FREQUENCIES;
+ return options;
+}
+export function medicationSafety(ctx){
+ const m=medicationSummary(ctx),d=treatmentSafetyData(ctx),alerts=[];
+ const add=(id,level,title,text,source,rows=[])=>alerts.push({id,level,title,text,source,rows});
+ const entries=m.active.map(row=>({row,drug:knownDrug(row)})),has=drug=>entries.some(x=>x.drug===drug);
+ const family=id=>entries.filter(x=>MEDICATION_FAMILIES.find(g=>g[0]===id)?.[2].includes(x.drug));
+ const ids=xs=>xs.map(x=>x.row.id);
+ const arni=family('arni'),ieca=family('ieca'),ara=family('ara'),mra=family('mra');
+ const arniSource=HF_MEDICATION_REFERENCE['Sacubitrilo/valsartán'].source,eplSource=HF_MEDICATION_REFERENCE.Eplerenona.source;
+ if(arni.length&&ieca.length)add('ARNI-IECA','red','Combinación contraindicada','ARNI + IECA: riesgo de angioedema. Intervalo mínimo de 36 h entre la última dosis de uno y el inicio del otro. Revisar de inmediato la medicación registrada.',arniSource,ids([...arni,...ieca]));
+ if(arni.length&&ara.length)add('ARNI-ARA','red','Combinación no permitida','Sacubitrilo/valsartán ya contiene valsartán. No asociar otro ARA-II. Revisar el registro.',arniSource,ids([...arni,...ara]));
+ if(ieca.length&&ara.length)add('IECA-ARA','amber','Bloqueo dual del SRAA','IECA + ARA-II: generalmente no recomendado; verificar indicación especializada, función renal y potasio.',HF_MEDICATION_REFERENCE.Candesartán.source,ids([...ieca,...ara]));
+ if(has('Eplerenona')&&has('Espironolactona'))add('MRA-DUAL','red','Combinación contraindicada','Eplerenona con otro diurético ahorrador de potasio: riesgo de hiperpotasemia.',eplSource,ids(mra));
+ if(ieca.length&&ara.length&&has('Eplerenona'))add('EPL-TRIPLE','red','Combinación contraindicada','Eplerenona + IECA + ARA-II.',eplSource,ids([...ieca,...ara,...mra]));
+ for(const {row,drug} of entries){
+  if(!drug)continue;
+  const r=HF_MEDICATION_REFERENCE[drug],f=row.frequency;
+  if(f&&!r.f.includes(f)&&!r.variable)add('FREQ-'+row.id,'amber','Revisar frecuencia: '+drug,f==='other'?'Pauta libre: comprobar intervalo y dosis total antes de interpretar.':'Frecuencia distinta de la pauta de referencia en IC. Confirmar indicación y formulación.',r.source,[row.id]);
+  if(f==='other'&&r.variable)add('CUSTOM-'+row.id,'blue','Pauta individualizada: '+drug,'Comprobar pauta real y respuesta diurética; no se calcula dosis diaria desde texto libre.',r.source,[row.id]);
+  // Numeric interpretation only for catalog selections; free-text units remain unparsed.
+  if(row.drug==='other'||!f||f==='other'||!row.dose)continue;
+  const number=s=>/^\d+(?:[.,]\d+)?$/.test(String(s).trim())?Number(String(s).replace(',','.')):NaN;
+  const dose=number(row.dose),dose2=number(row.dose2),n=24/Number(f),daily=dose*n,daily2=dose2*n;
+  if(!Number.isFinite(daily)||daily<=0)continue;
+  const fmt=v=>String(Math.round(v*1000)/1000).replace('.',',');
+  if(r.max&&(daily>r.max||r.max2&&daily2>r.max2))add('MAX-'+row.id,'amber','Dosis superior a la referencia de IC: '+drug,'Dosis registrada: '+fmt(daily)+(r.max2&&Number.isFinite(daily2)?'/'+fmt(daily2):'')+' mg/día equivalentes. Revisar pauta e indicación; no modificar automáticamente.',r.source,[row.id]);
+  else if(r.reference&&daily>r.reference)add('REF-'+row.id,'amber','Dosis distinta de la referencia de IC: '+drug,fmt(daily)+' mg/día equivalentes. '+(r.note||'Puede depender de otra indicación; revisar la pauta.'),r.source,[row.id]);
+  else if(drug==='Carvedilol'&&daily>50)add('CARV-'+row.id,'amber','Carvedilol: comprobar peso y gravedad',r.note,r.source,[row.id]);
+  if(drug==='Enalapril'&&f==='24'&&daily>20&&daily<=40)add('ENA-'+row.id,'amber','Enalapril: revisar reparto de dosis','La dosis máxima diaria de referencia de 40 mg se administra dividida en dos tomas.',r.source,[row.id]);
+  if(drug==='Eplerenona'&&f==='48'&&dose>25)add('EPL-48-'+row.id,'amber','Eplerenona: revisar días alternos','La pauta de días alternos de la ficha técnica utiliza 25 mg por toma.',r.source,[row.id]);
+ }
+ if(has('Eplerenona')&&d.labsConfirmed){
+  if(d.values.egfr<30)add('EPL-FG','red','Eplerenona: función renal contraindicada','FG confirmado inferior a 30 mL/min/1,73 m². Revisar tratamiento y situación clínica.',eplSource,ids(mra));
+  if(d.values.potassium>=6)add('EPL-K6','red','Eplerenona: hiperpotasemia importante','Potasio confirmado ≥6 mmol/L. Priorizar valoración clínica urgente y revisión de medicación.',eplSource,ids(mra));
+  else if(d.values.potassium>=5.5)add('EPL-K55','amber','Eplerenona: potasio elevado','Potasio confirmado 5,5–5,9 mmol/L: revisar tratamiento y monitorización.',eplSource,ids(mra));
+ }
+ if(mra.length&&!d.labsConfirmed)add('MRA-LABS','blue','Confirmar función renal y potasio','Datos vigentes necesarios para valorar seguridad de ARM.',eplSource,ids(mra));
+ if(mra.length&&(arni.length||ieca.length||ara.length))add('MRA-SRAA','blue','Monitorización renal y de potasio','La combinación de ARM con un inhibidor del SRAA puede ser indicada en IC; requiere seguimiento. No equivale a incompatibilidad.',eplSource,ids([...mra,...arni,...ieca,...ara]));
+ return alerts.sort((a,b)=>({red:0,amber:1,blue:2}[a.level]-{red:0,amber:1,blue:2}[b.level]));
 }

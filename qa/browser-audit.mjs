@@ -10,7 +10,7 @@ try{
  for(const [name,engine,viewport] of [['chromium',chromium,{width:1280,height:800}],['webkit-mobile',webkit,{width:390,height:844}]]){
   const browser=await engine.launch();try{
    const ctx=await browser.newContext({viewport,serviceWorkers:'allow'});const page=await ctx.newPage();const errors=[];page.on('pageerror',e=>errors.push(String(e)));
-   await page.goto(url);await page.getByRole('heading',{name:'CaHReMe',exact:true}).waitFor();assert.match(await page.locator('footer').innerText(),/v0\.99/);await page.screenshot({path:'qa-results/'+name+'-home.png',fullPage:true});
+   await page.goto(url);await page.getByRole('heading',{name:'CaHReMe',exact:true}).waitFor();assert.match(await page.locator('footer').innerText(),/v0\.100/);await page.screenshot({path:'qa-results/'+name+'-home.png',fullPage:true});
    await page.getByRole('button',{name:'Insuficiencia cardíaca',exact:true}).click();await page.getByRole('heading',{name:'Insuficiencia cardiaca',exact:true}).waitFor();
    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'No horizontal overflow');
    await page.screenshot({path:'qa-results/'+name+'-ic.png',fullPage:true});
@@ -41,10 +41,14 @@ try{
    const add=async drug=>{const c=page.locator('[data-panel="med-catalog"]');if(!await c.evaluate(e=>e.open))await c.locator(':scope > summary').click();await page.locator('[data-action="med-add-named"][data-med-drug="'+drug+'"]').click();};
    await add('Sacubitrilo/valsartán');await choose('extra-1','quick-dose','24/26');await choose('extra-1','frequency','12');
    assert.equal(await panel('extra-1').evaluate(e=>e.open),false);assert.match(await panel('extra-1').innerText(),/ARNI/);
-   await add('Bisoprolol');await choose('extra-2','quick-dose','2,5');await choose('extra-2','frequency','24');
+   await add('Bisoprolol');assert.equal(await panel('extra-2').locator('[data-med-field="frequency"][data-med-value="8"]').count(),0);assert.equal(await panel('extra-2').locator('[data-med-field="frequency"][data-med-value="12"]').count(),0);await choose('extra-2','quick-dose','2,5');await choose('extra-2','frequency','24');
    assert.equal(await panel('extra-2').evaluate(e=>e.open),false);assert.match(await panel('extra-2').innerText(),/Betabloqueantes/);
    await add('Bisoprolol');assert.match(await page.locator('#med-status').innerText(),/Principio activo repetido/);
    await page.locator('[data-action="med-remove"][data-med-id="extra-3"]').click();assert.doesNotMatch(await page.locator('#med-status').innerText(),/Principio activo repetido/);
+   await add('Enalapril');assert.match(await page.locator('#med-safety').innerText(),/Combinación contraindicada/);
+   await page.locator('[data-action="med-remove"][data-med-id="extra-4"]').click();assert.doesNotMatch(await page.locator('#med-safety').innerText(),/Combinación contraindicada/);
+   await add('Dapagliflozina');assert.equal(await panel('extra-5').locator('[data-med-field="frequency"][data-med-value="8"]').count(),0);
+   await page.locator('[data-action="med-remove"][data-med-id="extra-5"]').click();
    await page.locator('[data-med-confirm]').check();await panel('extra-2').locator(':scope > summary').click();await choose('extra-2','quick-dose','5');assert.equal(await page.locator('[data-med-confirm]').isChecked(),false);
    await page.locator('[data-panel="med-custom-extra-2"]>summary').click();await page.locator('input[data-med-id="extra-2"][data-med-field="dose"]').fill('6,25');assert.equal(await panel('extra-2').evaluate(e=>e.open),true);
    await page.locator('[data-action="med-done"][data-med-id="extra-2"]').click();

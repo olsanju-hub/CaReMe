@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {GROUPS,createClinicalContext,updateFinding,evaluateSuspicion,setGroupReviewed,isGroupReviewed,toggleFinding,setEvaluationReviewed,isEvaluationReviewed,diagnosticNext,diagnosticAction,setStudyResult,investigationPlan,interpretSuspicion,CLINICAL_DIMENSIONS,labPlan,setPeptide,interpretPeptide,peptideFactors,ECHO_FINDINGS,ECHO_NUMERIC,setEcho,interpretEcho,setStageAssessment,interpretStage,setPhenotypeAssessment,interpretPhenotype,NYHA_OPTIONS,setNyha,interpretNyha,SITUATION_QUESTIONS,setSituation,interpretSituation,classificationSummary,TREATMENT_VITALS,setTreatmentValue,confirmTreatmentLabs,treatmentSafetyData,MEDICATION_GROUPS,setMedicationField,addMedication,removeMedication,medicationSummary,confirmMedicationReview,MEDICATION_QUICK_DOSES,medicationEntryComplete,setMedicationQuickDose,MEDICATION_FAMILIES,medicationFamilyLabel,addNamedMedication,deleteRecordedMedication} from '../src/ic/suspicion.mjs';
+import {GROUPS,createClinicalContext,updateFinding,evaluateSuspicion,setGroupReviewed,isGroupReviewed,toggleFinding,setEvaluationReviewed,isEvaluationReviewed,diagnosticNext,diagnosticAction,setStudyResult,investigationPlan,interpretSuspicion,CLINICAL_DIMENSIONS,labPlan,setPeptide,interpretPeptide,peptideFactors,ECHO_FINDINGS,ECHO_NUMERIC,setEcho,interpretEcho,setStageAssessment,interpretStage,setPhenotypeAssessment,interpretPhenotype,NYHA_OPTIONS,setNyha,interpretNyha,SITUATION_QUESTIONS,setSituation,interpretSituation,classificationSummary,TREATMENT_VITALS,setTreatmentValue,confirmTreatmentLabs,treatmentSafetyData,MEDICATION_GROUPS,setMedicationField,addMedication,removeMedication,medicationSummary,confirmMedicationReview,MEDICATION_QUICK_DOSES,medicationEntryComplete,setMedicationQuickDose,MEDICATION_FAMILIES,medicationFamilyLabel,addNamedMedication,deleteRecordedMedication,medicationFrequencyOptions,medicationSafety,HF_MEDICATION_REFERENCE} from '../src/ic/suspicion.mjs';
 const allNo=()=>({findings:{...Object.fromEntries(GROUPS.flatMap(g=>g.fields.map(([id])=>[id,'no']))),vitalsReviewed:'yes'}});
 const result=(c)=>evaluateSuspicion(c).id;
 test('Datos ausentes no son negativos',()=>assert.equal(result(createClinicalContext()),'IC-SUS-03'));
@@ -308,4 +308,29 @@ test('Lista: ausencia únicamente tras revisión explícita; un medicamento no c
 });
 test('Etiquetas educativas distinguen ARNI, IECA y ARA-II',()=>{
  for(const [drug,label] of [['Sacubitrilo/valsartán','ARNI'],['Enalapril','IECA'],['Valsartán','ARA-II']])assert.equal(medicationFamilyLabel({drug}),label);
+});
+
+test('Frecuencias específicas, no se presupone pauta real',()=>{
+ for(const [drug,f] of [['Bisoprolol','24'],['Dapagliflozina','24'],['Sacubitrilo/valsartán','12']]){
+  let c=addNamedMedication(createClinicalContext(),drug);const m=medicationSummary(c).active[0];
+  assert.equal(m.frequency,'');assert.deepEqual(medicationFrequencyOptions(m).map(x=>x[0]),[f,'other']);
+ }
+ assert.ok(medicationFrequencyOptions({drug:'Eplerenona',frequency:''}).some(x=>x[0]==='48'));
+ assert.ok(medicationFrequencyOptions({drug:'Bisoprolol',frequency:'12'}).some(x=>x[0]==='12'));
+ assert.equal(Object.keys(HF_MEDICATION_REFERENCE).length,15);
+});
+test('Alertas específicas: ARNI IECA, ARNI ARA, dosis y vigencia',()=>{
+ let c=addNamedMedication(createClinicalContext(),'Sacubitrilo/valsartán');c=addNamedMedication(c,'Enalapril');
+ assert.ok(medicationSafety(c).some(x=>x.id==='ARNI-IECA'&&x.level==='red'));
+ c=deleteRecordedMedication(c,'extra-2');c=addNamedMedication(c,'Valsartán');assert.ok(medicationSafety(c).some(x=>x.id==='ARNI-ARA'));
+ c=addNamedMedication(c,'Bisoprolol');c=setMedicationQuickDose(c,'extra-4','10');c=setMedicationField(c,'extra-4','frequency','12');
+ assert.ok(medicationSafety(c).some(x=>x.id==='MAX-extra-4'));assert.ok(medicationSafety(c).some(x=>x.id==='FREQ-extra-4'));
+ c=addNamedMedication(c,'Eplerenona');c=setStudyResult(c,'egfr','25');c=setStudyResult(c,'potassium','6');
+ assert.ok(!medicationSafety(c).some(x=>x.id==='EPL-K6'));c=confirmTreatmentLabs(c,true);
+ assert.ok(medicationSafety(c).some(x=>x.id==='EPL-K6'));assert.ok(medicationSafety(c).some(x=>x.id==='EPL-FG'));
+});
+test('No equiparar combinación indicada de ARM e inhibidor SRAA a incompatibilidad',()=>{
+ let c=addNamedMedication(createClinicalContext(),'Enalapril');c=addNamedMedication(c,'Eplerenona');assert.ok(!medicationSafety(c).some(x=>x.level==='red'));
+ assert.ok(medicationSafety(c).some(x=>x.id==='MRA-SRAA'));
+ c=addNamedMedication(c,'Espironolactona');assert.ok(medicationSafety(c).some(x=>x.id==='MRA-DUAL'&&x.level==='red'));
 });
