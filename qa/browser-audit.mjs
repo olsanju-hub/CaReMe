@@ -10,7 +10,7 @@ try{
  for(const [name,engine,viewport] of [['chromium',chromium,{width:1280,height:800}],['webkit-mobile',webkit,{width:390,height:844}]]){
   const browser=await engine.launch();try{
    const ctx=await browser.newContext({viewport,serviceWorkers:'allow'});const page=await ctx.newPage();const errors=[];page.on('pageerror',e=>errors.push(String(e)));
-   await page.goto(url);await page.getByRole('heading',{name:'CaHReMe',exact:true}).waitFor();assert.match(await page.locator('footer').innerText(),/v0\.86/);await page.screenshot({path:'qa-results/'+name+'-home.png',fullPage:true});
+   await page.goto(url);await page.getByRole('heading',{name:'CaHReMe',exact:true}).waitFor();assert.match(await page.locator('footer').innerText(),/v0\.87/);await page.screenshot({path:'qa-results/'+name+'-home.png',fullPage:true});
    await page.getByRole('button',{name:'Insuficiencia cardíaca',exact:true}).click();await page.getByRole('heading',{name:'Insuficiencia cardiaca',exact:true}).waitFor();
    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'No horizontal overflow');
    await page.screenshot({path:'qa-results/'+name+'-ic.png',fullPage:true});
@@ -73,13 +73,17 @@ try{
      assert.equal(await page.locator('.study-block').count(),4);
      assert.equal(await page.locator('.study-block[open]').count(),0);
      assert.equal(await page.locator('.study-links .ic-card').count(),2);
-     assert.equal(await page.locator('[data-investigation="np"],[data-investigation="echo"]').count(),0);
+     assert.equal(await page.locator('[data-investigation]').count(),0);
      assert.equal(await page.locator('.study-page input:visible,.study-page select:visible').count(),0);
      if(name==='webkit-mobile')assert.ok(await page.locator('.study-next').evaluate(e=>e.getBoundingClientRect().bottom<=innerHeight),'Botón principal visible en pantalla inicial móvil');
      await page.screenshot({path:'qa-results/'+name+'-study-compact.png',fullPage:true});
      await page.locator('.study-block').filter({has:page.getByText('Electrocardiograma',{exact:true})}).locator('summary').first().click();
-     await page.locator('[data-investigation="ecg"]').selectOption('requested');
      await page.locator('[data-study-result="ecg"]').selectOption('af');
+     await page.locator('.study-block').filter({has:page.getByText('Radiografía de tórax',{exact:true})}).locator('summary').first().click();
+     assert.equal(await page.locator('[data-study-result="rx"]').isVisible(),true);
+     assert.equal(await page.locator('[data-investigation]').count(),0);
+     await page.locator('[data-study-result="rx"]').selectOption('congestion');
+     await page.locator('.study-block').filter({has:page.getByText('Radiografía de tórax',{exact:true})}).locator('summary').first().click();
      await page.locator('.study-block').filter({has:page.getByText('Analítica',{exact:true})}).locator('summary').first().click();
      assert.equal(await page.locator('.lab-priority input:visible').count(),3);
      assert.equal(await page.locator('.lab-extra-fields input:visible').count(),0);
@@ -107,7 +111,7 @@ try{
      assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'Sospecha sin desbordamiento horizontal');
      await page.screenshot({path:'qa-results/'+name+'-suspicion.png',fullPage:true});
     }else if(id==='asistente'){await page.getByRole('heading',{name:'Recorrido guiado'}).waitFor();await page.locator('[data-action="ic"]').first().click();await page.locator('[data-action="ic-section"][data-section="diagnostico"]').click();continue;}
-    else if(id==='pruebas'){await page.getByRole('heading',{name:'Pruebas diagnósticas',exact:true}).waitFor();assert.equal(await page.locator('[data-investigation="ecg"]').inputValue(),'requested');assert.equal(await page.locator('[data-study-result="ecg"]').inputValue(),'af');assert.equal(await page.locator('[data-study-result="egfr"]').inputValue(),'45');assert.equal(await page.locator('[data-study-result="ferritin"]').inputValue(),'80');}
+    else if(id==='pruebas'){await page.getByRole('heading',{name:'Pruebas diagnósticas',exact:true}).waitFor();assert.equal(await page.locator('[data-investigation]').count(),0);assert.equal(await page.locator('[data-study-result="ecg"]').inputValue(),'af');assert.equal(await page.locator('[data-study-result="rx"]').inputValue(),'congestion');assert.equal(await page.locator('[data-study-result="egfr"]').inputValue(),'45');assert.equal(await page.locator('[data-study-result="ferritin"]').inputValue(),'80');}
     else if(id==='peptidos'){
      await page.getByRole('heading',{name:'Péptidos natriuréticos',exact:true}).waitFor();
      await page.locator('[data-np-key="context"][data-np-value="outpatient"]').click();

@@ -76,3 +76,6 @@ v0.84 publicado; CI y auditoría de navegador correctas. Autorizado: asistente d
 
 ### Ajuste de consistencia v0.86
 Las respuestas discordantes vuelven a mostrarse aunque se hubiesen recuperado automáticamente datos positivos; pueden corregirse o quedar desconocidas. Si existe FEVI previa reducida y se declara ausencia de alteración actual, no se asigna A/0 sin aclarar antecedentes. Se añade prueba de regresión. Sin cambios en los otros asistentes.
+
+## Simplificación transversal v0.87
+Autorizado: eliminar de toda la aplicación el registro administrativo de estado de pruebas (sin registrar, solicitada, disponible, no indicada). Auditoría del código: los únicos selectores activos eran ECG y Rx de tórax. Analítica, péptidos y ecocardiografía ya no los tenían. Se elimina el modelo administrativo sin uso, no los resultados ni las variables clínicas de estabilidad, seguridad o estadio. ECG y Rx conservan el hallazgo principal y el valor desconocido «Sin resultado interpretado». Se mantiene el plan de pruebas y la lógica clínica existente. Criterio transversal para módulos futuros: no pedir estados administrativos que no condicionen una decisión clínica. v0.86 tenía pruebas y publicación satisfactorias. Se añaden pruebas de ausencia de selectores y conservación de resultados ECG/Rx en navegación. No se inicia Fenotipo.

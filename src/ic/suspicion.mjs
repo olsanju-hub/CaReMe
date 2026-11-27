@@ -11,7 +11,7 @@ export const GROUPS=[
  ['knownHF','Diagnóstico previo de IC'],['cardiac','Cardiopatía isquémica, valvulopatía o miocardiopatía'],['htn','Hipertensión arterial'],['dm','Diabetes'],['ckd','Enfermedad renal crónica'],['obesity','Obesidad'],['af','Fibrilación auricular u otra arritmia relevante'],['toxins','Exposición a cardiotóxicos o consumo perjudicial de alcohol'],['family','Antecedentes familiares de miocardiopatía']]}
 ];
 const fields=[...GROUPS.flatMap(g=>g.fields.map(([id])=>id)),'vitalsReviewed'];
-export function createClinicalContext(){return {findings:{},investigations:{},results:{},peptides:{},echo:{},stageAssessment:{},updatedAt:null};}
+export function createClinicalContext(){return {findings:{},results:{},peptides:{},echo:{},stageAssessment:{},updatedAt:null};}
 export function updateFinding(ctx,id,value){if(!fields.includes(id)||!['yes','no','unknown'].includes(value))return ctx;return {...ctx,findings:{...ctx.findings,[id]:value},updatedAt:new Date().toISOString()};}
 export function evaluateSuspicion(ctx){
  const f=ctx?.findings??{},val=id=>['yes','no'].includes(f[id])?f[id]:'unknown';
@@ -56,13 +56,6 @@ export function setEvaluationReviewed(ctx,reviewed){
 }
 export function isEvaluationReviewed(ctx){return GROUPS.every(g=>isGroupReviewed(ctx,g.id));}
 
-export const INVESTIGATIONS=[
- ['ecg','ECG de 12 derivaciones'],['np','BNP / NT-proBNP'],['lab','Analítica basal'],['rx','Radiografía de tórax'],['echo','Ecocardiografía']
-];
-export function setInvestigation(ctx,id,status){
- if(!INVESTIGATIONS.some(x=>x[0]===id)||!['unknown','requested','available','notIndicated'].includes(status))return ctx;
- return {...ctx,investigations:{...ctx.investigations,[id]:{status,updatedAt:new Date().toISOString()}},updatedAt:new Date().toISOString()};
-}
 // Solo controla la transición sugerida, nunca el acceso directo a módulos.
 export function diagnosticNext(ctx){
  const r=evaluateSuspicion(ctx);
@@ -104,8 +97,8 @@ export const LAB_FIELDS=[
  ['triglycerides','Triglicéridos','mg/dL','Perfil lipídico']
 ];
 export const REPORT_FIELDS={
- ecg:{label:'Hallazgo principal del ECG',options:[['unknown','Sin interpretar'],['normal','Sin alteraciones relevantes descritas'],['af','Fibrilación auricular'],['conduction','Alteración de conducción'],['ischemia','Alteraciones sugestivas de isquemia'],['other','Otras alteraciones']]},
- rx:{label:'Hallazgo principal de radiografía',options:[['unknown','Sin interpretar'],['normal','Sin alteraciones relevantes descritas'],['congestion','Signos de congestión'],['effusion','Derrame pleural'],['pulmonary','Alteración pulmonar alternativa'],['other','Otros hallazgos']]}
+ ecg:{label:'Hallazgo principal del ECG',options:[['unknown','Sin resultado interpretado'],['normal','Sin alteraciones relevantes descritas'],['af','Fibrilación auricular'],['conduction','Alteración de conducción'],['ischemia','Alteraciones sugestivas de isquemia'],['other','Otras alteraciones']]},
+ rx:{label:'Hallazgo principal de radiografía',options:[['unknown','Sin resultado interpretado'],['normal','Sin alteraciones relevantes descritas'],['congestion','Signos de congestión'],['effusion','Derrame pleural'],['pulmonary','Alteración pulmonar alternativa'],['other','Otros hallazgos']]}
 };
 export function setStudyResult(ctx,id,raw){
  const lab=LAB_FIELDS.find(x=>x[0]===id),report=REPORT_FIELDS[id];
