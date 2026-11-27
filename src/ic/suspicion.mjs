@@ -812,7 +812,7 @@ export const HF_MEDICATION_REFERENCE={
  'Nebivolol':{f:['24'],max:10,source:cima('83604')},
  'Espironolactona':{f:['24','48'],reference:50,source:cima('39059')},
  'Eplerenona':{f:['24','48'],max:50,source:cima('76182')},
- 'Finerenona':{f:['24'],max:40,source:cima('1211616002'),note:'Dosis objetivo en IC según FG al inicio; no extrapolar la dosis de ERC-DM2.'},
+ 'Finerenona':{f:['24'],max:40,source:cima('1211616012'),note:'Dosis objetivo en IC según FG al inicio; no extrapolar la dosis de ERC-DM2.'},
  'Dapagliflozina':{f:['24'],reference:10,source:cima('91132')},
  'Empagliflozina':{f:['24'],reference:10,source:cima('114930014',''),note:'25 mg/día puede corresponder a DM2, no a la dosis de IC.'},
  'Furosemida':{f:['24','12','8'],variable:true,source:cima('39969','fichatecnica_39969.html')},
@@ -858,12 +858,14 @@ export function medicationSafety(ctx){
  }
  // Audit P0/P4: limited exact-name matching, not a medication dictionary.
  const namedAs=(aliases)=>entries.filter(x=>aliases.includes(normalizeMedication(namedMedication(x.row))));
- const tmp=namedAs(['trimetoprim','trimetoprima','cotrimoxazol','co-trimoxazol','trimetoprim/sulfametoxazol','trimetoprima/sulfametoxazol','septrin','septrin forte','soltrim']);
- const spiro=entries.filter(x=>x.drug==='Espironolactona'),fin=entries.filter(x=>x.drug==='Finerenona');
+ const tmp=namedAs(['trimetoprim','trimetoprima','cotrimoxazol','co-trimoxazol','trimetoprim/sulfametoxazol','trimetoprima/sulfametoxazol','sulfametoxazol/trimetoprim','sulfametoxazol/trimetoprima','septrin','septrin forte','soltrim']);
+ const spiro=entries.filter(x=>x.drug==='Espironolactona'),fin=entries.filter(x=>x.drug==='Finerenona'),epl=entries.filter(x=>x.drug==='Eplerenona');
  if(tmp.length&&spiro.length)add('SPI-TMP','amber','Espironolactona + trimetoprim/cotrimoxazol','Riesgo de hiperpotasemia clínicamente relevante. Revisar la asociación y comprobar potasio y función renal. No implica suspensión automática.','https://cima.aemps.es/cima/dochtml/ft/81033/FichaTecnica_81033.html',ids([...spiro,...tmp]));
  if(tmp.length&&fin.length)add('FIN-TMP','amber','Finerenona + trimetoprim/cotrimoxazol','Revisar potasio y necesidad de interrupción temporal según ficha técnica; no modificar automáticamente.',HF_MEDICATION_REFERENCE.Finerenona.source,ids([...fin,...tmp]));
+ if(tmp.length&&epl.length)add('EPL-TMP','amber','Eplerenona + trimetoprim/cotrimoxazol','Riesgo de hiperpotasemia. Revisar asociación y monitorizar potasio y función renal.','https://cima.aemps.es/cima/dochtml/ft/76353/FT_76353.html',ids([...epl,...tmp]));
  const cyp=namedAs(['itraconazol','ketoconazol','ritonavir','nelfinavir','cobicistat','claritromicina','telitromicina','nefazodona']);
  if(fin.length&&cyp.length)add('FIN-CYP3A4','red','Finerenona: inhibidor fuerte de CYP3A4','Asociación contraindicada en ficha técnica. Confirmar principio activo y revisar tratamiento.',HF_MEDICATION_REFERENCE.Finerenona.source,ids([...fin,...cyp]));
+ if(epl.length&&cyp.length)add('EPL-CYP3A4','red','Eplerenona: posible inhibidor fuerte de CYP3A4','Revisar el principio activo y la contraindicación de asociación con inhibidores potentes del CYP3A4.','https://cima.aemps.es/cima/dochtml/ft/76353/FT_76353.html',ids([...epl,...cyp]));
  const aliskiren=namedAs(['aliskireno','aliskiren','rasilez']);
  if(arni.length&&aliskiren.length){
   const contraindicated=d.labsConfirmed&&d.values.egfr<60;
