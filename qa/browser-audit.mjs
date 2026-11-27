@@ -10,7 +10,7 @@ try{
  for(const [name,engine,viewport] of [['chromium',chromium,{width:1280,height:800}],['webkit-mobile',webkit,{width:390,height:844}]]){
   const browser=await engine.launch();try{
    const ctx=await browser.newContext({viewport,serviceWorkers:'allow'});const page=await ctx.newPage();const errors=[];page.on('pageerror',e=>errors.push(String(e)));
-   await page.goto(url);await page.getByRole('heading',{name:'CaHReMe',exact:true}).waitFor();assert.match(await page.locator('footer').innerText(),/v0\.88/);await page.screenshot({path:'qa-results/'+name+'-home.png',fullPage:true});
+   await page.goto(url);await page.getByRole('heading',{name:'CaHReMe',exact:true}).waitFor();assert.match(await page.locator('footer').innerText(),/v0\.89/);await page.screenshot({path:'qa-results/'+name+'-home.png',fullPage:true});
    await page.getByRole('button',{name:'Insuficiencia cardíaca',exact:true}).click();await page.getByRole('heading',{name:'Insuficiencia cardiaca',exact:true}).waitFor();
    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'No horizontal overflow');
    await page.screenshot({path:'qa-results/'+name+'-ic.png',fullPage:true});
@@ -41,7 +41,10 @@ try{
    if(name==='webkit-mobile')assert.ok(await page.locator('[data-action="phenotype-result"]').evaluate(e=>e.getBoundingClientRect().bottom<=innerHeight),'Fenotipo: acción visible');
    await page.locator('[data-action="phenotype-result"]').click();await page.getByRole('heading',{name:'FEVI pendiente',exact:true}).waitFor();
    await page.locator('.phenotype-page .sus-result-button').click();await page.getByRole('heading',{name:'Clasificación',exact:true}).waitFor();
-   for(const id of ['nyha','situacion','evolucion']){
+   await page.locator('[data-action="classification-section"][data-section="nyha"]').click();
+   await page.getByRole('heading',{name:'NYHA no asignable',exact:true}).waitFor();assert.equal(await page.locator('[data-nyha]').count(),0);
+   await page.locator('.nyha-page .sus-result-button').click();await page.getByRole('heading',{name:'Clasificación',exact:true}).waitFor();
+   for(const id of ['situacion','evolucion']){
     await page.locator('[data-action="classification-section"][data-section="'+id+'"]').click();await page.getByRole('heading',{name:'Pendiente de desarrollo'}).waitFor();
     await page.locator('[data-action="classification"]').click();await page.getByRole('heading',{name:'Clasificación',exact:true}).waitFor();
    }
@@ -191,6 +194,29 @@ try{
    await page.locator('[data-action="ic-section"][data-section="descompensada"]').click();await page.getByRole('heading',{name:'IC descompensada',exact:true}).waitFor();
    await page.locator('[data-action="ic"]').click();await page.getByRole('heading',{name:'Insuficiencia cardiaca',exact:true}).waitFor();
    await page.getByRole('button',{name:'CaHReMe',exact:false}).first().click();await page.getByRole('heading',{name:'CaHReMe',exact:true}).waitFor();
+   // Independent fictional case with stage C for NYHA; no effect on existing flow.
+   const nyctx=await browser.newContext({viewport,serviceWorkers:'allow'});try{
+    const nyp=await nyctx.newPage();await nyp.goto(url+'#ic/clasificacion/estadio');
+    await nyp.getByRole('heading',{name:'Estadio evolutivo',exact:true}).waitFor();
+    await nyp.locator('[data-stage-key="manifestations"][data-stage-value="yes"]').click();
+    await nyp.locator('[data-stage-key="objective"][data-stage-value="yes"]').click();
+    await nyp.locator('[data-action="stage-result"]').click();await nyp.getByRole('heading',{name:/Estadio C · IC clínica/}).waitFor();
+    await nyp.locator('.stage-page .sus-result-button').click();await nyp.getByRole('heading',{name:'Clasificación',exact:true}).waitFor();
+    await nyp.locator('[data-action="classification-section"][data-section="nyha"]').click();await nyp.getByRole('heading',{name:'Clase funcional',exact:true}).waitFor();
+    assert.equal(await nyp.locator('[data-nyha]').count(),5);
+    await nyp.locator('[data-nyha="II"]').check();await nyp.locator('.nyha-result').getByText('NYHA II',{exact:true}).waitFor();
+    assert.equal(await nyp.locator('[data-nyha]:checked').count(),1);
+    if(name==='webkit-mobile')assert.ok(await nyp.locator('.nyha-page .sus-result-button').evaluate(e=>e.getBoundingClientRect().bottom<=innerHeight),'NYHA: acción visible');
+    await nyp.screenshot({path:'qa-results/'+name+'-nyha.png',fullPage:true});
+    await nyp.locator('[data-nyha="IV"]').check();await nyp.locator('.nyha-result').getByText('NYHA IV',{exact:true}).waitFor();
+    assert.match(await nyp.locator('.nyha-page').innerText(),/no establece el estadio D/);
+    await nyp.locator('[data-nyha="III"]').check();await nyp.locator('.nyha-result').getByText('NYHA III',{exact:true}).waitFor();
+    await nyp.locator('.nyha-page .sus-result-button').click();await nyp.getByRole('heading',{name:'Clasificación',exact:true}).waitFor();
+    assert.match(await nyp.locator('[data-section="nyha"]').innerText(),/NYHA III/);
+    await nyp.locator('[data-action="classification-section"][data-section="nyha"]').click();await nyp.getByRole('heading',{name:'Clase funcional',exact:true}).waitFor();
+    assert.equal(await nyp.locator('[data-nyha="III"]').isChecked(),true);
+    await nyp.locator('[data-nyha="unknown"]').check();await nyp.locator('.nyha-result').getByText('NYHA no valorable',{exact:true}).waitFor();
+   }finally{await nyctx.close();}
    await page.getByRole('button',{name:'Diabetes tipo 2',exact:true}).click();await page.getByRole('heading',{name:'Pendiente de desarrollo'}).waitFor();assert.deepEqual(errors,[]);
   }finally{await browser.close();}
  }

@@ -977,3 +977,20 @@ body:has(.pearl-home) #app {
 .phenotype-links button{min-height:44px;font-size:.78rem;}
 .phenotype-page .echo-field{display:grid;grid-template-columns:minmax(0,1fr) 100px;align-items:center;}
 .phenotype-page .echo-field .np-error{grid-column:1/-1;}
+
+/* NYHA: single choice, concise rows, no separate result page. */
+.nyha-page .nyha-card{padding:9px 12px;}
+.nyha-fieldset{min-width:0;border:0;padding:0;margin:0;}
+.nyha-fieldset legend{padding:0 0 7px;font-size:.84rem;font-weight:600;line-height:1.35;color:#083748;}
+.nyha-option{display:grid;grid-template-columns:32px minmax(0,1fr) 18px;align-items:center;gap:8px;min-height:54px;padding:7px 4px;cursor:pointer;border-top:1px solid #dce8ed;}
+.nyha-option input{grid-column:3;grid-row:1;width:17px;height:17px;accent-color:#176c86;margin:0;}
+.nyha-number{grid-column:1;grid-row:1;display:grid;place-items:center;min-height:32px;border-radius:8px;background:#edf5f5;color:#176c86;font-weight:700;font-size:.87rem;}
+.nyha-description{grid-column:2;grid-row:1;min-width:0;}
+.nyha-description strong{display:block;color:#083748;font-size:.85rem;line-height:1.2;}
+.nyha-description small{display:block;color:#526e7b;font-size:.74rem;line-height:1.3;margin-top:3px;}
+.nyha-selected{background:#edf5f599;}
+.nyha-selected .nyha-number{background:#176c86;color:#fff;}
+.nyha-result{display:flex;align-items:center;justify-content:space-between;gap:8px;border-top:1px solid #dce8ed;padding:8px 4px 2px;color:#176c86;font-size:.86rem;}
+.nyha-result span{font-size:.76rem;color:#526e7b;}
+.nyha-reference{border:0;}
+.nyha-ineligible{font-size:1.05rem!important;margin:3px 0 6px!important;}

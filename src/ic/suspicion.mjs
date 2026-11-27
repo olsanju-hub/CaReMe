@@ -11,7 +11,7 @@ export const GROUPS=[
  ['knownHF','Diagnóstico previo de IC'],['cardiac','Cardiopatía isquémica, valvulopatía o miocardiopatía'],['htn','Hipertensión arterial'],['dm','Diabetes'],['ckd','Enfermedad renal crónica'],['obesity','Obesidad'],['af','Fibrilación auricular u otra arritmia relevante'],['toxins','Exposición a cardiotóxicos o consumo perjudicial de alcohol'],['family','Antecedentes familiares de miocardiopatía']]}
 ];
 const fields=[...GROUPS.flatMap(g=>g.fields.map(([id])=>id)),'vitalsReviewed'];
-export function createClinicalContext(){return {findings:{},results:{},peptides:{},echo:{},stageAssessment:{},phenotypeAssessment:{},updatedAt:null};}
+export function createClinicalContext(){return {findings:{},results:{},peptides:{},echo:{},stageAssessment:{},phenotypeAssessment:{},nyhaAssessment:{},updatedAt:null};}
 export function updateFinding(ctx,id,value){if(!fields.includes(id)||!['yes','no','unknown'].includes(value))return ctx;return {...ctx,findings:{...ctx.findings,[id]:value},updatedAt:new Date().toISOString()};}
 export function evaluateSuspicion(ctx){
  const f=ctx?.findings??{},val=id=>['yes','no'].includes(f[id])?f[id]:'unknown';
@@ -465,4 +465,30 @@ export function interpretPhenotype(ctx){
  }
  const trajectory=improved?'IC con FEVI mejorada':trajectoryPattern?'Mejoría cuantitativa; atribución pendiente':delta===null?'Evolución pendiente':delta>0?'FEVI en ascenso':delta<0?'FEVI en descenso':'FEVI sin cambio registrado';
  return {ef,prior,delta,current,clinicalHF,priorReduced,historicalNo,conflict,code,title,short,text,trajectory,trajectoryPattern,improved,notes,urgent:r.urgent,safety:r.safety,stage:st.stage,source:{doi:SOURCE.doi,sections:'5.2.1–5.2.2; consenso universal 2026, trayectorias',version:'0.1'}};
+}
+
+/* NYHA: clinician-selected limitation attributable to established clinical HF.
+ * No inference from EF, signs alone, stage D or acute clinical status. */
+export const NYHA_OPTIONS=[
+ ['I','Sin limitación','La actividad física habitual no provoca síntomas de IC.'],
+ ['II','Limitación leve','Sin síntomas en reposo; la actividad habitual provoca síntomas de IC.'],
+ ['III','Limitación marcada','Sin síntomas en reposo; esfuerzos menores de lo habitual provocan síntomas de IC.'],
+ ['IV','Síntomas en reposo','Los síntomas están presentes en reposo y cualquier esfuerzo aumenta el malestar.'],
+ ['unknown','No valorable','Información insuficiente o no es posible atribuir la limitación a IC.']
+];
+export function setNyha(ctx,value){
+ if(!NYHA_OPTIONS.some(x=>x[0]===value))return ctx;
+ const stage=interpretStage(ctx);
+ if(!['C','D'].includes(stage.stage))return ctx;
+ return {...ctx,nyhaAssessment:{value,recordedAt:new Date().toISOString()},updatedAt:new Date().toISOString()};
+}
+export function interpretNyha(ctx){
+ const st=interpretStage(ctx),eligible=['C','D'].includes(st.stage);
+ const saved=ctx.nyhaAssessment?.value;
+ const choice=eligible?NYHA_OPTIONS.find(x=>x[0]===saved):undefined;
+ const functionalClass=choice&&choice[0]!=='unknown'?choice[0]:null;
+ const title=functionalClass?'NYHA '+functionalClass:!eligible?'NYHA no asignable':choice?'NYHA no valorable':'NYHA pendiente';
+ const text=functionalClass?choice[2]:!eligible?(['0','A','B'].includes(st.stage)?'La clase funcional de IC no corresponde a este estadio sin IC clínica.':'Establecer primero IC clínica; no atribuir síntomas a IC sin evaluación.') :choice?choice[2]:'Selecciona la limitación funcional atribuible a IC.';
+ const warning=functionalClass==='IV'?'Si la disnea de reposo es nueva o intensa, o hay deterioro clínico, priorizar valoración urgente. La clase IV por sí sola no establece el estadio D.':'';
+ return {eligible,functionalClass,selected:choice?.[0]??null,title,text,short:functionalClass?choice[1]:!eligible?'IC clínica no establecida':choice?'No valorable':'Pendiente de evaluar',warning,stage:st.stage,urgent:st.urgent,safety:st.safety,source:{doi:SOURCE.doi,sections:'Tabla 8; AHA Classes and Stages of Heart Failure',version:'0.1'}};
 }

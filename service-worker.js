@@ -1,14 +1,14 @@
 // Solo cachea recursos estáticos: nunca guarda información introducida en formularios.
 // El símbolo SVG incluido es provisional; el icono aprobado en la conversación aún debe subirse.
 const CACHE_PREFIX = 'cahreme-shell-' + encodeURIComponent(new URL(self.registration.scope).pathname) + '-';
-const CACHE = CACHE_PREFIX + 'v0-88';
+const CACHE = CACHE_PREFIX + 'v0-89';
 const ASSETS = [
   "./",
   "./index.html",
   "./manifest.webmanifest",
-  "./src/app.mjs?v=88",
-  "./src/ic/suspicion.mjs?v=88",
-  "./src/styles.css?v=88",
+  "./src/app.mjs?v=89",
+  "./src/ic/suspicion.mjs?v=89",
+  "./src/styles.css?v=89",
   "./public/domain-cardiovascular.svg",
   "./public/domain-hepatico.svg",
   "./public/domain-metabolico.svg",

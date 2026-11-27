@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {GROUPS,createClinicalContext,updateFinding,evaluateSuspicion,setGroupReviewed,isGroupReviewed,toggleFinding,setEvaluationReviewed,isEvaluationReviewed,diagnosticNext,diagnosticAction,setStudyResult,investigationPlan,interpretSuspicion,CLINICAL_DIMENSIONS,labPlan,setPeptide,interpretPeptide,peptideFactors,ECHO_FINDINGS,ECHO_NUMERIC,setEcho,interpretEcho,setStageAssessment,interpretStage,setPhenotypeAssessment,interpretPhenotype} from '../src/ic/suspicion.mjs';
+import {GROUPS,createClinicalContext,updateFinding,evaluateSuspicion,setGroupReviewed,isGroupReviewed,toggleFinding,setEvaluationReviewed,isEvaluationReviewed,diagnosticNext,diagnosticAction,setStudyResult,investigationPlan,interpretSuspicion,CLINICAL_DIMENSIONS,labPlan,setPeptide,interpretPeptide,peptideFactors,ECHO_FINDINGS,ECHO_NUMERIC,setEcho,interpretEcho,setStageAssessment,interpretStage,setPhenotypeAssessment,interpretPhenotype,NYHA_OPTIONS,setNyha,interpretNyha} from '../src/ic/suspicion.mjs';
 const allNo=()=>({findings:{...Object.fromEntries(GROUPS.flatMap(g=>g.fields.map(([id])=>[id,'no']))),vitalsReviewed:'yes'}});
 const result=(c)=>evaluateSuspicion(c).id;
 test('Datos ausentes no son negativos',()=>assert.equal(result(createClinicalContext()),'IC-SUS-03'));
@@ -176,4 +176,19 @@ test('Trayectoria: patrón de mejoría requiere IC clínica previa atribuida, co
  c=setEcho(c,'ef','40');assert.equal(interpretPhenotype(c).improved,false);
  c=setEcho(c,'ef','39');assert.equal(interpretPhenotype(c).trajectoryPattern,false);
  c=updateFinding(c,'perfusion','yes');assert.equal(interpretPhenotype(c).urgent,true);
+});
+
+test('NYHA: selección única en IC clínica; sin inferencia por FEVI ni estadio',()=>{
+ let c=createClinicalContext();assert.equal(interpretNyha(c).eligible,false);assert.equal(setNyha(c,'II'),c);
+ c=setEcho(c,'ef','35');assert.equal(interpretNyha(c).functionalClass,null);
+ c=updateFinding(c,'knownHF','yes');assert.equal(interpretNyha(c).eligible,true);assert.equal(interpretNyha(c).functionalClass,null);
+ for(const k of ['I','II','III','IV']){c=setNyha(c,k);assert.equal(interpretNyha(c).functionalClass,k);assert.equal(interpretStage(c).stage,'C');}
+ assert.match(interpretNyha(c).warning,/no establece el estadio D/);assert.equal(interpretNyha(c).urgent,false);
+ c=setNyha(c,'unknown');assert.equal(interpretNyha(c).functionalClass,null);assert.equal(interpretNyha(c).title,'NYHA no valorable');
+ assert.equal(setNyha(c,'V'),c);
+});
+test('NYHA: alarma independiente y no mostrar clase si IC clínica deja de estar establecida',()=>{
+ let c=updateFinding(createClinicalContext(),'knownHF','yes');c=setNyha(c,'II');
+ c=updateFinding(c,'respiratory','yes');assert.equal(interpretNyha(c).urgent,true);assert.equal(interpretNyha(c).functionalClass,'II');
+ c=updateFinding(c,'knownHF','no');assert.equal(interpretNyha(c).eligible,false);assert.equal(interpretNyha(c).functionalClass,null);assert.equal(interpretNyha(c).urgent,true);
 });
