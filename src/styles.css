@@ -994,3 +994,11 @@ body:has(.pearl-home) #app {
 .nyha-result span{font-size:.76rem;color:#526e7b;}
 .nyha-reference{border:0;}
 .nyha-ineligible{font-size:1.05rem!important;margin:3px 0 6px!important;}
+
+/* Clinical situation: compact questions and editable recovered data. */
+.situation-page .stage-question{padding:4px 0;}
+.situation-page .stage-question p{margin:2px 0;font-size:.84rem;}
+.situation-page .stage-question .np-segment{margin:3px 0;}
+.situation-page .stage-card{padding:9px 12px;}
+.situation-page .stage-hint{line-height:1.35;}
+.situation-recovered>p{font-size:.79rem;line-height:1.4;}

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {GROUPS,createClinicalContext,updateFinding,evaluateSuspicion,setGroupReviewed,isGroupReviewed,toggleFinding,setEvaluationReviewed,isEvaluationReviewed,diagnosticNext,diagnosticAction,setStudyResult,investigationPlan,interpretSuspicion,CLINICAL_DIMENSIONS,labPlan,setPeptide,interpretPeptide,peptideFactors,ECHO_FINDINGS,ECHO_NUMERIC,setEcho,interpretEcho,setStageAssessment,interpretStage,setPhenotypeAssessment,interpretPhenotype,NYHA_OPTIONS,setNyha,interpretNyha} from '../src/ic/suspicion.mjs';
+import {GROUPS,createClinicalContext,updateFinding,evaluateSuspicion,setGroupReviewed,isGroupReviewed,toggleFinding,setEvaluationReviewed,isEvaluationReviewed,diagnosticNext,diagnosticAction,setStudyResult,investigationPlan,interpretSuspicion,CLINICAL_DIMENSIONS,labPlan,setPeptide,interpretPeptide,peptideFactors,ECHO_FINDINGS,ECHO_NUMERIC,setEcho,interpretEcho,setStageAssessment,interpretStage,setPhenotypeAssessment,interpretPhenotype,NYHA_OPTIONS,setNyha,interpretNyha,SITUATION_QUESTIONS,setSituation,interpretSituation} from '../src/ic/suspicion.mjs';
 const allNo=()=>({findings:{...Object.fromEntries(GROUPS.flatMap(g=>g.fields.map(([id])=>[id,'no']))),vitalsReviewed:'yes'}});
 const result=(c)=>evaluateSuspicion(c).id;
 test('Datos ausentes no son negativos',()=>assert.equal(result(createClinicalContext()),'IC-SUS-03'));
@@ -191,4 +191,32 @@ test('NYHA: alarma independiente y no mostrar clase si IC clínica deja de estar
  let c=updateFinding(createClinicalContext(),'knownHF','yes');c=setNyha(c,'II');
  c=updateFinding(c,'respiratory','yes');assert.equal(interpretNyha(c).urgent,true);assert.equal(interpretNyha(c).functionalClass,'II');
  c=updateFinding(c,'knownHF','no');assert.equal(interpretNyha(c).eligible,false);assert.equal(interpretNyha(c).functionalClass,null);assert.equal(interpretNyha(c).urgent,true);
+});
+
+test('Situación: evaluación explícita y prioridad de alarmas; combinaciones ternarias',()=>{
+ const vals=['yes','no','unknown'];
+ for(const worsening of vals)for(const congestion of vals)for(const perfusion of vals)for(const stable of vals){
+  const c={findings:{knownHF:'yes',worsening,perfusion},situationAssessment:{congestion,stable}};
+  const r=interpretSituation(c);
+  if(perfusion==='yes'||stable==='no'){assert.equal(r.code,'unstable');assert.equal(r.urgent,true);}
+  else if(worsening==='yes'){assert.equal(r.code,'worsening');assert.equal(r.urgent,true);}
+  else if(worsening==='no'&&perfusion==='no'&&stable==='yes'&&congestion!=='unknown')assert.equal(r.code,congestion==='no'?'compensated':'congested');
+  else assert.equal(r.code,'pending');
+ }
+});
+test('Situación: IC clínica requerida para compensación; señales inespecíficas no bastan',()=>{
+ let c=createClinicalContext();for(const k of ['worsening','congestion','perfusion'])c=setSituation(c,k,'no');c=setSituation(c,'stable','yes');
+ assert.equal(interpretSituation(c).code,'not-established');
+ c=updateFinding(c,'knownHF','yes');assert.equal(interpretSituation(c).code,'compensated');
+ c=updateFinding(c,'edema','yes');assert.equal(interpretSituation(c).code,'pending');
+ c=setSituation(c,'congestion','yes');assert.equal(interpretSituation(c).code,'congested');
+ c=setSituation(c,'perfusion','yes');assert.equal(interpretSituation(c).code,'unstable');assert.equal(interpretEcho(c).urgent,true);
+ assert.equal(interpretSituation(c).values.stable,'unknown');
+});
+test('Situación: constantes revisadas no prueban estabilidad; contexto agudo prevalece',()=>{
+ let c={...allNo(),findings:{...allNo().findings,knownHF:'yes'}};
+ c=setSituation(c,'congestion','no');assert.equal(interpretSituation(c).code,'pending');
+ c=setSituation(c,'stable','yes');assert.equal(interpretSituation(c).code,'compensated');
+ c=setPeptide(c,'context','acute');assert.equal(interpretSituation(c).urgent,true);
+ assert.equal(setSituation(c,'bogus','yes'),c);
 });

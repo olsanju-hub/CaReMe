@@ -11,8 +11,16 @@ export const GROUPS=[
  ['knownHF','Diagnóstico previo de IC'],['cardiac','Cardiopatía isquémica, valvulopatía o miocardiopatía'],['htn','Hipertensión arterial'],['dm','Diabetes'],['ckd','Enfermedad renal crónica'],['obesity','Obesidad'],['af','Fibrilación auricular u otra arritmia relevante'],['toxins','Exposición a cardiotóxicos o consumo perjudicial de alcohol'],['family','Antecedentes familiares de miocardiopatía']]}
 ];
 const fields=[...GROUPS.flatMap(g=>g.fields.map(([id])=>id)),'vitalsReviewed'];
-export function createClinicalContext(){return {findings:{},results:{},peptides:{},echo:{},stageAssessment:{},phenotypeAssessment:{},nyhaAssessment:{},updatedAt:null};}
-export function updateFinding(ctx,id,value){if(!fields.includes(id)||!['yes','no','unknown'].includes(value))return ctx;return {...ctx,findings:{...ctx.findings,[id]:value},updatedAt:new Date().toISOString()};}
+export function createClinicalContext(){return {findings:{},results:{},peptides:{},echo:{},stageAssessment:{},phenotypeAssessment:{},nyhaAssessment:{},situationAssessment:{},updatedAt:null};}
+export function updateFinding(ctx,id,value){
+ if(!fields.includes(id)||!['yes','no','unknown'].includes(value))return ctx;
+ const a={...ctx.situationAssessment};
+ if(ctx.findings[id]!==value){
+  if([...GROUPS[0].fields.map(x=>x[0]),'vitalsReviewed'].includes(id)&&a.stable==='yes')delete a.stable;
+  if(['orthopnea','pnd','swelling','weight','jvp','crackles','edema','ascites'].includes(id)&&a.congestion==='no')delete a.congestion;
+ }
+ return {...ctx,findings:{...ctx.findings,[id]:value},situationAssessment:a,updatedAt:new Date().toISOString()};
+}
 export function evaluateSuspicion(ctx){
  const f=ctx?.findings??{},val=id=>['yes','no'].includes(f[id])?f[id]:'unknown';
  const group=id=>GROUPS.find(g=>g.id===id).fields;
@@ -20,9 +28,10 @@ export function evaluateSuspicion(ctx){
  const complete=id=>group(id).every(([k])=>val(k)!=='unknown');
  const alarm=positives('alarms'),sym=positives('symptoms'),sign=positives('signs'),risk=positives('risk');
  const result=(id,level,title,action,details=[])=>({id,level,title,action,details,source:{...SOURCE,sections:['IC-SUS-01','IC-SUS-02','IC-SUS-03'].includes(id)?'ESC 2026, apartado 7.2':'ESC 2026, apartado 5.1 y tabla 7'},ruleType:'Adaptación de flujo experimental; no es una recomendación ESC textual'});
+ if(ctx?.situationAssessment?.stable==='no')return result('IC-SUS-01','critical','Inestabilidad clínica registrada','Prioriza valoración urgente inmediata y activa emergencias según gravedad. No demores por clasificación.');
  if(['respiratory','perfusion','chestPain','arrhythmia'].some(k=>val(k)==='yes'))return result('IC-SUS-01','critical','Alarma clínica','Prioriza valoración urgente inmediata y activa el circuito de emergencias según la situación. No demores por pruebas ambulatorias.',alarm);
  if(val('worsening')==='yes')return result('IC-SUS-02','urgent','Posible descompensación','Valora hoy la estabilidad, constantes, congestión y perfusión; decide destino asistencial según los hallazgos. No presupongas IC como única causa.',alarm);
- if(!complete('alarms')||val('vitalsReviewed')!=='yes')return result('IC-SUS-03','pending','Completar seguridad','Comprueba las alarmas, presión arterial, frecuencia cardiaca, frecuencia respiratoria y SpO₂; añade temperatura y ECG cuando proceda. No orientar un circuito ambulatorio sin valorar la estabilidad. Un dato no valorado no equivale a normal.');
+ if((!complete('alarms')||val('vitalsReviewed')!=='yes')&&ctx?.situationAssessment?.stable!=='yes')return result('IC-SUS-03','pending','Completar seguridad','Comprueba las alarmas, presión arterial, frecuencia cardiaca, frecuencia respiratoria y SpO₂; añade temperatura y ECG cuando proceda. No orientar un circuito ambulatorio sin valorar la estabilidad. Un dato no valorado no equivale a normal.');
  if(val('knownHF')==='yes')return result('IC-SUS-04','review','IC previamente diagnosticada','Revisa la evolución clínica, el tratamiento y la posible descompensación. No reclasifiques el diagnóstico por ausencia de síntomas actuales.',[...sym,...sign]);
  if(sym.length||sign.length)return result('IC-SUS-05','review','Hallazgos compatibles con IC','Integra antecedentes, exploración y diagnóstico diferencial. Si persiste sospecha, completa el estudio objetivo y consulta el algoritmo de la guía original. Un hallazgo inespecífico aislado no confirma IC.',[...sym,...sign]);
  if(!complete('symptoms')||!complete('signs'))return result('IC-SUS-06','pending','Evaluación clínica incompleta','Completa síntomas y exploración. No es posible descartar IC con datos ausentes.');
@@ -491,4 +500,48 @@ export function interpretNyha(ctx){
  const text=functionalClass?choice[2]:!eligible?(['0','A','B'].includes(st.stage)?'La clase funcional de IC no corresponde a este estadio sin IC clínica.':'Establecer primero IC clínica; no atribuir síntomas a IC sin evaluación.') :choice?choice[2]:'Selecciona la limitación funcional atribuible a IC.';
  const warning=functionalClass==='IV'?'Si la disnea de reposo es nueva o intensa, o hay deterioro clínico, priorizar valoración urgente. La clase IV por sí sola no establece el estadio D.':'';
  return {eligible,functionalClass,selected:choice?.[0]??null,title,text,short:functionalClass?choice[1]:!eligible?'IC clínica no establecida':choice?'No valorable':'Pendiente de evaluar',warning,stage:st.stage,urgent:st.urgent,safety:st.safety,source:{doi:SOURCE.doi,sections:'Tabla 8; AHA Classes and Stages of Heart Failure',version:'0.1'}};
+}
+
+/* Situation assessment: educational workflow, not an ESC validated rule or a disposition protocol.
+ * Shared worsening/perfusion data remain editable in clinical suspicion; no repeated mandatory entry.
+ * Explicit clinical stability assessment is required to classify compensation. */
+export const SITUATION_QUESTIONS={
+ worsening:'¿Empeoramiento reciente relevante respecto a su situación basal?',
+ congestion:'¿Congestión clínica actual atribuible a IC, tras revisar la exploración?',
+ perfusion:'¿Signos de hipoperfusión actuales?',
+ stable:'¿Constantes y restantes alarmas revisadas, con estabilidad clínica comprobada?'
+};
+export function setSituation(ctx,key,value){
+ if(!Object.hasOwn(SITUATION_QUESTIONS,key)||!['yes','no','unknown'].includes(value))return ctx;
+ if(key==='worsening'||key==='perfusion')return updateFinding(ctx,key,value);
+ return {...ctx,situationAssessment:{...ctx.situationAssessment,[key]:value},updatedAt:new Date().toISOString()};
+}
+export function interpretSituation(ctx){
+ const st=interpretStage(ctx),echo=interpretEcho(ctx),f=ctx.findings||{},a=ctx.situationAssessment||{};
+ const tri=v=>v==='yes'||v==='no'?v:'unknown';
+ const values={worsening:tri(f.worsening),congestion:tri(a.congestion),perfusion:tri(f.perfusion),stable:tri(a.stable)};
+ const eligible=['C','D'].includes(st.stage);
+ const congestionClues=GROUPS.flatMap(g=>g.fields).filter(([id])=>['orthopnea','pnd','swelling','weight','jvp','crackles','edema','ascites'].includes(id)&&f[id]==='yes');
+ const findings=congestionClues.map(x=>x[1]);
+ const ny=interpretNyha(ctx);
+ const contradictions=[];
+ if(values.stable==='yes'&&(values.perfusion==='yes'||['respiratory','chestPain','arrhythmia'].some(k=>f[k]==='yes')))contradictions.push('Estabilidad declarada con signos de alarma positivos; prevalece la alarma.');
+ const critical=echo.safety.level==='critical'||values.perfusion==='yes'||values.stable==='no';
+ const urgent=critical||echo.urgent||values.worsening==='yes';
+ const safety=critical?{level:'critical',title:'Inestabilidad o alarma clínica',text:echo.safety.level==='critical'?echo.safety.text:'Priorizar valoración urgente inmediata; activar emergencias según gravedad.'}:urgent?{level:'urgent',title:'Valoración urgente',text:values.worsening==='yes'?'Valorar hoy gravedad, constantes y causa del deterioro.':'Contexto agudo: no retrasar la valoración por clasificación.'}:values.stable!=='yes'||values.perfusion==='unknown'||values.worsening==='unknown'?{level:'pending',title:'Estabilidad pendiente de valorar',text:'Completar evaluación clínica, constantes y alarmas antes de decidir el ámbito asistencial.'}:{level:'review',title:'Estabilidad comprobada',text:'Según la valoración clínica registrada; reevaluar si cambia la situación.'};
+ let code='pending',title='Situación indeterminada',short='Pendiente de evaluar',text='Completar los datos necesarios; ausencia de registro no equivale a ausencia de congestión o inestabilidad.';
+ if(critical){code='unstable';title='Inestabilidad clínica';short='Inestabilidad';text='Hay alarma, hipoperfusión o inestabilidad registrada. Priorizar valoración urgente inmediata, sin asumir la causa.';}
+ else if(urgent){code='worsening';title=eligible?'Posible descompensación':'Deterioro o contexto agudo';short='Valoración urgente';text='Valorar hoy gravedad y posibles desencadenantes. Determinar destino según hallazgos; no presuponer la etiología.';}
+ else if(!eligible){code='not-established';title='IC clínica no establecida';short='IC clínica pendiente';text='No asignar compensación ni descompensación de IC sin IC clínica establecida. Revisar el estadio.';}
+ else if(values.congestion==='yes'&&values.worsening==='no'&&values.perfusion==='no'&&values.stable==='yes'){code='congested';title='Congestión sin deterioro referido';short='Congestión';text='Congestión actual con estabilidad comprobada y sin empeoramiento relevante referido. Reevaluar volumen y tratamiento. No presupone duración ni excluye otras causas.';}
+ else if(values.congestion==='no'&&values.worsening==='no'&&values.perfusion==='no'&&values.stable==='yes'){code='compensated';title='IC clínicamente compensada';short='Compensada';text='Sin congestión, hipoperfusión ni deterioro reciente relevante tras valoración explícita de la estabilidad. Reevaluar ante cambios clínicos.';}
+ else if(values.congestion==='yes'){text='Congestión registrada. Completar evolución, perfusión y estabilidad antes de establecer situación y ámbito asistencial.';}
+ const reason=[];
+ if(ny.functionalClass)reason.push('Clase funcional: NYHA '+ny.functionalClass+'; no determina por sí sola la compensación.');
+ if(findings.length)reason.push('Hallazgos compatibles, no específicos: '+findings.join(' · ')+'.');
+ for(const [k,v] of Object.entries(values))if(v!=='unknown')reason.push(SITUATION_QUESTIONS[k]+' '+(v==='yes'?'Sí.':'No.'));
+ if(echo.urgent)reason.push('Se mantiene la prioridad urgente de la evaluación previa.');
+ const recovered=['worsening','perfusion'].filter(k=>values[k]!=='unknown');
+ const questions=Object.keys(SITUATION_QUESTIONS).filter(k=>!recovered.includes(k));
+ return {code,title,short,text,values,eligible,urgent,safety,contradictions,reason,findings,recovered,questions,source:{doi:SOURCE.doi,sections:'IC descompensada; evaluación de congestión e hipoperfusión',version:'0.1'}};
 }
