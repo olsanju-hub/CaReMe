@@ -8,6 +8,6 @@ test('Todos los recursos PWA existen',async()=>{const sw=await readFile(new URL(
 
 test('Diagnóstico condensado y sin recomendaciones activas',()=>{for(const title of ['Asistente diagnóstico','Sospecha clínica','Pruebas diagnósticas','BNP / NT-proBNP','Ecocardiografía','Referencias científicas'])assert.ok(app.includes(title),title);assert.ok(app.includes('Sin recomendaciones clínicas activas'));assert.ok(app.includes("if(hash==='ic/diagnostico')return diagnosis()"));});
 
-test('Versión de recursos y caché coherente',async()=>{const html=await readFile(new URL('../index.html',import.meta.url),'utf8');const sw=await readFile(new URL('../service-worker.js',import.meta.url),'utf8');assert.match(html,/app\.mjs\?v=90/);assert.match(html,/styles\.css\?v=90/);assert.match(app,/suspicion\.mjs\?v=90/);assert.match(sw,/v0-90/);assert.doesNotMatch(sw,/ignoreSearch:\s*true/);assert.match(sw,/cache:'no-store'/);});
+test('Versión de recursos y caché coherente',async()=>{const html=await readFile(new URL('../index.html',import.meta.url),'utf8');const sw=await readFile(new URL('../service-worker.js',import.meta.url),'utf8');assert.match(html,/app\.mjs\?v=91/);assert.match(html,/styles\.css\?v=91/);assert.match(app,/suspicion\.mjs\?v=91/);assert.match(sw,/v0-91/);assert.doesNotMatch(sw,/ignoreSearch:\s*true/);assert.match(sw,/cache:'no-store'/);});
 
 test('Sin selectores de estado administrativo de pruebas',()=>{assert.doesNotMatch(app,/data-investigation|setInvestigation|<span>Estado<\/span>/);});

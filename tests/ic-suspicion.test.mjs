@@ -220,3 +220,5 @@ test('Situación: constantes revisadas no prueban estabilidad; contexto agudo pr
  c=setPeptide(c,'context','acute');assert.equal(interpretSituation(c).urgent,true);
  assert.equal(setSituation(c,'bogus','yes'),c);
 });
+
+test('Situación: declarar estabilidad no sustituye perfusión ni evolución pendientes',()=>{let c=updateFinding(createClinicalContext(),'knownHF','yes');c=setSituation(c,'stable','yes');assert.equal(interpretSituation(c).code,'pending');assert.equal(interpretEcho(c).safety.level,'pending');c=setSituation(c,'perfusion','no');c=setSituation(c,'worsening','no');c=setSituation(c,'stable','yes');assert.equal(interpretEcho(c).safety.level,'review');assert.equal(interpretSituation(c).code,'pending');});
