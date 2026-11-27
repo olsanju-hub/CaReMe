@@ -10,7 +10,7 @@ try{
  for(const [name,engine,viewport] of [['chromium',chromium,{width:1280,height:800}],['webkit-mobile',webkit,{width:390,height:844}]]){
   const browser=await engine.launch();try{
    const ctx=await browser.newContext({viewport,serviceWorkers:'allow'});const page=await ctx.newPage();const errors=[];page.on('pageerror',e=>errors.push(String(e)));
-   await page.goto(url);await page.getByRole('heading',{name:'CaHReMe',exact:true}).waitFor();assert.match(await page.locator('footer').innerText(),/v0\.93/);await page.screenshot({path:'qa-results/'+name+'-home.png',fullPage:true});
+   await page.goto(url);await page.getByRole('heading',{name:'CaHReMe',exact:true}).waitFor();assert.match(await page.locator('footer').innerText(),/v0\.94/);await page.screenshot({path:'qa-results/'+name+'-home.png',fullPage:true});
    await page.getByRole('button',{name:'Insuficiencia cardíaca',exact:true}).click();await page.getByRole('heading',{name:'Insuficiencia cardiaca',exact:true}).waitFor();
    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'No horizontal overflow');
    await page.screenshot({path:'qa-results/'+name+'-ic.png',fullPage:true});
@@ -22,6 +22,10 @@ try{
    assert.equal(await page.locator('.class-tile').count(),4);assert.match(await page.locator('.class-grid').innerText(),/FEVI pendiente/);
    if(name==='webkit-mobile')assert.ok(await page.locator('.class-page .sus-result-button').evaluate(e=>e.getBoundingClientRect().bottom<=innerHeight),'Portada clasificación compacta');
    await page.screenshot({path:'qa-results/'+name+'-classification.png',fullPage:true});
+   await page.locator('[data-action="classification-summary"]').click();await page.getByRole('heading',{name:'Conclusión clínica',exact:true}).waitFor();
+   assert.match(await page.locator('.summary-card').innerText(),/IC clínica no establecida/);
+   assert.equal(await page.locator('.classification-summary-page .sus-result-button[data-section="tratamiento"]').count(),0);
+   await page.locator('.classification-summary-page .ic-back').click();await page.getByRole('heading',{name:'Clasificación',exact:true}).waitFor();
    await page.locator('[data-action="classification-section"][data-section="estadio"]').click();
    await page.getByRole('heading',{name:'Estadio evolutivo',exact:true}).waitFor();
    assert.equal(await page.locator('.stage-question:visible').count(),1);
@@ -259,12 +263,24 @@ try{
     await nyp.locator('[data-action="situation-result"]').click();await nyp.getByRole('heading',{name:'IC clínicamente compensada',exact:true}).waitFor();
     await nyp.screenshot({path:'qa-results/'+name+'-situation.png',fullPage:true});
     await nyp.locator('.situation-page .sus-result-button').click();await nyp.getByRole('heading',{name:'Clasificación',exact:true}).waitFor();assert.match(await nyp.locator('[data-section="situacion"]').innerText(),/Compensada/);
+    // Complete a fictional profile and verify the integrated conclusion reuses it.
+    await nyp.locator('[data-action="classification-section"][data-section="fenotipo"]').click();await nyp.getByRole('heading',{name:'Fenotipo',exact:true}).waitFor();
+    await nyp.locator('[data-echo-input="ef"]').fill('37');await nyp.locator('[data-action="phenotype-result"]').click();await nyp.getByRole('heading',{name:'Conclusión',exact:true}).waitFor();
+    await nyp.locator('.phenotype-page .sus-result-button').click();await nyp.getByRole('heading',{name:'Clasificación',exact:true}).waitFor();
+    await nyp.locator('[data-action="classification-summary"]').click();await nyp.getByRole('heading',{name:'Conclusión clínica',exact:true}).waitFor();
+    assert.match(await nyp.locator('.summary-card').innerText(),/37 %/);assert.match(await nyp.locator('.summary-card').innerText(),/Compensada/);assert.match(await nyp.locator('.summary-card').innerText(),/C \(al menos\)/);
+    assert.equal(await nyp.locator('.classification-summary-page .sus-result-button[data-section="tratamiento"]').count(),1);
+    assert.equal(await nyp.locator('.classification-summary-page input,.classification-summary-page select').count(),0);
+    if(name==='webkit-mobile')assert.ok(await nyp.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'Resumen sin desbordamiento horizontal');
+    await nyp.screenshot({path:'qa-results/'+name+'-classification-summary.png',fullPage:true});
+    await nyp.locator('.classification-summary-page .ic-back').click();await nyp.getByRole('heading',{name:'Clasificación',exact:true}).waitFor();
     await nyp.locator('[data-action="classification-section"][data-section="situacion"]').click();await nyp.getByRole('heading',{name:'Situación clínica',exact:true}).waitFor();
     assert.equal(await nyp.locator('.stage-question:visible').count(),2);
     await nyp.locator('.situation-recovered>summary').click();
     await nyp.locator('[data-situation-key="perfusion"][data-situation-value="yes"]').click();
     await nyp.locator('[data-action="situation-result"]').click();await nyp.getByRole('heading',{name:'Inestabilidad clínica',exact:true}).waitFor();
     assert.equal(await nyp.locator('.situation-page .urgent-next').count(),1);
+    await nyp.locator('.situation-page .ic-back').click();await nyp.getByRole('heading',{name:'Situación clínica',exact:true}).waitFor();await nyp.locator('.situation-page .ic-back').click();await nyp.getByRole('heading',{name:'Clasificación',exact:true}).waitFor();await nyp.locator('[data-action="classification-summary"]').click();await nyp.getByRole('heading',{name:'Conclusión clínica',exact:true}).waitFor();assert.equal(await nyp.locator('.classification-summary-page .urgent-next').count(),1);assert.equal(await nyp.locator('.classification-summary-page [data-section="tratamiento"]').count(),0);
    }finally{await nyctx.close();}
    await page.getByRole('button',{name:'Diabetes tipo 2',exact:true}).click();await page.getByRole('heading',{name:'Pendiente de desarrollo'}).waitFor();assert.equal(await page.locator('.app-home-link').count(),1);await page.locator('.app-home-link').click();await page.getByRole('heading',{name:'CaHReMe',exact:true}).waitFor();assert.deepEqual(errors,[]);
   }finally{await browser.close();}

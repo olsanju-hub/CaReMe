@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {GROUPS,createClinicalContext,updateFinding,evaluateSuspicion,setGroupReviewed,isGroupReviewed,toggleFinding,setEvaluationReviewed,isEvaluationReviewed,diagnosticNext,diagnosticAction,setStudyResult,investigationPlan,interpretSuspicion,CLINICAL_DIMENSIONS,labPlan,setPeptide,interpretPeptide,peptideFactors,ECHO_FINDINGS,ECHO_NUMERIC,setEcho,interpretEcho,setStageAssessment,interpretStage,setPhenotypeAssessment,interpretPhenotype,NYHA_OPTIONS,setNyha,interpretNyha,SITUATION_QUESTIONS,setSituation,interpretSituation} from '../src/ic/suspicion.mjs';
+import {GROUPS,createClinicalContext,updateFinding,evaluateSuspicion,setGroupReviewed,isGroupReviewed,toggleFinding,setEvaluationReviewed,isEvaluationReviewed,diagnosticNext,diagnosticAction,setStudyResult,investigationPlan,interpretSuspicion,CLINICAL_DIMENSIONS,labPlan,setPeptide,interpretPeptide,peptideFactors,ECHO_FINDINGS,ECHO_NUMERIC,setEcho,interpretEcho,setStageAssessment,interpretStage,setPhenotypeAssessment,interpretPhenotype,NYHA_OPTIONS,setNyha,interpretNyha,SITUATION_QUESTIONS,setSituation,interpretSituation,classificationSummary} from '../src/ic/suspicion.mjs';
 const allNo=()=>({findings:{...Object.fromEntries(GROUPS.flatMap(g=>g.fields.map(([id])=>[id,'no']))),vitalsReviewed:'yes'}});
 const result=(c)=>evaluateSuspicion(c).id;
 test('Datos ausentes no son negativos',()=>assert.equal(result(createClinicalContext()),'IC-SUS-03'));
@@ -222,3 +222,29 @@ test('Situación: constantes revisadas no prueban estabilidad; contexto agudo pr
 });
 
 test('Situación: declarar estabilidad no sustituye perfusión ni evolución pendientes',()=>{let c=updateFinding(createClinicalContext(),'knownHF','yes');c=setSituation(c,'stable','yes');assert.equal(interpretSituation(c).code,'pending');assert.equal(interpretEcho(c).safety.level,'pending');c=setSituation(c,'perfusion','no');c=setSituation(c,'worsening','no');c=setSituation(c,'stable','yes');assert.equal(interpretEcho(c).safety.level,'review');assert.equal(interpretSituation(c).code,'pending');});
+
+test('Resumen integrado: sin datos no asigna IC, ni habilita tratamiento',()=>{
+ const r=classificationSummary(createClinicalContext());
+ assert.equal(r.clinicalHF,false);assert.equal(r.stage,null);assert.equal(r.next.kind,'review');assert.equal(r.ef,null);assert.ok(r.pending.some(x=>x.section==='estadio'));
+});
+test('Resumen integrado: C, FEVI, NYHA, compensación y trayectoria sin duplicar datos',()=>{
+ let c=createClinicalContext();c=updateFinding(c,'knownHF','yes');c=setStageAssessment(c,'advancedConfirmed','no');c=setEcho(c,'ef','37');c=setEcho(c,'priorEf','30');c=setNyha(c,'II');
+ for(const k of ['worsening','perfusion','congestion'])c=setSituation(c,k,'no');c=setSituation(c,'stable','yes');
+ const r=classificationSummary(c);assert.equal(r.stage,'C');assert.equal(r.phenotype,'href');assert.equal(r.nyha,'II');assert.equal(r.situation,'compensated');assert.equal(r.delta,7);assert.equal(r.next.kind,'treatment');assert.match(r.narrative,/NYHA II/);assert.match(r.narrative,/FEVI en ascenso/);
+ c=setEcho(c,'priorEf','');assert.equal(classificationSummary(c).next.kind,'treatment');assert.ok(classificationSummary(c).optional.some(x=>x.section==='evolucion'));
+ c=setSituation(c,'perfusion','yes');assert.equal(classificationSummary(c).next.kind,'urgent');
+});
+test('Resumen integrado: prioridad de seguridad, discordancia, pre-IC y avanzada',()=>{
+ let c={findings:{},stageAssessment:{manifestations:'no',objective:'no',risk:'yes'}};
+ for(const k of ['worsening','perfusion'])c=setSituation(c,k,'no');c=setSituation(c,'stable','yes');
+ assert.equal(classificationSummary(c).next.kind,'preclinical');
+ c=updateFinding(c,'knownHF','yes');assert.equal(classificationSummary(c).next.kind,'review');assert.ok(classificationSummary(c).contradictions.length);
+ c=setSituation(c,'stable','no');assert.equal(classificationSummary(c).next.kind,'urgent');
+ let d=updateFinding(createClinicalContext(),'knownHF','yes');d=setStageAssessment(d,'advancedConfirmed','yes');d=setEcho(d,'ef','35');
+ for(const k of ['worsening','perfusion','congestion'])d=setSituation(d,k,'no');d=setSituation(d,'stable','yes');assert.equal(classificationSummary(d).next.kind,'advanced');
+ d=setSituation(d,'stable','unknown');assert.equal(classificationSummary(d).next.kind,'review');
+});
+test('Resumen integrado: no confunde trayectoria mejorada con IC-FEp de novo',()=>{
+ let c=updateFinding(createClinicalContext(),'knownHF','yes');c=setEcho(c,'ef','55');c=setEcho(c,'priorEf','30');c=setPhenotypeAssessment(c,'priorClinical','yes');const r=classificationSummary(c);
+ assert.equal(r.improved,true);assert.equal(r.phenotype,'prior-reduced');assert.match(r.narrative,/no equivale a curación/);
+});

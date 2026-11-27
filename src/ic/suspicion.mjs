@@ -545,3 +545,52 @@ export function interpretSituation(ctx){
  const questions=Object.keys(SITUATION_QUESTIONS).filter(k=>!recovered.includes(k));
  return {code,title,short,text,values,eligible,urgent,safety,contradictions,reason,findings,recovered,questions,source:{doi:SOURCE.doi,sections:'IC descompensada; evaluación de congestión e hipoperfusión',version:'0.1'}};
 }
+
+/* Integrated classification: read-only projection of existing assistants, not a new diagnostic rule.
+ * Navigation prioritizes safety and unresolved inputs; treatment remains a placeholder. */
+export function classificationSummary(ctx){
+ const st=interpretStage(ctx),ph=interpretPhenotype(ctx),ny=interpretNyha(ctx),sit=interpretSituation(ctx);
+ const contradictions=[...new Set([...st.contradictions,...sit.contradictions,...(ph.conflict&&!st.contradictions.length?['Discordancia en la información histórica de FEVI.']:[])])];
+ const clinicalHF=['C','D'].includes(st.stage)&&!ph.conflict;
+ const preclinical=['0','A','B'].includes(st.stage)&&!ph.conflict;
+ const fmt=v=>v===null?'No registrada':String(v).replace('.',',')+' %';
+ const delta=ph.delta===null?'No calculable':(ph.delta>0?'+':'')+String(ph.delta).replace('.',',')+' puntos porcentuales';
+ const pending=[],optional=[];
+ if(st.stage===null)pending.push({section:'estadio',label:'Estadio evolutivo'});
+ if(ph.conflict)pending.push({section:'fenotipo',label:'Revisar discordancias de fenotipo'});
+ else if(clinicalHF&&(ph.code==='pending'||ph.code==='preserved-pending'))pending.push({section:'fenotipo',label:'Fenotipo de IC'});
+ if(sit.safety.level==='pending'||(clinicalHF&&sit.code==='pending'))pending.push({section:'situacion',label:'Situación clínica y seguridad'});
+ if(clinicalHF&&!ny.functionalClass)optional.push({section:'nyha',label:ny.title});
+ if(ph.delta===null)optional.push({section:'evolucion',label:'Comparación histórica de FEVI no disponible'});
+ else if(ph.trajectoryPattern&&!ph.improved&&!ph.conflict)optional.push({section:'fenotipo',label:'Aclarar contexto clínico de la mejoría de FEVI'});
+ if(clinicalHF&&st.stage==='C'&&st.title.includes('(al menos)'))optional.push({section:'estadio',label:'Completar valoración de posible IC avanzada'});
+ const stageLabel=st.stage===null?'Indeterminado':st.stage+(st.title.includes('(al menos)')?' (al menos)':'');
+ const title=contradictions.length?'Clasificación discordante':clinicalHF?ph.code==='pending'?'IC clínica; FEVI pendiente':ph.title:preclinical?st.title:'IC clínica no establecida';
+ const lines=[];
+ if(contradictions.length)lines.push('Hay datos discordantes; no consolidar el perfil clínico hasta revisarlos.');
+ else if(clinicalHF){
+  lines.push('IC clínica registrada, estadio '+stageLabel+'. '+ph.text);
+  if(ny.functionalClass)lines.push('Clase funcional '+ny.title+' ('+ny.short.toLowerCase()+').');
+  if(sit.code==='compensated'||sit.code==='congested')lines.push(sit.title+'.');
+  else if(!sit.urgent)lines.push('Situación clínica pendiente de completar.');
+  if(ph.delta!==null)lines.push(ph.trajectory+'. Variación de '+delta+'.');
+  if(ph.improved)lines.push('La mejoría de FEVI no equivale a curación ni justifica retirar tratamiento por sí sola.');
+  if(st.stage==='D'||st.flags.length)lines.push(st.text);
+ }else if(preclinical){lines.push(st.text);lines.push('No asignar un fenotipo ni una clase funcional de IC clínica.');}
+ else{lines.push('La información disponible no permite establecer una clasificación completa de IC.');}
+ if(sit.urgent)lines.push(sit.text);
+ const rows=[
+  {section:'estadio',label:'Estadio evolutivo',value:stageLabel},
+  {section:'nyha',label:'Clase funcional',value:ny.eligible?ny.title:preclinical?'No aplicable':'No asignable'},
+  {section:'situacion',label:'Situación clínica',value:sit.short},
+  {section:'evolucion',label:'FEVI previa',value:fmt(ph.prior)},
+  {section:'evolucion',label:'Variación',value:delta}
+ ];
+ let next={kind:'review',label:'Revisar clasificación',section:null};
+ if(sit.urgent)next={kind:'urgent',label:'IC descompensada (en desarrollo)',section:'descompensada'};
+ else if(contradictions.length||pending.length)next={kind:'review',label:'Completar clasificación',section:pending[0]?.section??'estadio'};
+ else if(st.stage==='D'||st.flags.length)next={kind:'advanced',label:'Valorar IC avanzada (en desarrollo)',section:'avanzada'};
+ else if(preclinical)next={kind:'preclinical',label:'Volver a insuficiencia cardiaca',section:null};
+ else if(clinicalHF&&['href','hfpef','prior-reduced'].includes(ph.code))next={kind:'treatment',label:'Continuar a tratamiento',section:'tratamiento'};
+ return {title,ef:ph.ef,prior:ph.prior,delta:ph.delta,stage:st.stage,stageLabel,phenotype:ph.code,phenotypeLabel:ph.title,clinicalHF,preclinical,nyha:ny.functionalClass,situation:sit.code,trajectory:ph.trajectory,improved:ph.improved,rows,narrative:lines.join(' '),contradictions,pending,optional,urgent:sit.urgent,safety:sit.safety,next,advancedFlags:st.flags,nyhaWarning:ny.warning};
+}
