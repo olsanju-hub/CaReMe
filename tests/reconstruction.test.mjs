@@ -8,7 +8,7 @@ test('Todos los recursos PWA existen',async()=>{const sw=await readFile(new URL(
 
 test('Diagnóstico condensado y sin recomendaciones activas',()=>{for(const title of ['Asistente diagnóstico','Sospecha clínica','Pruebas diagnósticas','BNP / NT-proBNP','Ecocardiografía','Referencias científicas'])assert.ok(app.includes(title),title);assert.ok(app.includes('Sin recomendaciones clínicas activas'));assert.ok(app.includes("if(hash==='ic/diagnostico')return diagnosis()"));});
 
-test('Versión de recursos y caché coherente',async()=>{const html=await readFile(new URL('../index.html',import.meta.url),'utf8');const sw=await readFile(new URL('../service-worker.js',import.meta.url),'utf8');assert.match(html,/app\.mjs\?v=94/);assert.match(html,/styles\.css\?v=94/);assert.match(app,/suspicion\.mjs\?v=94/);assert.match(sw,/v0-94/);assert.doesNotMatch(sw,/ignoreSearch:\s*true/);assert.match(sw,/cache:'no-store'/);});
+test('Versión de recursos y caché coherente',async()=>{const html=await readFile(new URL('../index.html',import.meta.url),'utf8');const sw=await readFile(new URL('../service-worker.js',import.meta.url),'utf8');assert.match(html,/app\.mjs\?v=95/);assert.match(html,/styles\.css\?v=95/);assert.match(app,/suspicion\.mjs\?v=95/);assert.match(sw,/v0-95/);assert.doesNotMatch(sw,/ignoreSearch:\s*true/);assert.match(sw,/cache:'no-store'/);});
 
 test('Sin selectores de estado administrativo de pruebas',()=>{assert.doesNotMatch(app,/data-investigation|setInvestigation|<span>Estado<\/span>/);});
 
@@ -17,3 +17,5 @@ test('Navegación común: marca de inicio y acceso a evolución',()=>{assert.mat
 test('Los desplegables tienen identidad estable y conservan su apertura en renderizado local',()=>{assert.match(app,/function capturePanels\(/);assert.match(app,/function restorePanels\(/);assert.doesNotMatch(app,/<details(?![^>]*data-panel=)[^>]*>/);assert.match(app,/restorePanels\(app,state\)/);});
 
 test('Conclusión integrada de clasificación y navegación desde portada',()=>{assert.match(app,/if\(hash==='ic\/clasificacion\/conclusion'\)return classificationSummaryView\(\)/);assert.match(app,/classificationSummary\(clinicalContext\)/);assert.match(app,/data-action="classification-summary"/);});
+
+test('Tratamiento tiene portada contextual y consulta directa independiente',()=>{assert.match(app,/if\(hash==='ic\/tratamiento'\)return treatmentHome\(\)/);assert.match(app,/function treatmentHome\(\)/);assert.match(app,/Consulta directa/);assert.match(app,/Sin recomendaciones terapéuticas activas/);});

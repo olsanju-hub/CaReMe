@@ -1037,3 +1037,21 @@ body:has(.pearl-home) #app {
 .summary-pending button,.summary-links button{min-height:44px;text-align:left;font-size:.8rem;}
 .classification-summary-page .echo-safety ul{padding-left:17px;margin:4px 0;}
 .classification-summary-page .stage-context{border-bottom:0;}
+
+/* Treatment landing: existing pearl materials, compact direct access. */
+#app .treatment-page{gap:9px;padding-top:12px;padding-bottom:12px;}
+#app .treatment-page h1{margin:0 0 3px;}
+.treatment-profile{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px;}
+.treatment-profile>div{min-width:0;}
+.treatment-profile small{color:#526e7b;font-size:.73rem;}
+.treatment-profile h2{color:#176c86;font-size:1.04rem;line-height:1.28;margin:3px 0;}
+.treatment-profile p{color:#526e7b;font-size:.78rem;margin:0;}
+.treatment-profile .text-link{flex:none;min-height:44px;font-size:.76rem;}
+.treatment-page .treatment-primary .ic-hero{min-height:86px;}
+.treatment-page .treatment-direct-title{margin:4px 0 0;font-size:1.05rem;}
+.treatment-page .treatment-grid{flex:1;grid-auto-rows:minmax(74px,1fr);gap:8px;}
+.treatment-page .treatment-grid .ic-card{min-height:74px;padding:11px 9px;}
+.treatment-page .treatment-grid .module-content strong{font-size:.87rem;overflow-wrap:normal;}
+.treatment-foot{text-align:center;}
+.treatment-foot .text-link{min-height:44px;font-size:.82rem;}
+.treatment-foot .class-status{margin:0;}

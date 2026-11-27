@@ -10,11 +10,25 @@ try{
  for(const [name,engine,viewport] of [['chromium',chromium,{width:1280,height:800}],['webkit-mobile',webkit,{width:390,height:844}]]){
   const browser=await engine.launch();try{
    const ctx=await browser.newContext({viewport,serviceWorkers:'allow'});const page=await ctx.newPage();const errors=[];page.on('pageerror',e=>errors.push(String(e)));
-   await page.goto(url);await page.getByRole('heading',{name:'CaHReMe',exact:true}).waitFor();assert.match(await page.locator('footer').innerText(),/v0\.94/);await page.screenshot({path:'qa-results/'+name+'-home.png',fullPage:true});
+   await page.goto(url);await page.getByRole('heading',{name:'CaHReMe',exact:true}).waitFor();assert.match(await page.locator('footer').innerText(),/v0\.95/);await page.screenshot({path:'qa-results/'+name+'-home.png',fullPage:true});
    await page.getByRole('button',{name:'Insuficiencia cardíaca',exact:true}).click();await page.getByRole('heading',{name:'Insuficiencia cardiaca',exact:true}).waitFor();
    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'No horizontal overflow');
    await page.screenshot({path:'qa-results/'+name+'-ic.png',fullPage:true});
-   for(const id of ['tratamiento','optimizacion','seguimiento','comorbilidades','derivacion','avanzada','calculadoras','farmacoteca','evidencia','descompensada']){
+   await page.locator('[data-action="ic-section"][data-section="tratamiento"]').click();await page.getByRole('heading',{name:'Tratamiento',exact:true}).waitFor();
+   assert.match(await page.locator('.treatment-profile').innerText(),/Perfil clínico pendiente/);
+   assert.equal(await page.locator('.treatment-grid [data-action="treatment-section"]').count(),6);
+   assert.equal(await page.locator('.treatment-page input,.treatment-page select').count(),0);
+   assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'Tratamiento sin desbordamiento horizontal');
+   if(name==='webkit-mobile')assert.ok(await page.locator('.treatment-grid').evaluate(e=>e.getBoundingClientRect().bottom<=innerHeight),'Consulta directa visible');
+   await page.screenshot({path:'qa-results/'+name+'-treatment-home.png',fullPage:true});
+   for(const id of ['asistente','fer','fep','mejorada','diureticos','ajustes','seguridad']){
+    await page.locator('[data-action="treatment-section"][data-section="'+id+'"]').click();await page.getByRole('heading',{name:'Pendiente de desarrollo'}).waitFor();
+    await page.locator('[data-action="treatment-home"]').click();await page.getByRole('heading',{name:'Tratamiento',exact:true}).waitFor();
+   }
+   await page.locator('[data-action="treatment-evidence"]').click();await page.getByRole('heading',{name:'Evidencia científica',exact:true}).waitFor();
+   await page.locator('[data-action="treatment-home"]').click();await page.getByRole('heading',{name:'Tratamiento',exact:true}).waitFor();
+   await page.locator('.treatment-page .ic-back').click();await page.getByRole('heading',{name:'Insuficiencia cardiaca',exact:true}).waitFor();
+   for(const id of ['optimizacion','seguimiento','comorbilidades','derivacion','avanzada','calculadoras','farmacoteca','evidencia','descompensada']){
     await page.locator('[data-section="'+id+'"]').first().click();await page.getByRole('heading',{name:'Pendiente de desarrollo'}).waitFor();await page.getByRole('button',{name:'Insuficiencia cardiaca',exact:false}).first().click();await page.getByRole('heading',{name:'Insuficiencia cardiaca',exact:true}).waitFor();
    }
    await page.locator('[data-action="ic-section"][data-section="clasificacion"]').click();
@@ -273,6 +287,9 @@ try{
     assert.equal(await nyp.locator('.classification-summary-page input,.classification-summary-page select').count(),0);
     if(name==='webkit-mobile')assert.ok(await nyp.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'Resumen sin desbordamiento horizontal');
     await nyp.screenshot({path:'qa-results/'+name+'-classification-summary.png',fullPage:true});
+    await nyp.locator('.classification-summary-page .sus-result-button[data-section="tratamiento"]').click();await nyp.getByRole('heading',{name:'Tratamiento',exact:true}).waitFor();
+    assert.match(await nyp.locator('.treatment-profile').innerText(),/37 %/);assert.match(await nyp.locator('.treatment-profile').innerText(),/Compensada/);
+    await nyp.locator('.treatment-profile [data-action="classification-summary"]').click();await nyp.getByRole('heading',{name:'Conclusión clínica',exact:true}).waitFor();
     await nyp.locator('.classification-summary-page .ic-back').click();await nyp.getByRole('heading',{name:'Clasificación',exact:true}).waitFor();
     await nyp.locator('[data-action="classification-section"][data-section="situacion"]').click();await nyp.getByRole('heading',{name:'Situación clínica',exact:true}).waitFor();
     assert.equal(await nyp.locator('.stage-question:visible').count(),2);
