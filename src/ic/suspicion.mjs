@@ -279,8 +279,8 @@ export function interpretPeptide(ctx){
  const factors=peptideFactors(ctx),s=interpretSuspicion(ctx),known=ctx?.findings?.knownHF==='yes';
  const urgent=['critical','urgent'].includes(s.safety.level)||context==='acute';
  const low=context==='acute'?(kind==='nt'?300:100):context==='outpatient'?(kind==='nt'?125:35):null;
- // In 2026 prose outpatient 50–75 and >75; the cited cohort uses 50–74 and >=75.
- // At exactly 75 years, preserve the interval 250–499 as indeterminate, no false exclusion.
+ // ESC 2026, Fig. 4 (p. 23): explicit outpatient age bands <50, 50–74, >=75.
+ // In the lower/indeterminate bands, persistent clinical suspicion still warrants echo.
  const high=kind==='nt'&&Number.isFinite(age)?context==='acute'?(age<50?450:age<75?900:1800):context==='outpatient'?(age<50?125:age<75?250:500):null:null;
  const notes=[];
  if(factors.obesity==='yes')notes.push('Obesidad: puede reducir la concentración; un resultado bajo no excluye IC si persiste sospecha.');
@@ -294,11 +294,12 @@ export function interpretPeptide(ctx){
  let id='NP-00',title='Datos pendientes',text='Introduce el contexto asistencial y el resultado.';
  if(low!==null&&Number.isFinite(v)){
   if(v<low){id='NP-01';title='Por debajo del umbral de exclusión';text='Disminuye la sospecha, pero no descarta IC de forma aislada. Si la clínica persiste o hay factores que reducen el péptido, valorar ecocardiografía.';}
-  else if(kind==='nt'&&context==='outpatient'&&v>2000){id='NP-04';title='NT-proBNP muy elevado';text='Apoya la sospecha y justifica valoración especializada preferente si corresponde al cuadro clínico.';}
+  else if(kind==='nt'&&context==='outpatient'&&v>2000){id='NP-04';title='NT-proBNP muy elevado';text='Si existe sospecha de IC, priorizar ecocardiografía y valoración especializada, preferiblemente en 2 semanas según la figura 4 de ESC 2026. La inestabilidad clínica requiere valoración urgente sin esperar ese plazo.';}
   else if(kind==='nt'&&context==='acute'&&v>5000){id='NP-05';title='NT-proBNP muy elevado en contexto agudo';text='Marcador de riesgo elevado. Priorizar valoración hospitalaria urgente; no demorar por pruebas programadas.';}
+  else if(kind==='bnp'&&context==='outpatient'&&v>=35){id='NP-03';title='BNP que apoya la sospecha de IC';text='Alcanza el umbral orientativo de la figura 4; si existe sospecha clínica, realizar ecocardiografía y valoración especializada. No confirma IC de forma aislada.';}
   else if(high!==null&&(context==='acute'?v>high:v>=high)){id='NP-03';title='Resultado que apoya la sospecha de IC';text='Supera el umbral orientativo por edad. Requiere correlación clínica y confirmación objetiva.';}
   else {id='NP-02';title='Resultado no excluyente';text='No permite descartar IC ni confirmarla. Integrar clínica, factores modificadores y ecocardiografía cuando proceda.';}
-  if(kind==='nt'&&context==='outpatient'&&age===75&&v>=250&&v<500){notes.push('A los 75 años existe discrepancia entre la redacción de la ESC 2026 y el intervalo del estudio citado. Se mantiene una zona no concluyente.');}
+  if(kind==='nt'&&context==='outpatient'&&age===75&&v>=250&&v<500){notes.push('A los 75 años la figura 4 utiliza el umbral orientativo de 500 pg/mL. Un resultado inferior no excluye IC si persiste sospecha.');}
   if(kind==='nt'&&!Number.isFinite(age)&&v>=low)notes.push('Falta edad para aplicar el umbral orientativo ajustado.');
  }
  if(known&&id==='NP-01'){title='Valor bajo en IC conocida';text='No excluye ni revoca la IC previa. Interpretar según situación basal, tratamiento y evolución.';}
@@ -448,14 +449,13 @@ export function interpretPhenotype(ctx){
  const current=ef===null?'pending':ef<50?'reduced':'preserved';
  const titleCurrent=ef===null?'FEVI pendiente':ef<50?'FEVI reducida':'FEVI preservada';
  const priorClinical=a.priorClinical||'unknown',diastolic=a.diastolicEvidence||'unknown';
- // Universal 2026 trajectory section describes a >=10-point gain to >40%;
- // the general phenotype definition is not a rigid numeric threshold.
+ // ESC 2026 §3.3.1 p.16: absolute gain >=10 percentage points, current LVEF >40%; clinical HF history required.
  const trajectoryPattern=delta!==null&&prior<50&&delta>=10&&ef>40;
  const improved=clinicalHF&&priorClinical==='yes'&&trajectoryPattern&&!conflict;
  const notes=[];
  if(delta!==null)notes.push('FEVI previa '+prior+'%; actual '+ef+'%; variación '+(delta>0?'+':'')+delta+' puntos porcentuales.');
  if(priorReduced)notes.push('Antecedente de FEVI inferior al 50%; no corresponde etiquetar IC-FEp de novo.');
- if(trajectoryPattern)notes.push('La variación cumple el patrón cuantitativo descrito en la sección de trayectorias del consenso universal 2026. Requiere contexto de IC clínica previa con FEVI reducida.');
+ if(trajectoryPattern)notes.push('La variación cumple el patrón cuantitativo de FEVI mejorada de ESC 2026, apartado 3.3.1. Requiere contexto de IC clínica previa con FEVI reducida.');
  if(priorClinical==='yes'&&!priorReduced)notes.push('Antecedente de IC con FEVI reducida referido; completar las mediciones previas.');
  if(improved)notes.push('La mejoría de FEVI no equivale a resolución de la IC ni justifica retirar tratamiento por sí sola.');
  if(ef!==null&&ef>=50&&!priorReduced&&!historicalNo)notes.push('No consta una revisión suficiente de FEVI histórica; no asignar IC-FEp de novo.');
@@ -473,7 +473,7 @@ export function interpretPhenotype(ctx){
   else{code='preserved-pending';title='FEVI preservada; fenotipo pendiente';short='Fenotipo pendiente';text='Aclarar FEVI histórica y evidencia objetiva compatible con IC-FEp antes de asignar el fenotipo.';}
  }
  const trajectory=improved?'IC con FEVI mejorada':trajectoryPattern?'Mejoría cuantitativa; atribución pendiente':delta===null?'Evolución pendiente':delta>0?'FEVI en ascenso':delta<0?'FEVI en descenso':'FEVI sin cambio registrado';
- return {ef,prior,delta,current,clinicalHF,priorReduced,historicalNo,conflict,code,title,short,text,trajectory,trajectoryPattern,improved,notes,urgent:r.urgent,safety:r.safety,stage:st.stage,source:{doi:SOURCE.doi,sections:'5.2.1–5.2.2; consenso universal 2026, trayectorias',version:'0.1'}};
+ return {ef,prior,delta,current,clinicalHF,priorReduced,historicalNo,conflict,code,title,short,text,trajectory,trajectoryPattern,improved,notes,urgent:r.urgent,safety:r.safety,stage:st.stage,source:{doi:SOURCE.doi,sections:'3.3.1; 5.2.1–5.2.2; tabla 10',version:'0.1'}};
 }
 
 /* NYHA: clinician-selected limitation attributable to established clinical HF.
@@ -482,7 +482,7 @@ export const NYHA_OPTIONS=[
  ['I','Sin limitación','La actividad física habitual no provoca síntomas de IC.'],
  ['II','Limitación leve','Sin síntomas en reposo; la actividad habitual provoca síntomas de IC.'],
  ['III','Limitación marcada','Sin síntomas en reposo; esfuerzos menores de lo habitual provocan síntomas de IC.'],
- ['IV','Síntomas en reposo','Los síntomas están presentes en reposo y cualquier esfuerzo aumenta el malestar.'],
+ ['IV','Limitación con cualquier actividad','No puede realizar actividad física sin malestar atribuible a IC. Puede presentar síntomas en reposo; cualquier actividad aumenta el malestar.'],
  ['unknown','No valorable','Información insuficiente o no es posible atribuir la limitación a IC.']
 ];
 export function setNyha(ctx,value){
@@ -933,7 +933,7 @@ export function treatmentProposal(ctx){
  const symptomatic=['II','III'].includes(r.nyha);
  const arni=existing('raas'),bb=existing('bb'),arm=existing('mra'),sg=existing('sglt2'),loop=existing('diuretic');
  if(historical){
-  push('maintain','FEVI recuperada o antecedente de reducción','No retirar tratamiento modificador del pronóstico únicamente por mejoría de FEVI. Revisar fenotipo previo e indicaciones de cada fármaco.','Confirmar diagnóstico histórico y motivo de cualquier cambio; no aplicar escalada de novo en este escenario.');
+  push('maintain','FEVI recuperada o antecedente de reducción','Mantener el tratamiento basal a dosis máximas toleradas es la recomendación general ESC 2026 (I C). La mejoría de FEVI no equivale a curación.','Una retirada gradual solo puede considerarse excepcionalmente (IIb C) con causa reversible tratada, ausencia de síntomas, normalización completa de función y volumen VI y péptidos, preferencia del paciente y vigilancia frecuente especializada. No automatizar retirada ni reintroducción.');
  }else if(!symptomatic){
   push('review','Confirmar perfil sintomático','Para proponer nuevos fármacos con indicación de IC sintomática, revisar clase funcional e historia de síntomas.','NYHA I o no registrada no implica ausencia de indicación previa.');
  }
@@ -959,19 +959,23 @@ export function treatmentProposal(ctx){
    else push('review','ARM: revisar seguridad','No se propone inicio con FG <30 o potasio ≥5 mmol/L en este prototipo.','Valorar alternativas y control analítico.',refDrug('Espironolactona'));
   }else if(arm)push('review','Revisar '+arm.drug,'Comprobar dosis según indicación, función renal y potasio.','No titular ARM sin datos de función renal previa y revisión de los límites específicos de su ficha técnica.',refDrug(arm.drug));
  }else if(mid&&symptomatic){
-  push('review','FEVI 41–49 %: individualizar SRAA y betabloqueante','Aunque pertenece al fenotipo de FEVI reducida en ESC 2026, no trasladar automáticamente todas las dosis e indicaciones de los ensayos con FEVI ≤40 %.','Revisar etiología, síntomas, FEVI histórica, comorbilidades e indicación de cada principio activo.',HF_GUIDE);
-  if(absent('mra'))push('review','Valorar ARM en FEVI 41–49 %','La evidencia y la indicación regulatoria dependen del principio activo; no aplicar el esquema de FEVI ≤40 % automáticamente.','Finerenona dispone de indicación autorizada desde FEVI ≥40 %; valorar individualmente y revisar elección de ARM.',refDrug('Finerenona'));
+  if(absent('raas')||arni)push('review','FEVI 41–49 %: revisar tratamiento SRAA','ESC 2026, tabla de recomendaciones 5: IECA o ARNI en IC-FEr sintomática, clase I A; valorar transición a ARNI si procede, clase I B1.','La guía reconoce ausencia de grandes ensayos exclusivos en FEVI 41–49 %. Verificar indicación de la presentación y elegibilidad; la selección de dosis para este tramo sigue pendiente de auditoría.',HF_GUIDE);
+  if(absent('bb')||bb)push('review','FEVI 41–49 %: revisar betabloqueante','ESC 2026 recomienda betabloqueantes en IC-FEr sintomática estable, clase I A, con la cautela de evidencia específica limitada en este tramo.','Revisar ritmo, frecuencia, tolerancia y ficha técnica. No extrapolar automáticamente una pauta no auditada.',HF_GUIDE);
+  if(absent('mra'))push('review','FEVI 41–49 %: valorar ARM esteroideo','ESC 2026 recomienda ARM en IC sintomática con independencia de FEVI (clase I A); en IC-FEr especifica ARM esteroideo.','Verificar indicación de la presentación, FG, K y tolerancia. La indicación autorizada de finerenona desde FEVI ≥40 % es un dato regulatorio distinto de la recomendación ESC por fenotipo.',HF_GUIDE);
+  else if(arm)push('review','Revisar ARM registrado','Comprobar concordancia entre fenotipo, indicación de la presentación y función renal.','No sustituir automáticamente ni asociar ARM.',refDrug(arm.drug));
  }
  if(preserved&&symptomatic&&absent('mra')){
+  push('review','IC-FEp: revisar elección de ARM','ESC 2026 recomienda ARM esteroideo o no esteroideo en IC-FEp sintomática, clase I A.','Individualizar según evidencia por molécula, indicación regulatoria, función renal y potasio; no asociar dos ARM.',HF_GUIDE);
   if(egfr>=25&&potassium<=5)push('start','Valorar finerenona',(egfr>=60?'20':'10')+' mg cada 24 h como dosis inicial de referencia; objetivo según FG inicial: '+(egfr>=60?'40':'20')+' mg/día.','Comprobar ausencia de otro ARM, ahorradores de K, inhibidores/inductores CYP3A4, Addison, hepatopatía grave, embarazo y demás contraindicaciones. FG/K a las 4 semanas; titular solo según tabla y cambio de FG.',refDrug('Finerenona'));
   else push('review','Finerenona: revisar elegibilidad','No se propone inicio con FG <25 o K >5.','Revisar evolución renal y potasio.',refDrug('Finerenona'));
  }
+ if(preserved&&symptomatic&&absent('raas'))push('review','IC-FEp: valorar IECA, ARA-II o ARNI','ESC 2026 permite considerar inhibición SRAA en IC-FEp sintomática para reducir ingresos por IC (IIb C).','No equiparar a recomendación clase I; revisar comorbilidades, indicación autorizada y tolerancia. Selección de dosis pendiente de auditoría.',HF_GUIDE);
  if(preserved&&arm)push('review','Revisar ARM registrado','No asociar finerenona a espironolactona o eplerenona.','Si se valora un cambio, revisar indicación, FG previo, potasio e interacciones; no aplicar sustitución automática.',refDrug(arm.drug));
  if(symptomatic&&!historical&&absent('sglt2')){
   if(egfr>=20){const drug=egfr>=25?'Dapagliflozina':'Empagliflozina';push('start','Valorar '+drug,'10 mg cada 24 h, sin titulación para IC.','Comprobar DM1, cetoacidosis previa/riesgo, ayuno o cirugía, enfermedad aguda, volemia, embarazo y contraindicaciones. Educar sobre interrupción temporal en enfermedad grave o cirugía según ficha técnica; revisar diuréticos y FG.',refDrug(drug));}
   else push('review','iSGLT2: revisar FG','No se ofrece inicio con FG <20; no implica retirar tratamiento previamente establecido.','Revisar indicación y evolución renal.',refDrug('Empagliflozina'));
  }else if(sg)push('maintain','iSGLT2 registrado: '+sg.drug,'No precisa titulación para la indicación de IC.','Confirmar indicación, tolerancia, función renal, volemia y precauciones; no retirar por una cifra aislada de FG.',refDrug(sg.drug));
  if(loop)push('review','Revisar necesidad de diurético de asa','Paciente sin congestión según datos registrados. Valorar la menor dosis eficaz, sin reducción automática.','Comprobar peso, síntomas, PA, función renal, electrolitos y evolución de la congestión.',refDrug(loop.drug));
- push('follow','Seguimiento tras cambios','Control clínico de PA, FC, peso y síntomas; programar FG y K según el medicamento y el plazo de ajuste.','Registrar dosis máxima tolerada, motivo de no iniciar o titular, adherencia y fecha de reevaluación; vigilar descompensación.',HF_GUIDE);
+ push('follow','Seguimiento tras cambios','ESC 2026 recomienda reevaluar titulación de FMT al menos cada 1–2 semanas según clínica, constantes y analítica (I C); el intervalo de incremento efectivo depende de la ficha y tolerancia.','Registrar dosis máxima tolerada, motivo de no iniciar o titular, adherencia y fecha de reevaluación; vigilar descompensación. No acelerar un escalón por encima de la pauta verificada.',HF_GUIDE);
  return result('conditional');
 }
