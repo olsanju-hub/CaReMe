@@ -10,7 +10,7 @@ try{
  for(const [name,engine,viewport] of [['chromium',chromium,{width:1280,height:800}],['webkit-mobile',webkit,{width:390,height:844}]]){
   const browser=await engine.launch();try{
    const ctx=await browser.newContext({viewport,serviceWorkers:'allow'});const page=await ctx.newPage();const errors=[];page.on('pageerror',e=>errors.push(String(e)));
-   await page.goto(url);await page.getByRole('heading',{name:'CaHReMe',exact:true}).waitFor();assert.match(await page.locator('footer').innerText(),/v0\.100/);await page.screenshot({path:'qa-results/'+name+'-home.png',fullPage:true});
+   await page.goto(url);await page.getByRole('heading',{name:'CaHReMe',exact:true}).waitFor();assert.match(await page.locator('footer').innerText(),/v0\.101/);await page.screenshot({path:'qa-results/'+name+'-home.png',fullPage:true});
    await page.getByRole('button',{name:'Insuficiencia cardíaca',exact:true}).click();await page.getByRole('heading',{name:'Insuficiencia cardiaca',exact:true}).waitFor();
    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'No horizontal overflow');
    await page.screenshot({path:'qa-results/'+name+'-ic.png',fullPage:true});
@@ -55,7 +55,7 @@ try{
    await page.locator('[data-med-confirm]').check();assert.equal(await page.locator('.med-accordion').count(),2);
    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'Medicación sin desbordamiento horizontal');
    await page.screenshot({path:'qa-results/'+name+'-therapy-step2-filled.png',fullPage:true});
-   await page.locator('[data-action="therapy-proposal"]').click();await page.getByRole('heading',{name:'Propuesta de tratamiento',exact:true}).waitFor();await page.getByRole('heading',{name:'Pendiente de desarrollo'}).waitFor();
+   await page.locator('[data-action="therapy-proposal"]').click();await page.getByRole('heading',{name:'Propuesta de tratamiento',exact:true}).waitFor();await page.getByRole('heading',{name:'Revisión necesaria antes de proponer cambios'}).waitFor();assert.equal(await page.locator('.proposal-action').count(),0);
    await page.locator('[data-action="therapy-medication"]').click();await page.getByRole('heading',{name:'Medicación actual',exact:true}).waitFor();
    assert.match(await panel('extra-1').innerText(),/24\/26/);assert.match(await panel('extra-2').innerText(),/6,25/);assert.equal(await page.locator('[data-med-confirm]').isChecked(),true);
    await page.locator('[data-action="therapy-first"]').click();await page.getByRole('heading',{name:'Asistente terapéutico',exact:true}).waitFor();

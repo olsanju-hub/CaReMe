@@ -8,7 +8,7 @@ test('Todos los recursos PWA existen',async()=>{const sw=await readFile(new URL(
 
 test('Diagnóstico condensado y sin recomendaciones activas',()=>{for(const title of ['Asistente diagnóstico','Sospecha clínica','Pruebas diagnósticas','BNP / NT-proBNP','Ecocardiografía','Referencias científicas'])assert.ok(app.includes(title),title);assert.ok(app.includes('Sin recomendaciones clínicas activas'));assert.ok(app.includes("if(hash==='ic/diagnostico')return diagnosis()"));});
 
-test('Versión de recursos y caché coherente',async()=>{const html=await readFile(new URL('../index.html',import.meta.url),'utf8');const sw=await readFile(new URL('../service-worker.js',import.meta.url),'utf8');assert.match(html,/app\.mjs\?v=100/);assert.match(html,/styles\.css\?v=100/);assert.match(app,/suspicion\.mjs\?v=100/);assert.match(sw,/v0-100/);assert.doesNotMatch(sw,/ignoreSearch:\s*true/);assert.match(sw,/cache:'no-store'/);});
+test('Versión de recursos y caché coherente',async()=>{const html=await readFile(new URL('../index.html',import.meta.url),'utf8');const sw=await readFile(new URL('../service-worker.js',import.meta.url),'utf8');assert.match(html,/app\.mjs\?v=101/);assert.match(html,/styles\.css\?v=101/);assert.match(app,/suspicion\.mjs\?v=101/);assert.match(sw,/v0-101/);assert.doesNotMatch(sw,/ignoreSearch:\s*true/);assert.match(sw,/cache:'no-store'/);});
 
 test('Sin selectores de estado administrativo de pruebas',()=>{assert.doesNotMatch(app,/data-investigation|setInvestigation|<span>Estado<\/span>/);});
 
@@ -22,10 +22,12 @@ test('Tratamiento tiene portada contextual y consulta directa independiente',()=
 
 test('Asistente terapéutico: primer paso y continuación a medicación sin prescripción',()=>{assert.match(app,/function therapyStepOne\(\)/);assert.match(app,/if\(id==='asistente'\)return therapyStepOne\(\)/);assert.match(app,/data-therapy-confirm/);assert.match(app,/Sin recomendaciones farmacológicas activas/);});
 
-test('Asistente terapéutico: conciliación de medicación y tercera pantalla reservada',()=>{assert.match(app,/function therapyStepTwo\(\)/);assert.match(app,/function therapyStepThreePending\(\)/);assert.match(app,/data-med-field/);assert.match(app,/data-med-confirm/);assert.match(app,/Propuesta de tratamiento/);});
+test('Asistente terapéutico: conciliación de medicación y tercera pantalla reservada',()=>{assert.match(app,/function therapyStepTwo\(\)/);assert.match(app,/function therapyStepThree\(\)/);assert.match(app,/data-med-field/);assert.match(app,/data-med-confirm/);assert.match(app,/Propuesta de tratamiento/);});
 
 test('Medicación inline: acordeón, selección rápida y avance de fila',()=>{assert.match(app,/function advanceMedication\(/);assert.match(app,/med-accordion/);assert.match(app,/setMedicationQuickDose/);assert.doesNotMatch(app,/function medOptions\(/);});
 
 test('Lista de medicación agrupada por familias educativas',()=>{assert.match(app,/function medicationCatalogView\(/);assert.match(app,/MEDICATION_FAMILIES/);assert.match(app,/Confirmo que he registrado toda la medicación relevante/);assert.match(app,/data-action="med-add-named"/);});
 
 test('Registro de medicación con frecuencias específicas y alertas acotadas',()=>{assert.match(app,/medicationFrequencyOptions\(m\)/);assert.match(app,/function medicationSafetyView\(/);assert.match(app,/id="med-safety"/);});
+
+test('Propuesta educativa usa motor puro con bloqueos y justificación',()=>{assert.match(app,/function therapyStepThree\(/);assert.match(app,/treatmentProposal\(clinicalContext\)/);assert.match(app,/Requisitos y fuente/);assert.match(app,/Revisión necesaria antes de proponer cambios/);});

@@ -1134,3 +1134,20 @@ body:has(.pearl-home) #app {
 .med-safety-alert.amber{border-left-color:#a8751d;background:#fff9ed;color:#79581d;}
 .med-safety-alert p{margin:4px 0;}
 .med-safety-alert .text-link{font-size:.77rem;display:inline-flex;min-height:44px;align-items:center;}
+
+/* Conditional treatment proposal. */
+.proposal-vitals{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;padding:8px 0;color:#365768;font-size:.75rem;text-align:center;}
+.proposal-vitals span{background:#ffffffab;border:1px solid #d6e6e8;border-radius:8px;padding:8px 3px;}
+.proposal-note{font-size:.78rem;color:#526e7b;margin:8px 0;}
+.proposal-block,.proposal-group,.proposal-scope{padding:12px;margin:9px 0;}
+.proposal-block{border-left:3px solid #a8751d;}
+.proposal-block.urgent{border-left-color:#a93c43;}
+.proposal-block h2,.proposal-group h2{color:#176c86;font-size:.9rem;margin:0 0 7px;}
+.proposal-block ul{padding-left:17px;font-size:.83rem;color:#365768;}
+.proposal-links{display:flex;flex-wrap:wrap;gap:8px;}
+.proposal-links button{min-height:44px;}
+.proposal-action{padding:7px 0;border-top:1px solid #dce8ed;}
+.proposal-action h3{font-size:.88rem;color:#083748;margin:0 0 4px;}
+.proposal-action p,.proposal-scope p{font-size:.8rem;line-height:1.45;color:#365768;margin:4px 0;}
+.proposal-action details{margin:4px 0;}
+.proposal-scope summary{font-size:.82rem;color:#176c86;min-height:44px;display:flex;align-items:center;}
