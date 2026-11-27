@@ -856,6 +856,24 @@ export function medicationSafety(ctx){
   if(drug==='Enalapril'&&f==='24'&&daily>20&&daily<=40)add('ENA-'+row.id,'amber','Enalapril: revisar reparto de dosis','La dosis máxima diaria de referencia de 40 mg se administra dividida en dos tomas.',r.source,[row.id]);
   if(drug==='Eplerenona'&&f==='48'&&dose>25)add('EPL-48-'+row.id,'amber','Eplerenona: revisar días alternos','La pauta de días alternos de la ficha técnica utiliza 25 mg por toma.',r.source,[row.id]);
  }
+ // Audit P0/P4: limited exact-name matching, not a medication dictionary.
+ const namedAs=(aliases)=>entries.filter(x=>aliases.includes(normalizeMedication(namedMedication(x.row))));
+ const tmp=namedAs(['trimetoprim','trimetoprima','cotrimoxazol','co-trimoxazol','trimetoprim/sulfametoxazol','trimetoprima/sulfametoxazol','septrin','septrin forte','soltrim']);
+ const spiro=entries.filter(x=>x.drug==='Espironolactona'),fin=entries.filter(x=>x.drug==='Finerenona');
+ if(tmp.length&&spiro.length)add('SPI-TMP','amber','Espironolactona + trimetoprim/cotrimoxazol','Riesgo de hiperpotasemia clínicamente relevante. Revisar la asociación y comprobar potasio y función renal. No implica suspensión automática.','https://cima.aemps.es/cima/dochtml/ft/81033/FichaTecnica_81033.html',ids([...spiro,...tmp]));
+ if(tmp.length&&fin.length)add('FIN-TMP','amber','Finerenona + trimetoprim/cotrimoxazol','Revisar potasio y necesidad de interrupción temporal según ficha técnica; no modificar automáticamente.',HF_MEDICATION_REFERENCE.Finerenona.source,ids([...fin,...tmp]));
+ const cyp=namedAs(['itraconazol','ketoconazol','ritonavir','nelfinavir','cobicistat','claritromicina','telitromicina','nefazodona']);
+ if(fin.length&&cyp.length)add('FIN-CYP3A4','red','Finerenona: inhibidor fuerte de CYP3A4','Asociación contraindicada en ficha técnica. Confirmar principio activo y revisar tratamiento.',HF_MEDICATION_REFERENCE.Finerenona.source,ids([...fin,...cyp]));
+ const aliskiren=namedAs(['aliskireno','aliskiren','rasilez']);
+ if(arni.length&&aliskiren.length){
+  const contraindicated=d.labsConfirmed&&d.values.egfr<60;
+  add('ARNI-ALISK',contraindicated?'red':'amber',contraindicated?'ARNI + aliskireno: combinación contraindicada':'ARNI + aliskireno: combinación no recomendada','Contraindicada si existe diabetes o FG estimado inferior a 60. Comprobar ambos criterios y la medicación registrada.',arniSource,ids([...arni,...aliskiren]));
+ }
+ if(spiro.length&&d.labsConfirmed){
+  const source=HF_MEDICATION_REFERENCE.Espironolactona.source;
+  if(d.values.potassium>=6)add('SPI-K6','red','Espironolactona: hiperpotasemia importante','Potasio confirmado de 6 mmol/L o superior: priorizar valoración clínica urgente y revisión de medicación.',source,ids(spiro));
+  else if(d.values.potassium>5)add('SPI-K5','amber','Espironolactona: revisar potasio','La ficha técnica de referencia exige revisar la continuidad con potasio superior a 5 mmol/L. Confirmar presentación, contexto clínico y medidas de manejo; no suspender automáticamente.',source,ids(spiro));
+ }
  if(has('Eplerenona')&&d.labsConfirmed){
   if(d.values.egfr<30)add('EPL-FG','red','Eplerenona: revisar función renal','FG estimado inferior a 30 mL/min/1,73 m². Verificar aclaramiento de creatinina, criterio de la ficha técnica, y revisar tratamiento.',eplSource,ids(mra));
   if(d.values.potassium>=6)add('EPL-K6','red','Eplerenona: hiperpotasemia importante','Potasio confirmado ≥6 mmol/L. Priorizar valoración clínica urgente y revisión de medicación.',eplSource,ids(mra));
@@ -935,7 +953,7 @@ export function treatmentProposal(ctx){
    else push('review','Revisar bisoprolol','Confirmar dosis máxima tolerada; no aumentar si hay intolerancia.','No retirar bruscamente; verificar FC y PA.',refDrug('Bisoprolol'));
   }else if(bb)push('review','Valorar titulación de '+bb.drug,'La pauta individual de titulación para este principio activo aún no está automatizada.','Comprobar formulación, peso cuando proceda, ritmo, dosis actual y ficha técnica.',refDrug(bb.drug));
   if(absent('mra')){
-   if(egfr>=30&&potassium<5)push('start','Valorar ARM esteroideo','Espironolactona: dosis de referencia de inicio 25 mg/día en IC grave según ficha técnica; eplerenona es alternativa si cumple su indicación específica.','Verificar indicación de la presentación, creatinina, aclaramiento, K, interacciones y tolerancia; controlar FG/K en una semana tras inicio o ajuste.',refDrug('Espironolactona'));
+   if(egfr>=30&&potassium<5)push('review','Valorar ARM esteroideo: verificar indicación','La elección y la dosis inicial quedan pendientes de comprobar la indicación específica de la presentación, el fenotipo y la clase funcional.','Aldactone: indicación de IC grave NYHA III–IV y cautelas específicas; Eplerenona STADA: criterios específicos de FEVI, NYHA o infarto reciente. No extrapolar automáticamente entre fichas; revisar creatinina, aclaramiento, potasio e interacciones.','https://cima.aemps.es/cima/dochtml/ft/39059/FT_39059.html');
    else push('review','ARM: revisar seguridad','No se propone inicio con FG <30 o potasio ≥5 mmol/L en este prototipo.','Valorar alternativas y control analítico.',refDrug('Espironolactona'));
   }else if(arm)push('review','Revisar '+arm.drug,'Comprobar dosis según indicación, función renal y potasio.','No titular ARM sin datos de función renal previa y revisión de los límites específicos de su ficha técnica.',refDrug(arm.drug));
  }else if(mid&&symptomatic){
