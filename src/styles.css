@@ -1091,3 +1091,24 @@ body:has(.pearl-home) #app {
 .med-card .therapy-confirm{margin:4px 0;font-size:.78rem;}
 #med-status .np-alert ul{margin:4px 0;padding-left:17px;}
 #med-status .med-pending ul{font-size:.78rem;}
+
+/* Inline medication accordion, no OS picker overlays. */
+.med-accordion{padding:0;border-bottom:1px solid #dce8ed;}
+.med-accordion>summary{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:54px;padding:8px 0;cursor:pointer;list-style:none;}
+.med-accordion>summary::-webkit-details-marker,.med-drug-picker>summary::-webkit-details-marker{display:none;}
+.med-accordion>summary:after,.med-drug-picker>summary:after{content:'';width:8px;height:8px;border-right:1.6px solid #176c86;border-bottom:1.6px solid #176c86;transform:rotate(45deg);margin-right:5px;flex:none;}
+.med-accordion[open]>summary:after,.med-drug-picker[open]>summary:after{transform:rotate(225deg);}
+.med-accordion>summary strong{display:block;color:#083748;font-size:.86rem;}
+.med-row-value{display:block;color:#526e7b;font-size:.79rem;line-height:1.3;margin-top:3px;overflow-wrap:anywhere;}
+.med-row-body{padding:0 0 7px;}
+.med-drug-picker{border:1px solid #d6e6e8;border-radius:10px;padding:0 8px;background:#ffffff9c;}
+.med-drug-picker>summary{list-style:none;display:flex;justify-content:space-between;align-items:center;min-height:44px;font-size:.85rem;font-weight:650;color:#176c86;cursor:pointer;}
+.med-choice{display:flex;flex-wrap:wrap;gap:6px;margin:5px 0;}
+.med-choice.med-drug-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;margin-bottom:8px;}
+.med-chip{border:1px solid #d6e6e8;background:#ffffffaa;border-radius:9px;color:#083748;font-size:.81rem;padding:7px 10px;min-height:44px;min-width:44px;line-height:1.25;overflow-wrap:anywhere;cursor:pointer;}
+.med-chip[aria-pressed=true]{background:#e5f2f4;border-color:#176c86;color:#176c86;font-weight:700;}
+.med-label{font-size:.77rem;font-weight:600;color:#365768;margin:9px 0 3px;}
+.med-row-actions{display:flex;align-items:center;justify-content:flex-end;gap:12px;}
+.med-row-actions button{min-height:44px;font-size:.81rem;}
+.med-row-error{color:#a93c43;font-size:.75rem;margin:0;}
+.med-row-error:empty{display:none;}

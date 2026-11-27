@@ -729,3 +729,35 @@ export function confirmMedicationReview(ctx,checked){
  const a=medicationState(ctx);
  return {...ctx,medicationAssessment:{...a,reviewed:checked},updatedAt:new Date().toISOString()};
 }
+
+// Quick entry choices, NOT dose recommendations, exhaustive licensed strengths or titration rules.
+// ESC 2021 Table 8; CIMA references recorded in project documentation.
+// Metoprolol uses actual succinate salt mg, not tartrate-equivalent label.
+export const MEDICATION_QUICK_DOSES={
+ 'Sacubitrilo/valsartán':['24/26','49/51','97/103'],
+ 'Enalapril':['2,5','5','10','20'],
+ 'Ramipril':['1,25','2,5','5','10'],
+ 'Candesartán':['4','8','16','32'],
+ 'Valsartán':['40','80','160'],
+ 'Bisoprolol':['1,25','2,5','3,75','5','7,5','10'],
+ 'Carvedilol':['3,125','6,25','12,5','25','50'],
+ 'Metoprolol succinato':['11,875','23,75','47,5','95','190'],
+ 'Nebivolol':['1,25','2,5','5','10'],
+ 'Espironolactona':['12,5','25','50'],
+ 'Eplerenona':['25','50'],
+ 'Dapagliflozina':['10'],
+ 'Empagliflozina':['10'],
+ 'Furosemida':['20','40','80'],
+ 'Torasemida':['2,5','5','10','20']
+};
+export function medicationEntryComplete(summary,id){
+ const m=[...summary.groups,...summary.additional].find(x=>x.id===id);
+ return !!m&&m.drug!=='unknown'&&!summary.missing.some(x=>x.id===id);
+}
+export function setMedicationQuickDose(ctx,id,value){
+ const m=[...medicationSummary(ctx).groups,...medicationSummary(ctx).additional].find(x=>x.id===id);
+ if(!m||!MEDICATION_QUICK_DOSES[m.drug]?.includes(value))return ctx;
+ const [dose,dose2]=value.split('/');
+ const next=setMedicationField(ctx,id,'dose',dose);
+ return dose2?setMedicationField(next,id,'dose2',dose2):next;
+}

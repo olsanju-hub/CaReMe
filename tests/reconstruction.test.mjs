@@ -8,7 +8,7 @@ test('Todos los recursos PWA existen',async()=>{const sw=await readFile(new URL(
 
 test('Diagnóstico condensado y sin recomendaciones activas',()=>{for(const title of ['Asistente diagnóstico','Sospecha clínica','Pruebas diagnósticas','BNP / NT-proBNP','Ecocardiografía','Referencias científicas'])assert.ok(app.includes(title),title);assert.ok(app.includes('Sin recomendaciones clínicas activas'));assert.ok(app.includes("if(hash==='ic/diagnostico')return diagnosis()"));});
 
-test('Versión de recursos y caché coherente',async()=>{const html=await readFile(new URL('../index.html',import.meta.url),'utf8');const sw=await readFile(new URL('../service-worker.js',import.meta.url),'utf8');assert.match(html,/app\.mjs\?v=97/);assert.match(html,/styles\.css\?v=97/);assert.match(app,/suspicion\.mjs\?v=97/);assert.match(sw,/v0-97/);assert.doesNotMatch(sw,/ignoreSearch:\s*true/);assert.match(sw,/cache:'no-store'/);});
+test('Versión de recursos y caché coherente',async()=>{const html=await readFile(new URL('../index.html',import.meta.url),'utf8');const sw=await readFile(new URL('../service-worker.js',import.meta.url),'utf8');assert.match(html,/app\.mjs\?v=98/);assert.match(html,/styles\.css\?v=98/);assert.match(app,/suspicion\.mjs\?v=98/);assert.match(sw,/v0-98/);assert.doesNotMatch(sw,/ignoreSearch:\s*true/);assert.match(sw,/cache:'no-store'/);});
 
 test('Sin selectores de estado administrativo de pruebas',()=>{assert.doesNotMatch(app,/data-investigation|setInvestigation|<span>Estado<\/span>/);});
 
@@ -23,3 +23,5 @@ test('Tratamiento tiene portada contextual y consulta directa independiente',()=
 test('Asistente terapéutico: primer paso y continuación a medicación sin prescripción',()=>{assert.match(app,/function therapyStepOne\(\)/);assert.match(app,/if\(id==='asistente'\)return therapyStepOne\(\)/);assert.match(app,/data-therapy-confirm/);assert.match(app,/Sin recomendaciones farmacológicas activas/);});
 
 test('Asistente terapéutico: conciliación de medicación y tercera pantalla reservada',()=>{assert.match(app,/function therapyStepTwo\(\)/);assert.match(app,/function therapyStepThreePending\(\)/);assert.match(app,/data-med-field/);assert.match(app,/data-med-confirm/);assert.match(app,/Propuesta de tratamiento/);});
+
+test('Medicación inline: acordeón, selección rápida y avance de fila',()=>{assert.match(app,/function advanceMedication\(/);assert.match(app,/med-accordion/);assert.match(app,/setMedicationQuickDose/);assert.doesNotMatch(app,/function medOptions\(/);});

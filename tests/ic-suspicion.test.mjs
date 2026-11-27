@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {GROUPS,createClinicalContext,updateFinding,evaluateSuspicion,setGroupReviewed,isGroupReviewed,toggleFinding,setEvaluationReviewed,isEvaluationReviewed,diagnosticNext,diagnosticAction,setStudyResult,investigationPlan,interpretSuspicion,CLINICAL_DIMENSIONS,labPlan,setPeptide,interpretPeptide,peptideFactors,ECHO_FINDINGS,ECHO_NUMERIC,setEcho,interpretEcho,setStageAssessment,interpretStage,setPhenotypeAssessment,interpretPhenotype,NYHA_OPTIONS,setNyha,interpretNyha,SITUATION_QUESTIONS,setSituation,interpretSituation,classificationSummary,TREATMENT_VITALS,setTreatmentValue,confirmTreatmentLabs,treatmentSafetyData,MEDICATION_GROUPS,setMedicationField,addMedication,removeMedication,medicationSummary,confirmMedicationReview} from '../src/ic/suspicion.mjs';
+import {GROUPS,createClinicalContext,updateFinding,evaluateSuspicion,setGroupReviewed,isGroupReviewed,toggleFinding,setEvaluationReviewed,isEvaluationReviewed,diagnosticNext,diagnosticAction,setStudyResult,investigationPlan,interpretSuspicion,CLINICAL_DIMENSIONS,labPlan,setPeptide,interpretPeptide,peptideFactors,ECHO_FINDINGS,ECHO_NUMERIC,setEcho,interpretEcho,setStageAssessment,interpretStage,setPhenotypeAssessment,interpretPhenotype,NYHA_OPTIONS,setNyha,interpretNyha,SITUATION_QUESTIONS,setSituation,interpretSituation,classificationSummary,TREATMENT_VITALS,setTreatmentValue,confirmTreatmentLabs,treatmentSafetyData,MEDICATION_GROUPS,setMedicationField,addMedication,removeMedication,medicationSummary,confirmMedicationReview,MEDICATION_QUICK_DOSES,medicationEntryComplete,setMedicationQuickDose} from '../src/ic/suspicion.mjs';
 const allNo=()=>({findings:{...Object.fromEntries(GROUPS.flatMap(g=>g.fields.map(([id])=>[id,'no']))),vitalsReviewed:'yes'}});
 const result=(c)=>evaluateSuspicion(c).id;
 test('Datos ausentes no son negativos',()=>assert.equal(result(createClinicalContext()),'IC-SUS-03'));
@@ -288,4 +288,12 @@ test('Medicación: adicionales, duplicidad de principio activo y posibles duplic
  assert.match(medicationSummary(c).duplicates.join(' '),/Principio activo repetido/);
  c=setMedicationField(c,'extra-1','drug','Carvedilol');assert.match(medicationSummary(c).duplicates.join(' '),/Posible duplicidad en Betabloqueantes/);
  c=removeMedication(c,'extra-1');assert.equal(medicationSummary(c).duplicates.length,0);assert.equal(medicationSummary(c).additional.length,0);
+});
+
+test('Registro rápido: dosis combinada, sin dosis o frecuencia implícita, y completitud por fila',()=>{
+ let c=createClinicalContext();c=setMedicationField(c,'raas','drug','Sacubitrilo/valsartán');c=setMedicationQuickDose(c,'raas','24/26');let r=medicationSummary(c);
+ assert.equal(r.groups[0].dose,'24');assert.equal(r.groups[0].dose2,'26');assert.equal(r.groups[0].frequency,'');assert.equal(medicationEntryComplete(r,'raas'),false);
+ c=setMedicationField(c,'raas','frequency','12');assert.equal(medicationEntryComplete(medicationSummary(c),'raas'),true);
+ c=setMedicationField(c,'bb','drug','none');assert.equal(medicationEntryComplete(medicationSummary(c),'bb'),true);assert.equal(medicationEntryComplete(medicationSummary(c),'mra'),false);
+ assert.equal(setMedicationQuickDose(c,'raas','24/103'),c);
 });
