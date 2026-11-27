@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {GROUPS,createClinicalContext,updateFinding,evaluateSuspicion,setGroupReviewed,isGroupReviewed,toggleFinding,setEvaluationReviewed,isEvaluationReviewed,diagnosticNext,diagnosticAction,setStudyResult,investigationPlan,interpretSuspicion,CLINICAL_DIMENSIONS,labPlan,setPeptide,interpretPeptide,peptideFactors,ECHO_FINDINGS,ECHO_NUMERIC,setEcho,interpretEcho,setStageAssessment,interpretStage,setPhenotypeAssessment,interpretPhenotype,NYHA_OPTIONS,setNyha,interpretNyha,SITUATION_QUESTIONS,setSituation,interpretSituation,classificationSummary,TREATMENT_VITALS,setTreatmentValue,confirmTreatmentLabs,treatmentSafetyData,MEDICATION_GROUPS,setMedicationField,addMedication,removeMedication,medicationSummary,confirmMedicationReview,MEDICATION_QUICK_DOSES,medicationEntryComplete,setMedicationQuickDose} from '../src/ic/suspicion.mjs';
+import {GROUPS,createClinicalContext,updateFinding,evaluateSuspicion,setGroupReviewed,isGroupReviewed,toggleFinding,setEvaluationReviewed,isEvaluationReviewed,diagnosticNext,diagnosticAction,setStudyResult,investigationPlan,interpretSuspicion,CLINICAL_DIMENSIONS,labPlan,setPeptide,interpretPeptide,peptideFactors,ECHO_FINDINGS,ECHO_NUMERIC,setEcho,interpretEcho,setStageAssessment,interpretStage,setPhenotypeAssessment,interpretPhenotype,NYHA_OPTIONS,setNyha,interpretNyha,SITUATION_QUESTIONS,setSituation,interpretSituation,classificationSummary,TREATMENT_VITALS,setTreatmentValue,confirmTreatmentLabs,treatmentSafetyData,MEDICATION_GROUPS,setMedicationField,addMedication,removeMedication,medicationSummary,confirmMedicationReview,MEDICATION_QUICK_DOSES,medicationEntryComplete,setMedicationQuickDose,MEDICATION_FAMILIES,medicationFamilyLabel,addNamedMedication,deleteRecordedMedication} from '../src/ic/suspicion.mjs';
 const allNo=()=>({findings:{...Object.fromEntries(GROUPS.flatMap(g=>g.fields.map(([id])=>[id,'no']))),vitalsReviewed:'yes'}});
 const result=(c)=>evaluateSuspicion(c).id;
 test('Datos ausentes no son negativos',()=>assert.equal(result(createClinicalContext()),'IC-SUS-03'));
@@ -271,7 +271,7 @@ test('Asistente terapéutico: constantes, datos ausentes e incoherencia de presi
 test('Medicación: ausencia explícita, desconocido y confirmación sin convertir desconocido en no toma',()=>{
  let c=createClinicalContext();assert.equal(medicationSummary(c).unknown.length,5);
  c=setMedicationField(c,'raas','drug','none');c=setMedicationField(c,'raas','reason','intolerance');
- c=confirmMedicationReview(c,true);let r=medicationSummary(c);assert.equal(r.unknown.length,4);assert.equal(r.reviewed,true);assert.equal(r.reconciled,false);
+ c=confirmMedicationReview(c,true);let r=medicationSummary(c);assert.equal(r.unknown.length,0);assert.equal(r.reviewed,true);assert.equal(r.reconciled,true);
  c=setMedicationField(c,'raas','drug','Enalapril');r=medicationSummary(c);assert.equal(r.reviewed,false);assert.equal(r.groups[0].reason,'unknown');assert.equal(r.groups[0].dose,'');
 });
 test('Medicación: dosis combinada y pauta sin inventar dosis por defecto',()=>{
@@ -296,4 +296,16 @@ test('Registro rápido: dosis combinada, sin dosis o frecuencia implícita, y co
  c=setMedicationField(c,'raas','frequency','12');assert.equal(medicationEntryComplete(medicationSummary(c),'raas'),true);
  c=setMedicationField(c,'bb','drug','none');assert.equal(medicationEntryComplete(medicationSummary(c),'bb'),true);assert.equal(medicationEntryComplete(medicationSummary(c),'mra'),false);
  assert.equal(setMedicationQuickDose(c,'raas','24/103'),c);
+});
+
+test('Lista: ausencia únicamente tras revisión explícita; un medicamento no clasificado conserva incertidumbre',()=>{
+ let c=createClinicalContext();let r=medicationSummary(c);assert.equal(r.unknown.length,5);assert.equal(r.reconciled,false);
+ c=confirmMedicationReview(c,true);r=medicationSummary(c);assert.equal(r.active.length,0);assert.equal(r.unknown.length,0);assert.equal(r.reconciled,true);
+ c=addNamedMedication(c,'Bisoprolol');r=medicationSummary(c);assert.equal(r.reviewed,false);assert.equal(r.familyStatus.find(x=>x.id==='bb').status,'present');assert.equal(medicationFamilyLabel(r.active[0]),'Betabloqueantes');
+ c=setMedicationQuickDose(c,'extra-1','2,5');c=setMedicationField(c,'extra-1','frequency','24');c=confirmMedicationReview(c,true);r=medicationSummary(c);assert.equal(r.reconciled,true);assert.equal(r.familyStatus.find(x=>x.id==='mra').status,'absent');
+ c=addNamedMedication(c,'other');c=setMedicationField(c,'extra-2','name','Fármaco no clasificado');c=setMedicationField(c,'extra-2','dose','1 mg');c=setMedicationField(c,'extra-2','frequency','24');c=confirmMedicationReview(c,true);r=medicationSummary(c);assert.equal(r.unidentified,true);assert.equal(r.familyStatus.find(x=>x.id==='mra').status,'unknown');assert.equal(r.reconciled,false);
+ c=deleteRecordedMedication(c,'extra-2');assert.equal(medicationSummary(c).reviewed,false);
+});
+test('Etiquetas educativas distinguen ARNI, IECA y ARA-II',()=>{
+ for(const [drug,label] of [['Sacubitrilo/valsartán','ARNI'],['Enalapril','IECA'],['Valsartán','ARA-II']])assert.equal(medicationFamilyLabel({drug}),label);
 });

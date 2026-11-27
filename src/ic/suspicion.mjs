@@ -698,7 +698,7 @@ export function removeMedication(ctx,id){
 export function medicationSummary(ctx){
  const a=medicationState(ctx);
  const groups=MEDICATION_GROUPS.map(([id,label,options])=>({id,label,options,...(a.groups[id]||newMedication())}));
- const unknown=groups.filter(m=>m.drug==='unknown').map(m=>m.label);
+
  const rows=[...groups,...a.additional];
  const active=rows.filter(m=>!['unknown','none'].includes(m.drug));
  const missing=[];
@@ -721,8 +721,14 @@ export function medicationSummary(ctx){
   if(family&&family!=='diuretic'){const list=classes.get(family)||[];list.push(name);classes.set(family,list);}
  }
  for(const [family,list] of classes)if(new Set(list).size>1)duplicates.push('Posible duplicidad en '+MEDICATION_GROUPS.find(g=>g[0]===family)[1]+'. Revisar la combinación registrada.');
+ const unidentified=a.additional.some(m=>m.drug==='unknown')||active.some(m=>!medicationGroupFor(m));
+ const familyStatus=groups.map(g=>{
+  const members=active.filter(m=>medicationGroupFor(m)===g.id||(m.id===g.id&&m.drug!=='other'));
+  return {id:g.id,label:g.label,status:members.length?'present':g.drug==='none'?'absent':a.reviewed===true&&!unidentified?'absent':'unknown',members};
+ });
+ const unknown=familyStatus.filter(g=>g.status==='unknown').map(g=>g.label);
  const complete=unknown.length===0&&missing.length===0;
- return {groups,additional:a.additional,active,unknown,missing,duplicates:[...new Set(duplicates)],reviewed:a.reviewed===true,complete,reconciled:complete&&a.reviewed===true&&duplicates.length===0};
+ return {groups,additional:a.additional,active,unknown,missing,familyStatus,unidentified,duplicates:[...new Set(duplicates)],reviewed:a.reviewed===true,complete,reconciled:complete&&a.reviewed===true&&duplicates.length===0};
 }
 export function confirmMedicationReview(ctx,checked){
  if(typeof checked!=='boolean')return ctx;
@@ -760,4 +766,31 @@ export function setMedicationQuickDose(ctx,id,value){
  const [dose,dose2]=value.split('/');
  const next=setMedicationField(ctx,id,'dose',dose);
  return dose2?setMedicationField(next,id,'dose2',dose2):next;
+}
+
+/* Teaching labels: narrower classes than the reconciliation/duplicate-detection groups. */
+export const MEDICATION_FAMILIES=[
+ ['arni','ARNI',['Sacubitrilo/valsartán']],
+ ['ieca','IECA',['Enalapril','Ramipril']],
+ ['ara','ARA-II',['Candesartán','Valsartán']],
+ ['bb','Betabloqueantes',['Bisoprolol','Carvedilol','Metoprolol succinato','Nebivolol']],
+ ['mra','ARM',['Espironolactona','Eplerenona']],
+ ['sglt2','iSGLT2',['Dapagliflozina','Empagliflozina']],
+ ['diuretic','Diuréticos de asa',['Furosemida','Torasemida']]
+];
+export function medicationFamilyLabel(m){
+ return MEDICATION_FAMILIES.find(g=>g[2].some(x=>normalizeMedication(x)===normalizeMedication(namedMedication(m))))?.[1]??'Familia sin clasificar';
+}
+export function addNamedMedication(ctx,drug){
+ if(!['other',...medicationCatalog].includes(drug))return ctx;
+ const a=medicationState(ctx);
+ if(a.additional.length>=30)return ctx;
+ const next=addMedication(ctx);
+ return setMedicationField(next,'extra-'+a.nextId,'drug',drug);
+}
+export function deleteRecordedMedication(ctx,id){
+ if(MEDICATION_GROUPS.some(g=>g[0]===id)){
+  return setMedicationField(ctx,id,'drug','unknown');
+ }
+ return removeMedication(ctx,id);
 }

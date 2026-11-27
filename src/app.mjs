@@ -1,5 +1,5 @@
-import {GROUPS,SOURCE,createClinicalContext,updateFinding,evaluateSuspicion,setEvaluationReviewed,isEvaluationReviewed,isGroupReviewed,toggleFinding,diagnosticNext,diagnosticAction,LAB_FIELDS,REPORT_FIELDS,setStudyResult,investigationPlan,interpretSuspicion,labPlan,setPeptide,interpretPeptide,peptideFactors,ECHO_FINDINGS,ECHO_NUMERIC,setEcho,interpretEcho,STAGE_QUESTIONS,setStageAssessment,interpretStage,setPhenotypeAssessment,interpretPhenotype,NYHA_OPTIONS,setNyha,interpretNyha,SITUATION_QUESTIONS,setSituation,interpretSituation,classificationSummary,TREATMENT_VITALS,setTreatmentValue,confirmTreatmentLabs,treatmentSafetyData,MEDICATION_GROUPS,MEDICATION_FREQUENCIES,MEDICATION_ABSENCE_REASONS,MEDICATION_TOLERANCE,setMedicationField,addMedication,removeMedication,medicationSummary,confirmMedicationReview,MEDICATION_QUICK_DOSES,medicationEntryComplete,setMedicationQuickDose} from './ic/suspicion.mjs?v=98';
-const BUILD='0.98';
+import {GROUPS,SOURCE,createClinicalContext,updateFinding,evaluateSuspicion,setEvaluationReviewed,isEvaluationReviewed,isGroupReviewed,toggleFinding,diagnosticNext,diagnosticAction,LAB_FIELDS,REPORT_FIELDS,setStudyResult,investigationPlan,interpretSuspicion,labPlan,setPeptide,interpretPeptide,peptideFactors,ECHO_FINDINGS,ECHO_NUMERIC,setEcho,interpretEcho,STAGE_QUESTIONS,setStageAssessment,interpretStage,setPhenotypeAssessment,interpretPhenotype,NYHA_OPTIONS,setNyha,interpretNyha,SITUATION_QUESTIONS,setSituation,interpretSituation,classificationSummary,TREATMENT_VITALS,setTreatmentValue,confirmTreatmentLabs,treatmentSafetyData,MEDICATION_GROUPS,MEDICATION_FREQUENCIES,MEDICATION_ABSENCE_REASONS,MEDICATION_TOLERANCE,setMedicationField,addMedication,removeMedication,medicationSummary,confirmMedicationReview,MEDICATION_QUICK_DOSES,medicationEntryComplete,setMedicationQuickDose,MEDICATION_FAMILIES,medicationFamilyLabel,addNamedMedication,deleteRecordedMedication} from './ic/suspicion.mjs?v=99';
+const BUILD='0.99';
 const app=document.getElementById('app');
 const PATHOLOGIES = [
  ['dm2','Diabetes tipo 2','Incluye insulinización'],['hta','Hipertensión arterial','Confirmación y control'],
@@ -365,12 +365,10 @@ function medLabel(m){
 function medChoice(id,key,label,value,options,style='chips'){
  return '<div class="med-choice '+style+'" role="group" aria-label="'+medEscape(label)+'">'+options.map(([v,t])=>'<button type="button" class="med-chip" data-action="med-choice" data-med-id="'+id+'" data-med-field="'+key+'" data-med-value="'+medEscape(v)+'" aria-pressed="'+(value===v)+'">'+medEscape(t)+'</button>').join('')+'</div>';
 }
-function medicationRow(m,extra=false,open=false){
+function medicationRow(m,open=false){
  const id=m.id;
  const input=(key,label,value,mode='text',limit=80)=>'<label class="med-field"><span>'+label+'</span><input type="text" inputmode="'+mode+'" autocomplete="off" maxlength="'+limit+'" data-med-id="'+id+'" data-med-field="'+key+'" aria-label="'+medEscape(label)+'" value="'+medEscape(value)+'" placeholder="—"></label>';
- const choices=extra?MEDICATION_GROUPS.flatMap(g=>g[2]):m.options;
  const active=!['unknown','none'].includes(m.drug),other=m.drug==='other',arni=m.drug==='Sacubitrilo/valsartán';
- const drugOptions=[...choices.map(x=>[x,x]),['other','Otro'],...(extra?[]:[['none','No toma']]),['unknown','Sin revisar']];
  const preset=MEDICATION_QUICK_DOSES[m.drug]||[];
  const selectedDose=arni?m.dose+'/'+m.dose2:m.dose;
  const normalized=selectedDose.replaceAll('.',',');
@@ -379,33 +377,36 @@ function medicationRow(m,extra=false,open=false){
  const doseOptions=preset.length?'<p class="med-label">Dosis por toma (mg)'+(m.drug==='Metoprolol succinato'?' · mg de succinato (no equivalentes de tartrato)':'')+'</p>'+medChoice(id,'quick-dose','Dosis por toma',normalized,preset.map(v=>[v,v]))+'<details class="stage-context med-context" data-panel="med-custom-'+id+'" '+(custom?'open':'')+'><summary>Otra dosis</summary>'+customInputs+'</details>':customInputs;
  const dose=active?(other?input('name','Principio activo',m.name):'')+doseOptions+'<p class="med-label">Frecuencia</p>'+medChoice(id,'frequency','Frecuencia',m.frequency,MEDICATION_FREQUENCIES.map(([v,t])=>[v,v==='other'?'Otra':t.replace('Cada ','')]))+(m.frequency==='other'?input('customFrequency','Pauta exacta',m.customFrequency):''):'';
  const detail=m.drug==='none'?'<details class="stage-context med-context" data-panel="med-context-'+id+'"><summary>Motivo de ausencia (opcional)'+(m.reason!=='unknown'?' · Registrado':'')+'</summary>'+medChoice(id,'reason','Motivo',m.reason,MEDICATION_ABSENCE_REASONS)+(m.reason!=='unknown'?input('note','Detalle (opcional)',m.note,'text',240):'')+'</details>':active?'<details class="stage-context med-context" data-panel="med-context-'+id+'"><summary>Tolerancia (opcional)'+(m.tolerance!=='unknown'?' · Registrada':'')+'</summary>'+medChoice(id,'tolerance','Tolerancia',m.tolerance,MEDICATION_TOLERANCE)+(m.tolerance==='problem'?input('note','Problema referido',m.note,'text',240):'')+'</details>':'';
- const drugPicker='<details class="med-drug-picker" data-panel="med-drug-'+id+'" '+(m.drug==='unknown'?'open':'')+'><summary>'+medEscape(m.drug==='unknown'?'Elegir medicamento':m.drug==='none'?'No toma':m.drug==='other'?'Otro medicamento':m.drug)+'</summary>'+medChoice(id,'drug','Principio activo',m.drug,drugOptions,'med-drug-list')+'</details>';
- return '<details class="med-row med-accordion" data-panel="med-row-'+id+'" data-med-row="'+id+'" '+(open?'open':'')+'><summary><span><strong>'+medEscape(extra?'Medicación adicional':m.label)+'</strong><small class="med-row-value">'+medEscape(medLabel(m))+'</small></span></summary><div class="med-row-body">'+drugPicker+dose+detail+'<div class="med-row-actions">'+(extra?'<button type="button" class="text-link" data-action="med-remove" data-med-id="'+id+'">Quitar</button>':'')+'<button type="button" class="text-link med-done" data-action="med-done" data-med-id="'+id+'">Listo ›</button></div><p class="med-row-error" role="status"></p></div></details>';
+
+ const name=m.drug==='other'?m.name||'Otro medicamento':m.drug;
+ return '<details class="med-row med-accordion" data-panel="med-row-'+id+'" data-med-row="'+id+'" '+(open?'open':'')+'><summary><span><small class="med-family-label">'+medEscape(medicationFamilyLabel(m))+'</small><strong>'+medEscape(name)+'</strong><small class="med-row-value">'+medEscape(medLabel(m).slice(name.length).trim()||'Pauta pendiente')+'</small></span></summary><div class="med-row-body">'+dose+detail+'<div class="med-row-actions"><button type="button" class="text-link med-delete" data-action="med-remove" data-med-id="'+id+'">Quitar</button><button type="button" class="text-link med-done" data-action="med-done" data-med-id="'+id+'">Listo ›</button></div><p class="med-row-error" role="status"></p></div></details>';
 }
 function advanceMedication(id){
- const m=medicationSummary(clinicalContext),rows=[...m.groups,...m.additional];
+ const m=medicationSummary(clinicalContext);
  if(!medicationEntryComplete(m,id))return false;
  const current=document.querySelector('[data-med-row="'+id+'"]');if(current)current.open=false;
- const index=rows.findIndex(x=>x.id===id),next=rows.slice(index+1).find(x=>!medicationEntryComplete(m,x.id));
- if(next){const panel=document.querySelector('[data-med-row="'+next.id+'"]');if(panel){panel.open=true;panel.querySelector(':scope > summary')?.focus({preventScroll:true});panel.scrollIntoView({block:'nearest'});}}
- else current?.querySelector(':scope > summary')?.focus({preventScroll:true});
+ document.querySelector('[data-panel="med-catalog"]>summary')?.focus({preventScroll:true});
  return true;
 }
+function medicationCatalogView(m){
+ const families=MEDICATION_FAMILIES.map(([id,label,drugs])=>'<section class="med-catalog-family"><h3>'+label+'</h3><div class="med-catalog-drugs">'+drugs.map(drug=>'<button type="button" class="med-catalog-drug" data-action="med-add-named" data-med-drug="'+medEscape(drug)+'"'+(m.additional.length>=30?' disabled':'')+'>'+medEscape(drug)+'<span aria-hidden="true">+</span></button>').join('')+'</div></section>').join('');
+ return '<details class="med-catalog" data-panel="med-catalog" '+(m.active.length?'':'open')+'><summary>+ Añadir medicamento</summary><div class="med-catalog-content">'+families+'<button type="button" class="text-link med-add" data-action="med-add-named" data-med-drug="other"'+(m.additional.length>=30?' disabled':'')+'>+ Otro medicamento</button></div></details>';
+}
 function medicationStatus(m){
- const pending=[...m.unknown.map(x=>x+': sin revisar'),...m.missing.map(x=>x.label)];
+ const pending=[...(!m.reviewed?['Lista pendiente de confirmar']:m.unknown.length?['Familias pendientes de identificar en la medicación registrada']:[]),...m.missing.map(x=>x.label)];
  return (m.duplicates.length?'<div class="np-alert" role="alert"><strong>Revisar posibles duplicidades</strong><ul>'+m.duplicates.map(x=>'<li>'+medEscape(x)+'</li>').join('')+'</ul></div>':'')+(pending.length?'<details class="stage-context med-pending" data-panel="med-pending"><summary>Datos pendientes · '+pending.length+'</summary><ul>'+pending.map(x=>'<li>'+medEscape(x)+'</li>').join('')+'</ul><p>Un dato desconocido no equivale a ausencia de tratamiento.</p></details>':'<p class="stage-hint">Pautas registradas. La revisión de interacciones y elegibilidad terapéutica sigue pendiente.</p>');
 }
 function refreshMedication(){
  const m=medicationSummary(clinicalContext),c=document.querySelector('[data-med-confirm]'),status=document.getElementById('med-status');
  if(c)c.checked=m.reviewed;
  if(status)replacePanelContent(status,medicationStatus(m));
- for(const row of [...m.groups,...m.additional]){const value=document.querySelector('[data-med-row="'+row.id+'"] .med-row-value');if(value)value.textContent=medLabel(row);}
+ for(const row of [...m.groups,...m.additional]){const value=document.querySelector('[data-med-row="'+row.id+'"] .med-row-value');if(value){const name=row.drug==='other'?row.name||'Otro medicamento':row.drug;value.textContent=medLabel(row).slice(name.length).trim()||'Pauta pendiente';const parent=value.closest('summary');parent.querySelector('strong').textContent=name;parent.querySelector('.med-family-label').textContent=medicationFamilyLabel(row);}}
 }
 function therapyStepTwo(){
  const r=classificationSummary(clinicalContext),m=medicationSummary(clinicalContext);
- const firstPending=[...m.groups,...m.additional].find(x=>!medicationEntryComplete(m,x.id))?.id;
+ const firstPending=m.active.find(x=>!medicationEntryComplete(m,x.id))?.id;
  const next=r.urgent?'<button class="sus-result-button urgent-next" type="button" data-action="ic-section" data-section="descompensada">IC descompensada (en desarrollo) ›</button>':'<button class="sus-result-button" type="button" data-action="therapy-proposal">Ver propuesta de tratamiento ›</button>';
- return '<div class="page pearl-home ic-page class-page stage-page therapy-page medication-page">'+back('Perfil clínico y seguridad','therapy-first')+'<h1>Medicación actual</h1>'+therapyStepHeader(2,'Registro de tratamiento')+(r.urgent?situationSafety(r):'')+'<section class="pearl-card stage-card med-card">'+m.groups.map(x=>medicationRow(x,false,x.id===firstPending)).join('')+m.additional.map(x=>medicationRow(x,true,x.id===firstPending)).join('')+'<button type="button" class="text-link med-add" data-action="med-add"'+(m.additional.length>=30?' disabled':'')+'>+ Añadir otro medicamento</button><label class="sus-check therapy-confirm"><input type="checkbox" data-med-confirm '+(m.reviewed?'checked':'')+'><span>He revisado la medicación registrada.</span></label><div id="med-status">'+medicationStatus(m)+'</div></section>'+next+'<p class="class-status">Registro educativo · Sin recomendaciones farmacológicas activas</p></div>';
+ return '<div class="page pearl-home ic-page class-page stage-page therapy-page medication-page">'+back('Perfil clínico y seguridad','therapy-first')+'<h1>Medicación actual</h1>'+therapyStepHeader(2,'Registro de tratamiento')+(r.urgent?situationSafety(r):'')+'<section class="pearl-card stage-card med-card"><h2 class="med-list-title">Tratamiento registrado</h2>'+(m.active.length?m.active.map(x=>medicationRow(x,x.id===firstPending)).join(''):'<p class="med-empty">Ningún medicamento registrado.</p>')+medicationCatalogView(m)+'<label class="sus-check therapy-confirm"><input type="checkbox" data-med-confirm '+(m.reviewed?'checked':'')+'><span>Confirmo que he registrado toda la medicación relevante, incluso si no toma ninguna.</span></label><div id="med-status">'+medicationStatus(m)+'</div></section>'+next+'<p class="class-status">Registro educativo · Sin recomendaciones farmacológicas activas</p></div>';
 }
 function therapyStepThreePending(){
  const r=classificationSummary(clinicalContext),m=medicationSummary(clinicalContext),d=treatmentSafetyData(clinicalContext);
@@ -470,12 +471,18 @@ app.addEventListener('click',event=>{const btn=event.target.closest('button[data
  clinicalContext=key==='quick-dose'?setMedicationQuickDose(clinicalContext,id,value):setMedicationField(clinicalContext,id,key,value);
  render();
  const panel=document.querySelector('[data-med-row="'+id+'"]');
- if(key==='drug'){const picker=panel?.querySelector('.med-drug-picker');if(picker)picker.open=value==='unknown';}
  if(key==='quick-dose'){const custom=panel?.querySelector('[data-panel="med-custom-'+id+'"]');if(custom)custom.open=false;}
- if(['drug','quick-dose','frequency'].includes(key)&&!wasComplete&&medicationEntryComplete(medicationSummary(clinicalContext),id))advanceMedication(id);
+ if(['quick-dose','frequency'].includes(key)&&!wasComplete&&medicationEntryComplete(medicationSummary(clinicalContext),id))advanceMedication(id);
  break;
- }case 'med-done':{const id=btn.dataset.medId;const m=medicationSummary(clinicalContext),row=[...m.groups,...m.additional].find(x=>x.id===id);if(!advanceMedication(id)){const panel=document.querySelector('[data-med-row="'+id+'"]');if(row?.drug==='unknown'){if(panel)panel.open=false;}else if(panel)panel.querySelector('.med-row-error').textContent='Completa la dosis, frecuencia o principio activo antes de plegar la pauta.';}break;}
- case 'med-add':clinicalContext=addMedication(clinicalContext);render();{const extra=[...document.querySelectorAll('.med-row[data-med-row^="extra-"]')].at(-1);if(extra){extra.open=true;extra.querySelector(':scope > summary')?.focus();extra.scrollIntoView({block:'nearest'});}}break;case 'med-remove':clinicalContext=removeMedication(clinicalContext,btn.dataset.medId);render();break;case 'therapy-medication':go('ic/tratamiento/asistente/medicacion');break;case 'therapy-proposal':go(classificationSummary(clinicalContext).urgent?'ic/descompensada':'ic/tratamiento/asistente/propuesta');break;case 'therapy-first':go('ic/tratamiento/asistente');break;case 'therapy-next':{
+ }case 'med-done':{const id=btn.dataset.medId;if(!advanceMedication(id)){const panel=document.querySelector('[data-med-row="'+id+'"]');if(panel)panel.querySelector('.med-row-error').textContent='Completa la dosis, frecuencia o principio activo antes de cerrar la pauta.';}break;}
+ case 'med-add-named':{
+ const before=clinicalContext;clinicalContext=addNamedMedication(clinicalContext,btn.dataset.medDrug);if(before===clinicalContext)break;
+ const id=medicationSummary(clinicalContext).additional.at(-1).id;render();
+ const catalog=document.querySelector('[data-panel="med-catalog"]');if(catalog)catalog.open=false;
+ document.querySelectorAll('.med-accordion').forEach(e=>{e.open=e.dataset.medRow===id;});
+ const panel=document.querySelector('[data-med-row="'+id+'"]');panel?.querySelector(':scope > summary')?.focus({preventScroll:true});panel?.scrollIntoView({block:'nearest'});
+ break;
+ }case 'med-remove':clinicalContext=deleteRecordedMedication(clinicalContext,btn.dataset.medId);render();break;case 'therapy-medication':go('ic/tratamiento/asistente/medicacion');break;case 'therapy-proposal':go(classificationSummary(clinicalContext).urgent?'ic/descompensada':'ic/tratamiento/asistente/propuesta');break;case 'therapy-first':go('ic/tratamiento/asistente');break;case 'therapy-next':{
  const inputs=[...document.querySelectorAll('[data-therapy-input]')];let valid=true;
  for(const field of inputs){const before=clinicalContext;clinicalContext=setTreatmentValue(clinicalContext,field.dataset.therapyInput,field.value);const invalid=before===clinicalContext;field.setAttribute('aria-invalid',String(invalid));const err=field.closest('label').querySelector('.therapy-error');if(err)err.textContent=invalid?'Valor inválido':'';if(invalid)valid=false;}
  const d=treatmentSafetyData(clinicalContext);refreshTherapySafety();if(d.urgent){go('ic/descompensada');break;}if(!valid){document.querySelector('[data-therapy-input][aria-invalid="true"]')?.focus();break;}if(d.pressureDiscordant){document.querySelector('[data-therapy-input="sbp"]')?.focus();break;}go('ic/tratamiento/asistente/medicacion');break;
