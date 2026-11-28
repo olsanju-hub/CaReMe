@@ -1242,10 +1242,12 @@ export function treatmentProposal(ctx){
  const actions=[],blockers=[],urgent=[];
  const {sbp,hr,egfr,potassium}=d.values;
  const lowPressure=sbp!==null&&sbp>=90&&sbp<100;
- const push=(kind,title,detail,check,source=HF_GUIDE,candidate=null)=>{
+ const push=(kind,title,detail,check,source=HF_GUIDE,candidate=null,presentation={})=>{
+  // Presentation metadata groups already evaluated actions; it does not change eligibility.
+  const view={section:({start:'complete',titrate:'optimize',switch:'optimize',reduce:'optimize',stop:'optimize',restart:'complete',maintain:'maintain',follow:'follow'})[kind]||'review',...presentation};
   const screening=candidate?candidateRiskScreen(ctx,candidate):null;
   if(screening?.positives.length){
-   actions.push({kind:'review',title,detail:'No proponer inicio con los datos registrados: '+screening.positives.map(x=>x.label).join('; ')+'. Requiere revisión de la ficha y del contexto.',check,source,candidate,screening});
+   actions.push({kind:'review',title,detail:'No proponer inicio con los datos registrados: '+screening.positives.map(x=>x.label).join('; ')+'. Requiere revisión de la ficha y del contexto.',check,source,candidate,screening,presentation:view});
    return;
   }
   const metadata=screening?{candidate,screening}:{};
@@ -1253,8 +1255,8 @@ export function treatmentProposal(ctx){
   // No start/up-titration/switch is proposed before symptoms, perfusion and treatment are checked.
   if((lowPressure||m.externalReviewValid)&&['start','titrate','switch'].includes(kind)){
    const caveats=[lowPressure?'PAS 90–99 mmHg: confirmar síntomas y perfusión, y revisar el tratamiento antes de decidir.':'',m.externalReviewValid?'La revisión externa corresponde a la lista actual, no al candidato: comprobar sus interacciones antes de plantear un cambio.':''].filter(Boolean).join(' ');
-   actions.push({kind:'review',title,detail:'Referencia condicionada: '+detail,check:caveats+' '+check,source,...metadata});
-  }else actions.push({kind,title,detail,check,source,...metadata});
+   actions.push({kind:'review',title,detail:'Referencia condicionada: '+detail,check:caveats+' '+check,source,...metadata,presentation:view});
+  }else actions.push({kind,title,detail,check,source,...metadata,presentation:view});
  };
  if(r.urgent)urgent.push('La situación clínica registrada requiere valoración urgente.');
  for(const row of m.active){const advice=medicationProblemReference(row,ctx);if(advice?.urgent)urgent.push(advice.title+': valoración urgente.');}
@@ -1305,21 +1307,21 @@ export function treatmentProposal(ctx){
  if(reduced&&symptomatic){
   if(canStart('raas')){
    if(egfr>=30&&potassium<=5.4&&sbp>=100)push('start','Valorar sacubitrilo/valsartán','24/26 mg cada 12 h como inicio conservador en quien no recibe IECA/ARA-II; objetivo de referencia 97/103 mg cada 12 h.','Comprobar angioedema previo, embarazo, hepatopatía, interacciones, PA y ausencia real de IECA/ARA-II. Doblar cada 3–4 semanas si tolera; controlar FG/K tras inicio y ajustes.',refDrug('Sacubitrilo/valsartán'),'Sacubitrilo/valsartán');
-   else push('review','SRAA: revisar elegibilidad','No se ofrece dosis de inicio por los datos de seguridad registrados.','Confirmar PA, potasio, función renal y alternativa según tolerancia.',refDrug('Sacubitrilo/valsartán'));
+   else push('review','SRAA: revisar elegibilidad','No se ofrece dosis de inicio por los datos de seguridad registrados.','Confirmar PA, potasio, función renal y alternativa según tolerancia.',refDrug('Sacubitrilo/valsartán'),null,{section:'complete',label:'Revisar elegibilidad'});
   }else if(arni?.drug==='Sacubitrilo/valsartán'&&arni.frequency==='12'){
    const step=raasStepReference(arni,ctx);
-   push('review','Revisar sacubitrilo/valsartán',step.detail,HF_TITRATION_REFERENCE[arni.drug].checks,step.source);
+   push('review','Revisar sacubitrilo/valsartán',step.detail,HF_TITRATION_REFERENCE[arni.drug].checks,step.source,null,{section:'optimize',medicationId:arni.id,label:step.status==='reference'?'Escalón de referencia':'Revisar antes de titular',showDetail:step.status==='reference'});
   }else if(arni&&['IECA','ARA-II'].includes(medicationFamilyLabel(arni))){
    const step=raasStepReference(arni,ctx);
-   push('review','Revisar tratamiento actual: '+arni.drug,step?.detail||'Valorar dosis máxima tolerada y alternativa según indicación. No se presupone que debe sustituirse siempre.',HF_TITRATION_REFERENCE[arni.drug]?.checks||'Revisar presentación y ficha técnica.',refDrug(arni.drug));
-   push('review','Valorar sustitución por sacubitrilo/valsartán','Si la indicación y tolerancia lo permiten, considerar transición desde '+arni.drug+'. No asociarlos ni ejecutar el cambio sin comprobar elegibilidad.','Si procede desde IECA, respetar ≥36 h; desde ARA-II, evitar solapamiento. Verificar dosis anterior, PA, FG, K, angioedema y ficha técnica para seleccionar dosis de inicio.',refDrug('Sacubitrilo/valsartán'));
+   push('review','Revisar tratamiento actual: '+arni.drug,step?.detail||'Valorar dosis máxima tolerada y alternativa según indicación. No se presupone que debe sustituirse siempre.',HF_TITRATION_REFERENCE[arni.drug]?.checks||'Revisar presentación y ficha técnica.',refDrug(arni.drug),null,{section:'optimize',medicationId:arni.id,label:step?.status==='reference'?'Escalón de referencia':'Revisar antes de titular',showDetail:step?.status==='reference'});
+   push('review','Valorar sustitución por sacubitrilo/valsartán','Si la indicación y tolerancia lo permiten, considerar transición desde '+arni.drug+'. No asociarlos ni ejecutar el cambio sin comprobar elegibilidad.','Si procede desde IECA, respetar ≥36 h; desde ARA-II, evitar solapamiento. Verificar dosis anterior, PA, FG, K, angioedema y ficha técnica para seleccionar dosis de inicio.',refDrug('Sacubitrilo/valsartán'),null,{section:'optimize',medicationId:arni.id,label:'Valorar sustitución'});
   }
-  if(betaCaution&&(canStart('bb')||bb))push('review','Betabloqueante: revisar frecuencia cardiaca','FC 50–59 lpm: el prototipo no propone inicio ni aumento de betabloqueante sin valorar síntomas y ECG. No es una contraindicación universal ni impide por sí sola valorar otros tratamientos.','Comprobar ritmo, conducción, cronotropos y tolerancia; no retirar bruscamente.',HF_GUIDE);
+  if(betaCaution&&(canStart('bb')||bb))push('review','Betabloqueante: revisar frecuencia cardiaca','FC 50–59 lpm: el prototipo no propone inicio ni aumento de betabloqueante sin valorar síntomas y ECG. No es una contraindicación universal ni impide por sí sola valorar otros tratamientos.','Comprobar ritmo, conducción, cronotropos y tolerancia; no retirar bruscamente.',HF_GUIDE,null,{section:bb?'optimize':'complete',medicationId:bb?.id,label:'Revisar frecuencia cardiaca'});
   else if(canStart('bb'))push('start','Valorar bisoprolol','Inicio de referencia 1,25 mg cada 24 h; objetivo máximo 10 mg/día si tolera.',HF_TITRATION_REFERENCE.Bisoprolol.checks+' Verificar contraindicaciones de ficha técnica.',refDrug('Bisoprolol'),'Bisoprolol');
   else if(bb){
    const ref=HF_TITRATION_REFERENCE[bb.drug],step=betaBlockerReferenceStep(bb);
    const nebAge=ctx.peptides?.age;
-   if(bb.drug==='Nebivolol'&&(!Number.isFinite(nebAge)||nebAge<70))push('review','Nebivolol: comprobar indicación y edad','No se propone titulación de IC sin edad registrada ≥70 años, según ficha de Insucor.','Confirmar indicación real, gravedad y presentación. No suspender por esta regla.',ref.source);
+   if(bb.drug==='Nebivolol'&&(!Number.isFinite(nebAge)||nebAge<70))push('review','Nebivolol: comprobar indicación y edad','No se propone titulación de IC sin edad registrada ≥70 años, según ficha de Insucor.','Confirmar indicación real, gravedad y presentación. No suspender por esta regla.',ref.source,null,{section:'optimize',medicationId:bb.id,label:'Comprobar indicación y edad'});
    else if(step){
     const days=mgNumber(bb.doseDays),minDays=Math.max(14,step.minDays);
     const missing=[];
@@ -1327,38 +1329,38 @@ export function treatmentProposal(ctx){
     if(bb.tolerance!=='well')missing.push('tolerancia');
     if(!Number.isFinite(days)||days<minDays)missing.push('al menos '+minDays+' días en pauta actual');
     if(ctx.results?.ecg?.value!=='normal'&&ctx.results?.ecg?.value!=='af')missing.push('ECG y conducción');
-    push('review','Revisar '+bb.drug,missing.length?'Antes de valorar un incremento, comprobar '+missing.join(', ')+'.':fmtDose(step.from)+' → '+fmtDose(step.to)+' mg cada '+step.frequency+' h como escalón de referencia, no orden.','Intervalo ambulatorio conservador: '+minDays+' días. '+step.checks,step.source);
-   }else push('review','Revisar '+bb.drug,'Sin escalón superior automatizado para la pauta registrada; comprobar dosis máxima tolerada y formulación.','No interpretar dosis objetivo como obligación ni retirar bruscamente. '+(ref?.checks||'Revisar ficha técnica.'),refDrug(bb.drug));
+    push('review','Revisar '+bb.drug,missing.length?'Antes de valorar un incremento, comprobar '+missing.join(', ')+'.':fmtDose(step.from)+' → '+fmtDose(step.to)+' mg cada '+step.frequency+' h como escalón de referencia, no orden.','Intervalo ambulatorio conservador: '+minDays+' días. '+step.checks,step.source,null,{section:'optimize',medicationId:bb.id,label:missing.length?'Revisar antes de titular':'Escalón de referencia',showDetail:!missing.length});
+   }else push('review','Revisar '+bb.drug,'Sin escalón superior automatizado para la pauta registrada; comprobar dosis máxima tolerada y formulación.','No interpretar dosis objetivo como obligación ni retirar bruscamente. '+(ref?.checks||'Revisar ficha técnica.'),refDrug(bb.drug),null,{section:'optimize',medicationId:bb.id,label:'Revisar dosis máxima tolerada'});
   }
   if(canStart('mra')){
-   if(egfr>=30&&potassium<5)push('review','Valorar ARM esteroideo: verificar indicación','La elección y la dosis inicial quedan pendientes de comprobar la indicación específica de la presentación, el fenotipo y la clase funcional.','Aldactone: indicación de IC grave NYHA III–IV y cautelas específicas; Eplerenona STADA: criterios específicos de FEVI, NYHA o infarto reciente. No extrapolar automáticamente entre fichas; revisar creatinina, aclaramiento, potasio e interacciones.','https://cima.aemps.es/cima/dochtml/ft/39059/FT_39059.html');
-   else push('review','ARM: revisar seguridad','No se propone inicio con FG <30 o potasio ≥5 mmol/L en este prototipo.','Valorar alternativas y control analítico.',refDrug('Espironolactona'));
-  }else if(arm)push('review','Revisar '+arm.drug,'Comprobar dosis según indicación, función renal y potasio.','No titular ARM sin datos de función renal previa y revisión de los límites específicos de su ficha técnica. '+(HF_TITRATION_REFERENCE[arm.drug]?.checks||''),refDrug(arm.drug));
+   if(egfr>=30&&potassium<5)push('review','Valorar ARM esteroideo: verificar indicación','La elección y la dosis inicial quedan pendientes de comprobar la indicación específica de la presentación, el fenotipo y la clase funcional.','Aldactone: indicación de IC grave NYHA III–IV y cautelas específicas; Eplerenona STADA: criterios específicos de FEVI, NYHA o infarto reciente. No extrapolar automáticamente entre fichas; revisar creatinina, aclaramiento, potasio e interacciones.','https://cima.aemps.es/cima/dochtml/ft/39059/FT_39059.html',null,{section:'complete',label:'Comprobar indicación y seguridad'});
+   else push('review','ARM: revisar seguridad','No se propone inicio con FG <30 o potasio ≥5 mmol/L en este prototipo.','Valorar alternativas y control analítico.',refDrug('Espironolactona'),null,{section:'complete',label:'Revisar elegibilidad'});
+  }else if(arm)push('review','Revisar '+arm.drug,'Comprobar dosis según indicación, función renal y potasio.','No titular ARM sin datos de función renal previa y revisión de los límites específicos de su ficha técnica. '+(HF_TITRATION_REFERENCE[arm.drug]?.checks||''),refDrug(arm.drug),null,{section:'optimize',medicationId:arm.id,label:'Revisar indicación y seguridad'});
  }else if(mid&&symptomatic){
-  if(canStart('raas')||arni)push('review','FEVI 41–49 %: revisar tratamiento SRAA','ESC 2026, tabla de recomendaciones 5: IECA o ARNI en IC-FEr sintomática, clase I A; valorar transición a ARNI si procede, clase I B1.','La guía reconoce ausencia de grandes ensayos exclusivos en FEVI 41–49 %. Verificar indicación de la presentación y elegibilidad; la selección de dosis para este tramo sigue pendiente de auditoría.',HF_GUIDE);
-  if(canStart('bb')||bb)push('review','FEVI 41–49 %: revisar betabloqueante','ESC 2026 recomienda betabloqueantes en IC-FEr sintomática estable, clase I A, con la cautela de evidencia específica limitada en este tramo.','Revisar ritmo, frecuencia, tolerancia y ficha técnica. No extrapolar automáticamente una pauta no auditada.',HF_GUIDE);
-  if(canStart('mra'))push('review','FEVI 41–49 %: valorar ARM esteroideo','ESC 2026 recomienda ARM en IC sintomática con independencia de FEVI (clase I A); en IC-FEr especifica ARM esteroideo.','Verificar indicación de la presentación, FG, K y tolerancia. La indicación autorizada de finerenona desde FEVI ≥40 % es un dato regulatorio distinto de la recomendación ESC por fenotipo.',HF_GUIDE);
-  else if(arm)push('review','Revisar ARM registrado','Comprobar concordancia entre fenotipo, indicación de la presentación y función renal.','No sustituir automáticamente ni asociar ARM.',refDrug(arm.drug));
+  if(canStart('raas')||arni)push('review','FEVI 41–49 %: revisar tratamiento SRAA','ESC 2026, tabla de recomendaciones 5: IECA o ARNI en IC-FEr sintomática, clase I A; valorar transición a ARNI si procede, clase I B1.','La guía reconoce ausencia de grandes ensayos exclusivos en FEVI 41–49 %. Verificar indicación de la presentación y elegibilidad; la selección de dosis para este tramo sigue pendiente de auditoría.',HF_GUIDE,null,{section:arni?'optimize':'complete',medicationId:arni?.id,label:'Revisar indicación y seguridad'});
+  if(canStart('bb')||bb)push('review','FEVI 41–49 %: revisar betabloqueante','ESC 2026 recomienda betabloqueantes en IC-FEr sintomática estable, clase I A, con la cautela de evidencia específica limitada en este tramo.','Revisar ritmo, frecuencia, tolerancia y ficha técnica. No extrapolar automáticamente una pauta no auditada.',HF_GUIDE,null,{section:bb?'optimize':'complete',medicationId:bb?.id,label:'Revisar indicación y seguridad'});
+  if(canStart('mra'))push('review','FEVI 41–49 %: valorar ARM esteroideo','ESC 2026 recomienda ARM en IC sintomática con independencia de FEVI (clase I A); en IC-FEr especifica ARM esteroideo.','Verificar indicación de la presentación, FG, K y tolerancia. La indicación autorizada de finerenona desde FEVI ≥40 % es un dato regulatorio distinto de la recomendación ESC por fenotipo.',HF_GUIDE,null,{section:'complete',label:'Revisar indicación y seguridad'});
+  else if(arm)push('review','Revisar ARM registrado','Comprobar concordancia entre fenotipo, indicación de la presentación y función renal.','No sustituir automáticamente ni asociar ARM.',refDrug(arm.drug),null,{section:'optimize',medicationId:arm.id,label:'Revisar indicación y seguridad'});
  }
  if(preserved&&symptomatic&&canStart('mra')){
-  push('review','IC-FEp: revisar elección de ARM','ESC 2026 recomienda ARM esteroideo o no esteroideo en IC-FEp sintomática, clase I A.','Individualizar según evidencia por molécula, indicación regulatoria, función renal y potasio; no asociar dos ARM.',HF_GUIDE);
+  push('review','IC-FEp: revisar elección de ARM','ESC 2026 recomienda ARM esteroideo o no esteroideo en IC-FEp sintomática, clase I A.','Individualizar según evidencia por molécula, indicación regulatoria, función renal y potasio; no asociar dos ARM.',HF_GUIDE,null,{section:'complete',label:'Revisar elección de ARM'});
   if(egfr>=25&&potassium<=5)push('start','Valorar finerenona',(egfr>=60?'20':'10')+' mg cada 24 h como dosis inicial de referencia; objetivo según FG inicial: '+(egfr>=60?'40':'20')+' mg/día.','Comprobar ausencia de otro ARM, ahorradores de K, inhibidores/inductores CYP3A4, Addison, hepatopatía grave, embarazo y demás contraindicaciones. FG/K a las 4 semanas; titular solo según tabla y cambio de FG.',refDrug('Finerenona'),'Finerenona');
-  else push('review','Finerenona: revisar elegibilidad','No se propone inicio con FG <25 o K >5.','Revisar evolución renal y potasio.',refDrug('Finerenona'));
+  else push('review','Finerenona: revisar elegibilidad','No se propone inicio con FG <25 o K >5.','Revisar evolución renal y potasio.',refDrug('Finerenona'),null,{section:'complete',label:'Revisar elegibilidad'});
  }
- if(preserved&&symptomatic&&canStart('raas'))push('review','IC-FEp: valorar IECA, ARA-II o ARNI','ESC 2026 permite considerar inhibición SRAA en IC-FEp sintomática para reducir ingresos por IC (IIb C).','No equiparar a recomendación clase I; revisar comorbilidades, indicación autorizada y tolerancia. Selección de dosis pendiente de auditoría.',HF_GUIDE);
- if(preserved&&arm)push('review','Revisar ARM registrado','No asociar finerenona a espironolactona o eplerenona.','Si se valora un cambio, revisar indicación, FG previo, potasio e interacciones; no aplicar sustitución automática.',refDrug(arm.drug));
+ if(preserved&&symptomatic&&canStart('raas'))push('review','IC-FEp: valorar IECA, ARA-II o ARNI','ESC 2026 permite considerar inhibición SRAA en IC-FEp sintomática para reducir ingresos por IC (IIb C).','No equiparar a recomendación clase I; revisar comorbilidades, indicación autorizada y tolerancia. Selección de dosis pendiente de auditoría.',HF_GUIDE,null,{section:'complete',label:'Valorar indicación'});
+ if(preserved&&arm)push('review','Revisar ARM registrado','No asociar finerenona a espironolactona o eplerenona.','Si se valora un cambio, revisar indicación, FG previo, potasio e interacciones; no aplicar sustitución automática.',refDrug(arm.drug),null,{section:'optimize',medicationId:arm.id,label:'Revisar indicación y seguridad'});
  if(symptomatic&&!historical&&canStart('sglt2')){
   const eligible=['Dapagliflozina','Empagliflozina'].filter(drug=>egfr>=HF_TITRATION_REFERENCE[drug].minInitiationEgfr);
   for(const drug of eligible){
    const ref=HF_TITRATION_REFERENCE[drug];
-   push('start','Valorar '+drug,'10 mg cada 24 h como dosis habitual de IC; opciones alternativas, no asociar dos iSGLT2.','Antes de iniciar: '+ref.checks+' '+sglt2Interruption,ref.source,drug);
+   push('start','Valorar '+drug,'10 mg cada 24 h como dosis habitual de IC; opciones alternativas, no asociar dos iSGLT2.','Antes de iniciar: '+ref.checks+' '+sglt2Interruption,ref.source,drug,{section:'complete',alternativeGroup:'sglt2',label:'Valorar inicio'});
   }
-  if(!eligible.length)push('review','iSGLT2: revisar FG','No se ofrece inicio con FG <20; no implica retirar tratamiento previamente establecido.','Revisar indicación y evolución renal.',refDrug('Empagliflozina'));
+  if(!eligible.length)push('review','iSGLT2: revisar FG','No se ofrece inicio con FG <20; no implica retirar tratamiento previamente establecido.','Revisar indicación y evolución renal.',refDrug('Empagliflozina'),null,{section:'complete',label:'Revisar elegibilidad'});
  }else if(sg){
   const ref=HF_TITRATION_REFERENCE[sg.drug];
-  push('review','iSGLT2 registrado: '+sg.drug,'No precisa titulación habitual para IC. Diferenciar continuidad de inicio; el descenso aislado de FG no justifica por sí solo la retirada.','Confirmar indicación, dosis, función renal, volemia, tolerancia y causa de deterioro. '+sglt2Interruption,ref?.source||refDrug(sg.drug));
+  push('review','iSGLT2 registrado: '+sg.drug,'No precisa titulación habitual para IC. Diferenciar continuidad de inicio; el descenso aislado de FG no justifica por sí solo la retirada.','Confirmar indicación, dosis, función renal, volemia, tolerancia y causa de deterioro. '+sglt2Interruption,ref?.source||refDrug(sg.drug),null,{section:'optimize',medicationId:sg.id,label:'Revisar continuidad'});
  }
- if(loop)push('review','Revisar necesidad de diurético de asa','Paciente sin congestión según datos registrados. Valorar la menor dosis eficaz, sin reducción automática.','Comprobar peso, síntomas, PA, función renal, electrolitos y evolución de la congestión.',refDrug(loop.drug));
+ if(loop)push('review','Revisar necesidad de diurético de asa','Paciente sin congestión según datos registrados. Valorar la menor dosis eficaz, sin reducción automática.','Comprobar peso, síntomas, PA, función renal, electrolitos y evolución de la congestión.',refDrug(loop.drug),null,{section:'optimize',medicationId:loop.id,label:'Revisar necesidad y dosis'});
  push('follow','Seguimiento tras cambios','ESC 2026 recomienda reevaluar titulación de FMT al menos cada 1–2 semanas según clínica, constantes y analítica (I C); el intervalo de incremento efectivo depende de la ficha y tolerancia.','Registrar dosis máxima tolerada, motivo de no iniciar o titular, adherencia y fecha de reevaluación; vigilar descompensación. No acelerar un escalón por encima de la pauta verificada.',HF_GUIDE);
  return result('conditional');
 }
