@@ -48,6 +48,17 @@ try{
    await add('Enalapril');assert.match(await page.locator('#med-safety').innerText(),/Combinación contraindicada/);
    await page.locator('[data-action="med-remove"][data-med-id="extra-4"]').click();assert.doesNotMatch(await page.locator('#med-safety').innerText(),/Combinación contraindicada/);
    await add('Dapagliflozina');assert.equal(await panel('extra-5').locator('[data-med-field="frequency"][data-med-value="8"]').count(),0);
+   // Verify that informational monitoring is collapsed and actionable alerts remain visible.
+   await add('Furosemida');
+   const monitoring=page.locator('[data-panel="med-monitoring"]');
+   assert.equal(await monitoring.count(),1);
+   assert.equal(await monitoring.evaluate(e=>e.open),false);
+   await monitoring.locator(':scope > summary').click();
+   assert.match(await monitoring.innerText(),/volemia/i);
+   await page.locator('[data-med-row="extra-6"] > summary').evaluate(e=>{e.parentElement.open=true;});
+   await page.locator('[data-action="med-remove"][data-med-id="extra-6"]').click();
+   assert.equal(await page.locator('[data-panel="med-monitoring"]').count(),0);
+   await page.locator('[data-med-row="extra-5"] > summary').evaluate(e=>{e.parentElement.open=true;});
    await page.locator('[data-action="med-remove"][data-med-id="extra-5"]').click();
    await page.locator('[data-med-confirm]').check();await panel('extra-2').locator(':scope > summary').click();await choose('extra-2','quick-dose','5');assert.equal(await page.locator('[data-med-confirm]').isChecked(),false);
    await page.locator('[data-panel="med-custom-extra-2"]>summary').click();await page.locator('input[data-med-id="extra-2"][data-med-field="dose"]').fill('6,25');assert.equal(await panel('extra-2').evaluate(e=>e.open),true);
