@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {GROUPS,createClinicalContext,updateFinding,evaluateSuspicion,setGroupReviewed,isGroupReviewed,toggleFinding,setEvaluationReviewed,isEvaluationReviewed,diagnosticNext,diagnosticAction,setStudyResult,investigationPlan,interpretSuspicion,CLINICAL_DIMENSIONS,labPlan,setPeptide,interpretPeptide,peptideFactors,ECHO_FINDINGS,ECHO_NUMERIC,setEcho,interpretEcho,setStageAssessment,interpretStage,setPhenotypeAssessment,interpretPhenotype,NYHA_OPTIONS,setNyha,interpretNyha,SITUATION_QUESTIONS,setSituation,interpretSituation,classificationSummary,TREATMENT_VITALS,setTreatmentValue,confirmTreatmentLabs,treatmentSafetyData,MEDICATION_GROUPS,setMedicationField,addMedication,removeMedication,medicationSummary,confirmMedicationReview,MEDICATION_QUICK_DOSES,medicationEntryComplete,setMedicationQuickDose,MEDICATION_FAMILIES,medicationFamilyLabel,addNamedMedication,deleteRecordedMedication,medicationFrequencyOptions,medicationSafety,HF_MEDICATION_REFERENCE,treatmentProposal,HF_TITRATION_REFERENCE,betaBlockerReferenceStep,armPotassiumReference,echoSupportCriteria,confirmExternalMedicationReview,setAbsenceReason,raasMaintenanceReference,raasStepReference,arniTransitionReference} from '../src/ic/suspicion.mjs';
+import {GROUPS,createClinicalContext,updateFinding,evaluateSuspicion,setGroupReviewed,isGroupReviewed,toggleFinding,setEvaluationReviewed,isEvaluationReviewed,diagnosticNext,diagnosticAction,setStudyResult,investigationPlan,interpretSuspicion,CLINICAL_DIMENSIONS,labPlan,setPeptide,interpretPeptide,peptideFactors,ECHO_FINDINGS,ECHO_NUMERIC,setEcho,interpretEcho,setStageAssessment,interpretStage,setPhenotypeAssessment,interpretPhenotype,NYHA_OPTIONS,setNyha,interpretNyha,SITUATION_QUESTIONS,setSituation,interpretSituation,classificationSummary,TREATMENT_VITALS,setTreatmentValue,confirmTreatmentLabs,treatmentSafetyData,MEDICATION_GROUPS,setMedicationField,addMedication,removeMedication,medicationSummary,confirmMedicationReview,MEDICATION_QUICK_DOSES,medicationEntryComplete,setMedicationQuickDose,MEDICATION_FAMILIES,medicationFamilyLabel,addNamedMedication,deleteRecordedMedication,medicationFrequencyOptions,medicationSafety,HF_MEDICATION_REFERENCE,treatmentProposal,HF_TITRATION_REFERENCE,betaBlockerReferenceStep,armPotassiumReference,echoSupportCriteria,confirmExternalMedicationReview,setAbsenceReason,raasMaintenanceReference,raasStepReference,arniTransitionReference,setTherapyRisk,candidateRiskScreen} from '../src/ic/suspicion.mjs';
 const allNo=()=>({findings:{...Object.fromEntries(GROUPS.flatMap(g=>g.fields.map(([id])=>[id,'no']))),vitalsReviewed:'yes'}});
 const result=(c)=>evaluateSuspicion(c).id;
 test('Datos ausentes no son negativos',()=>assert.equal(result(createClinicalContext()),'IC-SUS-03'));
@@ -645,4 +645,15 @@ test('P5: transición IECA/ARNI en ambos sentidos, 36 h exactas y ausencia de so
  assert.equal(arniTransitionReference({...base,angioedema:'yes'}).status,'blocked');
  assert.equal(arniTransitionReference({...base,angioedema:'unknown'}).status,'missing');
  assert.equal(arniTransitionReference({...base,elapsedHours:undefined}).status,'missing');
+});
+
+test('P4: cribado contextual no confunde datos desconocidos con ausencia ni certifica elegibilidad',()=>{
+ let c=proposalFixture();
+ let p=treatmentProposal(c),a=p.actions.find(x=>x.candidate==='Bisoprolol');assert.ok(a.screening.pending.length>0);assert.equal(a.screening.complete,false);
+ c=setTherapyRisk(c,'severeAsthma','yes');p=treatmentProposal(c);a=p.actions.find(x=>x.candidate==='Bisoprolol');assert.equal(a.kind,'review');assert.match(a.detail,/Asma grave/);
+ assert.ok(p.actions.some(x=>x.candidate==='Dapagliflozina'&&x.kind==='start'));
+ c=setTherapyRisk(c,'severeAsthma','no');assert.equal(candidateRiskScreen(c,'Bisoprolol').positives.length,0);
+ c=setTherapyRisk(c,'type1','yes');p=treatmentProposal(c);assert.ok(p.actions.filter(x=>['Empagliflozina','Dapagliflozina'].includes(x.candidate)).every(x=>x.kind==='review'));
+ c=setTherapyRisk(c,'ketoacidosis','yes');assert.equal(treatmentProposal(c).status,'urgent');
+ c=setTherapyRisk(c,'ketoacidosis','unknown');assert.notEqual(treatmentProposal(c).status,'urgent');
 });
