@@ -2,7 +2,7 @@
 
 PWA de apoyo a la decisión clínica para Atención Primaria, centrada en el abordaje cardiorrenal-hepatometabólico. Se conserva la portada aprobada y se reconstruyen los módulos clínicos por patologías. La primera patología es insuficiencia cardiaca (IC).
 
-**Actualizado: 28/11/2026. Punto de reanudación: IC → Tratamiento → Asistente terapéutico → paso 3, Propuesta de tratamiento (v0.102 implementada; verificar CI y revisar funcionamiento antes de cierre).**
+**Actualizado: 28/11/2026. Punto de reanudación: IC → Tratamiento → Asistente terapéutico → paso 3, Propuesta de tratamiento (v0.102 verificada; v0.103 incorpora planificación de sustitución IECA/ARA-II a ARNI; verificar CI del nuevo corte y continuar ajustes).**
 
 > Este README es el documento operativo vivo del proyecto. No es una guía clínica ni una certificación. Ante un nuevo chat, leerlo antes de modificar código. El historial y las pruebas permiten continuar sin repetir una auditoría general. Solo reabrir comprobaciones concretas cuando exista una nueva fuente, una modificación de reglas, un fallo o una discrepancia relevante.
 
@@ -11,12 +11,12 @@ PWA de apoyo a la decisión clínica para Atención Primaria, centrada en el abo
 | Elemento | Estado |
 | --- | --- |
 | Repositorio | [olsanju-hub/CaReMe](https://github.com/olsanju-hub/CaReMe) |
-| Versión de interfaz en rama de trabajo | v0.102 (base v0.101) |
+| Versión de interfaz en rama de trabajo | v0.103 (base visual v0.102) |
 | Rama del prototipo | `feat/prototipo-interfaz` |
 | Rama de trabajo vigente | `audit/ic-validacion-clinica` |
 | Integración | [PR #12 en borrador](https://github.com/olsanju-hub/CaReMe/pull/12), hacia la rama del prototipo |
-| Último corte de código y auditoría verificado íntegramente (CI) | `b9a2cb03807bafc0389c1a8dfc2dd44824a2f99b` |
-| Corte v0.102 implementado | `a27febed91df2a023afaa2eaa43ef960beaa1408` (check nativo success; navegador pendiente de confirmar) |
+| Último corte de código verificado íntegramente (CI) | `74b16e4870e0afbabccd83c6f3ae765e2ed1b685` (v0.102) |
+| Corte v0.103 implementado | `a7bf051b75d8d527d54c151b12b3d9e285e90f43` (nuevo CI pendiente de confirmar) |
 | Aplicación publicada | [CaReMe](https://olsanju-hub.github.io/CaReMe/), sin modificar durante este trabajo |
 | Alcance actual | Prototipo educativo con casos ficticios; no validado para decisiones asistenciales |
 
@@ -60,7 +60,7 @@ La decisión operativa actual es **continuar el desarrollo del asistente terapé
 | IC: Tratamiento, portada | Perfil recuperado y accesos directos implementados |
 | IC: Tratamiento, asistente, paso 1 | Perfil clínico y seguridad: PA, FC, FG y K; reutilización de datos y comprobación de vigencia |
 | IC: Tratamiento, asistente, paso 2 | Medicación actual por familias, dosis/frecuencia, conciliación y alertas; pantalla de registro aprobada en su estructura, preservar |
-| IC: Tratamiento, asistente, paso 3 | Maqueta aprobada implementada en v0.102; propuesta condicionada por actuaciones, alternativas iSGLT2 agrupadas, pauta actual recuperada, requisitos contextuales y seguimiento. Verificar nueva interfaz y completar integración clínica pendiente antes de cierre funcional |
+| IC: Tratamiento, asistente, paso 3 | Maqueta aprobada implementada en v0.102; propuesta condicionada por actuaciones, alternativas iSGLT2 agrupadas, pauta actual recuperada, requisitos contextuales y seguimiento. v0.102 verificada por CI; v0.103 añade planificación de transición a ARNI. Completar integración clínica pendiente antes de cierre funcional |
 | IC: accesos directos de Tratamiento | IC-FEr, IC-FEp, FEVI mejorada, diuréticos, titulación y ajustes, seguridad farmacológica: todavía pendientes como apartados de consulta independientes |
 | IC: Optimización | Pendiente como módulo independiente; parte de la lógica ya reside en el motor terapéutico |
 | IC: Seguimiento / Comorbilidades / Derivación / IC avanzada | Pendientes |
@@ -74,13 +74,13 @@ Ruta: `#ic/tratamiento/asistente/propuesta`. Función de interfaz: `therapyStepT
 
 El asistente tiene tres pasos: (1) perfil y seguridad; (2) medicación actual; (3) propuesta de tratamiento. Los dos primeros existen. No volver a diseñarlos desde cero. El titular aprobó la maqueta de paso 3 y se implementó en v0.102: perfil compacto con constantes y unidades; tratamiento por completar (opciones iSGLT2 mutuamente excluyentes, comprobaciones compartidas); optimización agrupada por pauta actual; seguimiento y evidencia desplegable. Las alertas accionables permanecen visibles y el caso urgente tiene prioridad. Las secciones vacías se omiten. Desde la propuesta se puede abrir directamente la pauta y su contexto existente en el paso 2, sin nuevo formulario. No interpretar ausencia de actuación como recomendación de mantenimiento.
 
-La tarea inmediata pasa de diseñar la pantalla a **verificar v0.102 y terminar su funcionamiento**.
+La v0.102 superó CI nativo y Chromium/WebKit. En v0.103 se añade, solo dentro de la actuación de sustitución por ARNI, la última dosis real o prevista, primera dosis prevista y comprobación de plan sin solapamiento. El motor calcula intervalo (36 h si IECA) y límite horario teórico; no prescribe ni modifica la medicación, no certifica retirada real. La interfaz aprobada se mantiene. **Continuar ajustes específicos**, no volver a diseñar ni repetir auditoría general.
 
 ### Siguiente intervención, en orden
 
-1. Confirmar CI nativo y Chromium/WebKit del corte v0.102; si falla, corregir únicamente el motivo concreto y documentar el resultado. Revisar la interfaz implementada con casos ficticios representativos (IC-FEr, FEVI 41–49 %, IC-FEp, FEVI mejorada, medicación incompleta y situación de alarma).
-2. Valorar con el titular la pantalla implementada, preservando la distribución aprobada. Comprobar especialmente lectura móvil, alternativas de iSGLT2 excluyentes, pauta actual, acceso directo al contexto de un medicamento y ausencia de actuaciones en urgencia. No volver a plantear la maqueta desde cero.
-3. Completar en el motor los casos que todavía devuelven referencias condicionadas por falta de algoritmo o de datos, vinculando cada actuación a sus requisitos pertinentes. En especial, enlazar transición IECA/ARNI y el registro longitudinal necesario, ajustes que dependen de aclaramiento y contraindicaciones de la presentación. No ampliar catálogo sin verificar fuentes.
+1. Confirmar CI nativo y Chromium/WebKit del corte v0.103. Corregir únicamente errores concretos, con pruebas; la v0.102 está verificada y no necesita nueva revisión general.
+2. Continuar los ajustes farmacológicos pendientes dentro del asistente: aclaramiento de creatinina cuando la ficha lo exige (no sustituir por FG indexado), fecha/vigencia de analítica y evolución relevante para la decisión; conectar requisitos a la pauta concreta, sin formulario general. Después completar ajustes e interrupciones/reintroducciones específicas por fármaco.
+3. Revisar la interfaz y el resultado individualizado con casos ficticios representativos, mantener el diseño aprobado. La planificación temporal de transición a ARNI ya está implementada; falta completar la elección individualizada de dosis y demás criterios de elegibilidad cuando se disponga de fuentes y datos suficientes.
 4. Verificar escenarios positivos, negativos, límites, privacidad y regresiones. Actualizar README y registro clínico técnico. Cerrar el asistente funcional solo al satisfacer criterios de aceptación; no confundirlo con autorización de uso clínico.
 
 Después, desarrollar los apartados de consulta directa de Tratamiento, reutilizando el mismo motor. El orden de esas pantallas y de los módulos posteriores es una propuesta de continuidad, no una aprobación anticipada del diseño: mantener desarrollo secuencial y acordar cada nuevo apartado con el titular.
@@ -130,7 +130,7 @@ Antes de modificar, comprobar rama y estado actual. Si existen cambios posterior
 
 ## 7. Validación y pendientes técnicos/clínicos
 
-Último corte con CI integral confirmado: `b9a2cb03807bafc0389c1a8dfc2dd44824a2f99b` (v0.101). La revisión v0.102 está implementada, con pruebas actualizadas. No atribuirle el CI de v0.101.
+Último corte con CI integral confirmado: `74b16e4870e0afbabccd83c6f3ae765e2ed1b685` (v0.102). La v0.103 está implementada y sus pruebas actualizadas; no atribuirle automáticamente los resultados de v0.102.
 
 | Control | Resultado al 28/11/2026 |
 | --- | --- |
@@ -139,17 +139,17 @@ Antes de modificar, comprobar rama y estado actual. Si existen cambios posterior
 | P3, farmacología | 16/16 principios activos del catálogo con presentación de referencia; cobertura no exhaustiva |
 | P4, seguridad | Alertas y cribado contextual ampliados; cobertura de interacciones y contraindicaciones incompleta |
 | P5, optimización | Reglas y referencias diferenciadas; faltan algoritmos y datos longitudinales específicos |
-| Pruebas del motor | v0.102: 103/103 en adaptador aislado. Comparación de 576 escenarios ficticios con v0.101: 576/576 iguales en decisiones, bloqueadores, alertas y valores, excluidos metadatos de presentación. No equivale a validación clínica |
-| Node.js / sintaxis | v0.101 [success](https://github.com/olsanju-hub/CaReMe/actions/runs/46124984535). v0.102 [118/119; fallo por expectativa fija v0.101](https://github.com/olsanju-hub/CaReMe/actions/runs/46154612992); corregida prueba de coherencia dinámica de BUILD/caché en a27febed; [repetición success](https://github.com/olsanju-hub/CaReMe/actions/runs/46154675210), 119/119 pruebas nativas y sintaxis |
-| Chromium + WebKit | v0.101 [success](https://github.com/olsanju-hub/CaReMe/actions/runs/46124984617). v0.102 [ejecución 46154612984](https://github.com/olsanju-hub/CaReMe/actions/runs/46154612984), pendiente de confirmar; se añadieron pruebas de alternativas, respuesta compartida, pauta actual y navegación a contexto |
+| Pruebas del motor | v0.103: 105/105 en adaptador aislado. v0.102: 103/103; comparación de 576 escenarios ficticios con v0.101: 576/576 iguales en decisiones, bloqueadores, alertas y valores, excluidos metadatos de presentación. No equivale a validación clínica |
+| Node.js / sintaxis | v0.102 [success](https://github.com/olsanju-hub/CaReMe/actions/runs/46154762030), 119/119 pruebas nativas y sintaxis (expectativa fija de caché corregida). v0.103 pendiente de verificar CI nativo |
+| Chromium + WebKit | v0.102 [success](https://github.com/olsanju-hub/CaReMe/actions/runs/46154762015), alternativas, respuesta compartida, pauta actual y navegación contextual. v0.103: nuevos escenarios de transición, pendiente de verificar CI |
 | Validación clínica independiente | Pendiente |
 | Publicación / integración | No autorizada en este corte; PR borrador |
 
 Pendientes específicos que deben acompañar el desarrollo, sin bloquear por defecto el progreso de las pantallas del prototipo:
 
 - Completar contraindicaciones por presentación e indicación y ampliar el reconocimiento de principios activos, marcas y combinaciones; no certificar compatibilidad exhaustiva.
-- Completar decisiones de ajuste/reintroducción, aclaramiento de creatinina, fecha de analíticas y tendencias pertinentes. Integrar el helper de transición IECA/ARNI (36 h) en el flujo real de cambio.
-- Resolver diferencias documentales concretas: por ejemplo, el motor usa la referencia de sacubitrilo/valsartán 90716 y una anotación posterior de auditoría cita 90717; contrastar ficha exacta antes de ampliar esa regla, sin sustituir el código por una referencia no verificada.
+- Completar decisiones de ajuste/reintroducción, aclaramiento de creatinina, fecha de analíticas y tendencias pertinentes. Planificador de transición IECA/ARA-II a ARNI integrado en v0.103; pendiente elección individualizada de dosis y comprobación clínica completa, no prescripción automática.
+- Diferencia documental 90716/90717 resuelta el 28/11/2026: ambas presentaciones de sacubitrilo/valsartán Kern Pharma remiten a ficha conjunta de tres concentraciones; se mantiene 90716. No extrapolar a todas las marcas. Conservar otras discrepancias concretas pendientes en registro técnico.
 - Mantener distinción entre finerenona en IC y ERC-DM2, límites de inicio/continuación de iSGLT2 y criterios de ARM esteroideos. Conservar la advertencia de cobertura parcial.
 - Completar módulos de IC aún pendientes (incluida IC descompensada), trazabilidad exhaustiva, revisión clínica independiente y alcance regulatorio/licencias antes de uso asistencial.
 
@@ -172,7 +172,8 @@ Las entradas del 28/11/2026 reconstruyen el orden de las intervenciones document
 | 28/11/2026 · 08 | P4/P5 ampliados: interacciones CIMA, mantenimiento SRAA S4/S5, escalones condicionados, transición ARNI, riesgos contextuales e intolerancia | 102 pruebas aisladas; últimos cambios de motor y UI documentados en auditoría |
 | 28/11/2026 · 09 | P6: confirmación de check nativo y Chromium/WebKit, incluidos casos nuevos | b9a2cb03807bafc0389c1a8dfc2dd44824a2f99b; runs 46124984535 y 46124984617 success |
 | 28/11/2026 · 10 | Decisión de continuidad: retomar Tratamiento y terminar el asistente terapéutico. Crear README maestro con hoja de ruta, reglas y pendientes | Este documento; sin alterar la interfaz ni publicar cambios |
-| 28/11/2026 · 11 | Maqueta de propuesta terapéutica aprobada por el titular. Implementación v0.102: metadatos de agrupación desde motor, alternativas iSGLT2 y cribado común, tarjetas por pauta actual, acceso contextual, seguimiento y estilo perlado; actualización de caché PWA. No se modifican las decisiones clínicas | Motor 9131d809 / 8dd79daf; UI bdbc9fca / 47ad107e; CSS 046a24e3 / 664c8c0d; QA 9a1df533; tests 0dacd978 / a27febed. 103/103 pruebas aisladas y 576/576 escenarios de equivalencia; CI nativo 119/119 y sintaxis superados tras corregir comprobación de caché; Chromium/WebKit pendientes de confirmar |
+| 28/11/2026 · 11 | Maqueta de propuesta terapéutica aprobada por el titular. Implementación v0.102: metadatos de agrupación desde motor, alternativas iSGLT2 y cribado común, tarjetas por pauta actual, acceso contextual, seguimiento y estilo perlado; actualización de caché PWA. No se modifican las decisiones clínicas | Motor 9131d809 / 8dd79daf; UI bdbc9fca / 47ad107e; CSS 046a24e3 / 664c8c0d; QA 9a1df533; tests 0dacd978 / a27febed. 103/103 pruebas aisladas y 576/576 escenarios de equivalencia; CI nativo 119/119 y sintaxis superados tras corregir comprobación de caché; Chromium/WebKit confirmados success en 74b16e48 (runs 46154762030 y 46154762015) |
+| 28/11/2026 · 12 | v0.103: integrar planificación temporal IECA/ARA-II a ARNI dentro de la actuación existente; intervalo, límite de 36 h, plan sin solapamiento y riesgos compartidos; sin alterar la lista de medicación. Fichas 90716/90717 contrastadas | Motor a21377bc, tests 4cb81c1b (105/105 aisladas), UI d85c29cd, QA 063ec060, shell a7bf051b; registro clínico 17185445. CI nuevo pendiente de confirmar |
 
 ## 9. Protocolo de actualización y relevo de chat
 
@@ -185,4 +186,4 @@ Al terminar cada intervención que cambie el proyecto:
 5. Si surge un impedimento, consignar el dato o acción necesarios para resolverlo. No prometer ejecución de fondo sin una tarea activa verificable.
 6. Dejar una instrucción concreta de continuidad que no dependa de la memoria del chat. Una nueva conversación debe seguir ese punto, no reiniciar auditorías ni volver a pedir decisiones ya registradas.
 
-**Instrucción de continuidad vigente:** continuar en `audit/ic-validacion-clinica` sobre v0.102. La distribución del paso 3 está aprobada e implementada. Confirmar los checks de la revisión actual y revisar la pantalla con el titular; terminar los requisitos funcionales pendientes del asistente terapéutico. No repetir el diseño ni trasladar la complejidad del motor al médico. No tocar otras pantallas aprobadas, no fusionar ni publicar. Actualizar README al finalizar cada bloque.
+**Instrucción de continuidad vigente:** continuar en `audit/ic-validacion-clinica` sobre v0.103. Distribución aprobada y v0.102 verificada; planificación temporal de transición a ARNI integrada. Confirmar los checks de v0.103; continuar con aclaramiento, analítica y ajustes específicos dentro del motor y contexto de cada medicamento. No repetir el diseño ni auditorías generales; no tocar otras pantallas aprobadas, no fusionar ni publicar. Actualizar README al finalizar cada bloque.
