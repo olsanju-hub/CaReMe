@@ -67,7 +67,7 @@ try{
    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'Medicación sin desbordamiento horizontal');
    await page.screenshot({path:'qa-results/'+name+'-therapy-step2-filled.png',fullPage:true});
    await page.locator('[data-action="therapy-proposal"]').click();await page.getByRole('heading',{name:'Propuesta de tratamiento',exact:true}).waitFor();await page.getByRole('heading',{name:'Revisión necesaria antes de proponer cambios'}).waitFor();assert.equal(await page.locator('.proposal-action').count(),0);
-   await page.locator('[data-action="therapy-medication"]').click();await page.getByRole('heading',{name:'Medicación actual',exact:true}).waitFor();
+   await page.getByRole('button',{name:'Revisar medicación ›',exact:true}).click();await page.getByRole('heading',{name:'Medicación actual',exact:true}).waitFor();
    assert.match(await panel('extra-1').innerText(),/24\/26/);assert.match(await panel('extra-2').innerText(),/6,25/);assert.equal(await page.locator('[data-med-confirm]').isChecked(),true);
    await page.locator('[data-action="therapy-first"]').click();await page.getByRole('heading',{name:'Asistente terapéutico',exact:true}).waitFor();
    assert.equal(await page.locator('[data-therapy-input="sbp"]').inputValue(),'120');assert.equal(await page.locator('[data-therapy-confirm]').isChecked(),true);
