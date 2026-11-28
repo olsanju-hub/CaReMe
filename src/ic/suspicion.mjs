@@ -679,10 +679,17 @@ export const MEDICATION_GROUPS=[
 export const MEDICATION_FREQUENCIES=[['24','Cada 24 h'],['12','Cada 12 h'],['8','Cada 8 h'],['48','Días alternos'],['other','Otra pauta']];
 export const MEDICATION_ABSENCE_REASONS=[['unknown','Sin precisar'],['notStarted','No iniciado'],['intolerance','Intolerancia previa'],['contraindication','Contraindicación referida'],['notIndicated','No indicado según valoración previa'],['other','Otro motivo']];
 export const MEDICATION_TOLERANCE=[['unknown','Sin valorar'],['well','Sin problemas referidos'],['problem','Problemas de tolerancia']];
+const INTOLERANCE_LABELS={cough:'Tos persistente',angioedema:'Sospecha de angioedema actual',gynecomastia:'Ginecomastia o dolor mamario',brady:'Bradicardia sintomática',hypotension:'Hipotensión sintomática',congestion:'Empeoramiento de congestión',dehydration:'Hipovolemia o deshidratación',ketoacidosis:'Sospecha de cetoacidosis actual',acuteIllness:'Cirugía mayor/enfermedad aguda grave',other:'Otro problema'};
+export function medicationProblemOptions(row){
+ const family=medicationGroupFor(row);
+ const list={raas:['cough','angioedema','hypotension'],bb:['brady','hypotension','congestion'],mra:row.drug==='Espironolactona'?['gynecomastia','dehydration']:['dehydration'],sglt2:['dehydration','ketoacidosis','acuteIllness'],diuretic:['dehydration','hypotension','congestion']}[family]||[];
+ return [['unknown','Sin precisar'],...[...list,'other'].map(k=>[k,INTOLERANCE_LABELS[k]])];
+}
+
 export const MEDICATION_INDICATIONS=[['unknown','Sin precisar'],['hf','IC'],['hf40','IC con FEVI ≥40%'],['ckd-dm2','ERC-DM2'],['other','Otra indicación']];
 const medicationState=ctx=>({groups:{},additional:[],reviewed:false,nextId:1,...ctx.medicationAssessment});
 const medicationCatalog=MEDICATION_GROUPS.flatMap(g=>g[2]);
-const newMedication=(drug='unknown')=>({drug,name:'',dose:'',dose2:'',frequency:'',customFrequency:'',reason:'unknown',tolerance:'unknown',note:'',otherClass:'unknown',product:'',indication:'unknown',doseDays:'',initialEgfr:'',priorEgfr:''});
+const newMedication=(drug='unknown')=>({drug,name:'',dose:'',dose2:'',frequency:'',customFrequency:'',reason:'unknown',tolerance:'unknown',problem:'unknown',note:'',otherClass:'unknown',product:'',indication:'unknown',doseDays:'',initialEgfr:'',priorEgfr:''});
 const normalizeMedication=s=>String(s??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/\s*\/\s*/g,'/').replace(/\s+/g,' ').trim();
 const namedMedication=m=>m.drug==='other'?m.name:m.drug;
 const medicationGroupFor=m=>MEDICATION_GROUPS.find(g=>g[2].some(x=>normalizeMedication(x)===normalizeMedication(namedMedication(m))))?.[0]??null;
@@ -700,6 +707,8 @@ export function setMedicationField(ctx,id,key,raw){
    if(old.drug!=='none'||!MEDICATION_ABSENCE_REASONS.some(x=>x[0]===raw))return ctx;
   }else if(key==='tolerance'){
    if(['none','unknown'].includes(old.drug)||!MEDICATION_TOLERANCE.some(x=>x[0]===raw))return ctx;
+  }else if(key==='problem'){
+   if(old.tolerance!=='problem'||!medicationProblemOptions(old).some(x=>x[0]===raw))return ctx;
   }else if(key==='otherClass'){
    if(old.drug!=='other'||!['unknown','outside'].includes(raw)||raw==='outside'&&interactionFamilies(old).length)return ctx;
   }else if(key==='indication'){
@@ -721,6 +730,7 @@ export function setMedicationField(ctx,id,key,raw){
   if(['dose','dose2','frequency','customFrequency'].includes(key))m.doseDays='';
   if(key==='name')m.otherClass='unknown';
   if(key==='reason'&&raw==='unknown'||key==='tolerance'&&raw!=='problem')m.note='';
+  if(key==='tolerance'&&raw!=='problem')m.problem='unknown';
  }
  const groups=group?{...a.groups,[id]:m}:a.groups;
  const additional=group?a.additional:a.additional.map((x,i)=>i===index?m:x);
@@ -909,6 +919,10 @@ export function medicationSafety(ctx){
  const m=medicationSummary(ctx),d=treatmentSafetyData(ctx),alerts=[];
  const add=(id,level,title,text,source,rows=[])=>alerts.push({id,level,title,text,source,rows:[...new Set(rows)]});
  const entries=m.active.map(row=>({row,drug:knownDrug(row)})),has=drug=>entries.some(x=>x.drug===drug);
+ for(const {row} of entries){
+  const advice=medicationProblemReference(row,ctx);
+  if(advice)add('TOL-'+row.id,advice.level,advice.title,advice.detail,advice.source,[row.id]);
+ }
  const family=id=>entries.filter(x=>interactionFamilies(x.row).includes(id));
  const ids=xs=>xs.map(x=>x.row.id);
  const arni=family('arni'),ieca=family('ieca'),ara=family('ara'),mra=family('mra');
@@ -1170,6 +1184,24 @@ export function arniTransitionReference({from,to,elapsedHours,overlap,angioedema
 }
 const sglt2Interruption='Ante sospecha/diagnóstico de cetoacidosis, interrumpir y evaluar de inmediato; no reiniciar tras CAD salvo desencadenante identificado y resuelto. En cirugía mayor o enfermedad aguda grave hospitalizada, interrupción temporal, cetonas preferentemente en sangre y reinicio solo cuando sean normales y el paciente esté estable. La duración de la interrupción no basta.';
 
+// Targeted problem solving; source ESC S4–S9 or referenced CIMA. Does not
+// order withdrawal, substitution or restart. Only problems explicitly recorded.
+export function medicationProblemReference(row,ctx){
+ if(row?.tolerance!=='problem'||!medicationProblemOptions(row).some(x=>x[0]===row.problem)||row.problem==='unknown'||row.problem==='other')return null;
+ const drug=row.drug,problem=row.problem,d=treatmentSafetyData(ctx),source=refDrug(drug);
+ const make=(level,title,detail,urgent=false)=>({level,title,detail,source,urgent});
+ const guide=(title,detail)=>({...make('amber',title,detail),source:HF_GUIDE});
+ if(problem==='angioedema')return make('red','Sospecha de angioedema','Priorizar valoración urgente, especialmente vía aérea; revisar de inmediato el fármaco causal. No reintroducir IECA/ARNI sin resolver la contraindicación.',true);
+ if(problem==='ketoacidosis')return make('red','Sospecha de cetoacidosis','La ficha indica interrumpir iSGLT2 y evaluar urgentemente, incluso sin hiperglucemia marcada. No reiniciar tras CAD salvo desencadenante identificado y resuelto.',true);
+ if(problem==='acuteIllness')return make('amber','iSGLT2: valorar interrupción temporal','Cirugía mayor o enfermedad aguda grave hospitalizada: ficha indica interrupción y control de cetonas. Valorar reinicio solo cuando cetonas normales y estabilidad clínica; no por días transcurridos.');
+ if(problem==='cough')return guide('Tos con tratamiento SRAA','S4/S5: descartar congestión pulmonar y otras causas. Si tos limitante atribuida a IECA/ARNI, valorar sustitución por ARA-II sin solapamiento, según indicación. No presuponer causalidad.');
+ if(problem==='gynecomastia')return guide('Espironolactona: valorar alternativa','S8: si ginecomastia atribuible a espironolactona, valorar eplerenona o finerenona según FEVI, indicación, K/FG e interacciones. No combinar ARM.');
+ if(problem==='brady')return guide('Bradicardia sintomática con betabloqueante','S6: revisar gravedad y otros cronotropos, realizar ECG; valorar reducción si FC <50 y síntomas, con revisión clínica. Evitar retirada brusca salvo necesidad clínica.');
+ if(problem==='hypotension')return guide('Hipotensión sintomática','S4–S7: evaluar perfusión y causas; revisar otros vasodilatadores y, solo si no existe congestión, valorar disminuir diurético. Si inestable, prioridad urgente. No aplicar retirada automática.');
+ if(problem==='congestion')return guide('Congestión o empeoramiento durante tratamiento','S6/S7: valorar gravedad, estabilidad, adherencia, respuesta diurética y desencadenantes. No intensificar betabloqueante durante deterioro; determinar necesidad de valoración urgente.');
+ if(problem==='dehydration')return guide('Hipovolemia o deshidratación','S7–S9: comprobar volemia, PA, función renal y electrolitos; valorar ajuste diurético y otros fármacos según cuadro. En enfermedad aguda grave aplicar reglas específicas de interrupción de iSGLT2.');
+ return null;
+}
 const THERAPY_RISK_DEFINITIONS={
  pregnancy:'Embarazo, posibilidad de embarazo o lactancia',
  angioedema:'Antecedente de angioedema',
@@ -1225,6 +1257,7 @@ export function treatmentProposal(ctx){
   }else actions.push({kind,title,detail,check,source,...metadata});
  };
  if(r.urgent)urgent.push('La situación clínica registrada requiere valoración urgente.');
+ for(const row of m.active){const advice=medicationProblemReference(row,ctx);if(advice?.urgent)urgent.push(advice.title+': valoración urgente.');}
  if(ctx.treatmentAssessment?.risks?.ketoacidosis==='yes')urgent.push('Sospecha de cetoacidosis registrada: valoración urgente, no esperar a optimizar tratamiento.');
  if(Number.isFinite(potassium)&&potassium>=6)urgent.push('Potasio registrado ≥6 mmol/L: valoración clínica urgente, ECG y confirmación según contexto, aunque falte marcar la confirmación analítica; no esperar a optimizar tratamiento.');
  if(alerts.some(a=>a.level==='red'))blockers.push('Resolver las alertas rojas y comprobar la medicación real.');
