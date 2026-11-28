@@ -356,8 +356,8 @@ try{
     const direct=nyp.locator('[data-proposal-form="profile"]');
     for(const [k,v] of [['sbp','118'],['dbp','72'],['hr','76'],['egfr','65'],['potassium','4,3']]){const field=direct.locator('[name="'+k+'"]');if(await field.count())await field.fill(v);}
     await direct.locator('button[type="submit"]').click();
-    await nyp.locator('[data-proposal-confirm="labs"]').check();
-    await nyp.locator('[data-proposal-confirm="medication"]').check();
+    await nyp.locator('[data-proposal-confirm="labs"]').click();await nyp.locator('[data-proposal-confirm="labs"]').waitFor({state:'detached'});
+    await nyp.locator('[data-proposal-confirm="medication"]').click();await nyp.locator('[data-proposal-confirm="medication"]').waitFor({state:'detached'});
     assert.equal(await nyp.locator('.proposal-missing').count(),0);
     assert.equal(await nyp.getByRole('heading',{name:'Revisión necesaria antes de proponer cambios'}).count(),0);
     await nyp.screenshot({path:'qa-results/'+name+'-inline-proposal.png',fullPage:true});
@@ -396,7 +396,7 @@ try{
     await nyp.getByRole('heading',{name:'Propuesta de tratamiento',exact:true}).waitFor();
     const inlineMed=nyp.locator('[data-proposal-form="medication"][data-proposal-row="extra-1"]');
     await inlineMed.locator('[name="dose"]').fill('2,5');await inlineMed.locator('[name="frequency"]').selectOption('24');
-    await inlineMed.locator('button[type="submit"]').click();await nyp.locator('[data-proposal-confirm="medication"]').check();
+    await inlineMed.locator('button[type="submit"]').click();await nyp.locator('[data-proposal-confirm="medication"]').click();await nyp.locator('[data-proposal-confirm="medication"]').waitFor({state:'detached'});
     assert.equal(await nyp.locator('[data-proposal-form="medication"]').count(),0);
     const current=nyp.locator('[data-proposal-medication="extra-1"]');
     assert.match(await current.innerText(),/Bisoprolol/);assert.match(await current.innerText(),/2,5 mg \/ 24 h/);
