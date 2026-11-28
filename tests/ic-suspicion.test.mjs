@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {GROUPS,createClinicalContext,updateFinding,evaluateSuspicion,setGroupReviewed,isGroupReviewed,toggleFinding,setEvaluationReviewed,isEvaluationReviewed,diagnosticNext,diagnosticAction,setStudyResult,investigationPlan,interpretSuspicion,CLINICAL_DIMENSIONS,labPlan,setPeptide,interpretPeptide,peptideFactors,ECHO_FINDINGS,ECHO_NUMERIC,setEcho,interpretEcho,setStageAssessment,interpretStage,setPhenotypeAssessment,interpretPhenotype,NYHA_OPTIONS,setNyha,interpretNyha,SITUATION_QUESTIONS,setSituation,interpretSituation,classificationSummary,TREATMENT_VITALS,setTreatmentValue,confirmTreatmentLabs,treatmentSafetyData,MEDICATION_GROUPS,setMedicationField,addMedication,removeMedication,medicationSummary,confirmMedicationReview,MEDICATION_QUICK_DOSES,medicationEntryComplete,setMedicationQuickDose,MEDICATION_FAMILIES,medicationFamilyLabel,addNamedMedication,deleteRecordedMedication,medicationFrequencyOptions,medicationSafety,HF_MEDICATION_REFERENCE,treatmentProposal,HF_TITRATION_REFERENCE,betaBlockerReferenceStep,armPotassiumReference,echoSupportCriteria,confirmExternalMedicationReview,setAbsenceReason,raasMaintenanceReference,raasStepReference,arniTransitionReference,setTherapyRisk,candidateRiskScreen,medicationProblemReference,medicationProblemOptions} from '../src/ic/suspicion.mjs';
+import {GROUPS,createClinicalContext,updateFinding,evaluateSuspicion,setGroupReviewed,isGroupReviewed,toggleFinding,setEvaluationReviewed,isEvaluationReviewed,diagnosticNext,diagnosticAction,setStudyResult,investigationPlan,interpretSuspicion,CLINICAL_DIMENSIONS,labPlan,setPeptide,interpretPeptide,peptideFactors,ECHO_FINDINGS,ECHO_NUMERIC,setEcho,interpretEcho,setStageAssessment,interpretStage,setPhenotypeAssessment,interpretPhenotype,NYHA_OPTIONS,setNyha,interpretNyha,SITUATION_QUESTIONS,setSituation,interpretSituation,classificationSummary,TREATMENT_VITALS,setTreatmentValue,confirmTreatmentLabs,treatmentSafetyData,MEDICATION_GROUPS,setMedicationField,addMedication,removeMedication,medicationSummary,confirmMedicationReview,MEDICATION_QUICK_DOSES,medicationEntryComplete,setMedicationQuickDose,MEDICATION_FAMILIES,medicationFamilyLabel,addNamedMedication,deleteRecordedMedication,medicationFrequencyOptions,medicationSafety,HF_MEDICATION_REFERENCE,treatmentProposal,HF_TITRATION_REFERENCE,betaBlockerReferenceStep,armPotassiumReference,echoSupportCriteria,confirmExternalMedicationReview,setAbsenceReason,raasMaintenanceReference,raasStepReference,arniTransitionReference,setTherapyRisk,candidateRiskScreen,medicationProblemReference,medicationProblemOptions,setArniTransitionField,arniTransitionPlanReference} from '../src/ic/suspicion.mjs';
 const allNo=()=>({findings:{...Object.fromEntries(GROUPS.flatMap(g=>g.fields.map(([id])=>[id,'no']))),vitalsReviewed:'yes'}});
 const result=(c)=>evaluateSuspicion(c).id;
 test('Datos ausentes no son negativos',()=>assert.equal(result(createClinicalContext()),'IC-SUS-03'));
@@ -684,4 +684,33 @@ test('Presentación de propuesta: alternativas iSGLT2 y acciones de medicación 
  assert.equal(alternatives.length,2);
  assert.ok(alternatives.every(a=>a.kind==='review'&&a.detail.includes('No proponer inicio')));
  c=setTreatmentValue(c,'potassium','6');assert.equal(treatmentProposal(c).actions.length,0);
+});
+
+test('Plan de transición IECA/ARNI: tiempos absolutos, límite exacto, riesgos y revisión, sin modificar medicación',()=>{
+ let c=proposalFixture();c=addNamedMedication(c,'Enalapril');c=setMedicationQuickDose(c,'extra-1','5');c=setMedicationField(c,'extra-1','frequency','12');c=confirmMedicationReview(c,true);
+ const get=ctx=>treatmentProposal(ctx).actions.find(a=>a.presentation?.transition);
+ const fields=ctx=>get(ctx).presentation.transition;
+ assert.equal(fields(c).status,'missing');
+ const original=JSON.stringify(medicationSummary(c).active);
+ c=setArniTransitionField(c,'extra-1','lastDose','2026-11-28T07:00:00.000Z');
+ assert.equal(fields(c).limit,'2026-11-29T19:00:00.000Z');
+ c=setArniTransitionField(c,'extra-1','firstDose','2026-11-29T18:59:00.000Z');assert.equal(fields(c).status,'blocked');
+ c=setArniTransitionField(c,'extra-1','firstDose','2026-11-29T19:00:00.000Z');assert.equal(fields(c).elapsed,36);assert.equal(fields(c).status,'missing');
+ c=setArniTransitionField(c,'extra-1','noOverlap','no');assert.equal(fields(c).status,'blocked');
+ c=setArniTransitionField(c,'extra-1','noOverlap','yes');
+ for(const k of ['pregnancy','angioedema','bilateralRas','severeLiver'])c=setTherapyRisk(c,k,'no');
+ assert.equal(fields(c).status,'reference');assert.equal(get(c).kind,'review');assert.equal(JSON.stringify(medicationSummary(c).active),original);
+ c=setTherapyRisk(c,'angioedema','yes');assert.equal(fields(c).status,'blocked');assert.equal(get(c).kind,'review');
+ c=setTherapyRisk(c,'angioedema','no');c=setArniTransitionField(c,'extra-1','firstDose','2026-02-31T19:00:00.000Z');assert.equal(fields(c).status,'missing');
+ c=setArniTransitionField(c,'extra-1','firstDose','2026-11-29T19:00:00.000Z');
+ c=setMedicationField(c,'extra-1','dose','10');c=confirmMedicationReview(c,true);assert.equal(fields(c).data.lastDose,'');assert.equal(fields(c).status,'missing');
+});
+test('Plan ARA-II/ARNI: no imponer 36 h, verificar orden y evitar solapamiento',()=>{
+ let c=proposalFixture();c=addNamedMedication(c,'Candesartán');c=setMedicationQuickDose(c,'extra-1','8');c=setMedicationField(c,'extra-1','frequency','24');c=confirmMedicationReview(c,true);
+ const fields=ctx=>treatmentProposal(ctx).actions.find(a=>a.presentation?.transition).presentation.transition;
+ for(const k of ['pregnancy','angioedema','bilateralRas','severeLiver'])c=setTherapyRisk(c,k,'no');
+ c=setArniTransitionField(c,'extra-1','lastDose','2026-11-28T07:00:00.000Z');c=setArniTransitionField(c,'extra-1','firstDose','2026-11-28T19:00:00.000Z');c=setArniTransitionField(c,'extra-1','noOverlap','yes');
+ assert.equal(fields(c).limit,null);assert.equal(fields(c).elapsed,12);assert.equal(fields(c).status,'reference');
+ c=setArniTransitionField(c,'extra-1','firstDose','2026-11-28T07:00:00.000Z');assert.equal(fields(c).status,'blocked');
+ c=setTreatmentValue(c,'sbp','99');assert.equal(fields(c).status,'blocked');
 });
