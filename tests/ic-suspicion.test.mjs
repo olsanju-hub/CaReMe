@@ -668,3 +668,18 @@ test('P5: orientar intolerancia por problema concreto sin automatizar sustituci�
  assert.equal(treatmentProposal(d).status,'urgent');assert.equal(treatmentProposal(d).actions.length,0);
  assert.equal(setMedicationField(d,'extra-1','problem','gynecomastia'),d);
 });
+
+test('Presentación de propuesta: alternativas iSGLT2 y acciones de medicación registradas sin cambiar decisión clínica',()=>{
+ let c=proposalFixture();c=addNamedMedication(c,'Sacubitrilo/valsartán');c=setMedicationQuickDose(c,'extra-1','24/26');c=setMedicationField(c,'extra-1','frequency','12');
+ c=addNamedMedication(c,'Bisoprolol');c=setMedicationQuickDose(c,'extra-2','2,5');c=setMedicationField(c,'extra-2','frequency','24');c=confirmMedicationReview(c,true);
+ let p=treatmentProposal(c);
+ assert.equal(p.status,'conditional');
+ assert.equal(p.actions.filter(a=>a.presentation.alternativeGroup==='sglt2').length,2);
+ assert.ok(p.actions.some(a=>a.kind==='review'&&a.presentation.section==='optimize'&&a.presentation.medicationId==='extra-1'));
+ assert.ok(p.actions.some(a=>a.kind==='review'&&a.presentation.section==='optimize'&&a.presentation.medicationId==='extra-2'));
+ c=setTherapyRisk(c,'type1','yes');p=treatmentProposal(c);
+ const alternatives=p.actions.filter(a=>a.presentation.alternativeGroup==='sglt2');
+ assert.equal(alternatives.length,2);
+ assert.ok(alternatives.every(a=>a.kind==='review'&&a.detail.includes('No proponer inicio')));
+ c=setTreatmentValue(c,'potassium','6');assert.equal(treatmentProposal(c).actions.length,0);
+});
