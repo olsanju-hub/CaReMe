@@ -1,9 +1,9 @@
 name: Auditoría de navegador
 on:
   push:
-    branches: [feat/prototipo-interfaz]
+    branches: [feat/prototipo-interfaz, audit/ic-validacion-clinica]
   pull_request:
-    branches: [main]
+    branches: [main, feat/prototipo-interfaz]
 permissions:
   contents: read
 jobs:

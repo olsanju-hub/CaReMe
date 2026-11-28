@@ -125,7 +125,7 @@ export function setStudyResult(ctx,id,raw){
  }
  const results={...ctx.results};
  if(value===null)delete results[id];else results[id]={value,unit:lab?.[2]??null,recordedAt:new Date().toISOString(),source:'Introducción manual; fecha de muestra no registrada'};
- return {...ctx,results,updatedAt:new Date().toISOString()};
+ return {...ctx,results,...(['egfr','potassium','creatinine'].includes(id)?{renalAssessment:{...ctx.renalAssessment,confirmation:null,...(id==='creatinine'?{crcl:null,crclDate:null}:{})}}:{}),updatedAt:new Date().toISOString()};
 }
 export function investigationPlan(ctx){
  const f=ctx?.findings??{},step=diagnosticNext(ctx);
@@ -271,7 +271,7 @@ export function peptideFactors(ctx){
   obesity:value('obesity',f.obesity),
   af:value('af',ctx?.results?.ecg?.value==='af'?'yes':f.af==='yes'?'unknown':f.af),
   renal:value('renal',f.ckd==='yes'||(Number.isFinite(egfr)&&egfr<60)?'yes':undefined),
-  arni:value('arni','unknown')
+  arni:value('arni',medicationSummary(ctx).active.some(m=>knownDrug(m)==='Sacubitrilo/valsartán')?'yes':'unknown')
  };
 }
 export function interpretPeptide(ctx){
@@ -279,26 +279,30 @@ export function interpretPeptide(ctx){
  const factors=peptideFactors(ctx),s=interpretSuspicion(ctx),known=ctx?.findings?.knownHF==='yes';
  const urgent=['critical','urgent'].includes(s.safety.level)||context==='acute';
  const low=context==='acute'?(kind==='nt'?300:100):context==='outpatient'?(kind==='nt'?125:35):null;
- // In 2026 prose outpatient 50–75 and >75; the cited cohort uses 50–74 and >=75.
- // At exactly 75 years, preserve the interval 250–499 as indeterminate, no false exclusion.
+ // ESC 2026, Fig. 4 (p. 23): explicit outpatient age bands <50, 50–74, >=75.
+ // In the lower/indeterminate bands, persistent clinical suspicion still warrants echo.
  const high=kind==='nt'&&Number.isFinite(age)?context==='acute'?(age<50?450:age<75?900:1800):context==='outpatient'?(age<50?125:age<75?250:500):null:null;
  const notes=[];
  if(factors.obesity==='yes')notes.push('Obesidad: puede reducir la concentración; un resultado bajo no excluye IC si persiste sospecha.');
  if(factors.af==='yes')notes.push('Fibrilación auricular: puede elevar el resultado sin que exista IC.');
  if(ctx?.findings?.af==='yes'&&factors.af==='unknown')notes.push('Arritmia previa registrada: precisar si existe fibrilación auricular.');
  if(factors.renal==='yes')notes.push('Disfunción renal: puede elevar los péptidos; no invalida el resultado.');
- if(factors.arni==='yes'&&kind==='bnp')notes.push('Sacubitrilo/valsartán: puede modificar BNP; NT-proBNP resulta más apropiado para seguimiento.');
+ if(factors.arni==='yes'&&kind==='bnp')notes.push('Sacubitrilo/valsartán puede elevar BNP; NT-proBNP resulta más apropiado para seguimiento.');
+ const recorded=medicationSummary(ctx).active.map(knownDrug);
+ if(recorded.some(drug=>drug&&MEDICATION_FAMILIES.some(([id,,drugs])=>['arni','ieca','ara','bb','mra','sglt2'].includes(id)&&drugs.includes(drug))))notes.push('Tratamiento de IC registrado: los fármacos modificadores del pronóstico pueden disminuir los péptidos. Revisar si ya estaban prescritos en el momento de la muestra (tabla 9).');
+ if(p.arni==='no'&&recorded.includes('Sacubitrilo/valsartán'))notes.push('Discordancia con medicación registrada: confirmar si tomaba sacubitrilo/valsartán al obtener la muestra.');
  if(Object.values(factors).includes('unknown'))notes.push('Hay factores modificadores sin evaluar.');
  if(known)notes.push('IC previamente conocida: el péptido no confirma ni revoca el diagnóstico previo.');
  const source={doi:SOURCE.doi,sections:'Diagnóstico de IC crónica, péptidos natriuréticos; figura 11 (IC descompensada)',version:'0.1'};
  let id='NP-00',title='Datos pendientes',text='Introduce el contexto asistencial y el resultado.';
  if(low!==null&&Number.isFinite(v)){
   if(v<low){id='NP-01';title='Por debajo del umbral de exclusión';text='Disminuye la sospecha, pero no descarta IC de forma aislada. Si la clínica persiste o hay factores que reducen el péptido, valorar ecocardiografía.';}
-  else if(kind==='nt'&&context==='outpatient'&&v>2000){id='NP-04';title='NT-proBNP muy elevado';text='Apoya la sospecha y justifica valoración especializada preferente si corresponde al cuadro clínico.';}
+  else if(kind==='nt'&&context==='outpatient'&&v>2000){id='NP-04';title='NT-proBNP muy elevado';text='Si existe sospecha de IC, priorizar ecocardiografía y valoración especializada, preferiblemente en 2 semanas según la figura 4 de ESC 2026. La inestabilidad clínica requiere valoración urgente sin esperar ese plazo.';}
   else if(kind==='nt'&&context==='acute'&&v>5000){id='NP-05';title='NT-proBNP muy elevado en contexto agudo';text='Marcador de riesgo elevado. Priorizar valoración hospitalaria urgente; no demorar por pruebas programadas.';}
+  else if(kind==='bnp'&&context==='outpatient'&&v>=35){id='NP-03';title='BNP que apoya la sospecha de IC';text='Alcanza el umbral orientativo de la figura 4; si existe sospecha clínica, realizar ecocardiografía y valoración especializada. No confirma IC de forma aislada.';}
   else if(high!==null&&(context==='acute'?v>high:v>=high)){id='NP-03';title='Resultado que apoya la sospecha de IC';text='Supera el umbral orientativo por edad. Requiere correlación clínica y confirmación objetiva.';}
   else {id='NP-02';title='Resultado no excluyente';text='No permite descartar IC ni confirmarla. Integrar clínica, factores modificadores y ecocardiografía cuando proceda.';}
-  if(kind==='nt'&&context==='outpatient'&&age===75&&v>=250&&v<500){notes.push('A los 75 años existe discrepancia entre la redacción de la ESC 2026 y el intervalo del estudio citado. Se mantiene una zona no concluyente.');}
+  if(kind==='nt'&&context==='outpatient'&&age===75&&v>=250&&v<500){notes.push('A los 75 años la figura 4 utiliza el umbral orientativo de 500 pg/mL. Un resultado inferior no excluye IC si persiste sospecha.');}
   if(kind==='nt'&&!Number.isFinite(age)&&v>=low)notes.push('Falta edad para aplicar el umbral orientativo ajustado.');
  }
  if(known&&id==='NP-01'){title='Valor bajo en IC conocida';text='No excluye ni revoca la IC previa. Interpretar según situación basal, tratamiento y evolución.';}
@@ -317,11 +321,15 @@ export const ECHO_NUMERIC=[
  ['ef','FEVI actual','%'],['priorEf','FEVI previa','%'],
  ['ee','E/e′ medio',''],['lavi','Volumen auricular izquierdo indexado','mL/m²'],
  ['lvmi','Masa ventricular izquierda indexada','g/m²'],['tapse','TAPSE','mm'],
- ['trv','Velocidad máxima de regurgitación tricuspídea','m/s']
+ ['trv','Velocidad máxima de regurgitación tricuspídea','m/s'],['rwt','Grosor relativo de pared',''],['pasp','Presión arterial pulmonar sistólica estimada','mmHg']
 ];
 export function setEcho(ctx,key,raw){
  const next={...(ctx.echo||{})};
- if(ECHO_FINDINGS.some(x=>x[0]===key)||key==='priorReduced'){
+ if(['sex','rhythm'].includes(key)){
+  const allowed=key==='sex'?['female','male','unknown']:['sinus','af','unknown'];
+  if(!allowed.includes(raw))return ctx;
+  next[key]=raw;
+ }else if(ECHO_FINDINGS.some(x=>x[0]===key)||key==='priorReduced'){
   if(!['yes','no','unknown'].includes(raw))return ctx;
   next[key]=raw;
  }else if(ECHO_NUMERIC.some(x=>x[0]===key)){
@@ -331,6 +339,27 @@ export function setEcho(ctx,key,raw){
   else next[key]=Number(s);
  }else return ctx;
  return {...ctx,echo:next,updatedAt:new Date().toISOString()};
+}
+// ESC 2026 Table 10, final edition p. 5370. Quantitative supportive criteria,
+// not a diagnostic score. Sex/rhythm refer to the measurement context and are never inferred.
+export function echoSupportCriteria(ctx){
+ const e=ctx.echo||{};
+ const valid=v=>Number.isFinite(v)&&v>0;
+ const metrics=[];
+ const add=(id,label,state,detail)=>metrics.push({id,label,state,detail});
+ if(valid(e.lvmi)){
+  const threshold=e.sex==='female'?95:e.sex==='male'?115:null;
+  add('lvmi','Masa VI indexada',threshold===null?'unknown':e.lvmi>=threshold?'support':'not-reached',threshold===null?'Falta sexo de referencia para interpretar la masa indexada.':'Umbral de tabla 10: ≥'+threshold+' g/m².');
+ }
+ if(valid(e.rwt))add('rwt','Grosor relativo de pared',e.rwt>0.42?'support':'not-reached','Umbral orientativo >0,42.');
+ if(valid(e.lavi)){
+  const threshold=e.rhythm==='sinus'?34:e.rhythm==='af'?40:null;
+  add('lavi','Volumen auricular izquierdo indexado',threshold===null?'unknown':e.lavi>threshold?'support':'not-reached',threshold===null?'Falta ritmo durante la medición.':'Umbral de tabla 10: >'+threshold+' mL/m².');
+ }
+ if(valid(e.ee))add('ee','E/e′ medio en reposo',e.ee>9?'support':'not-reached',e.ee>=15?'≥15: mayor especificidad, menor sensibilidad.':'Umbral orientativo >9; requiere contexto.');
+ if(valid(e.trv))add('trv','Velocidad de regurgitación tricuspídea',e.trv>2.8?'support':'not-reached','Umbral en reposo >2,8 m/s.');
+ if(valid(e.pasp))add('pasp','Presión pulmonar sistólica estimada',e.pasp>35?'support':'not-reached','Umbral >35 mmHg; no determina etiología por sí solo.');
+ return {metrics,source:{doi:SOURCE.doi,sections:'5.2.2, tabla 10, p.5370'},diagnosisEstablished:false};
 }
 export function interpretEcho(ctx){
  const e=ctx.echo||{},s=interpretSuspicion(ctx),np=interpretPeptide(ctx),f=ctx.findings||{};
@@ -356,7 +385,10 @@ export function interpretEcho(ctx){
  if(known&&ef!==null&&prior!==null&&ef>prior&&prior<50&&ef<50)notes.push('FEVI en ascenso, todavía inferior al 50%. Valorar trayectoria, sin asignar automáticamente IC con FEVI mejorada.');
  if(positive.length)notes.push('Los hallazgos ecocardiográficos deben relacionarse con los síntomas y la etiología; no todos demuestran presiones de llenado elevadas.');
  if(unknown.length)notes.push('Hay '+unknown.length+' hallazgos no evaluados o no descritos; no equivalen a normales.');
- if(ECHO_NUMERIC.slice(2).some(([id])=>Number.isFinite(e[id])))notes.push('Parámetros cuantitativos registrados: interpretar con el informe completo; sin umbrales automáticos en esta versión.');
+ const support=echoSupportCriteria(ctx);
+ for(const m of support.metrics)notes.push(m.label+': '+(m.state==='support'?'alcanza criterio de apoyo. ':m.state==='not-reached'?'no alcanza este umbral; no excluye IC. ':'interpretación pendiente. ')+m.detail);
+ if(support.metrics.length)notes.push('Tabla 10 ESC 2026: estos hallazgos son datos de apoyo a valorar conjuntamente, no una puntuación diagnóstica. No sustituyen la atribución clínica ni establecen IC-FEp automáticamente.');
+ if(Number.isFinite(e.tapse))notes.push('TAPSE registrado: interpretar función ventricular derecha con el informe completo; no es criterio de la tabla 10.');
  if(npRecorded&&np.id==='NP-01')notes.push('Péptido por debajo del umbral orientativo: no excluye IC aisladamente.');
  const npLabel=npRecorded?(np.kind==='nt'?'NT-proBNP':'BNP')+' '+np.value+' pg/mL · '+np.title:'Péptidos pendientes de interpretación.';
  let integratedTitle,integrated;
@@ -366,7 +398,7 @@ export function interpretEcho(ctx){
  else if(clinical){integratedTitle='Sospecha clínica pendiente de confirmación';integrated='La FEVI preservada o los datos ecocardiográficos ausentes no excluyen IC. Completar estudio si persiste sospecha.';}
  else {integratedTitle='Información insuficiente para concluir IC';integrated='Revisar antecedentes, síntomas y pruebas disponibles; no asumir normalidad ni excluir IC.';}
  const urgent=np.urgent;
- return {ef,prior,title,phenotype,trajectory,positive,unknown,notes,integratedTitle,integrated,npLabel,clinicalTitle:s.title,safety:s.safety,urgent,next:urgent?'descompensada':'clasificacion',source:{doi:SOURCE.doi,sections:'Clasificación por FEVI y diagnóstico de IC; adaptación educativa',version:'0.1'}};
+ return {ef,prior,title,phenotype,trajectory,positive,unknown,notes,support,integratedTitle,integrated,npLabel,clinicalTitle:s.title,safety:s.safety,urgent,next:urgent?'descompensada':'clasificacion',source:{doi:SOURCE.doi,sections:'Clasificación por FEVI y diagnóstico de IC; adaptación educativa',version:'0.1'}};
 }
 
 /* Staging: Second Universal Definition 2026, Table 1; ESC 2026 §3.3.
@@ -443,25 +475,24 @@ export function interpretPhenotype(ctx){
  const ef=r.ef,prior=r.prior,delta=ef!==null&&prior!==null?Math.round((ef-prior)*1000000)/1000000:null;
  const priorReduced=prior!==null&&prior<50||e.priorReduced==='yes';
  const historicalNo=e.priorReduced==='no'&&!priorReduced;
- const conflict=e.priorReduced==='no'&&priorReduced||st.contradictions.length>0;
+ const conflict=e.priorReduced==='no'&&(priorReduced||a.priorClinical==='yes')||st.contradictions.length>0;
  const clinicalHF=['C','D'].includes(st.stage)&&!conflict;
  const current=ef===null?'pending':ef<50?'reduced':'preserved';
  const titleCurrent=ef===null?'FEVI pendiente':ef<50?'FEVI reducida':'FEVI preservada';
  const priorClinical=a.priorClinical||'unknown',diastolic=a.diastolicEvidence||'unknown';
- // Universal 2026 trajectory section describes a >=10-point gain to >40%;
- // the general phenotype definition is not a rigid numeric threshold.
+ // ESC 2026 §3.3.1 p.16: absolute gain >=10 percentage points, current LVEF >40%; clinical HF history required.
  const trajectoryPattern=delta!==null&&prior<50&&delta>=10&&ef>40;
  const improved=clinicalHF&&priorClinical==='yes'&&trajectoryPattern&&!conflict;
  const notes=[];
  if(delta!==null)notes.push('FEVI previa '+prior+'%; actual '+ef+'%; variación '+(delta>0?'+':'')+delta+' puntos porcentuales.');
  if(priorReduced)notes.push('Antecedente de FEVI inferior al 50%; no corresponde etiquetar IC-FEp de novo.');
- if(trajectoryPattern)notes.push('La variación cumple el patrón cuantitativo descrito en la sección de trayectorias del consenso universal 2026. Requiere contexto de IC clínica previa con FEVI reducida.');
+ if(trajectoryPattern)notes.push('La variación cumple el patrón cuantitativo de FEVI mejorada de ESC 2026, apartado 3.3.1. Requiere contexto de IC clínica previa con FEVI reducida.');
  if(priorClinical==='yes'&&!priorReduced)notes.push('Antecedente de IC con FEVI reducida referido; completar las mediciones previas.');
  if(improved)notes.push('La mejoría de FEVI no equivale a resolución de la IC ni justifica retirar tratamiento por sí sola.');
  if(ef!==null&&ef>=50&&!priorReduced&&!historicalNo)notes.push('No consta una revisión suficiente de FEVI histórica; no asignar IC-FEp de novo.');
  if(ef!==null&&ef>=50&&diastolic!=='yes')notes.push('Precisar evidencia objetiva de disfunción diastólica o presiones de llenado elevadas y revisar los péptidos. No se diagnostica IC-FEp por FEVI aislada.');
  if(st.contradictions.length)notes.push(...st.contradictions);
- if(e.priorReduced==='no'&&priorReduced)notes.push('Discordancia entre FEVI histórica y respuesta sobre reducción previa.');
+ if(e.priorReduced==='no'&&(priorReduced||priorClinical==='yes'))notes.push('Discordancia entre FEVI histórica, IC previa con FEVI reducida y respuesta sobre reducción previa.');
  let title=titleCurrent,short=titleCurrent,text='Clasificación pendiente de FEVI actual.',code='pending';
  if(conflict){title='Datos discordantes';short='Revisar datos';text='Revisar antecedentes y mediciones antes de asignar el fenotipo.';}
  else if(ef!==null&&!clinicalHF){
@@ -473,7 +504,7 @@ export function interpretPhenotype(ctx){
   else{code='preserved-pending';title='FEVI preservada; fenotipo pendiente';short='Fenotipo pendiente';text='Aclarar FEVI histórica y evidencia objetiva compatible con IC-FEp antes de asignar el fenotipo.';}
  }
  const trajectory=improved?'IC con FEVI mejorada':trajectoryPattern?'Mejoría cuantitativa; atribución pendiente':delta===null?'Evolución pendiente':delta>0?'FEVI en ascenso':delta<0?'FEVI en descenso':'FEVI sin cambio registrado';
- return {ef,prior,delta,current,clinicalHF,priorReduced,historicalNo,conflict,code,title,short,text,trajectory,trajectoryPattern,improved,notes,urgent:r.urgent,safety:r.safety,stage:st.stage,source:{doi:SOURCE.doi,sections:'5.2.1–5.2.2; consenso universal 2026, trayectorias',version:'0.1'}};
+ return {ef,prior,delta,current,clinicalHF,priorReduced,historicalNo,conflict,code,title,short,text,trajectory,trajectoryPattern,improved,notes,urgent:r.urgent,safety:r.safety,stage:st.stage,source:{doi:SOURCE.doi,sections:'3.3.1; 5.2.1–5.2.2; tabla 10',version:'0.1'}};
 }
 
 /* NYHA: clinician-selected limitation attributable to established clinical HF.
@@ -482,7 +513,7 @@ export const NYHA_OPTIONS=[
  ['I','Sin limitación','La actividad física habitual no provoca síntomas de IC.'],
  ['II','Limitación leve','Sin síntomas en reposo; la actividad habitual provoca síntomas de IC.'],
  ['III','Limitación marcada','Sin síntomas en reposo; esfuerzos menores de lo habitual provocan síntomas de IC.'],
- ['IV','Síntomas en reposo','Los síntomas están presentes en reposo y cualquier esfuerzo aumenta el malestar.'],
+ ['IV','Limitación con cualquier actividad','No puede realizar actividad física sin malestar atribuible a IC. Puede presentar síntomas en reposo; cualquier actividad aumenta el malestar.'],
  ['unknown','No valorable','Información insuficiente o no es posible atribuir la limitación a IC.']
 ];
 export function setNyha(ctx,value){
@@ -602,7 +633,62 @@ export const TREATMENT_VITALS=[
 ];
 const treatmentLabs=['egfr','potassium'];
 function labSnapshot(ctx){
- return JSON.stringify(treatmentLabs.map(k=>[k,ctx.results?.[k]?.value??null,ctx.results?.[k]?.recordedAt??null]));
+ return JSON.stringify(treatmentLabs.map(k=>[k,ctx.results?.[k]?.value??null,ctx.results?.[k]?.recordedAt??null,ctx.results?.[k]?.sampleDate??null]));
+}
+function renalSnapshot(ctx){
+ return JSON.stringify([...treatmentLabs,'creatinine'].map(k=>[k,ctx.results?.[k]?.value??null,ctx.results?.[k]?.recordedAt??null,ctx.results?.[k]?.sampleDate??null]).concat([ctx.renalAssessment?.crcl??null,ctx.renalAssessment?.crclDate??null,ctx.renalAssessment?.stable??'unknown']));
+}
+function validSampleDate(raw,today){
+ if(typeof raw!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(raw)||raw<'1900-01-01'||raw>today)return false;
+ const d=new Date(raw+'T00:00:00Z');return Number.isFinite(d.getTime())&&d.toISOString().slice(0,10)===raw;
+}
+export function localClinicalDate(now=new Date()){
+ return now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
+}
+export function setRenalContext(ctx,key,raw,today=localClinicalDate()){
+ const a={...ctx.renalAssessment},results={...ctx.results};
+ if(['egfrDate','potassiumDate','creatinineDate'].includes(key)){
+  const lab=key.slice(0,-4),old=results[lab];if(!old)return ctx;
+  results[lab]={...old,sampleDate:validSampleDate(raw,today)?raw:null};
+ }else if(key==='crcl'){
+  const value=mgNumber(raw);a.crcl=Number.isFinite(value)&&value>=0?value:null;a.crclDate=null;
+ }else if(key==='crclDate')a.crclDate=Number.isFinite(a.crcl)&&validSampleDate(raw,today)?raw:null;
+ else if(key==='stable')a.stable=['yes','no'].includes(raw)?raw:'unknown';
+ else if(key==='creatinine'){
+  const s=String(raw??'').trim(),value=mgNumber(s);
+  // Invalid entries clear the dependent value rather than retaining stale data.
+  return setStudyResult(ctx,'creatinine',Number.isFinite(value)&&value>0?s:'');
+ }else return ctx;
+ return {...ctx,results,renalAssessment:{...a,confirmation:null},updatedAt:new Date().toISOString()};
+}
+export function confirmRenalContext(ctx,checked){
+ if(typeof checked!=='boolean')return ctx;
+ const a={...ctx.renalAssessment};
+ const complete=checked&&a.stable==='yes'&&treatmentLabs.every(k=>Number.isFinite(ctx.results?.[k]?.value)&&validSampleDate(ctx.results[k].sampleDate,localClinicalDate()));
+ a.confirmation=complete?renalSnapshot(ctx):null;
+ const next={...ctx,renalAssessment:a,updatedAt:new Date().toISOString()};
+ // The same explicit confirmation covers FG/K; no second checkbox needed here.
+ return complete?confirmTreatmentLabs(next,true):next;
+}
+export function renalContext(ctx,today=localClinicalDate()){
+ const a=ctx.renalAssessment||{},results=ctx.results||{};
+ const values=Object.fromEntries([...treatmentLabs,'creatinine'].map(k=>[k,results[k]?.value??null]));
+ const dates=Object.fromEntries([...treatmentLabs,'creatinine'].map(k=>[k,results[k]?.sampleDate??'']));
+ const dated=k=>Number.isFinite(values[k])&&validSampleDate(dates[k],today);
+ const confirmed=a.stable==='yes'&&a.confirmation===renalSnapshot(ctx);
+ const ageDays=k=>dated(k)?Math.round((Date.parse(today)-Date.parse(dates[k]))/86400000):null;
+ const crcl=Number.isFinite(a.crcl)&&a.crcl>=0?a.crcl:null;
+ const coreReady=confirmed&&dated('egfr')&&dated('potassium');
+ return {values,dates,stable:a.stable||'unknown',confirmed,coreReady,crcl,crclDate:a.crclDate||'',crclReady:coreReady&&crcl!==null&&validSampleDate(a.crclDate,today),creatinineReady:coreReady&&dated('creatinine')&&values.creatinine>0,days:Object.fromEntries([...treatmentLabs,'creatinine'].map(k=>[k,ageDays(k)]))};
+}
+// Conservative date linkage for adjustment, not an AKI diagnostic algorithm.
+// A baseline belongs to a specific regimen and must precede the current sample.
+export function renalTrendReference(row,ctx){
+ const r=renalContext(ctx),previous=mgNumber(row?.priorEgfr),previousCr=mgNumber(row?.priorCreatinine);
+ const fgDate=row?.priorEgfrDate||'',crDate=row?.priorCreatinineDate||'';
+ const comparableFg=r.coreReady&&Number.isFinite(previous)&&previous>0&&validSampleDate(fgDate,r.dates.egfr)&&fgDate<r.dates.egfr;
+ const comparableCr=r.creatinineReady&&Number.isFinite(previousCr)&&previousCr>0&&validSampleDate(crDate,r.dates.creatinine)&&crDate<r.dates.creatinine;
+ return {...r,previous,previousCr,fgDate,crDate,comparableFg,comparableCr,fgDrop:comparableFg?100*(previous-r.values.egfr)/previous:null,creatinineRise:comparableCr?100*(r.values.creatinine-previousCr)/previousCr:null};
 }
 export function setTreatmentValue(ctx,key,raw){
  if(!TREATMENT_VITALS.some(x=>x[0]===key)&&!treatmentLabs.includes(key))return ctx;
@@ -648,9 +734,17 @@ export const MEDICATION_GROUPS=[
 export const MEDICATION_FREQUENCIES=[['24','Cada 24 h'],['12','Cada 12 h'],['8','Cada 8 h'],['48','Días alternos'],['other','Otra pauta']];
 export const MEDICATION_ABSENCE_REASONS=[['unknown','Sin precisar'],['notStarted','No iniciado'],['intolerance','Intolerancia previa'],['contraindication','Contraindicación referida'],['notIndicated','No indicado según valoración previa'],['other','Otro motivo']];
 export const MEDICATION_TOLERANCE=[['unknown','Sin valorar'],['well','Sin problemas referidos'],['problem','Problemas de tolerancia']];
+const INTOLERANCE_LABELS={cough:'Tos persistente',angioedema:'Sospecha de angioedema actual',gynecomastia:'Ginecomastia o dolor mamario',brady:'Bradicardia sintomática',hypotension:'Hipotensión sintomática',congestion:'Empeoramiento de congestión',dehydration:'Hipovolemia o deshidratación',ketoacidosis:'Sospecha de cetoacidosis actual',acuteIllness:'Cirugía mayor/enfermedad aguda grave',other:'Otro problema'};
+export function medicationProblemOptions(row){
+ const family=medicationGroupFor(row);
+ const list={raas:['cough','angioedema','hypotension'],bb:['brady','hypotension','congestion'],mra:row.drug==='Espironolactona'?['gynecomastia','dehydration']:['dehydration'],sglt2:['dehydration','ketoacidosis','acuteIllness'],diuretic:['dehydration','hypotension','congestion']}[family]||[];
+ return [['unknown','Sin precisar'],...[...list,'other'].map(k=>[k,INTOLERANCE_LABELS[k]])];
+}
+
+export const MEDICATION_INDICATIONS=[['unknown','Sin precisar'],['hf','IC'],['hf40','IC con FEVI ≥40%'],['ckd-dm2','ERC-DM2'],['other','Otra indicación']];
 const medicationState=ctx=>({groups:{},additional:[],reviewed:false,nextId:1,...ctx.medicationAssessment});
 const medicationCatalog=MEDICATION_GROUPS.flatMap(g=>g[2]);
-const newMedication=(drug='unknown')=>({drug,name:'',dose:'',dose2:'',frequency:'',customFrequency:'',reason:'unknown',tolerance:'unknown',note:''});
+const newMedication=(drug='unknown')=>({drug,name:'',dose:'',dose2:'',frequency:'',customFrequency:'',reason:'unknown',tolerance:'unknown',problem:'unknown',note:'',otherClass:'unknown',product:'',indication:'unknown',doseDays:'',initialEgfr:'',priorEgfr:'',priorEgfrDate:'',priorCreatinine:'',priorCreatinineDate:''});
 const normalizeMedication=s=>String(s??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/\s*\/\s*/g,'/').replace(/\s+/g,' ').trim();
 const namedMedication=m=>m.drug==='other'?m.name:m.drug;
 const medicationGroupFor=m=>MEDICATION_GROUPS.find(g=>g[2].some(x=>normalizeMedication(x)===normalizeMedication(namedMedication(m))))?.[0]??null;
@@ -668,9 +762,21 @@ export function setMedicationField(ctx,id,key,raw){
    if(old.drug!=='none'||!MEDICATION_ABSENCE_REASONS.some(x=>x[0]===raw))return ctx;
   }else if(key==='tolerance'){
    if(['none','unknown'].includes(old.drug)||!MEDICATION_TOLERANCE.some(x=>x[0]===raw))return ctx;
+  }else if(key==='problem'){
+   if(old.tolerance!=='problem'||!medicationProblemOptions(old).some(x=>x[0]===raw))return ctx;
+  }else if(key==='otherClass'){
+   if(old.drug!=='other'||!['unknown','outside'].includes(raw)||raw==='outside'&&interactionFamilies(old).length)return ctx;
+  }else if(key==='indication'){
+   if(['none','unknown'].includes(old.drug)||!MEDICATION_INDICATIONS.some(x=>x[0]===raw))return ctx;
+  }else if(['priorEgfrDate','priorCreatinineDate'].includes(key)){
+   if(raw&&!validSampleDate(raw,localClinicalDate()))return ctx;
+  }else if(['doseDays','initialEgfr','priorEgfr','priorCreatinine'].includes(key)){
+   if(['none','unknown','other'].includes(old.drug))return ctx;
+   if(raw&&!/^\d+(?:[.,]\d+)?$/.test(raw.trim()))return ctx;
+   if(raw&&(!Number.isFinite(Number(raw.replace(',','.')))||Number(raw.replace(',','.'))<0||key==='doseDays'&&!Number.isInteger(Number(raw))))return ctx;
   }else if(key==='frequency'){
    if(['none','unknown'].includes(old.drug)||!['',...MEDICATION_FREQUENCIES.map(x=>x[0])].includes(raw))return ctx;
-  }else if(['name','dose','dose2','customFrequency','note'].includes(key)){
+  }else if(['name','dose','dose2','customFrequency','note','product'].includes(key)){
    if(key==='name'&&old.drug!=='other'||['dose','dose2','customFrequency'].includes(key)&&['none','unknown'].includes(old.drug))return ctx;
    if(key==='dose2'&&old.drug!=='Sacubitrilo/valsartán'||key==='customFrequency'&&old.frequency!=='other')return ctx;
    if(raw.length>(key==='note'?240:80))return ctx;
@@ -678,22 +784,26 @@ export function setMedicationField(ctx,id,key,raw){
   if(old[key]===raw)return ctx;
   m[key]=raw;
   if(key==='frequency'&&raw!=='other')m.customFrequency='';
+  if(['dose','dose2','frequency','customFrequency'].includes(key)){m.doseDays='';m.priorEgfr='';m.priorEgfrDate='';m.priorCreatinine='';m.priorCreatinineDate='';}
+  if(key==='priorEgfr')m.priorEgfrDate='';if(key==='priorCreatinine')m.priorCreatinineDate='';
+  if(key==='name')m.otherClass='unknown';
   if(key==='reason'&&raw==='unknown'||key==='tolerance'&&raw!=='problem')m.note='';
+  if(key==='tolerance'&&raw!=='problem')m.problem='unknown';
  }
  const groups=group?{...a.groups,[id]:m}:a.groups;
  const additional=group?a.additional:a.additional.map((x,i)=>i===index?m:x);
- return {...ctx,medicationAssessment:{...a,groups,additional,reviewed:false},updatedAt:new Date().toISOString()};
+ return {...ctx,arniTransitionPlan:null,medicationAssessment:{...a,groups,additional,reviewed:false,externalReview:null},updatedAt:new Date().toISOString()};
 }
 export function addMedication(ctx){
  const a=medicationState(ctx);
  if(a.additional.length>=30)return ctx;
  const id='extra-'+a.nextId;
- return {...ctx,medicationAssessment:{...a,additional:[...a.additional,{...newMedication(),id}],nextId:a.nextId+1,reviewed:false},updatedAt:new Date().toISOString()};
+ return {...ctx,arniTransitionPlan:null,medicationAssessment:{...a,additional:[...a.additional,{...newMedication(),id}],nextId:a.nextId+1,reviewed:false,externalReview:null},updatedAt:new Date().toISOString()};
 }
 export function removeMedication(ctx,id){
  const a=medicationState(ctx);
  if(!a.additional.some(m=>m.id===id))return ctx;
- return {...ctx,medicationAssessment:{...a,additional:a.additional.filter(m=>m.id!==id),reviewed:false},updatedAt:new Date().toISOString()};
+ return {...ctx,arniTransitionPlan:null,medicationAssessment:{...a,additional:a.additional.filter(m=>m.id!==id),reviewed:false,externalReview:null},updatedAt:new Date().toISOString()};
 }
 export function medicationSummary(ctx){
  const a=medicationState(ctx);
@@ -717,18 +827,36 @@ export function medicationSummary(ctx){
   const previous=names.get(name);
   if(previous)duplicates.push('Principio activo repetido: '+namedMedication(m)+'. Revisar si es una misma pauta o un registro duplicado.');
   else names.set(name,m);
-  const family=medicationGroupFor(m);
-  if(family&&family!=='diuretic'){const list=classes.get(family)||[];list.push(name);classes.set(family,list);}
+  for(const family of interactionGroupIds(m))if(family!=='diuretic'){const list=classes.get(family)||[];list.push(name);classes.set(family,list);}
  }
  for(const [family,list] of classes)if(new Set(list).size>1)duplicates.push('Posible duplicidad en '+MEDICATION_GROUPS.find(g=>g[0]===family)[1]+'. Revisar la combinación registrada.');
- const unidentified=a.additional.some(m=>m.drug==='unknown')||active.some(m=>!medicationGroupFor(m));
+ const otherRows=active.filter(m=>m.drug==='other');
+ const outsideReviewed=otherRows.filter(m=>m.otherClass==='outside'&&!interactionFamilies(m).length&&!!m.name.trim());
+ const unidentified=a.additional.some(m=>m.drug==='unknown')||active.some(m=>m.drug==='other'?!outsideReviewed.includes(m):!medicationGroupFor(m));
+ const externalReady=otherRows.length>0&&outsideReviewed.length===otherRows.length&&!missing.length&&!duplicates.length;
+ const externalReviewValid=externalReady&&a.externalReview===externalReviewSnapshot(ctx);
  const familyStatus=groups.map(g=>{
-  const members=active.filter(m=>medicationGroupFor(m)===g.id||(m.id===g.id&&m.drug!=='other'));
+  const members=active.filter(m=>interactionGroupIds(m).includes(g.id)||(m.id===g.id&&m.drug!=='other'));
   return {id:g.id,label:g.label,status:members.length?'present':g.drug==='none'?'absent':a.reviewed===true&&!unidentified?'absent':'unknown',members};
  });
  const unknown=familyStatus.filter(g=>g.status==='unknown').map(g=>g.label);
  const complete=unknown.length===0&&missing.length===0;
- return {groups,additional:a.additional,active,unknown,missing,familyStatus,unidentified,duplicates:[...new Set(duplicates)],reviewed:a.reviewed===true,complete,reconciled:complete&&a.reviewed===true&&duplicates.length===0};
+ return {groups,additional:a.additional,active,unknown,missing,familyStatus,unidentified,otherRows,externalReady,externalReviewValid,duplicates:[...new Set(duplicates)],reviewed:a.reviewed===true,complete,reconciled:complete&&a.reviewed===true&&duplicates.length===0};
+}
+// Human attestation only; never describes an automated interaction check.
+function externalReviewSnapshot(ctx){
+ const a=medicationState(ctx);
+ return JSON.stringify([a.groups,a.additional,ctx.treatmentAssessment,ctx.renalAssessment,renalSnapshot(ctx),labSnapshot(ctx)]);
+}
+export function confirmExternalMedicationReview(ctx,checked){
+ if(typeof checked!=='boolean')return ctx;
+ const a=medicationState(ctx);
+ return {...ctx,medicationAssessment:{...a,externalReview:checked&&medicationSummary(ctx).externalReady?externalReviewSnapshot(ctx):null},updatedAt:new Date().toISOString()};
+}
+export function setAbsenceReason(ctx,id,reason){
+ const s=medicationSummary(ctx);
+ if(!MEDICATION_GROUPS.some(g=>g[0]===id)||s.familyStatus.find(g=>g.id===id)?.status==='present'||!MEDICATION_ABSENCE_REASONS.some(x=>x[0]===reason))return ctx;
+ return setMedicationField(setMedicationField(ctx,id,'drug','none'),id,'reason',reason);
 }
 export function confirmMedicationReview(ctx,checked){
  if(typeof checked!=='boolean')return ctx;
@@ -747,7 +875,7 @@ export const MEDICATION_QUICK_DOSES={
  'Valsartán':['40','80','160'],
  'Bisoprolol':['1,25','2,5','3,75','5','7,5','10'],
  'Carvedilol':['3,125','6,25','12,5','25','50'],
- 'Metoprolol succinato':['11,875','23,75','47,5','95','190'],
+ 'Metoprolol succinato':['11,88','23,75','47,5','95','190'],
  'Nebivolol':['1,25','2,5','5','10'],
  'Espironolactona':['12,5','25','50'],
  'Eplerenona':['25','50'],
@@ -779,8 +907,28 @@ export const MEDICATION_FAMILIES=[
  ['sglt2','iSGLT2',['Dapagliflozina','Empagliflozina']],
  ['diuretic','Diuréticos de asa',['Furosemida','Torasemida']]
 ];
+// Limited interaction classification for exact active ingredients, not prescribing catalog.
+// ATC C09AA/C09CA and ESC 2026 S4. Do not infer identity from a suffix or a brand fragment.
+// Recognise slash/plus-separated active ingredients, but no dosing for combination products.
+const EXTRA_INTERACTION_NAMES={
+ arni:['entresto','neparvis'],
+ ieca:['captopril','lisinopril','perindopril','trandolapril','fosinopril','quinapril','benazepril','cilazapril','delapril','imidapril','moexipril','spirapril','zofenopril'],
+ ara:['losartan','irbesartan','telmisartan','olmesartan','olmesartan medoxomilo','eprosartan','azilsartan','azilsartan medoxomilo']
+};
+function interactionFamilies(m){
+ const name=normalizeMedication(namedMedication(m));
+ if(!name)return [];
+ const names=new Set([name]);
+ if(name==='sacubitrilo/valsartan'||EXTRA_INTERACTION_NAMES.arni.includes(name))return ['arni'];
+ for(const n of name.split(/\s*[+/]\s*/))if(n)names.add(n);
+ return MEDICATION_FAMILIES.filter(([id,,drugs])=>[...drugs.map(normalizeMedication),...(EXTRA_INTERACTION_NAMES[id]||[])].some(n=>names.has(n))).map(([id])=>id);
+}
+function interactionGroupIds(m){
+ return [...new Set(interactionFamilies(m).map(id=>['arni','ieca','ara'].includes(id)?'raas':id))];
+}
 export function medicationFamilyLabel(m){
- return MEDICATION_FAMILIES.find(g=>g[2].some(x=>normalizeMedication(x)===normalizeMedication(namedMedication(m))))?.[1]??'Familia sin clasificar';
+ const families=interactionFamilies(m);
+ return families.length?MEDICATION_FAMILIES.filter(([id])=>families.includes(id)).map(g=>g[1]).join(' + ')+(m.drug==='other'?' · revisar presentación':''):'Familia sin clasificar';
 }
 export function addNamedMedication(ctx,drug){
  if(!['other',...medicationCatalog].includes(drug))return ctx;
@@ -801,19 +949,19 @@ export function deleteRecordedMedication(ctx,id){
  * Never infer an actual patient's frequency from a reference schedule. */
 const cima=(id,file='FT_'+id+'.html')=>'https://cima.aemps.es/cima/dochtml/ft/'+id+'/'+file;
 export const HF_MEDICATION_REFERENCE={
- 'Sacubitrilo/valsartán':{f:['12'],max:194,max2:206,source:cima('91062')},
+ 'Sacubitrilo/valsartán':{f:['12'],max:194,max2:206,source:cima('90716')},
  'Enalapril':{f:['12','24'],max:40,source:cima('83712')},
  'Ramipril':{f:['12','24'],max:10,source:cima('76966'),note:'En IC sintomática se recomiendan dos tomas; el inicio puede ser en una toma.'},
  'Candesartán':{f:['24'],max:32,source:cima('74643')},
  'Valsartán':{f:['12'],max:320,source:cima('72856','ft_72856.html')},
  'Bisoprolol':{f:['24'],max:10,source:cima('81432')},
  'Carvedilol':{f:['12'],max:100,source:cima('66923','FichaTecnica_66923.html'),note:'Más de 50 mg/día exige comprobar peso >85 kg y ausencia de IC grave.'},
- 'Metoprolol succinato':{f:['24'],max:190,source:cima('61506','FichaTecnica_61506.html'),note:'Liberación prolongada; expresar en mg de succinato.'},
+ 'Metoprolol succinato':{f:['24'],max:190,source:cima('81030'),note:'Referencia Metoprolol Krka Retard; no extrapolar a otras presentaciones. Expresar mg de succinato.'},
  'Nebivolol':{f:['24'],max:10,source:cima('83604')},
  'Espironolactona':{f:['24','48'],reference:50,source:cima('39059')},
  'Eplerenona':{f:['24','48'],max:50,source:cima('76182')},
- 'Finerenona':{f:['24'],max:40,source:cima('1211616002'),note:'Dosis objetivo en IC según FG al inicio; no extrapolar la dosis de ERC-DM2.'},
- 'Dapagliflozina':{f:['24'],reference:10,source:cima('91132')},
+ 'Finerenona':{f:['24'],max:40,source:cima('1211616012'),note:'Dosis objetivo en IC según FG al inicio; no extrapolar la dosis de ERC-DM2.'},
+ 'Dapagliflozina':{f:['24'],reference:10,source:cima('90837')},
  'Empagliflozina':{f:['24'],reference:10,source:cima('114930014',''),note:'25 mg/día puede corresponder a DM2, no a la dosis de IC.'},
  'Furosemida':{f:['24','12','8'],variable:true,source:cima('39969','fichatecnica_39969.html')},
  'Torasemida':{f:['24'],variable:true,source:cima('60802','FichaTecnica_60802.html')}
@@ -827,9 +975,13 @@ export function medicationFrequencyOptions(m){
 }
 export function medicationSafety(ctx){
  const m=medicationSummary(ctx),d=treatmentSafetyData(ctx),alerts=[];
- const add=(id,level,title,text,source,rows=[])=>alerts.push({id,level,title,text,source,rows});
+ const add=(id,level,title,text,source,rows=[])=>alerts.push({id,level,title,text,source,rows:[...new Set(rows)]});
  const entries=m.active.map(row=>({row,drug:knownDrug(row)})),has=drug=>entries.some(x=>x.drug===drug);
- const family=id=>entries.filter(x=>MEDICATION_FAMILIES.find(g=>g[0]===id)?.[2].includes(x.drug));
+ for(const {row} of entries){
+  const advice=medicationProblemReference(row,ctx);
+  if(advice)add('TOL-'+row.id,advice.level,advice.title,advice.detail,advice.source,[row.id]);
+ }
+ const family=id=>entries.filter(x=>interactionFamilies(x.row).includes(id));
  const ids=xs=>xs.map(x=>x.row.id);
  const arni=family('arni'),ieca=family('ieca'),ara=family('ara'),mra=family('mra');
  const arniSource=HF_MEDICATION_REFERENCE['Sacubitrilo/valsartán'].source,eplSource=HF_MEDICATION_REFERENCE.Eplerenona.source;
@@ -856,16 +1008,104 @@ export function medicationSafety(ctx){
   if(drug==='Enalapril'&&f==='24'&&daily>20&&daily<=40)add('ENA-'+row.id,'amber','Enalapril: revisar reparto de dosis','La dosis máxima diaria de referencia de 40 mg se administra dividida en dos tomas.',r.source,[row.id]);
   if(drug==='Eplerenona'&&f==='48'&&dose>25)add('EPL-48-'+row.id,'amber','Eplerenona: revisar días alternos','La pauta de días alternos de la ficha técnica utiliza 25 mg por toma.',r.source,[row.id]);
  }
+ // Audit P0/P4: limited exact-name matching, not a medication dictionary.
+ const namedAs=(aliases)=>entries.filter(x=>{const name=normalizeMedication(namedMedication(x.row));return aliases.includes(name)||name.split(/\s*[+/]\s*/).some(part=>aliases.includes(part));});
+ const tmp=namedAs(['trimetoprim','trimetoprima','cotrimoxazol','co-trimoxazol','trimetoprim/sulfametoxazol','trimetoprima/sulfametoxazol','sulfametoxazol/trimetoprim','sulfametoxazol/trimetoprima','septrin','septrin forte','soltrim']);
+ const escSupplement='https://doi.org/10.1093/eurheartj/ehag100';
+ const bb=family('bb'),sglt2=family('sglt2'),loop=family('diuretic'),raas=[...arni,...ieca,...ara];
+ const nsaid=namedAs(['ibuprofeno','naproxeno','diclofenaco','dexketoprofeno','ketoprofeno','indometacina','celecoxib','etoricoxib','meloxicam','piroxicam','aceclofenaco','ketorolaco']);
+ const kSparing=namedAs(['amilorida','triamtereno','hidroclorotiazida/amilorida','amilorida/hidroclorotiazida','furosemida/amilorida','amilorida/furosemida']);
+ const kSupp=namedAs(['cloruro de potasio','citrato de potasio','bicarbonato de potasio','suplemento de potasio','sal rica en potasio']);
+ const rateBlock=namedAs(['verapamilo','diltiazem']);
+ const otherRate=namedAs(['digoxina','amiodarona','ivabradina']);
+ const thiazide=namedAs(['hidroclorotiazida','clortalidona','indapamida','metolazona','bendroflumetiazida']);
+ const hypoglycemic=namedAs(['insulina','insulina glargina','insulina degludec','insulina detemir','insulina lispro','insulina aspart','insulina humana','gliclazida','glimepirida','glibenclamida','glipizida']);
+ const kidneyRisk=[...raas,...mra,...loop];
+ const heparin=namedAs(['heparina','heparina sodica','enoxaparina','dalteparina','tinzaparina','nadroparina','bemiparina']);
+ const finOtherMra=namedAs(['canrenona','canrenoato de potasio','esaxerenona']);
+ const finModerate=namedAs(['eritromicina','verapamilo','fluvoxamina']);
+ const fin40=entries.filter(x=>x.drug==='Finerenona'&&x.row.drug!=='other'&&x.row.frequency==='24'&&mgNumber(x.row.dose)===40);
+ const finSensitive=namedAs(['tacrolimus','ciclosporina','repaglinida','sirolimus','everolimus']);
+ const sodium=ctx.results?.sodium?.value;
+ if(loop.length&&Number.isFinite(sodium)&&sodium<135)add('ESC-DIUR-NA','amber','Diurético: hiponatremia registrada','ESC S7: confirmar analítica y distinguir depleción de volumen de congestión antes de ajustar diuresis. No aplicar una reducción o aumento fijo.',escSupplement,ids(loop));
+ if(loop.length&&Number.isFinite(d.values.potassium)&&d.values.potassium<=3.5)add('ESC-DIUR-K','amber','Diurético: potasio bajo','ESC S7: confirmar potasio, evaluar magnesio, función renal y tratamiento; no aumentar diurético sin revisión.',escSupplement,ids(loop));
+ if(loop.length&&raas.length&&Number.isFinite(d.values.sbp)&&d.values.sbp<100)add('ESC-DIUR-PA','amber','Diurético e inhibición SRAA: PA baja','ESC S7: comprobar síntomas, perfusión y volemia antes de modificar dosis; la combinación no está prohibida.',escSupplement,ids([...loop,...raas]));
+ if(rateBlock.length&&d.profile.clinicalHF&&Number.isFinite(d.profile.ef)&&d.profile.ef<50)add('ESC-NDHP-EF','amber','Verapamilo/diltiazem en IC-FEr','ESC S4/S6: revisar indicación por efecto inotrópico negativo; no se recomienda su uso rutinario en IC-FEr.',escSupplement,ids(rateBlock));
+ if(fin40.length&&finSensitive.length)add('FIN40-SUBSTRATE','amber','Finerenona 40 mg: revisar sustratos CYP3A4/CYP2C8','CIMA 4.5: posible aumento de exposición. Revisar interacción específica y monitorización, especialmente con margen terapéutico estrecho o riesgo de hipoglucemia.',refDrug('Finerenona'),ids([...fin40,...finSensitive]));
+ if(kidneyRisk.length&&nsaid.length)add('ESC-NSAID','amber','AINE y tratamiento de IC','ESC 2026, tablas S4, S5, S7 y S8: revisar necesidad del AINE; riesgo de deterioro renal, hiperpotasemia o menor respuesta diurética según el tratamiento. No se incluye AAS a dosis antiagregante en esta regla.',escSupplement,ids([...kidneyRisk,...nsaid]));
+ if(raas.length&&tmp.length)add('ESC-SRAA-TMP','amber','Inhibición SRAA + trimetoprim/cotrimoxazol','ESC 2026, S4–S5: riesgo de hiperpotasemia; revisar asociación, función renal y K.',escSupplement,ids([...raas,...tmp]));
+ if(raas.length&&(kSparing.length||kSupp.length))add('ESC-SRAA-K','amber','Inhibición SRAA + agente que eleva potasio','ESC 2026, S4–S5: comprobar necesidad, potasio y función renal; no suspender automáticamente.',escSupplement,ids([...raas,...kSparing,...kSupp]));
+ if(mra.length&&(kSparing.length||kSupp.length))add('ESC-MRA-K','amber','ARM + otro agente que eleva potasio','ESC 2026, S8: evitar otros ahorradores de potasio y revisar suplementos; comprobar contraindicaciones de la ficha específica y K/FG.',escSupplement,ids([...mra,...kSparing,...kSupp]));
+ if(ieca.length&&ara.length&&mra.length)add('ESC-TRIPLE-SRAA','amber','Triple bloqueo del SRAA','ESC 2026, S8: no se recomienda asociar IECA, ARA-II y ARM; revisar la combinación. La alerta específica de eplerenona prevalece si procede.',escSupplement,ids([...ieca,...ara,...mra]));
+ if(bb.length&&rateBlock.length)add('ESC-BB-NDHP','amber','Betabloqueante + verapamilo/diltiazem','ESC 2026, S6: riesgo de bradicardia o bloqueo AV; los calcioantagonistas no dihidropiridínicos pueden ser perjudiciales en IC-FEr. Revisar ECG, indicación y tratamiento.',escSupplement,ids([...bb,...rateBlock]));
+ if(bb.length&&otherRate.length)add('ESC-BB-RATE',d.values.hr!==null&&d.values.hr<50?'amber':'blue','Betabloqueante + otro cronotropo negativo','ESC 2026, S6: comprobar indicación, síntomas, frecuencia y conducción AV. La combinación puede ser pertinente en casos seleccionados; no implica incompatibilidad automática.',escSupplement,ids([...bb,...otherRate]));
+ if(sglt2.length&&(loop.length||thiazide.length))add('ESC-SGLT2-DIUR','blue','iSGLT2 + diurético: vigilar volemia','ESC 2026, S9: monitorizar congestión, depleción de volumen, PA y función renal; valorar dosis diurética según volemia. Combinación habitual, no contraindicación automática.',escSupplement,ids([...sglt2,...loop,...thiazide]));
+ if(sglt2.length&&hypoglycemic.length)add('ESC-SGLT2-HYPO','blue','iSGLT2 + tratamiento con riesgo de hipoglucemia','ESC 2026, S9: vigilar glucemia y revisar tratamiento antidiabético si procede; no reducir automáticamente insulina por riesgo de cetoacidosis.',escSupplement,ids([...sglt2,...hypoglycemic]));
+ if(loop.length&&thiazide.length)add('ESC-DIUR-COMB','amber','Diurético de asa + tiazida o afín','ESC 2026, S7: comprobar indicación, duración y monitorización de volemia, sodio, potasio y función renal. Puede ser apropiado ante resistencia diurética.',escSupplement,ids([...loop,...thiazide]));
+ if(bb.length&&d.values.hr!==null&&d.values.hr<50)add('ESC-BB-HR','amber','Betabloqueante: FC inferior a 50 lpm','ESC 2026, S6: valorar síntomas, ECG, conducción y otros cronotropos; no retirar bruscamente salvo necesidad clínica.',escSupplement,ids(bb));
+ const spiro=entries.filter(x=>x.drug==='Espironolactona'),fin=entries.filter(x=>x.drug==='Finerenona'),epl=entries.filter(x=>x.drug==='Eplerenona');
+ if(spiro.length&&heparin.length)add('SPI-HEP','amber','Espironolactona + heparina','CIMA Aldactone 4.4: asociación que puede elevar el potasio; revisar indicación y monitorizar K/FG.',refDrug('Espironolactona'),ids([...spiro,...heparin]));
+ if(fin.length&&finOtherMra.length)add('FIN-OTHER-MRA','red','Finerenona + otro ARM','CIMA Kerendia 4.4/4.5: no asociar otros ARM; comprobar identidad y revisar tratamiento.',refDrug('Finerenona'),ids([...fin,...finOtherMra]));
+ if(fin.length&&finModerate.length)add('FIN-MOD','amber','Finerenona + inhibidor CYP3A4 moderado/débil','CIMA Kerendia 4.5: intensificar control de K al iniciar o cambiar dosis; comprobar interacción específica.',refDrug('Finerenona'),ids([...fin,...finModerate]));
+ if(spiro.length&&d.labsConfirmed&&d.values.egfr<30)add('SPI-FG','amber','Espironolactona: función renal reducida','ESC S8 y ficha Aldactone: requiere revisión individual y contraste de la presentación; no escalar.',refDrug('Espironolactona'),ids(spiro));
+ if(epl.length&&kSparing.length)add('EPL-KSP','red','Eplerenona + ahorrador de potasio','Combinación contraindicada en ficha técnica; verificar principios activos y revisar de inmediato.',eplSource,ids([...epl,...kSparing]));
+ if(epl.length&&kSupp.length)add('EPL-KSUP','red','Eplerenona + suplemento de potasio','La ficha técnica indica no asociarlos; comprobar medicación y potasio.',eplSource,ids([...epl,...kSupp]));
+ if(fin.length&&kSparing.length)add('FIN-KSP','red','Finerenona + ahorrador de potasio','Asociación no permitida según ficha; revisar tratamiento.',refDrug('Finerenona'),ids([...fin,...kSparing]));
+ const inducer=namedAs(['rifampicina','carbamazepina','fenitoina','fenobarbital','hierba de san juan','hiperico','efavirenz']);
+ if(fin.length&&inducer.length)add('FIN-IND','red','Finerenona + inductor CYP3A4','La ficha indica no asociar inductores fuertes o moderados de CYP3A4; confirmar fármaco.',refDrug('Finerenona'),ids([...fin,...inducer]));
+ if(epl.length&&inducer.length)add('EPL-IND','amber','Eplerenona + inductor CYP3A4','Asociación con inductores potentes no recomendada; revisar ficha e indicación.',eplSource,ids([...epl,...inducer]));
+ const cypModerate=namedAs(['amiodarona','verapamilo','diltiazem','fluconazol','eritromicina']);
+ if(epl.length&&cypModerate.length)add('EPL-MOD','amber','Eplerenona + inhibidor CYP3A4 leve/moderado','Comprobar interacción y dosis: máximo 25 mg/día con inhibidores leves/moderados según ficha.',eplSource,ids([...epl,...cypModerate]));
+ const lithium=namedAs(['litio','carbonato de litio']),calcineurin=namedAs(['ciclosporina','tacrolimus']);
+ if(raas.length&&lithium.length)add('SRAA-LI','amber','Inhibición SRAA + litio','CIMA sacubitrilo/valsartán 4.5: asociación no recomendada; si imprescindible, control estrecho de litemia. El riesgo puede aumentar con diuréticos.',arniSource,ids([...raas,...lithium]));
+ if(epl.length&&(lithium.length||calcineurin.length))add('EPL-LI-CNI','amber','Eplerenona: litio o inhibidor de calcineurina','Evitar según ficha; si asociación imprescindible, monitorización específica de litio o K/función renal.',eplSource,ids([...epl,...lithium,...calcineurin]));
+ if(tmp.length&&spiro.length)add('SPI-TMP','amber','Espironolactona + trimetoprim/cotrimoxazol','Riesgo de hiperpotasemia clínicamente relevante. Revisar la asociación y comprobar potasio y función renal. No implica suspensión automática.','https://cima.aemps.es/cima/dochtml/ft/81033/FichaTecnica_81033.html',ids([...spiro,...tmp]));
+ if(tmp.length&&fin.length)add('FIN-TMP','amber','Finerenona + trimetoprim/cotrimoxazol','Revisar potasio y necesidad de interrupción temporal según ficha técnica; no modificar automáticamente.',HF_MEDICATION_REFERENCE.Finerenona.source,ids([...fin,...tmp]));
+ if(tmp.length&&epl.length)add('EPL-TMP','amber','Eplerenona + trimetoprim/cotrimoxazol','Riesgo de hiperpotasemia. Revisar asociación y monitorizar potasio y función renal.','https://cima.aemps.es/cima/dochtml/ft/76353/FT_76353.html',ids([...epl,...tmp]));
+ const cyp=namedAs(['itraconazol','ketoconazol','ritonavir','nelfinavir','cobicistat','claritromicina','telitromicina','nefazodona']);
+ if(fin.length&&cyp.length)add('FIN-CYP3A4','red','Finerenona: inhibidor fuerte de CYP3A4','Asociación contraindicada en ficha técnica. Confirmar principio activo y revisar tratamiento.',HF_MEDICATION_REFERENCE.Finerenona.source,ids([...fin,...cyp]));
+ if(epl.length&&cyp.length)add('EPL-CYP3A4','red','Eplerenona: posible inhibidor fuerte de CYP3A4','Revisar el principio activo y la contraindicación de asociación con inhibidores potentes del CYP3A4.','https://cima.aemps.es/cima/dochtml/ft/76353/FT_76353.html',ids([...epl,...cyp]));
+ const aliskiren=namedAs(['aliskireno','aliskiren','rasilez']);
+ if((ieca.length||ara.length)&&aliskiren.length){
+  const contraindicated=ctx.findings?.dm==='yes'||(d.labsConfirmed&&d.values.egfr<60);
+  add('SRAA-ALISK',contraindicated?'red':'amber','IECA/ARA-II + aliskireno','Contraindicado con diabetes o FG <60 según fichas; en otros casos bloqueo dual no recomendado. Comprobar ambos criterios.',refDrug('Ramipril'),ids([...ieca,...ara,...aliskiren]));
+ }
+ if(arni.length&&aliskiren.length){
+  const contraindicated=ctx.findings?.dm==='yes'||(d.labsConfirmed&&d.values.egfr<60);
+  add('ARNI-ALISK',contraindicated?'red':'amber',contraindicated?'ARNI + aliskireno: combinación contraindicada':'ARNI + aliskireno: combinación no recomendada','Contraindicada si existe diabetes o FG estimado inferior a 60. Comprobar ambos criterios y la medicación registrada.',arniSource,ids([...arni,...aliskiren]));
+ }
+ if(spiro.length&&d.labsConfirmed){
+  const source=HF_MEDICATION_REFERENCE.Espironolactona.source;
+  if(d.values.potassium>=6)add('SPI-K6','red','Espironolactona: hiperpotasemia importante','Potasio confirmado de 6 mmol/L o superior: priorizar valoración clínica urgente y revisión de medicación.',source,ids(spiro));
+  else if(d.values.potassium>5)add('SPI-K5','amber','Espironolactona: revisar potasio','La ficha técnica de referencia exige revisar la continuidad con potasio superior a 5 mmol/L. Confirmar presentación, contexto clínico y medidas de manejo; no suspender automáticamente.',source,ids(spiro));
+ }
  if(has('Eplerenona')&&d.labsConfirmed){
   if(d.values.egfr<30)add('EPL-FG','red','Eplerenona: revisar función renal','FG estimado inferior a 30 mL/min/1,73 m². Verificar aclaramiento de creatinina, criterio de la ficha técnica, y revisar tratamiento.',eplSource,ids(mra));
   if(d.values.potassium>=6)add('EPL-K6','red','Eplerenona: hiperpotasemia importante','Potasio confirmado ≥6 mmol/L. Priorizar valoración clínica urgente y revisión de medicación.',eplSource,ids(mra));
-  else if(d.values.potassium>=5.5)add('EPL-K55','amber','Eplerenona: potasio elevado','Potasio confirmado 5,5–5,9 mmol/L: revisar tratamiento y monitorización.',eplSource,ids(mra));
+  else if(d.values.potassium>=5.5)add('EPL-K55','amber','Eplerenona: potasio elevado','Potasio confirmado entre 5,5 y <6 mmol/L: tabla 1 de ficha indica bajar un escalón (50/día a 25/día; 25/día a 25 en días alternos; 25 en días alternos a interrupción). Confirmar pauta, función renal y presentación antes de decidir.',eplSource,ids(mra));
  }
  if(has('Finerenona')&&d.labsConfirmed){
   const source=HF_MEDICATION_REFERENCE.Finerenona.source;
   if(d.values.potassium>=6)add('FIN-K6','red','Finerenona: hiperpotasemia importante','Potasio ≥6 mmol/L: valoración urgente y revisión de tratamiento.',source,ids(mra));
-  else if(d.values.potassium>=5.5)add('FIN-K55','amber','Finerenona: potasio elevado','Revisar indicación, dosis y tabla de ajuste de la ficha técnica.',source,ids(mra));
-  if(d.values.egfr<15)add('FIN-FG15','red','Finerenona: función renal muy reducida','FG <15; revisar tratamiento conforme a ficha técnica.',source,ids(mra));
+  else if(d.values.potassium>=5.5)add('FIN-K55','amber','Finerenona: potasio elevado','Confirmar indicación, presentación, dosis y evolución renal: la tabla 4 de IC y la tabla 2 de ERC-DM2 difieren. Consultar la referencia específica registrada; no aplicar una tabla por defecto.',source,ids(mra));
+  if(d.values.egfr<15)add('FIN-FG15','red','Finerenona: función renal muy reducida','TFGe <15: la ficha indica interrumpir el tratamiento al progresar a enfermedad renal terminal; confirmar resultado y revisar con el equipo clínico.',source,ids(mra));
+ }
+ if(d.labsConfirmed)for(const {row,drug} of entries){
+  if(row.drug==='other'||!drug||!['IECA','ARA-II','ARNI'].includes(medicationFamilyLabel(row)))continue;
+  const trend=renalTrendReference(row,ctx);
+  const ref=raasMaintenanceReference({drug,egfr:d.values.egfr,potassium:d.values.potassium,priorEgfr:trend.comparableFg?trend.previous:undefined,creatinine:trend.comparableCr?trend.values.creatinine:undefined,priorCreatinine:trend.comparableCr?trend.previousCr:undefined,confirmed:true});
+  if(ref&&ref.level!=='blue')add('SRAA-ADJUST-'+row.id,ref.level,ref.title,ref.detail,ref.source,[row.id]);
+ }
+ if(d.labsConfirmed)for(const {row,drug} of entries){
+  if(!['Eplerenona','Finerenona','Espironolactona'].includes(drug)||row.drug==='other')continue;
+  const ref=HF_TITRATION_REFERENCE[drug];
+  if(normalizeMedication(row.product)!==normalizeMedication(ref.product))continue;
+  const indication=drug==='Espironolactona'&&row.indication==='hf'?'aldactone-hf':row.indication;
+  const trend=renalTrendReference(row,ctx);
+  const advice=armPotassiumReference({drug,indication,potassium:d.values.potassium,dose:row.dose,frequency:row.frequency,confirmed:true,egfr:d.values.egfr,initialEgfr:mgNumber(row.initialEgfr),priorEgfr:trend.comparableFg?trend.previous:undefined,doseDays:mgNumber(row.doseDays)});
+  const cr=drug==='Eplerenona'?creatinineClearanceReference(row,ctx):null;
+  if(cr?.status==='blocked'||cr?.status==='review')add('CRCL-'+row.id,cr.status==='blocked'?'red':'amber','Aclaramiento: '+drug,cr.detail,cr.source,[row.id]);
+  if(advice)add('ARM-REF-'+row.id,advice.kind==='interrupt'?(d.values.potassium>=6||d.values.egfr<15?'red':'amber'):d.values.potassium>=5.5?'amber':'blue','Referencia de ajuste: '+drug,advice.reference,advice.source,[row.id]);
  }
  if(mra.length&&!d.labsConfirmed)add('MRA-LABS','blue','Confirmar función renal y potasio','Datos vigentes necesarios para valorar seguridad de ARM.',eplSource,ids(mra));
  if(mra.length&&(arni.length||ieca.length||ara.length))add('MRA-SRAA','blue','Monitorización renal y de potasio','La combinación de ARM con un inhibidor del SRAA puede ser indicada en IC; requiere seguimiento. No equivale a incompatibilidad.',eplSource,ids([...mra,...arni,...ieca,...ara]));
@@ -881,30 +1121,339 @@ const HF_GUIDE_2026_SUMMARY='https://www.escardio.org/news/press/press-releases/
 const refDrug=drug=>HF_MEDICATION_REFERENCE[drug]?.source||HF_GUIDE;
 const mgNumber=s=>/^\d+(?:[.,]\d+)?$/.test(String(s??'').trim())?Number(String(s).replace(',','.')):NaN;
 const fmtDose=n=>String(n).replace('.',',');
+// Product-specific reference schedules; not eligibility or a prescription.
+// ESC 2026 supplement S6/S9; CIMA 4.1–4.4, reviewed 2026-11-28.
+export const HF_TITRATION_REFERENCE={
+ 'Sacubitrilo/valsartán':{product:'Sacubitrilo/valsartán Kern Pharma',source:refDrug('Sacubitrilo/valsartán'),frequency:'12',steps:['24/26','49/51','97/103'],target:'97/103',checks:'Inicio habitual 49/51 mg/12 h; 24/26 si sin IECA/ARA-II previo o dosis baja, considerar también PAS 100–110 y disfunción renal/hepática según ficha. Titular cada 2–4 semanas (3–4 con inicio bajo por ausencia/dosis baja de IECA/ARA-II). No iniciar con PAS <100 o K >5,4. Evitar solapamiento con ARA-II; separación mínima de 36 h respecto a IECA en ambos sentidos. Revisar angioedema, embarazo, estenosis renal, Child-Pugh y aliskireno. No extrapolar la ficha a otros productos.'},
+ 'Enalapril':{product:'Enalapril Aurovitas',source:refDrug('Enalapril'),frequency:'12/24',steps:[2.5,5,10,20],target:20,maxDaily:40,checks:'Dosis de referencia en ficha para IC sintomática: 2,5 mg/día inicialmente bajo estrecha supervisión; escalado a 5, 10 y 20 mg/día durante 2–4 semanas según tolerancia; 40 mg/día máximo en dos tomas. La tabla S4 ESC usa inicio 2,5 mg/12 h; no confundir ambas pautas. Revisar aclaramiento, PA, K, embarazo, angioedema e interacciones; no escalar sin control analítico.'},
+ 'Ramipril':{product:'Ramipril Alter',source:refDrug('Ramipril'),frequency:'12/24',steps:[1.25,2.5,5,10],target:10,maxDaily:10,checks:'IC sintomática estabilizada con diurético: 1,25 mg/día de inicio; duplicación cada 1–2 semanas según tolerancia, preferentemente dos tomas. Máximo diario 5 mg con CrCl 10–<60; máximo 2,5 mg/día en hepatopatía bajo supervisión. No confundir con pauta posinfarto ni con TFGe. Revisar PA, K, embarazo y angioedema.'},
+ 'Candesartán':{product:'Candesartán STADA',source:refDrug('Candesartán'),frequency:'24',steps:[4,8,16,32],days:[14,14,14],target:32,checks:'Ficha IC con FEVI ≤40 y criterios específicos de intolerancia a IECA o terapia adicional. Duplicar a intervalos ≥2 semanas según tolerancia. Revisar función renal/K, PA, embarazo, hepatopatía grave/colestasis y evitar triple bloqueo. No extrapolar indicación de HTA a IC.'},
+ 'Valsartán':{product:'Valsartán STADA',source:refDrug('Valsartán'),frequency:'12',steps:[40,80,160],days:[14,14],target:160,checks:'IC sintomática con criterios de indicación de ficha: inicio 40 mg/12 h, duplicación a intervalos ≥2 semanas. Máximo 320 mg/día dividido; hepatopatía leve/moderada sin colestasis máximo 80 mg/día, grave o colestasis contraindicado. Verificar CrCl, PA, K, embarazo y asociación con IECA. Pauta posinfarto distinta.'},
+ 'Espironolactona':{product:'Aldactone',source:refDrug('Espironolactona'),frequency:'24/48',steps:[25,50],target:50,checks:'Indicación IC NYHA III–IV y criterios de creatinina y potasio de ficha; 25 mg/día, hasta 50 si indicado o 25 en días alternos si intolerancia. La ficha desaconseja NYHA I–II y contiene discrepancia entre posología y contraindicación renal moderada: revisar presentación antes de decidir. S8 ESC no sustituye ficha. Control K/creatinina a la semana, mensual tres meses, trimestral un año y luego semestral; ficha exige interrupción con K >5 o creatinina >4 mg/dL.'},
+ 'Eplerenona':{product:'Eplerenona STADA',source:refDrug('Eplerenona'),frequency:'24/48',steps:[25,50],target:50,checks:'IC crónica NYHA II con FEVI ≤30 o posinfarto reciente estable con FEVI ≤40 y signos IC. Inicio 25 mg/día y objetivo 50 preferiblemente en 4 semanas; CrCl 30–60: inicio 25 mg en días alternos. Contraindicado FG <30, K inicial >5, Child-Pugh C, otros ahorradores de K, inhibidores fuertes CYP3A4 y triple bloqueo. Inhibidores leves/moderados CYP3A4: máximo 25 mg/día. Control K basal, semana 1 y mes 1 después de inicio o ajuste.'},
+ 'Finerenona':{product:'Kerendia',source:refDrug('Finerenona'),frequency:'24',steps:[10,20,40],target:'20 o 40 según TFGe inicial',checks:'IC FEVI ≥40: K inicial ≤5, TFGe ≥25. CIMA tabla 3: 10 mg/día con TFGe inicial 25–<60, 20 mg con ≥60; objetivo 20 o 40 respectivamente. S8 usa ≤60/>60: discrepancia explícita en 60; usar ficha para posología autorizada. Tabla 4 de IC distinta de ERC-DM2. K/FG a las 4 semanas tras inicio/reinicio/ajuste. No iniciar con hepatopatía grave; revisar Addison, CYP3A4 y otros ARM/ahorradores de K. Continuación con FG ≥15 bajo ajuste; interrumpir si <15.'},
+ 'Furosemida':{product:'Seguril',source:refDrug('Furosemida'),frequency:'individualizada',steps:[],target:null,checks:'Edema asociado a IC; ficha oral 20–80 mg/día de inicio, ajustar al mínimo eficaz. No hay objetivo fijo modificador del pronóstico. S7: evaluar congestión, peso seco, PA, Na/K/Mg, función renal y respuesta; control analítico 1–2 semanas tras inicio/aumento. Reducción si hipovolemia o sin congestión según revisión. No extrapolar dosis oral a intravenosa.'},
+ 'Torasemida':{product:'Isodiur',source:refDrug('Torasemida'),frequency:'24',steps:[],target:null,checks:'Edema por IC: ficha 10–20 mg/día de inicio y ajuste por respuesta (S7 ESC 5–10 mg de inicio). No asumir equivalencia fija con furosemida ni objetivo universal. Revisar volemia, sodio, potasio, función renal, PA y anuria; control tras ajustes. No extrapolar HTA ni cirrosis a IC.'},
+ 'Bisoprolol':{product:'Bisoprolol Pensa',source:refDrug('Bisoprolol'),frequency:'24',steps:[1.25,2.5,3.75,5,7.5,10],days:[7,7,7,28,28],target:10,checks:'IC estable con disfunción sistólica; comprobar ECG, síntomas, PA/FC, estabilidad, función renal y hepática. Evitar retirada brusca; reevaluar reintroducción cuando esté estable.'},
+ 'Carvedilol':{product:'Carvedilol Teva',source:refDrug('Carvedilol'),frequency:'12',steps:[3.125,6.25,12.5,25],days:[14,14,14],target:25,checks:'Confirmar indicación y presentación, peso, estabilidad, PA/FC, ritmo, función renal y ausencia de hepatopatía clínicamente manifiesta; con alimentos en IC. Incremento a 50 mg por toma solo tras comprobar peso >85 kg, IC no grave y supervisión médica. Si interrupción >2 semanas, esta ficha prevé reiniciar en 3,125 mg/12 h bajo supervisión; otras presentaciones difieren.'},
+ 'Metoprolol succinato':{product:'Metoprolol Krka Retard',source:refDrug('Metoprolol succinato'),frequency:'24',steps:[11.88,23.75,47.5,95,190],days:[7,14,14,14],target:190,checks:'Confirmar producto de liberación prolongada con indicación IC y dosis expresada en succinato. Inicio de referencia NYHA II: 23,75 mg; III–IV: 11,88 mg, IV con especialista. Estabilidad sin IC aguda 6 semanas y tratamiento basal estable 2 semanas al inicio. Verificar PA, ECG, función hepática y tolerancia; no fraccionar presentaciones sin autorización.'},
+ 'Nebivolol':{product:'Insucor',source:refDrug('Nebivolol'),frequency:'24',steps:[1.25,2.5,5,10],days:[7,7,7],target:10,checks:'Indicación IC estable leve/moderada a partir de 70 años. Al inicio, sin IC aguda 6 semanas y tratamiento concomitante estable 2 semanas. Escalones cada 1–2 semanas y supervisión médica al menos 2 h al inicio y cada aumento. Verificar hepatopatía y función renal.'},
+ 'Dapagliflozina':{product:'Dapagliflozina Mabo',source:refDrug('Dapagliflozina'),frequency:'24',steps:[10],target:10,minInitiationEgfr:25,checks:'No iniciar con TFG <25 según ficha. Dosis habitual IC 10 mg/día; hepatopatía grave: inicio de referencia 5 mg/día y valorar 10 si se tolera. Evaluar DM1, cetoacidosis, hipovolemia, embarazo y demás precauciones.'},
+ 'Empagliflozina':{product:'Empagliflozina Tecnigen',source:refDrug('Empagliflozina'),frequency:'24',steps:[10],target:10,minInitiationEgfr:20,checks:'No iniciar con TFGe <20 según ficha; 10 mg/día en IC. 25 mg/día no es una titulación de IC. Evaluar DM1, cetoacidosis, hipovolemia, embarazo y demás precauciones.'}
+};
+export function betaBlockerReferenceStep(m){
+ const ref=HF_TITRATION_REFERENCE[m?.drug];
+ if(!ref?.days||m.frequency!==ref.frequency)return null;
+ let dose=mgNumber(m.dose);
+ // Existing 11.875 mg records represent half of the 23.75 mg tablet; the referenced FT rounds to 11.88.
+ if(m.drug==='Metoprolol succinato'&&dose===11.875)dose=11.88;
+ const i=ref.steps.indexOf(dose);
+ return i<0||i===ref.steps.length-1?null:{from:dose,to:ref.steps[i+1],minDays:ref.days[i],frequency:ref.frequency,source:ref.source,product:ref.product,checks:ref.checks};
+}
+// A bounded reference table, not a patient-specific order. Explicit indication is required.
+// Missing longitudinal data must never generate a positive escalation decision.
+export function armPotassiumReference({drug,indication,potassium,dose,frequency,confirmed,egfr,initialEgfr,priorEgfr,doseDays}={}){
+ if(!confirmed||!Number.isFinite(potassium)||potassium<0)return null;
+ const n=mgNumber(dose);
+ if(drug==='Eplerenona'&&indication==='hf'){
+  if(potassium>=6)return {kind:'interrupt',reference:'Interrumpir según tabla 1; valorar de forma urgente. Reinicio de referencia 25 mg en días alternos si K <5,0, tras revisión clínica.',source:refDrug(drug)};
+  const key=n+'/'+frequency,down={'50/24':'25 mg cada 24 h','25/24':'25 mg en días alternos','25/48':'interrupción'};
+  if(potassium>=5.5)return {kind:'review',reference:down[key]?'Tabla 1: escalón inferior de referencia: '+down[key]+'. Verificar elegibilidad.':'Confirmar pauta antes de aplicar tabla 1.',source:refDrug(drug)};
+  return {kind:'review',reference:potassium>=5?'Tabla 1: mantenimiento por criterio de K; revisar función renal y otras condiciones.':'Tabla 1 permite valorar aumento por K; falta comprobar función renal, dosis, intervalo y demás criterios.',source:refDrug(drug)};
+ }
+ if(drug==='Finerenona'&&['hf40','ckd-dm2'].includes(indication)){
+  const hf=indication==='hf40',table=hf?'Tabla 4 IC':'Tabla 2 ERC-DM2',source=refDrug(drug);
+  const review=reference=>({kind:'review',reference:table+': '+reference,source});
+  const interrupt=reference=>({kind:'interrupt',reference:table+': '+reference,source});
+  const validFg=Number.isFinite(egfr)&&egfr>=0,previous=Number.isFinite(priorEgfr)&&priorEgfr>0;
+  // Compare multiplication rather than rounded percentage; exact 30% and 40% are distinct.
+  const drop30=validFg&&previous&&egfr*100<priorEgfr*70;
+  const drop40=validFg&&previous&&egfr*100<=priorEgfr*60;
+  const checkRenal=hf&&drop40?' Además, caída de TFGe ≥40%: considerar reducción/interrupción y revisión especializada.':'';
+  if(validFg&&egfr<15)return interrupt('La ficha indica interrupción al progresar a TFGe <15. Confirmar evolución renal; no reiniciar por una cifra aislada.');
+  if(potassium>=6)return interrupt(hf?'Interrupción; valoración urgente. Referencia de reinicio: 10 mg/día cuando K <5,5, o <5,0 si elevación repetida ≥5,5, tras resolver causas y revisión clínica.':'Interrupción; valoración urgente. Referencia de reinicio 10 mg/día cuando K ≤5,0, tras revisión clínica.');
+  if(!hf&&potassium>5.5)return interrupt('Interrupción; referencia de reinicio 10 mg/día cuando K ≤5,0. Confirmar indicación y seguimiento.');
+  if(frequency!=='24'||!(hf?[10,20,40]:[10,20]).includes(n))return review('Confirmar pauta e indicación antes de aplicar esta tabla.');
+  if(hf&&potassium>=5.5){
+   const down={10:'interrupción; revisar reinicio con 10 mg/día cuando K <5,5',20:'reducción a 10 mg/día',40:'reducción a 20 mg/día'};
+   return (n===10?interrupt:review)(down[n]+'. Confirmar pauta, función renal y contexto.'+checkRenal);
+  }
+  if(hf&&drop40)return review('TFGe disminuida ≥40%: considerar reducción o interrupción, evaluar causa y estabilización antes de reiniciar o aumentar.');
+  if(hf&&n===40&&drop30)return review('Descenso de TFGe >30% con 40 mg/día: referencia de reducción a 20 mg/día; confirmar mediciones y contexto.');
+  if(!validFg||!previous)return review('Faltan datos de TFGe actual o anterior; no se propone aumento ni se concluye seguridad.');
+  if(n===10||hf&&n===20){
+   const favorableK=hf?potassium<5:potassium<=4.8;
+   if(!favorableK)return review('La tabla permite mantenimiento por criterio de K; revisar TFGe y demás condiciones.');
+   if(drop30)return review('Descenso de TFGe >30%: no aumentar; revisar evolución y causas.');
+   if(!Number.isFinite(doseDays)||doseDays<28)return review('Falta comprobar el control de K/TFGe a las cuatro semanas del inicio, reinicio o ajuste; no proponer aumento.');
+   if(hf&&n===20&&(!Number.isFinite(initialEgfr)||initialEgfr<25))return review('Falta TFGe inicial válida para decidir objetivo de 20 o 40 mg/día.');
+   if(hf&&n===20&&initialEgfr<60)return review('Objetivo de referencia 20 mg/día con TFGe inicial 25–<60; no aumentar por normalización posterior del FG.');
+   return review('Escalón de referencia '+(n===10?'20':'40')+' mg/día conforme a la tabla con los datos registrados. Verificar mediciones, indicación, tolerancia, contraindicaciones e interacciones; no es una orden.');
+  }
+  return review('Dosis objetivo de referencia registrada; comprobar tolerancia, TFGe y K; no aumentar automáticamente.');
+ }
+ if(drug==='Espironolactona'&&indication==='aldactone-hf'&&potassium>5)return {kind:'review',reference:'Ficha Aldactone 4.4: interrupción temporal o definitiva por K >5. Contrastar la presentación y la discrepancia con S8 ESC.',source:refDrug(drug)};
+ return null;
+}
+// ESC 2026 S4/S5. Maintenance only, not initiation or a prescription.
+// Exact 30% decline is outside the stated <30% acceptable range; review,
+// not automatic reduction. The S4 interruption thresholds are NOT copied to S5.
+export function raasMaintenanceReference({drug,egfr,potassium,priorEgfr,creatinine,priorCreatinine,confirmed}={}){
+ const arni=drug==='Sacubitrilo/valsartán';
+ if(!confirmed||!['Sacubitrilo/valsartán','Enalapril','Ramipril','Candesartán','Valsartán'].includes(drug)||!Number.isFinite(egfr)||egfr<0||!Number.isFinite(potassium)||potassium<=0)return null;
+ const table=arni?'S5':'S4',source='https://doi.org/10.1093/eurheartj/ehag100';
+ const make=(level,title,detail)=>({level,title,detail:'ESC '+table+': '+detail,source});
+ const drop=Number.isFinite(priorEgfr)&&priorEgfr>0&&egfr*100<=priorEgfr*70;
+ const creatRise=Number.isFinite(creatinine)&&creatinine>0&&Number.isFinite(priorCreatinine)&&priorCreatinine>0&&creatinine>2*priorCreatinine;
+ if(potassium>=6)return make('red','Hiperpotasemia: revisión urgente','Priorizar valoración urgente y confirmar medicación y analítica; no intensificar.');
+ if(!arni&&(potassium>5.5||egfr<20||creatRise))return make('amber','IECA/ARA-II: criterio de interrupción de S4','La tabla indica interrumpir y consultar al especialista ante estos límites. Confirmar valores, evolución y ficha específica; no ejecutar retirada automática.');
+ if(egfr<30||potassium>5.5||drop||creatRise)return make('amber','Revisar función renal y potasio: '+drug,'Comprobar volemia, nefrotóxicos y otros fármacos que elevan K. Si persiste deterioro excesivo tras corregir causas, valorar reducción de dosis y analítica en 1–2 semanas; consultar al especialista. No extrapolar automáticamente criterios de retirada de S4 a ARNI.');
+ return make('blue','Seguimiento renal: '+drug,'Revisar tendencia de FG/creatinina y K. Control analítico en 1–2 semanas tras inicio y ajuste; el dato aislado no demuestra tolerancia.');
+}
+// CIMA 4.2/4.3: enalapril 83712, ramipril 76966, eplerenona 76182.
+// CrCl is a separately entered measured or estimated result, never indexed eGFR.
+export function creatinineClearanceReference(row,ctx){
+ if(!row||!['Enalapril','Ramipril','Eplerenona'].includes(row.drug))return null;
+ const r=renalContext(ctx),drug=row.drug,ref=HF_TITRATION_REFERENCE[drug],source=ref.source;
+ const result=(status,detail,extra={})=>({status,detail,source,...extra});
+ if(!r.crclReady)return result('missing','Comprobar aclaramiento de creatinina (mL/min), su fecha, fechas de FG/K y estabilidad renal. No sustituir por FG indexado.');
+ if(normalizeMedication(row.product)!==normalizeMedication(ref.product)||row.indication!=='hf')return result('missing','Comprobar presentación exacta e indicación de IC antes de aplicar límites de ficha.');
+ const cl=r.crcl,n=mgNumber(row.dose),daily=row.frequency==='12'?2*n:row.frequency==='24'?n:row.frequency==='48'?n/2:NaN;
+ if(!Number.isFinite(daily)||daily<=0)return result('missing','Confirmar dosis diaria y pauta actual.');
+ if(drug==='Enalapril'){
+  const start=cl<=10?'2,5 mg en días de diálisis, solo si corresponde a ese contexto':cl<=30?'2,5 mg/día':cl<80?'5–10 mg/día en la tabla renal general':'sin pauta específica en la tabla renal';
+  return result('review','Tabla 2 de CIMA: dosis inicial renal de referencia '+start+'. En IC la ficha recoge inicio bajo supervisión con 2,5 mg; no aplicar la tabla renal como máximo de mantenimiento ni automatizar el reparto. Valorar intervalo y tolerancia.');
+ }
+ if(drug==='Ramipril'){
+  if(cl<10)return result('review','CrCl <10: no extrapolar la pauta de hemodiálisis de HTA a IC. Revisión especializada.');
+  const cap=cl<=60?5:10; // exact 60 overlaps bands; use conservative 5 for review only
+  if(daily>cap)return result('review','Dosis diaria registrada superior al límite renal de referencia de '+cap+' mg/día. Revisar ficha y contexto; no reducir automáticamente.',{daily,cap});
+  if(cl===60)return result('review','CrCl exactamente 60: bandas solapadas en la ficha; confirmar criterio antes de aumentar. Referencia conservadora de revisión: máximo 5 mg/día.',{daily,cap});
+  if(daily>=cap)return result('review','Dosis diaria en el límite renal de referencia ('+cap+' mg/día); no ofrecer aumento.',{daily,cap});
+  return result('reference','Límite renal de referencia: '+cap+' mg/día. Falta verificar hepatopatía (límite distinto), estabilidad, tolerancia y reparto de dosis antes de titular.',{daily,cap});
+ }
+ if(cl<30||r.values.egfr<30)return result('blocked','CIMA: insuficiencia renal grave (CrCl <30 o TFGe <30 según apartados 4.2/4.3). Revisar tratamiento, no intensificar.');
+ if(cl<50&&daily>25)return result('review','CrCl <50: dosis >25 mg/día no estudiadas. Revisar pauta y alternativas; no reducir automáticamente.',{daily});
+ if(cl<50)return result('reference','CrCl <50: no proponer 50 mg/día; confirmar indicación y contexto posinfarto, si procede.',{daily});
+ return result('reference',cl<=60?'CrCl 30–60: pauta inicial renal de referencia 25 mg en días alternos; no usarla como orden de reducción del mantenimiento. Verificar K y demás condiciones.':'CrCl >60: aplicar tabla de K y comprobar indicación, intervalo y CYP3A4; no confirma elegibilidad.',{daily});
+}
+// Ambulatory reference, not a prescription. Missing conditions are not assumed normal.
+export function raasStepReference(row,ctx){
+ const drug=row?.drug,ref=HF_TITRATION_REFERENCE[drug],d=treatmentSafetyData(ctx);
+ if(!ref||!['Sacubitrilo/valsartán','Enalapril','Ramipril','Candesartán','Valsartán'].includes(drug))return null;
+ const n=mgNumber(row.dose),f=row.frequency,days=mgNumber(row.doseDays),source=ref.source;
+ const result=(status,detail,next=null)=>({status,detail,next,source});
+ if(d.profile.urgent||d.profile.situation!=='compensated'||!d.labsConfirmed||d.pressureDiscordant||d.values.sbp===null||d.values.sbp<100||d.values.egfr<30||d.values.potassium<3.5||d.values.potassium>5.2)return result('review','Revisar estabilidad, PA, función renal y K antes de considerar un aumento.');
+ if(normalizeMedication(row.product)!==normalizeMedication(ref.product)||row.indication!=='hf')return result('missing','Comprobar presentación exacta e indicación de IC.');
+ if(row.tolerance!=='well')return result('missing','Comprobar tolerancia a la pauta actual.');
+ const renal=renalTrendReference(row,ctx);
+ if(!renal.coreReady)return result('missing','Confirmar fecha de FG y K y vigencia clínica de la evaluación renal antes de titular.');
+ if(!renal.comparableFg)return result('missing','Comprobar FG previo a la pauta actual y fecha anterior a la muestra actual.');
+ if(renal.fgDrop>=30||renal.comparableCr&&renal.creatinineRise>100)return result('review','Deterioro renal relevante: revisar causas y no aumentar antes de reevaluar.');
+ const minDays=drug==='Sacubitrilo/valsartán'?28:14;
+ if(!Number.isFinite(days)||days<minDays)return result('missing','Comprobar intervalo de titulación: referencia conservadora de '+minDays+' días para seguimiento ambulatorio.');
+ let next=null;
+ if(drug==='Sacubitrilo/valsartán'&&f==='12')next={'24/26':'49/51 mg/12 h','49/51':'97/103 mg/12 h'}[n+'/'+mgNumber(row.dose2)]||null;
+ if(drug==='Candesartán'&&f==='24')next={4:'8 mg/24 h',8:'16 mg/24 h',16:'32 mg/24 h'}[n]||null;
+ if(drug==='Valsartán'&&f==='12')next={40:'80 mg/12 h',80:'160 mg/12 h'}[n]||null;
+ if(['Enalapril','Ramipril'].includes(drug)){const cr=creatinineClearanceReference(row,ctx);return result(cr.status==='missing'?'missing':'review',cr.detail);}
+ return next?result('reference','Escalón de referencia: '+next+'. Verificar contraindicaciones, interacciones y demás condiciones de ficha. Control FG/K tras el cambio en 1–2 semanas.',next):result('review','Sin escalón superior aplicable a la pauta registrada; revisar dosis máxima tolerada.');
+}
+export function arniTransitionReference({from,to,elapsedHours,overlap,angioedema}={}){
+ const valid=['IECA','ARA-II','ARNI'];
+ if(!valid.includes(from)||!valid.includes(to)||from===to||!([from,to].includes('ARNI')))return null;
+ const source=HF_TITRATION_REFERENCE['Sacubitrilo/valsartán'].source;
+ if(overlap===true)return {status:'blocked',detail:'No solapar ARNI con IECA ni ARA-II.',source};
+ if(angioedema==='yes')return {status:'blocked',detail:'Antecedente de angioedema: no proponer transición; revisar contraindicación específica y alternativas.',source};
+ if([from,to].includes('IECA')){
+  if(!Number.isFinite(elapsedHours)||elapsedHours<0)return {status:'missing',detail:'Confirmar última dosis; intervalo mínimo de 36 h.',source};
+  if(elapsedHours<36)return {status:'blocked',detail:'No iniciar todavía: intervalo mínimo de 36 h entre IECA y ARNI.',source};
+ }
+ if(overlap!==false||angioedema!=='no')return {status:'missing',detail:'Confirmar ausencia de solapamiento y antecedente de angioedema.',source};
+ return {status:'reference',detail:'Requisito de transición comprobado. Aún se deben verificar indicación, tolerancia, PA, función renal, K y ficha antes del cambio.',source};
+}
+// CIMA Kern Pharma 90716/90717, sections 4.2–4.5: time between
+// actual or planned last dose and planned first dose, not elapsed time since
+// this screen was opened. A plan does not establish that a drug was withdrawn.
+function transitionInstant(value){
+ if(typeof value!=='string'||!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(value))return null;
+ const n=Date.parse(value);return Number.isFinite(n)&&new Date(n).toISOString()===value?n:null;
+}
+export function setArniTransitionField(ctx,id,key,value){
+ const row=medicationSummary(ctx).active.find(x=>x.id===id);
+ if(!row||!['IECA','ARA-II'].includes(medicationFamilyLabel(row)))return ctx;
+ if(!['lastDose','firstDose','noOverlap'].includes(key))return ctx;
+ const old=ctx.arniTransitionPlan?.id===id?ctx.arniTransitionPlan:{id,lastDose:'',firstDose:'',noOverlap:'unknown'};
+ const next={...old,[key]:key==='noOverlap'?(['yes','no'].includes(value)?value:'unknown'):(transitionInstant(value)!==null?value:'')};
+ return {...ctx,arniTransitionPlan:next,updatedAt:new Date().toISOString()};
+}
+export function arniTransitionPlanReference(ctx,row){
+ const from=medicationFamilyLabel(row);
+ if(!['IECA','ARA-II'].includes(from))return null;
+ const data=ctx.arniTransitionPlan?.id===row.id?ctx.arniTransitionPlan:{id:row.id,lastDose:'',firstDose:'',noOverlap:'unknown'};
+ const last=transitionInstant(data.lastDose),first=transitionInstant(data.firstDose);
+ const elapsed=last!==null&&first!==null?(first-last)/3600000:null;
+ const limit=from==='IECA'&&last!==null?new Date(last+36*3600000).toISOString():null;
+ const source=refDrug('Sacubitrilo/valsartán'),d=treatmentSafetyData(ctx),screen=candidateRiskScreen(ctx,'Sacubitrilo/valsartán');
+ const make=(status,detail)=>({id:row.id,from,data,elapsed,limit,status,detail,source});
+ if(d.values.sbp!==null&&d.values.sbp<100||Number.isFinite(d.values.potassium)&&d.values.potassium>5.4)return make('blocked','No plantear inicio de ARNI con PAS <100 mmHg o K >5,4 mmol/L; reevaluar los datos.');
+ if(screen.positives.length)return make('blocked','Revisar el riesgo registrado antes de plantear la sustitución.');
+ if(data.noOverlap==='no'||elapsed!==null&&elapsed<=0)return make('blocked','No planificar solapamiento ni una primera dosis anterior o simultánea a la última del tratamiento previo.');
+ if(from==='IECA'&&elapsed!==null&&elapsed<36)return make('blocked','El intervalo planificado es inferior a 36 horas; no cumple el requisito de separación IECA/ARNI.');
+ if(last===null||first===null)return make('missing',from==='IECA'?'Registrar la última dosis y la primera prevista para comprobar las 36 horas.':'Registrar ambas dosis para comprobar el orden temporal sin solapamiento.');
+ const ref=arniTransitionReference({from,to:'ARNI',elapsedHours:elapsed,overlap:data.noOverlap==='yes'?false:undefined,angioedema:ctx.treatmentAssessment?.risks?.angioedema});
+ if(ref.status!=='reference')return make(ref.status,ref.detail);
+ if(screen.pending.length)return make('missing','El intervalo y el plan sin solapamiento están comprobados; quedan riesgos del candidato por revisar.');
+ return make('reference','El intervalo planificado cumple el requisito temporal registrado. No confirma retirada efectiva, indicación, dosis inicial ni elegibilidad clínica; verificar la ficha y las demás condiciones antes del cambio.');
+}
+const sglt2Interruption='Ante sospecha/diagnóstico de cetoacidosis, interrumpir y evaluar de inmediato; no reiniciar tras CAD salvo desencadenante identificado y resuelto. En cirugía mayor o enfermedad aguda grave hospitalizada, interrupción temporal, cetonas preferentemente en sangre y reinicio solo cuando sean normales y el paciente esté estable. La duración de la interrupción no basta.';
+
+// Targeted problem solving; source ESC S4–S9 or referenced CIMA. Does not
+// order withdrawal, substitution or restart. Only problems explicitly recorded.
+export function medicationProblemReference(row,ctx){
+ if(row?.tolerance!=='problem'||!medicationProblemOptions(row).some(x=>x[0]===row.problem)||row.problem==='unknown'||row.problem==='other')return null;
+ const drug=row.drug,problem=row.problem,d=treatmentSafetyData(ctx),source=refDrug(drug);
+ const make=(level,title,detail,urgent=false)=>({level,title,detail,source,urgent});
+ const guide=(title,detail)=>({...make('amber',title,detail),source:HF_GUIDE});
+ if(problem==='angioedema')return make('red','Sospecha de angioedema','Priorizar valoración urgente, especialmente vía aérea; revisar de inmediato el fármaco causal. No reintroducir IECA/ARNI sin resolver la contraindicación.',true);
+ if(problem==='ketoacidosis')return make('red','Sospecha de cetoacidosis','La ficha indica interrumpir iSGLT2 y evaluar urgentemente, incluso sin hiperglucemia marcada. No reiniciar tras CAD salvo desencadenante identificado y resuelto.',true);
+ if(problem==='acuteIllness')return make('amber','iSGLT2: valorar interrupción temporal','Cirugía mayor o enfermedad aguda grave hospitalizada: ficha indica interrupción y control de cetonas. Valorar reinicio solo cuando cetonas normales y estabilidad clínica; no por días transcurridos.');
+ if(problem==='cough')return guide('Tos con tratamiento SRAA','S4/S5: descartar congestión pulmonar y otras causas. Si tos limitante atribuida a IECA/ARNI, valorar sustitución por ARA-II sin solapamiento, según indicación. No presuponer causalidad.');
+ if(problem==='gynecomastia')return guide('Espironolactona: valorar alternativa','S8: si ginecomastia atribuible a espironolactona, valorar eplerenona o finerenona según FEVI, indicación, K/FG e interacciones. No combinar ARM.');
+ if(problem==='brady')return guide('Bradicardia sintomática con betabloqueante','S6: revisar gravedad y otros cronotropos, realizar ECG; valorar reducción si FC <50 y síntomas, con revisión clínica. Evitar retirada brusca salvo necesidad clínica.');
+ if(problem==='hypotension')return guide('Hipotensión sintomática','S4–S7: evaluar perfusión y causas; revisar otros vasodilatadores y, solo si no existe congestión, valorar disminuir diurético. Si inestable, prioridad urgente. No aplicar retirada automática.');
+ if(problem==='congestion')return guide('Congestión o empeoramiento durante tratamiento','S6/S7: valorar gravedad, estabilidad, adherencia, respuesta diurética y desencadenantes. No intensificar betabloqueante durante deterioro; determinar necesidad de valoración urgente.');
+ if(problem==='dehydration')return guide('Hipovolemia o deshidratación','S7–S9: comprobar volemia, PA, función renal y electrolitos; valorar ajuste diurético y otros fármacos según cuadro. En enfermedad aguda grave aplicar reglas específicas de interrupción de iSGLT2.');
+ return null;
+}
+const THERAPY_RISK_DEFINITIONS={
+ pregnancy:'Embarazo, posibilidad de embarazo o lactancia',
+ angioedema:'Antecedente de angioedema',
+ bilateralRas:'Estenosis bilateral de arterias renales conocida',
+ severeLiver:'Hepatopatía grave, cirrosis biliar o colestasis',
+ avBlock:'Bloqueo AV de 2.º/3.er grado, enfermedad del nodo sinusal o bloqueo sinoauricular',
+ severeAsthma:'Asma grave',
+ limbIschemia:'Isquemia crítica o enfermedad arterial periférica grave',
+ symptomaticBrady:'Bradicardia o hipotensión sintomática',
+ type1:'Diabetes tipo 1',
+ ketoacidosis:'Sospecha de cetoacidosis actual',
+ acuteIllness:'Cirugía mayor o enfermedad aguda grave',
+ addison:'Enfermedad de Addison',
+ acidosis:'Acidosis metabólica',
+ pheochromocytoma:'Feocromocitoma no tratado'
+};
+const THERAPY_RISK_KEYS={
+ 'Sacubitrilo/valsartán':['pregnancy','angioedema','bilateralRas','severeLiver'],
+ 'Bisoprolol':['avBlock','severeAsthma','limbIschemia','symptomaticBrady','acidosis','pheochromocytoma'],
+ 'Finerenona':['pregnancy','addison','severeLiver'],
+ 'Dapagliflozina':['pregnancy','type1','ketoacidosis','acuteIllness'],
+ 'Empagliflozina':['pregnancy','type1','ketoacidosis','acuteIllness']
+};
+export function setTherapyRisk(ctx,key,value){
+ if(!Object.hasOwn(THERAPY_RISK_DEFINITIONS,key)||!['yes','no','unknown'].includes(value))return ctx;
+ const a={...ctx.treatmentAssessment},risks={...a.risks};
+ if(value==='unknown')delete risks[key];else risks[key]=value;
+ return {...ctx,treatmentAssessment:{...a,risks},updatedAt:new Date().toISOString()};
+}
+export function candidateRiskScreen(ctx,drug){
+ const keys=THERAPY_RISK_KEYS[drug]||[],risks=ctx.treatmentAssessment?.risks||{};
+ const items=keys.map(key=>({key,label:THERAPY_RISK_DEFINITIONS[key],value:['yes','no'].includes(risks[key])?risks[key]:key==='type1'&&ctx.findings?.dm==='no'?'no':'unknown'}));
+ const positives=items.filter(x=>x.value==='yes'),pending=items.filter(x=>x.value==='unknown');
+ return {items,positives,pending,status:positives.length?'review':pending.length?'pending':'partial-review',complete:false,source:refDrug(drug)};
+}
+// UI requirements are derived from the same registered context as the
+// existing safety gates. They do not relax any blocker or certify eligibility.
+export function proposalMissingData(ctx){
+ const d=treatmentSafetyData(ctx),r=d.profile,m=medicationSummary(ctx);
+ const fields={sbp:['PA sistólica','mmHg'],dbp:['PA diastólica','mmHg'],hr:['Frecuencia cardiaca','lpm'],egfr:['FG estimado','mL/min/1,73 m²'],potassium:['Potasio','mmol/L']};
+ const profileFields=d.missing.map(key=>({key,label:fields[key][0],unit:fields[key][1]}));
+ const classification=r.pending.map(x=>({section:x.section,label:x.label}));
+ if(!Number.isFinite(r.ef)&&!classification.some(x=>x.section==='fenotipo'))classification.push({section:'fenotipo',label:'Registrar FEVI'});
+ if(r.situation!=='compensated'&&!classification.some(x=>x.section==='situacion'))classification.push({section:'situacion',label:'Revisar estabilidad y congestión'});
+ if((r.next.kind!=='treatment'||!r.clinicalHF)&&!classification.length)classification.push({section:'conclusion',label:'Revisar clasificación e IC clínica'});
+ const medRows=[...new Set(m.missing.map(x=>x.id))].map(id=>{
+  const row=[...m.groups,...m.additional].find(x=>x.id===id);
+  if(!row||row.drug==='unknown')return {id,label:'Identificar medicamento',fields:[],navigate:true};
+  const fields=[],valid=x=>Number.isFinite(mgNumber(x))&&mgNumber(x)>0;
+  if(row.drug==='other'&&!row.name.trim())fields.push('name');
+  if(row.drug==='other'?!row.dose.trim():!valid(row.dose))fields.push('dose');
+  if(row.drug==='Sacubitrilo/valsartán'&&!valid(row.dose2))fields.push('dose2');
+  if(!row.frequency)fields.push('frequency');
+  if(row.frequency==='other'&&!row.customFrequency.trim())fields.push('customFrequency');
+  return {id,label:row.drug==='other'?row.name||'Otro medicamento':row.drug,fields,navigate:!fields.length};
+ });
+ return {profileFields,confirmLabs:d.labsAvailable&&!d.labsConfirmed,classification,medRows,confirmMedication:!m.reviewed&&!m.missing.length&&!m.duplicates.length&&!m.unidentified,reviewMedication:!m.reconciled||m.otherRows.length&&!m.externalReviewValid||m.active.some(x=>x.frequency==='other'||x.tolerance==='problem')};
+}
+function adjustmentInputFields(row,ref,days,ecg,ctx){
+ const fields=[];
+ if(normalizeMedication(row.product)!==normalizeMedication(ref.product))fields.push('product');
+ if(row.indication!=='hf')fields.push('indication');
+ if(row.tolerance==='unknown')fields.push('tolerance');
+ if(!Number.isFinite(mgNumber(row.doseDays))||mgNumber(row.doseDays)<days)fields.push('doseDays');
+ if(ecg&&ctx.results?.ecg?.value!=='normal'&&ctx.results?.ecg?.value!=='af')fields.push('ecg');
+ return {id:row.id,fields,referenceProduct:ref.product,minDays:days};
+}
 export function treatmentProposal(ctx){
  const d=treatmentSafetyData(ctx),r=d.profile,m=medicationSummary(ctx),alerts=medicationSafety(ctx);
  const actions=[],blockers=[],urgent=[];
  const {sbp,hr,egfr,potassium}=d.values;
- const push=(kind,title,detail,check,source=HF_GUIDE)=>actions.push({kind,title,detail,check,source});
+ const lowPressure=sbp!==null&&sbp>=90&&sbp<100;
+ const push=(kind,title,detail,check,source=HF_GUIDE,candidate=null,presentation={})=>{
+  // Presentation metadata groups already evaluated actions; it does not change eligibility.
+  const view={section:({start:'complete',titrate:'optimize',switch:'optimize',reduce:'optimize',stop:'optimize',restart:'complete',maintain:'maintain',follow:'follow'})[kind]||'review',...presentation};
+  if(view.medicationId&&!view.transition){
+   const row=m.active.find(x=>x.id===view.medicationId);
+   if(row&&['Enalapril','Ramipril','Candesartán','Valsartán','Sacubitrilo/valsartán','Eplerenona','Finerenona'].includes(row.drug)){
+    view.renalContext={id:row.id,trend:renalTrendReference(row,ctx),needsCrcl:['Enalapril','Ramipril','Eplerenona'].includes(row.drug),needsTrend:['Enalapril','Ramipril','Candesartán','Valsartán','Sacubitrilo/valsartán','Finerenona'].includes(row.drug),needsCreatinine:['Enalapril','Ramipril','Candesartán','Valsartán','Sacubitrilo/valsartán'].includes(row.drug)};
+   }
+  }
+  const screening=candidate?candidateRiskScreen(ctx,candidate):null;
+  if(screening?.positives.length){
+   actions.push({kind:'review',title,detail:'No proponer inicio con los datos registrados: '+screening.positives.map(x=>x.label).join('; ')+'. Requiere revisión de la ficha y del contexto.',check,source,candidate,screening,presentation:view});
+   return;
+  }
+  const metadata=screening?{candidate,screening}:{};
+  // Low BP in a recorded stable patient is a review context, not a blanket contraindication.
+  // No start/up-titration/switch is proposed before symptoms, perfusion and treatment are checked.
+  if((lowPressure||m.externalReviewValid)&&['start','titrate','switch'].includes(kind)){
+   const caveats=[lowPressure?'PAS 90–99 mmHg: confirmar síntomas y perfusión, y revisar el tratamiento antes de decidir.':'',m.externalReviewValid?'La revisión externa corresponde a la lista actual, no al candidato: comprobar sus interacciones antes de plantear un cambio.':''].filter(Boolean).join(' ');
+   actions.push({kind:'review',title,detail:'Referencia condicionada: '+detail,check:caveats+' '+check,source,...metadata,presentation:view});
+  }else actions.push({kind,title,detail,check,source,...metadata,presentation:view});
+ };
  if(r.urgent)urgent.push('La situación clínica registrada requiere valoración urgente.');
- if(d.labsConfirmed&&potassium>=6)urgent.push('Potasio ≥6 mmol/L: valoración clínica urgente, ECG y confirmación según contexto; no esperar a optimizar tratamiento.');
+ for(const row of m.active){const advice=medicationProblemReference(row,ctx);if(advice?.urgent)urgent.push(advice.title+': valoración urgente.');}
+ if(ctx.treatmentAssessment?.risks?.ketoacidosis==='yes')urgent.push('Sospecha de cetoacidosis registrada: valoración urgente, no esperar a optimizar tratamiento.');
+ if(Number.isFinite(potassium)&&potassium>=6)urgent.push('Potasio registrado ≥6 mmol/L: valoración clínica urgente, ECG y confirmación según contexto, aunque falte marcar la confirmación analítica; no esperar a optimizar tratamiento.');
  if(alerts.some(a=>a.level==='red'))blockers.push('Resolver las alertas rojas y comprobar la medicación real.');
  if(alerts.some(a=>a.level==='amber'))blockers.push('Revisar las alertas de dosis, frecuencia o interacción antes de plantear cambios.');
  if(r.next.kind==='advanced')blockers.push('Valorar IC avanzada con el equipo especializado.');
  else if(r.next.kind!=='treatment'||!r.clinicalHF||!Number.isFinite(r.ef))blockers.push('Completar clasificación y confirmar IC clínica.');
  if(r.situation!=='compensated')blockers.push('Confirmar estabilidad sin congestión antes de optimizar el tratamiento crónico. Si hay congestión, valorar diuresis y gravedad.');
  if(d.missing.length||!d.labsConfirmed||d.pressureDiscordant)blockers.push('Completar constantes y confirmar función renal y potasio vigentes.');
- if(sbp!==null&&sbp<100)blockers.push('PAS inferior a 100 mmHg: revisar síntomas, perfusión y causas antes de intensificar.');
- if(hr!==null&&hr<60)blockers.push('FC inferior a 60 lpm: revisar ritmo, síntomas y fármacos cronotropos antes de intensificar.');
+ if(sbp!==null&&sbp<90)blockers.push('PAS inferior a 90 mmHg: confirmar medida, síntomas y perfusión antes de intensificar; si hay inestabilidad o hipoperfusión, priorizar atención urgente.');
+ if(hr!==null&&hr<50)blockers.push('FC inferior a 50 lpm: revisar ritmo, síntomas y fármacos cronotropos antes de intensificar. Umbral conservador del prototipo; no implica suspender automáticamente.');
  if(d.labsConfirmed&&(potassium>=5.5||potassium<3.5))blockers.push('Potasio fuera del margen conservador del prototipo: revisar causas y tratamiento.');
  if(!m.reconciled)blockers.push('Confirmar lista completa, pautas y clasificación de los medicamentos; resolver duplicidades.');
- if(m.active.some(x=>x.drug==='other'||x.frequency==='other'||x.tolerance==='problem'))blockers.push('Revisión individual de pauta libre, medicamento no identificado o intolerancia registrada.');
+ if(m.active.some(x=>x.frequency==='other'||x.tolerance==='problem'))blockers.push('Revisión individual de pauta libre o intolerancia registrada.');
+ if(m.otherRows.length&&!m.externalReviewValid)blockers.push('Conciliar medicamentos fuera del catálogo y confirmar su revisión externa para esta lista y estos datos clínicos. No se presume ausencia de interacciones.');
  if(r.nyha==='IV')blockers.push('NYHA IV: evaluación especializada antes de la intensificación ambulatoria.');
- const result=(status)=>({status,profile:r,values:d.values,actions,blockers,urgent,alerts,source:HF_GUIDE});
+ const result=(status)=>({status,profile:r,values:d.values,actions,blockers,urgent,alerts,source:HF_GUIDE,renal:renalContext(ctx),missingData:status==='review'?proposalMissingData(ctx):null});
  if(urgent.length||blockers.length)return result(urgent.length?'urgent':'review');
  // The remaining output consists of conditional options, never orders. Each action states checks not automated.
  const member=id=>m.familyStatus.find(x=>x.id===id)?.members||[];
  const absent=id=>m.familyStatus.find(x=>x.id===id)?.status==='absent';
+ const deferred=new Set();
+ for(const group of m.groups){
+  if(absent(group.id)&&['intolerance','contraindication','notIndicated','other'].includes(group.reason)){
+   deferred.add(group.id);
+   push('review','Revisar motivo de ausencia: '+group.label,'Consta una decisión o problema previo; no se propone iniciar ni reintroducir automáticamente esta familia.','Precisar fármaco, motivo, evolución y alternativas; confirmar que se ha resuelto la contraindicación o intolerancia.',HF_GUIDE);
+  }
+ }
+ const canStart=id=>absent(id)&&!deferred.has(id);
+ const betaCaution=hr<60; // conservative prototype threshold, not an ESC absolute contraindication.
+ if(m.externalReviewValid)push('review','Revisión externa de medicación adicional','Se ha registrado una comprobación profesional de la lista actual; el motor no puede certificar esa revisión ni descartar nuevas interacciones.','Verificar por separado cualquier medicamento candidato y repetir la revisión si cambian los datos.',HF_GUIDE);
+ if(lowPressure)push('review','Revisar presión arterial','PAS 90–99 mmHg. No interpretar hipotensión asintomática como indicación automática de retirada.','ESC S4–S6: revisar síntomas, perfusión, vasodilatadores y diuréticos si no hay congestión. ARNI no se inicia por debajo de PAS 100 según la ficha de referencia.',HF_GUIDE);
+
  const existing=id=>member(id)[0];
  const reduced=r.ef<=40&&!r.improved&&r.phenotype!=='prior-reduced';
  const historical=r.improved||r.phenotype==='prior-reduced';
@@ -913,45 +1462,68 @@ export function treatmentProposal(ctx){
  const symptomatic=['II','III'].includes(r.nyha);
  const arni=existing('raas'),bb=existing('bb'),arm=existing('mra'),sg=existing('sglt2'),loop=existing('diuretic');
  if(historical){
-  push('maintain','FEVI recuperada o antecedente de reducción','No retirar tratamiento modificador del pronóstico únicamente por mejoría de FEVI. Revisar fenotipo previo e indicaciones de cada fármaco.','Confirmar diagnóstico histórico y motivo de cualquier cambio; no aplicar escalada de novo en este escenario.');
+  push('maintain','FEVI recuperada o antecedente de reducción','Mantener el tratamiento basal a dosis máximas toleradas es la recomendación general ESC 2026 (I C). La mejoría de FEVI no equivale a curación.','Una retirada gradual solo puede considerarse excepcionalmente (IIb C) con causa reversible tratada, ausencia de síntomas, normalización completa de función y volumen VI y péptidos, preferencia del paciente y vigilancia frecuente especializada. No automatizar retirada ni reintroducción.');
  }else if(!symptomatic){
   push('review','Confirmar perfil sintomático','Para proponer nuevos fármacos con indicación de IC sintomática, revisar clase funcional e historia de síntomas.','NYHA I o no registrada no implica ausencia de indicación previa.');
  }
  if(reduced&&symptomatic){
-  if(absent('raas')){
-   if(egfr>=30&&potassium<=5.4&&sbp>=100)push('start','Valorar sacubitrilo/valsartán','24/26 mg cada 12 h como inicio conservador en quien no recibe IECA/ARA-II; objetivo de referencia 97/103 mg cada 12 h.','Comprobar angioedema previo, embarazo, hepatopatía, interacciones, PA y ausencia real de IECA/ARA-II. Doblar cada 3–4 semanas si tolera; controlar FG/K tras inicio y ajustes.',refDrug('Sacubitrilo/valsartán'));
-   else push('review','SRAA: revisar elegibilidad','No se ofrece dosis de inicio por los datos de seguridad registrados.','Confirmar PA, potasio, función renal y alternativa según tolerancia.',refDrug('Sacubitrilo/valsartán'));
+  if(canStart('raas')){
+   if(egfr>=30&&potassium<=5.4&&sbp>=100)push('start','Valorar sacubitrilo/valsartán','24/26 mg cada 12 h como inicio conservador en quien no recibe IECA/ARA-II; objetivo de referencia 97/103 mg cada 12 h.','Comprobar angioedema previo, embarazo, hepatopatía, interacciones, PA y ausencia real de IECA/ARA-II. Doblar cada 3–4 semanas si tolera; controlar FG/K tras inicio y ajustes.',refDrug('Sacubitrilo/valsartán'),'Sacubitrilo/valsartán');
+   else push('review','SRAA: revisar elegibilidad','No se ofrece dosis de inicio por los datos de seguridad registrados.','Confirmar PA, potasio, función renal y alternativa según tolerancia.',refDrug('Sacubitrilo/valsartán'),null,{section:'complete',label:'Revisar elegibilidad'});
   }else if(arni?.drug==='Sacubitrilo/valsartán'&&arni.frequency==='12'){
-   const next={'24/26':'49/51','49/51':'97/103'}[arni.dose.replaceAll('.',',')+'/'+arni.dose2.replaceAll('.',',')];
-   if(next&&sbp>=100&&egfr>=30&&potassium<=5.4)push('titrate','Valorar titulación de sacubitrilo/valsartán',arni.dose+'/'+arni.dose2+' → '+next+' mg cada 12 h.','Solo tras tolerancia, estabilidad y revisión de PA/FG/K; comprobar duración de la dosis actual y función renal previa. Reevaluar a las 2–4 semanas.',refDrug(arni.drug));
-   else push('review','Revisar sacubitrilo/valsartán','Confirmar dosis máxima tolerada, pauta y seguridad; no aumentar automáticamente.','Revisar presión arterial, función renal y potasio.',refDrug(arni.drug));
+   const step=raasStepReference(arni,ctx);
+   push('review','Revisar sacubitrilo/valsartán',step.detail,HF_TITRATION_REFERENCE[arni.drug].checks,step.source,null,{section:'optimize',medicationId:arni.id,label:step.status==='reference'?'Escalón de referencia':'Revisar antes de titular',showDetail:step.status==='reference',adjustment:step.status==='missing'?adjustmentInputFields(arni,HF_TITRATION_REFERENCE[arni.drug],28,false,ctx):null});
   }else if(arni&&['IECA','ARA-II'].includes(medicationFamilyLabel(arni))){
-   push('switch','Valorar sustitución por sacubitrilo/valsartán','Si la indicación y tolerancia lo permiten, considerar transición desde '+arni.drug+'. No asociarlos.','Si procede desde IECA, respetar ≥36 h; desde ARA-II, evitar solapamiento. Verificar dosis anterior, PA, FG, K, angioedema y ficha técnica para seleccionar dosis de inicio.',refDrug('Sacubitrilo/valsartán'));
+   const step=raasStepReference(arni,ctx);
+   push('review','Revisar tratamiento actual: '+arni.drug,step?.detail||'Valorar dosis máxima tolerada y alternativa según indicación. No se presupone que debe sustituirse siempre.',HF_TITRATION_REFERENCE[arni.drug]?.checks||'Revisar presentación y ficha técnica.',refDrug(arni.drug),null,{section:'optimize',medicationId:arni.id,label:step?.status==='reference'?'Escalón de referencia':'Revisar antes de titular',showDetail:step?.status==='reference',adjustment:step?.status==='missing'?adjustmentInputFields(arni,HF_TITRATION_REFERENCE[arni.drug],14,false,ctx):null});
+   const transition=arniTransitionPlanReference(ctx,arni);
+   push('review','Valorar sustitución por sacubitrilo/valsartán',transition.detail,'Si procede, seleccionar dosis inicial según tratamiento anterior, PA, función renal y hepática, potasio, volemia, indicación e interacciones. No interrumpir ni iniciar automáticamente; verificar ausencia real de solapamiento y confirmar tiempos antes de actuar.',transition.source,'Sacubitrilo/valsartán',{section:'optimize',medicationId:arni.id,label:'Valorar sustitución por ARNI',showDetail:true,transition});
   }
-  if(absent('bb'))push('start','Valorar bisoprolol','Inicio de referencia 1,25 mg cada 24 h; objetivo máximo 10 mg/día si tolera.','Comprobar ECG, conducción AV, bradicardia/hipotensión sintomática, asma grave, interacciones y estabilidad. Vigilar FC, PA y signos de deterioro.',refDrug('Bisoprolol'));
-  else if(bb?.drug==='Bisoprolol'&&bb.frequency==='24'){
-   const dose=mgNumber(bb.dose),ladder=[1.25,2.5,3.75,5,7.5,10],i=ladder.indexOf(dose);
-   if(i>=0&&i<5)push('titrate','Valorar titulación de bisoprolol',fmtDose(dose)+' → '+fmtDose(ladder[i+1])+' mg cada 24 h.','Comprobar tolerancia, ECG, FC, PA y ausencia de congestión. Escalón actual durante '+(i<3?'al menos una semana':'al menos cuatro semanas')+' según ficha técnica.',refDrug('Bisoprolol'));
-   else push('review','Revisar bisoprolol','Confirmar dosis máxima tolerada; no aumentar si hay intolerancia.','No retirar bruscamente; verificar FC y PA.',refDrug('Bisoprolol'));
-  }else if(bb)push('review','Valorar titulación de '+bb.drug,'La pauta individual de titulación para este principio activo aún no está automatizada.','Comprobar formulación, peso cuando proceda, ritmo, dosis actual y ficha técnica.',refDrug(bb.drug));
-  if(absent('mra')){
-   if(egfr>=30&&potassium<5)push('start','Valorar ARM esteroideo','Espironolactona: dosis de referencia de inicio 25 mg/día en IC grave según ficha técnica; eplerenona es alternativa si cumple su indicación específica.','Verificar indicación de la presentación, creatinina, aclaramiento, K, interacciones y tolerancia; controlar FG/K en una semana tras inicio o ajuste.',refDrug('Espironolactona'));
-   else push('review','ARM: revisar seguridad','No se propone inicio con FG <30 o potasio ≥5 mmol/L en este prototipo.','Valorar alternativas y control analítico.',refDrug('Espironolactona'));
-  }else if(arm)push('review','Revisar '+arm.drug,'Comprobar dosis según indicación, función renal y potasio.','No titular ARM sin datos de función renal previa y revisión de los límites específicos de su ficha técnica.',refDrug(arm.drug));
+  if(betaCaution&&(canStart('bb')||bb))push('review','Betabloqueante: revisar frecuencia cardiaca','FC 50–59 lpm: el prototipo no propone inicio ni aumento de betabloqueante sin valorar síntomas y ECG. No es una contraindicación universal ni impide por sí sola valorar otros tratamientos.','Comprobar ritmo, conducción, cronotropos y tolerancia; no retirar bruscamente.',HF_GUIDE,null,{section:bb?'optimize':'complete',medicationId:bb?.id,label:'Revisar frecuencia cardiaca'});
+  else if(canStart('bb'))push('start','Valorar bisoprolol','Inicio de referencia 1,25 mg cada 24 h; objetivo máximo 10 mg/día si tolera.',HF_TITRATION_REFERENCE.Bisoprolol.checks+' Verificar contraindicaciones de ficha técnica.',refDrug('Bisoprolol'),'Bisoprolol');
+  else if(bb){
+   const ref=HF_TITRATION_REFERENCE[bb.drug],step=betaBlockerReferenceStep(bb);
+   const nebAge=ctx.peptides?.age;
+   if(bb.drug==='Nebivolol'&&(!Number.isFinite(nebAge)||nebAge<70))push('review','Nebivolol: comprobar indicación y edad','No se propone titulación de IC sin edad registrada ≥70 años, según ficha de Insucor.','Confirmar indicación real, gravedad y presentación. No suspender por esta regla.',ref.source,null,{section:'optimize',medicationId:bb.id,label:'Comprobar indicación y edad'});
+   else if(step){
+    const days=mgNumber(bb.doseDays),minDays=Math.max(14,step.minDays);
+    const missing=[];
+    if(normalizeMedication(bb.product)!==normalizeMedication(step.product)||bb.indication!=='hf')missing.push('presentación e indicación');
+    if(bb.tolerance!=='well')missing.push('tolerancia');
+    if(!Number.isFinite(days)||days<minDays)missing.push('al menos '+minDays+' días en pauta actual');
+    if(ctx.results?.ecg?.value!=='normal'&&ctx.results?.ecg?.value!=='af')missing.push('ECG y conducción');
+    push('review','Revisar '+bb.drug,missing.length?'Antes de valorar un incremento, comprobar '+missing.join(', ')+'.':fmtDose(step.from)+' → '+fmtDose(step.to)+' mg cada '+step.frequency+' h como escalón de referencia, no orden.','Intervalo ambulatorio conservador: '+minDays+' días. '+step.checks,step.source,null,{section:'optimize',medicationId:bb.id,label:missing.length?'Revisar antes de titular':'Escalón de referencia',showDetail:!missing.length,adjustment:missing.length?adjustmentInputFields(bb,step,minDays,true,ctx):null});
+   }else push('review','Revisar '+bb.drug,'Sin escalón superior automatizado para la pauta registrada; comprobar dosis máxima tolerada y formulación.','No interpretar dosis objetivo como obligación ni retirar bruscamente. '+(ref?.checks||'Revisar ficha técnica.'),refDrug(bb.drug),null,{section:'optimize',medicationId:bb.id,label:'Revisar dosis máxima tolerada'});
+  }
+  if(canStart('mra')){
+   if(egfr>=30&&potassium<5)push('review','Valorar ARM esteroideo: verificar indicación','La elección y la dosis inicial quedan pendientes de comprobar la indicación específica de la presentación, el fenotipo y la clase funcional.','Aldactone: indicación de IC grave NYHA III–IV y cautelas específicas; Eplerenona STADA: criterios específicos de FEVI, NYHA o infarto reciente. No extrapolar automáticamente entre fichas; revisar creatinina, aclaramiento, potasio e interacciones.','https://cima.aemps.es/cima/dochtml/ft/39059/FT_39059.html',null,{section:'complete',label:'Comprobar indicación y seguridad'});
+   else push('review','ARM: revisar seguridad','No se propone inicio con FG <30 o potasio ≥5 mmol/L en este prototipo.','Valorar alternativas y control analítico.',refDrug('Espironolactona'),null,{section:'complete',label:'Revisar elegibilidad'});
+  }else if(arm)push('review','Revisar '+arm.drug,arm.drug==='Eplerenona'?creatinineClearanceReference(arm,ctx).detail:'Comprobar dosis según indicación, función renal y potasio.','No titular ARM sin datos de función renal previa y revisión de los límites específicos de su ficha técnica. '+(HF_TITRATION_REFERENCE[arm.drug]?.checks||''),refDrug(arm.drug),null,{section:'optimize',medicationId:arm.id,label:'Revisar indicación y seguridad'});
  }else if(mid&&symptomatic){
-  push('review','FEVI 41–49 %: individualizar SRAA y betabloqueante','Aunque pertenece al fenotipo de FEVI reducida en ESC 2026, no trasladar automáticamente todas las dosis e indicaciones de los ensayos con FEVI ≤40 %.','Revisar etiología, síntomas, FEVI histórica, comorbilidades e indicación de cada principio activo.',HF_GUIDE);
-  if(absent('mra'))push('review','Valorar ARM en FEVI 41–49 %','La evidencia y la indicación regulatoria dependen del principio activo; no aplicar el esquema de FEVI ≤40 % automáticamente.','Finerenona dispone de indicación autorizada desde FEVI ≥40 %; valorar individualmente y revisar elección de ARM.',refDrug('Finerenona'));
+  if(canStart('raas')||arni)push('review','FEVI 41–49 %: revisar tratamiento SRAA','ESC 2026, tabla de recomendaciones 5: IECA o ARNI en IC-FEr sintomática, clase I A; valorar transición a ARNI si procede, clase I B1.','La guía reconoce ausencia de grandes ensayos exclusivos en FEVI 41–49 %. Verificar indicación de la presentación y elegibilidad; la selección de dosis para este tramo sigue pendiente de auditoría.',HF_GUIDE,null,{section:arni?'optimize':'complete',medicationId:arni?.id,label:'Revisar indicación y seguridad'});
+  if(canStart('bb')||bb)push('review','FEVI 41–49 %: revisar betabloqueante','ESC 2026 recomienda betabloqueantes en IC-FEr sintomática estable, clase I A, con la cautela de evidencia específica limitada en este tramo.','Revisar ritmo, frecuencia, tolerancia y ficha técnica. No extrapolar automáticamente una pauta no auditada.',HF_GUIDE,null,{section:bb?'optimize':'complete',medicationId:bb?.id,label:'Revisar indicación y seguridad'});
+  if(canStart('mra'))push('review','FEVI 41–49 %: valorar ARM esteroideo','ESC 2026 recomienda ARM en IC sintomática con independencia de FEVI (clase I A); en IC-FEr especifica ARM esteroideo.','Verificar indicación de la presentación, FG, K y tolerancia. La indicación autorizada de finerenona desde FEVI ≥40 % es un dato regulatorio distinto de la recomendación ESC por fenotipo.',HF_GUIDE,null,{section:'complete',label:'Revisar indicación y seguridad'});
+  else if(arm)push('review','Revisar ARM registrado','Comprobar concordancia entre fenotipo, indicación de la presentación y función renal.','No sustituir automáticamente ni asociar ARM.',refDrug(arm.drug),null,{section:'optimize',medicationId:arm.id,label:'Revisar indicación y seguridad'});
  }
- if(preserved&&symptomatic&&absent('mra')){
-  if(egfr>=25&&potassium<=5)push('start','Valorar finerenona',(egfr>=60?'20':'10')+' mg cada 24 h como dosis inicial de referencia; objetivo según FG inicial: '+(egfr>=60?'40':'20')+' mg/día.','Comprobar ausencia de otro ARM, ahorradores de K, inhibidores/inductores CYP3A4, Addison, hepatopatía grave, embarazo y demás contraindicaciones. FG/K a las 4 semanas; titular solo según tabla y cambio de FG.',refDrug('Finerenona'));
-  else push('review','Finerenona: revisar elegibilidad','No se propone inicio con FG <25 o K >5.','Revisar evolución renal y potasio.',refDrug('Finerenona'));
+ if(preserved&&symptomatic&&canStart('mra')){
+  push('review','IC-FEp: revisar elección de ARM','ESC 2026 recomienda ARM esteroideo o no esteroideo en IC-FEp sintomática, clase I A.','Individualizar según evidencia por molécula, indicación regulatoria, función renal y potasio; no asociar dos ARM.',HF_GUIDE,null,{section:'complete',label:'Revisar elección de ARM'});
+  if(egfr>=25&&potassium<=5)push('start','Valorar finerenona',(egfr>=60?'20':'10')+' mg cada 24 h como dosis inicial de referencia; objetivo según FG inicial: '+(egfr>=60?'40':'20')+' mg/día.','Comprobar ausencia de otro ARM, ahorradores de K, inhibidores/inductores CYP3A4, Addison, hepatopatía grave, embarazo y demás contraindicaciones. FG/K a las 4 semanas; titular solo según tabla y cambio de FG.',refDrug('Finerenona'),'Finerenona');
+  else push('review','Finerenona: revisar elegibilidad','No se propone inicio con FG <25 o K >5.','Revisar evolución renal y potasio.',refDrug('Finerenona'),null,{section:'complete',label:'Revisar elegibilidad'});
  }
- if(preserved&&arm)push('review','Revisar ARM registrado','No asociar finerenona a espironolactona o eplerenona.','Si se valora un cambio, revisar indicación, FG previo, potasio e interacciones; no aplicar sustitución automática.',refDrug(arm.drug));
- if(symptomatic&&!historical&&absent('sglt2')){
-  if(egfr>=20){const drug=egfr>=25?'Dapagliflozina':'Empagliflozina';push('start','Valorar '+drug,'10 mg cada 24 h, sin titulación para IC.','Comprobar DM1, cetoacidosis previa/riesgo, ayuno o cirugía, enfermedad aguda, volemia, embarazo y contraindicaciones. Educar sobre interrupción temporal en enfermedad grave o cirugía según ficha técnica; revisar diuréticos y FG.',refDrug(drug));}
-  else push('review','iSGLT2: revisar FG','No se ofrece inicio con FG <20; no implica retirar tratamiento previamente establecido.','Revisar indicación y evolución renal.',refDrug('Empagliflozina'));
- }else if(sg)push('maintain','iSGLT2 registrado: '+sg.drug,'No precisa titulación para la indicación de IC.','Confirmar indicación, tolerancia, función renal, volemia y precauciones; no retirar por una cifra aislada de FG.',refDrug(sg.drug));
- if(loop)push('review','Revisar necesidad de diurético de asa','Paciente sin congestión según datos registrados. Valorar la menor dosis eficaz, sin reducción automática.','Comprobar peso, síntomas, PA, función renal, electrolitos y evolución de la congestión.',refDrug(loop.drug));
- push('follow','Seguimiento tras cambios','Control clínico de PA, FC, peso y síntomas; programar FG y K según el medicamento y el plazo de ajuste.','Registrar dosis máxima tolerada, motivo de no iniciar o titular, adherencia y fecha de reevaluación; vigilar descompensación.',HF_GUIDE);
+ if(preserved&&symptomatic&&canStart('raas'))push('review','IC-FEp: valorar IECA, ARA-II o ARNI','ESC 2026 permite considerar inhibición SRAA en IC-FEp sintomática para reducir ingresos por IC (IIb C).','No equiparar a recomendación clase I; revisar comorbilidades, indicación autorizada y tolerancia. Selección de dosis pendiente de auditoría.',HF_GUIDE,null,{section:'complete',label:'Valorar indicación'});
+ if(preserved&&arm)push('review','Revisar ARM registrado','No asociar finerenona a espironolactona o eplerenona.','Si se valora un cambio, revisar indicación, FG previo, potasio e interacciones; no aplicar sustitución automática.',refDrug(arm.drug),null,{section:'optimize',medicationId:arm.id,label:'Revisar indicación y seguridad'});
+ if(symptomatic&&!historical&&canStart('sglt2')){
+  const eligible=['Dapagliflozina','Empagliflozina'].filter(drug=>egfr>=HF_TITRATION_REFERENCE[drug].minInitiationEgfr);
+  for(const drug of eligible){
+   const ref=HF_TITRATION_REFERENCE[drug];
+   push('start','Valorar '+drug,'10 mg cada 24 h como dosis habitual de IC; opciones alternativas, no asociar dos iSGLT2.','Antes de iniciar: '+ref.checks+' '+sglt2Interruption,ref.source,drug,{section:'complete',alternativeGroup:'sglt2',label:'Valorar inicio',referenceDose:'10 mg/24 h'});
+  }
+  if(!eligible.length)push('review','iSGLT2: revisar FG','No se ofrece inicio con FG <20; no implica retirar tratamiento previamente establecido.','Revisar indicación y evolución renal.',refDrug('Empagliflozina'),null,{section:'complete',label:'Revisar elegibilidad'});
+ }else if(sg){
+  const ref=HF_TITRATION_REFERENCE[sg.drug];
+  push('review','iSGLT2 registrado: '+sg.drug,'No precisa titulación habitual para IC. Diferenciar continuidad de inicio; el descenso aislado de FG no justifica por sí solo la retirada.','Confirmar indicación, dosis, función renal, volemia, tolerancia y causa de deterioro. '+sglt2Interruption,ref?.source||refDrug(sg.drug),null,{section:'optimize',medicationId:sg.id,label:'Revisar continuidad'});
+ }
+ if(loop)push('review','Revisar necesidad de diurético de asa','Paciente sin congestión según datos registrados. Valorar la menor dosis eficaz, sin reducción automática.','Comprobar peso, síntomas, PA, función renal, electrolitos y evolución de la congestión.',refDrug(loop.drug),null,{section:'optimize',medicationId:loop.id,label:'Revisar necesidad y dosis'});
+ push('follow','Seguimiento tras cambios','ESC 2026 recomienda reevaluar titulación de FMT al menos cada 1–2 semanas según clínica, constantes y analítica (I C); el intervalo de incremento efectivo depende de la ficha y tolerancia.','Registrar dosis máxima tolerada, motivo de no iniciar o titular, adherencia y fecha de reevaluación; vigilar descompensación. No acelerar un escalón por encima de la pauta verificada.',HF_GUIDE,null,{section:'follow',monitoring:['Presión arterial','Frecuencia cardiaca','Función renal','Potasio','Síntomas','Congestión']});
  return result('conditional');
 }
