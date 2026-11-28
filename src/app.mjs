@@ -444,9 +444,14 @@ function proposalDetails(a,index,{shared=false,summary='Requisitos y fuente',inc
 }
 function proposalAction(a,index,shared=false){
  const name=a.candidate||a.title;
- const status=a.kind==='follow'?'':('<p class="proposal-action-status '+(a.kind==='start'?'start':'review')+'">'+medEscape(proposalStatus(a))+'</p>');
+ // Compact dose label is only shown for a candidate that still has kind=start.
+ // When the motor downgrades to review, its full reason remains visible.
+ const compact=shared&&a.kind==='start'&&a.presentation?.referenceDose;
+ const status=a.kind==='follow'||compact?'':('<p class="proposal-action-status '+(a.kind==='start'?'start':'review')+'">'+medEscape(proposalStatus(a))+'</p>');
  const summary=a.screening&&!shared?(a.screening.pending.length?'Comprobaciones pendientes · '+a.screening.pending.length:'Requisitos y fuente'):'Requisitos y fuente';
- return '<article class="proposal-action" data-proposal-kind="'+medEscape(a.kind)+'"><h3>'+medEscape(name)+'</h3>'+status+'<p class="proposal-action-detail">'+medEscape(a.detail)+'</p>'+proposalDetails(a,index,{shared,summary})+'</article>';
+ const follow=a.presentation?.monitoring?.length?'<div class="proposal-follow"><p>Controles a individualizar</p><ul>'+a.presentation.monitoring.map(label=>'<li>'+medEscape(label)+'</li>').join('')+'</ul></div>':'';
+ const heading=compact?'<div class="proposal-dose-row"><h3>'+medEscape(name)+'</h3><strong>'+medEscape(a.presentation.referenceDose)+'</strong></div>':'<h3>'+medEscape(name)+'</h3>';
+ return '<article class="proposal-action" data-proposal-kind="'+medEscape(a.kind)+'">'+heading+status+(compact?'':'<p class="proposal-action-detail">'+medEscape(a.detail)+'</p>')+follow+proposalDetails(a,index,{shared,summary,includeDetail:!!compact})+'</article>';
 }
 function proposalAlternativeGroup(rows){
  // Same context keys are asked once; each evaluated alternative retains its source.
@@ -454,7 +459,7 @@ function proposalAlternativeGroup(rows){
  const pending=items.filter(item=>item.value==='unknown');
  const shared=items.length>0;
  const options=rows.map(({a,index},i)=>(i?'<div class="proposal-or">o bien</div>':'')+proposalAction(a,index,shared)).join('');
- return '<div class="proposal-alternatives" data-proposal-alternative="sglt2"><div class="proposal-alternative-head"><h3>iSGLT2</h3><span>'+(rows.some(({a})=>a.kind==='start')?'Valorar inicio':'Revisar antes de decidir')+'</span></div><p class="proposal-alternative-note">'+(rows.length>1?'Opciones alternativas, no asociar dos iSGLT2.':'Opción evaluada por el motor; no asociar dos iSGLT2.')+'</p>'+options+(shared?'<details class="stage-context proposal-details proposal-shared" data-panel="proposal-sglt2-checks"><summary>'+(pending.length?'Comprobaciones comunes pendientes · '+pending.length:'Revisar comprobaciones comunes')+'</summary>'+candidateRiskView({candidate:'iSGLT2',screening:{items,pending}},'sglt2')+'</details>':'')+'</div>';
+ return '<div class="proposal-alternatives" data-proposal-alternative="sglt2"><div class="proposal-alternative-head"><h3>iSGLT2</h3><span>'+(rows.some(({a})=>a.kind==='start')?'Valorar inicio':'Revisar antes de decidir')+'</span></div><p class="proposal-alternative-note">'+(rows.length>1?'Opciones alternativas, no asociar dos iSGLT2. Dosis habituales de referencia.':'Opción evaluada por el motor; no asociar dos iSGLT2.')+'</p>'+options+(shared?'<details class="stage-context proposal-details proposal-shared" data-panel="proposal-sglt2-checks"><summary>'+(pending.length?'Comprobaciones comunes pendientes · '+pending.length:'Revisar comprobaciones comunes')+'</summary>'+candidateRiskView({candidate:'iSGLT2',screening:{items,pending}},'sglt2')+'</details>':'')+'</div>';
 }
 function proposalMedicationCard(row,rows){
  const name=row.drug==='other'?row.name||'Otro medicamento':row.drug;
