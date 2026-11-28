@@ -810,8 +810,25 @@ export const MEDICATION_FAMILIES=[
  ['sglt2','iSGLT2',['Dapagliflozina','Empagliflozina']],
  ['diuretic','Diuréticos de asa',['Furosemida','Torasemida']]
 ];
+// Limited interaction classification for exact active ingredients, not prescribing catalog.
+// ATC C09AA/C09CA and ESC 2026 S4. Do not infer identity from a suffix or a brand fragment.
+// Recognise slash/plus-separated active ingredients, but no dosing for combination products.
+const EXTRA_INTERACTION_NAMES={
+ arni:['entresto','neparvis'],
+ ieca:['captopril','lisinopril','perindopril','trandolapril','fosinopril','quinapril','benazepril','cilazapril','delapril','imidapril','moexipril','spirapril','zofenopril'],
+ ara:['losartan','irbesartan','telmisartan','olmesartan','olmesartan medoxomilo','eprosartan','azilsartan','azilsartan medoxomilo']
+};
+function interactionFamilies(m){
+ const name=normalizeMedication(namedMedication(m));
+ if(!name)return [];
+ const names=new Set([name]);
+ if(name==='sacubitrilo/valsartan'||EXTRA_INTERACTION_NAMES.arni.includes(name))return ['arni'];
+ for(const n of name.split(/\s*[+/]\s*/))if(n)names.add(n);
+ return MEDICATION_FAMILIES.filter(([id,,drugs])=>[...drugs.map(normalizeMedication),...(EXTRA_INTERACTION_NAMES[id]||[])].some(n=>names.has(n))).map(([id])=>id);
+}
 export function medicationFamilyLabel(m){
- return MEDICATION_FAMILIES.find(g=>g[2].some(x=>normalizeMedication(x)===normalizeMedication(namedMedication(m))))?.[1]??'Familia sin clasificar';
+ const families=interactionFamilies(m);
+ return families.length?MEDICATION_FAMILIES.filter(([id])=>families.includes(id)).map(g=>g[1]).join(' + ')+(m.drug==='other'?' · revisar presentación':''):'Familia sin clasificar';
 }
 export function addNamedMedication(ctx,drug){
  if(!['other',...medicationCatalog].includes(drug))return ctx;
@@ -858,9 +875,9 @@ export function medicationFrequencyOptions(m){
 }
 export function medicationSafety(ctx){
  const m=medicationSummary(ctx),d=treatmentSafetyData(ctx),alerts=[];
- const add=(id,level,title,text,source,rows=[])=>alerts.push({id,level,title,text,source,rows});
+ const add=(id,level,title,text,source,rows=[])=>alerts.push({id,level,title,text,source,rows:[...new Set(rows)]});
  const entries=m.active.map(row=>({row,drug:knownDrug(row)})),has=drug=>entries.some(x=>x.drug===drug);
- const family=id=>entries.filter(x=>MEDICATION_FAMILIES.find(g=>g[0]===id)?.[2].includes(x.drug));
+ const family=id=>entries.filter(x=>interactionFamilies(x.row).includes(id));
  const ids=xs=>xs.map(x=>x.row.id);
  const arni=family('arni'),ieca=family('ieca'),ara=family('ara'),mra=family('mra');
  const arniSource=HF_MEDICATION_REFERENCE['Sacubitrilo/valsartán'].source,eplSource=HF_MEDICATION_REFERENCE.Eplerenona.source;
@@ -888,7 +905,7 @@ export function medicationSafety(ctx){
   if(drug==='Eplerenona'&&f==='48'&&dose>25)add('EPL-48-'+row.id,'amber','Eplerenona: revisar días alternos','La pauta de días alternos de la ficha técnica utiliza 25 mg por toma.',r.source,[row.id]);
  }
  // Audit P0/P4: limited exact-name matching, not a medication dictionary.
- const namedAs=(aliases)=>entries.filter(x=>aliases.includes(normalizeMedication(namedMedication(x.row))));
+ const namedAs=(aliases)=>entries.filter(x=>{const name=normalizeMedication(namedMedication(x.row));return aliases.includes(name)||name.split(/\s*[+/]\s*/).some(part=>aliases.includes(part));});
  const tmp=namedAs(['trimetoprim','trimetoprima','cotrimoxazol','co-trimoxazol','trimetoprim/sulfametoxazol','trimetoprima/sulfametoxazol','sulfametoxazol/trimetoprim','sulfametoxazol/trimetoprima','septrin','septrin forte','soltrim']);
  const escSupplement='https://doi.org/10.1093/eurheartj/ehag100';
  const bb=family('bb'),sglt2=family('sglt2'),loop=family('diuretic'),raas=[...arni,...ieca,...ara];
@@ -1022,7 +1039,14 @@ export function treatmentProposal(ctx){
  const d=treatmentSafetyData(ctx),r=d.profile,m=medicationSummary(ctx),alerts=medicationSafety(ctx);
  const actions=[],blockers=[],urgent=[];
  const {sbp,hr,egfr,potassium}=d.values;
- const push=(kind,title,detail,check,source=HF_GUIDE)=>actions.push({kind,title,detail,check,source});
+ const lowPressure=sbp!==null&&sbp>=90&&sbp<100;
+ const push=(kind,title,detail,check,source=HF_GUIDE)=>{
+  // Low BP in a recorded stable patient is a review context, not a blanket contraindication.
+  // No start/up-titration/switch is proposed before symptoms, perfusion and treatment are checked.
+  if(lowPressure&&['start','titrate','switch'].includes(kind)){
+   actions.push({kind:'review',title,detail:'Referencia condicionada: '+detail,check:'PAS 90–99 mmHg: confirmar síntomas y perfusión, y revisar el tratamiento antes de decidir. '+check,source});
+  }else actions.push({kind,title,detail,check,source});
+ };
  if(r.urgent)urgent.push('La situación clínica registrada requiere valoración urgente.');
  if(Number.isFinite(potassium)&&potassium>=6)urgent.push('Potasio registrado ≥6 mmol/L: valoración clínica urgente, ECG y confirmación según contexto, aunque falte marcar la confirmación analítica; no esperar a optimizar tratamiento.');
  if(alerts.some(a=>a.level==='red'))blockers.push('Resolver las alertas rojas y comprobar la medicación real.');
@@ -1031,7 +1055,7 @@ export function treatmentProposal(ctx){
  else if(r.next.kind!=='treatment'||!r.clinicalHF||!Number.isFinite(r.ef))blockers.push('Completar clasificación y confirmar IC clínica.');
  if(r.situation!=='compensated')blockers.push('Confirmar estabilidad sin congestión antes de optimizar el tratamiento crónico. Si hay congestión, valorar diuresis y gravedad.');
  if(d.missing.length||!d.labsConfirmed||d.pressureDiscordant)blockers.push('Completar constantes y confirmar función renal y potasio vigentes.');
- if(sbp!==null&&sbp<100)blockers.push('PAS inferior a 100 mmHg: revisar síntomas, perfusión y causas antes de intensificar.');
+ if(sbp!==null&&sbp<90)blockers.push('PAS inferior a 90 mmHg: confirmar medida, síntomas y perfusión antes de intensificar; si hay inestabilidad o hipoperfusión, priorizar atención urgente.');
  if(hr!==null&&hr<50)blockers.push('FC inferior a 50 lpm: revisar ritmo, síntomas y fármacos cronotropos antes de intensificar. Umbral conservador del prototipo; no implica suspender automáticamente.');
  if(d.labsConfirmed&&(potassium>=5.5||potassium<3.5))blockers.push('Potasio fuera del margen conservador del prototipo: revisar causas y tratamiento.');
  if(!m.reconciled)blockers.push('Confirmar lista completa, pautas y clasificación de los medicamentos; resolver duplicidades.');
@@ -1051,6 +1075,7 @@ export function treatmentProposal(ctx){
  }
  const canStart=id=>absent(id)&&!deferred.has(id);
  const betaCaution=hr<60; // conservative prototype threshold, not an ESC absolute contraindication.
+ if(lowPressure)push('review','Revisar presión arterial','PAS 90–99 mmHg. No interpretar hipotensión asintomática como indicación automática de retirada.','ESC S4–S6: revisar síntomas, perfusión, vasodilatadores y diuréticos si no hay congestión. ARNI no se inicia por debajo de PAS 100 según la ficha de referencia.',HF_GUIDE);
 
  const existing=id=>member(id)[0];
  const reduced=r.ef<=40&&!r.improved&&r.phenotype!=='prior-reduced';
