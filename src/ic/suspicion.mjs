@@ -730,12 +730,12 @@ export function addMedication(ctx){
  const a=medicationState(ctx);
  if(a.additional.length>=30)return ctx;
  const id='extra-'+a.nextId;
- return {...ctx,medicationAssessment:{...a,additional:[...a.additional,{...newMedication(),id}],nextId:a.nextId+1,reviewed:false},updatedAt:new Date().toISOString()};
+ return {...ctx,medicationAssessment:{...a,additional:[...a.additional,{...newMedication(),id}],nextId:a.nextId+1,reviewed:false,externalReview:null},updatedAt:new Date().toISOString()};
 }
 export function removeMedication(ctx,id){
  const a=medicationState(ctx);
  if(!a.additional.some(m=>m.id===id))return ctx;
- return {...ctx,medicationAssessment:{...a,additional:a.additional.filter(m=>m.id!==id),reviewed:false},updatedAt:new Date().toISOString()};
+ return {...ctx,medicationAssessment:{...a,additional:a.additional.filter(m=>m.id!==id),reviewed:false,externalReview:null},updatedAt:new Date().toISOString()};
 }
 export function medicationSummary(ctx){
  const a=medicationState(ctx);
@@ -999,7 +999,7 @@ export function medicationSafety(ctx){
  if(has('Finerenona')&&d.labsConfirmed){
   const source=HF_MEDICATION_REFERENCE.Finerenona.source;
   if(d.values.potassium>=6)add('FIN-K6','red','Finerenona: hiperpotasemia importante','Potasio ≥6 mmol/L: valoración urgente y revisión de tratamiento.',source,ids(mra));
-  else if(d.values.potassium>=5.5)add('FIN-K55','amber','Finerenona: potasio elevado','Confirmar indicación: para IC FEVI ≥40, tabla 4 de ficha indica interrumpir si 10 mg/día, reducir a 10 si 20 mg/día o a 20 si 40 mg/día. ERC-DM2 tiene otra tabla. Confirmar pauta y evolución renal; no aplicar automáticamente.',source,ids(mra));
+  else if(d.values.potassium>=5.5)add('FIN-K55','amber','Finerenona: potasio elevado','Confirmar indicación, presentación, dosis y evolución renal: la tabla 4 de IC y la tabla 2 de ERC-DM2 difieren. Consultar la referencia específica registrada; no aplicar una tabla por defecto.',source,ids(mra));
   if(d.values.egfr<15)add('FIN-FG15','red','Finerenona: función renal muy reducida','TFGe <15: la ficha indica interrumpir el tratamiento al progresar a enfermedad renal terminal; confirmar resultado y revisar con el equipo clínico.',source,ids(mra));
  }
  if(d.labsConfirmed)for(const {row,drug} of entries){
@@ -1007,8 +1007,8 @@ export function medicationSafety(ctx){
   const ref=HF_TITRATION_REFERENCE[drug];
   if(normalizeMedication(row.product)!==normalizeMedication(ref.product))continue;
   const indication=drug==='Espironolactona'&&row.indication==='hf'?'aldactone-hf':row.indication;
-  const advice=armPotassiumReference({drug,indication,potassium:d.values.potassium,dose:row.dose,frequency:row.frequency,confirmed:true});
-  if(advice)add('ARM-REF-'+row.id,advice.kind==='interrupt'?'red':d.values.potassium>=5.5?'amber':'blue','Referencia de ajuste: '+drug,advice.reference,advice.source,[row.id]);
+  const advice=armPotassiumReference({drug,indication,potassium:d.values.potassium,dose:row.dose,frequency:row.frequency,confirmed:true,egfr:d.values.egfr,initialEgfr:mgNumber(row.initialEgfr),priorEgfr:mgNumber(row.priorEgfr),doseDays:mgNumber(row.doseDays)});
+  if(advice)add('ARM-REF-'+row.id,advice.kind==='interrupt'?(d.values.potassium>=6||d.values.egfr<15?'red':'amber'):d.values.potassium>=5.5?'amber':'blue','Referencia de ajuste: '+drug,advice.reference,advice.source,[row.id]);
  }
  if(mra.length&&!d.labsConfirmed)add('MRA-LABS','blue','Confirmar función renal y potasio','Datos vigentes necesarios para valorar seguridad de ARM.',eplSource,ids(mra));
  if(mra.length&&(arni.length||ieca.length||ara.length))add('MRA-SRAA','blue','Monitorización renal y de potasio','La combinación de ARM con un inhibidor del SRAA puede ser indicada en IC; requiere seguimiento. No equivale a incompatibilidad.',eplSource,ids([...mra,...arni,...ieca,...ara]));
@@ -1055,7 +1055,7 @@ export function betaBlockerReferenceStep(m){
 }
 // A bounded reference table, not a patient-specific order. Explicit indication is required.
 // Missing longitudinal data must never generate a positive escalation decision.
-export function armPotassiumReference({drug,indication,potassium,dose,frequency,confirmed}={}){
+export function armPotassiumReference({drug,indication,potassium,dose,frequency,confirmed,egfr,initialEgfr,priorEgfr,doseDays}={}){
  if(!confirmed||!Number.isFinite(potassium)||potassium<0)return null;
  const n=mgNumber(dose);
  if(drug==='Eplerenona'&&indication==='hf'){
@@ -1064,11 +1064,36 @@ export function armPotassiumReference({drug,indication,potassium,dose,frequency,
   if(potassium>=5.5)return {kind:'review',reference:down[key]?'Tabla 1: escalón inferior de referencia: '+down[key]+'. Verificar elegibilidad.':'Confirmar pauta antes de aplicar tabla 1.',source:refDrug(drug)};
   return {kind:'review',reference:potassium>=5?'Tabla 1: mantenimiento por criterio de K; revisar función renal y otras condiciones.':'Tabla 1 permite valorar aumento por K; falta comprobar función renal, dosis, intervalo y demás criterios.',source:refDrug(drug)};
  }
- if(drug==='Finerenona'&&indication==='hf40'){
-  if(potassium>=6)return {kind:'interrupt',reference:'Tabla 4: interrupción; reinicio de referencia 10 mg/día tras K <5,5 o <5,0 si elevación repetida ≥5,5, y revisión clínica.',source:refDrug(drug)};
-  const down={10:'interrupción; revisar reinicio con 10 mg/día cuando K <5,5',20:'10 mg/día',40:'20 mg/día'};
-  if(potassium>=5.5)return {kind:'review',reference:frequency==='24'&&down[n]?'Tabla 4: '+down[n]+'. Confirmar pauta y función renal.':'Confirmar pauta antes de aplicar tabla 4.',source:refDrug(drug)};
-  return {kind:'review',reference:'Tabla 4: revisar K, dosis actual, TFGe inicial y cambio respecto a la previa; sin datos longitudinales no se propone aumento.',source:refDrug(drug)};
+ if(drug==='Finerenona'&&['hf40','ckd-dm2'].includes(indication)){
+  const hf=indication==='hf40',table=hf?'Tabla 4 IC':'Tabla 2 ERC-DM2',source=refDrug(drug);
+  const review=reference=>({kind:'review',reference:table+': '+reference,source});
+  const interrupt=reference=>({kind:'interrupt',reference:table+': '+reference,source});
+  const validFg=Number.isFinite(egfr)&&egfr>=0,previous=Number.isFinite(priorEgfr)&&priorEgfr>0;
+  // Compare multiplication rather than rounded percentage; exact 30% and 40% are distinct.
+  const drop30=validFg&&previous&&egfr*100<priorEgfr*70;
+  const drop40=validFg&&previous&&egfr*100<=priorEgfr*60;
+  const checkRenal=hf&&drop40?' Además, caída de TFGe ≥40%: considerar reducción/interrupción y revisión especializada.':'';
+  if(validFg&&egfr<15)return interrupt('La ficha indica interrupción al progresar a TFGe <15. Confirmar evolución renal; no reiniciar por una cifra aislada.');
+  if(potassium>=6)return interrupt(hf?'Interrupción; valoración urgente. Referencia de reinicio: 10 mg/día cuando K <5,5, o <5,0 si elevación repetida ≥5,5, tras resolver causas y revisión clínica.':'Interrupción; valoración urgente. Referencia de reinicio 10 mg/día cuando K ≤5,0, tras revisión clínica.');
+  if(!hf&&potassium>5.5)return interrupt('Interrupción; referencia de reinicio 10 mg/día cuando K ≤5,0. Confirmar indicación y seguimiento.');
+  if(frequency!=='24'||!(hf?[10,20,40]:[10,20]).includes(n))return review('Confirmar pauta e indicación antes de aplicar esta tabla.');
+  if(hf&&potassium>=5.5){
+   const down={10:'interrupción; revisar reinicio con 10 mg/día cuando K <5,5',20:'reducción a 10 mg/día',40:'reducción a 20 mg/día'};
+   return (n===10?interrupt:review)(down[n]+'. Confirmar pauta, función renal y contexto.'+checkRenal);
+  }
+  if(hf&&drop40)return review('TFGe disminuida ≥40%: considerar reducción o interrupción, evaluar causa y estabilización antes de reiniciar o aumentar.');
+  if(hf&&n===40&&drop30)return review('Descenso de TFGe >30% con 40 mg/día: referencia de reducción a 20 mg/día; confirmar mediciones y contexto.');
+  if(!validFg||!previous)return review('Faltan datos de TFGe actual o anterior; no se propone aumento ni se concluye seguridad.');
+  if(n===10||hf&&n===20){
+   const favorableK=hf?potassium<5:potassium<=4.8;
+   if(!favorableK)return review('La tabla permite mantenimiento por criterio de K; revisar TFGe y demás condiciones.');
+   if(drop30)return review('Descenso de TFGe >30%: no aumentar; revisar evolución y causas.');
+   if(!Number.isFinite(doseDays)||doseDays<28)return review('Falta comprobar el control de K/TFGe a las cuatro semanas del inicio, reinicio o ajuste; no proponer aumento.');
+   if(hf&&n===20&&(!Number.isFinite(initialEgfr)||initialEgfr<25))return review('Falta TFGe inicial válida para decidir objetivo de 20 o 40 mg/día.');
+   if(hf&&n===20&&initialEgfr<60)return review('Objetivo de referencia 20 mg/día con TFGe inicial 25–<60; no aumentar por normalización posterior del FG.');
+   return review('Escalón de referencia '+(n===10?'20':'40')+' mg/día conforme a la tabla con los datos registrados. Verificar mediciones, indicación, tolerancia, contraindicaciones e interacciones; no es una orden.');
+  }
+  return review('Dosis objetivo de referencia registrada; comprobar tolerancia, TFGe y K; no aumentar automáticamente.');
  }
  if(drug==='Espironolactona'&&indication==='aldactone-hf'&&potassium>5)return {kind:'review',reference:'Ficha Aldactone 4.4: interrupción temporal o definitiva por K >5. Contrastar la presentación y la discrepancia con S8 ESC.',source:refDrug(drug)};
  return null;
