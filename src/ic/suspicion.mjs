@@ -271,7 +271,7 @@ export function peptideFactors(ctx){
   obesity:value('obesity',f.obesity),
   af:value('af',ctx?.results?.ecg?.value==='af'?'yes':f.af==='yes'?'unknown':f.af),
   renal:value('renal',f.ckd==='yes'||(Number.isFinite(egfr)&&egfr<60)?'yes':undefined),
-  arni:value('arni','unknown')
+  arni:value('arni',medicationSummary(ctx).active.some(m=>knownDrug(m)==='Sacubitrilo/valsartán')?'yes':'unknown')
  };
 }
 export function interpretPeptide(ctx){
@@ -287,7 +287,10 @@ export function interpretPeptide(ctx){
  if(factors.af==='yes')notes.push('Fibrilación auricular: puede elevar el resultado sin que exista IC.');
  if(ctx?.findings?.af==='yes'&&factors.af==='unknown')notes.push('Arritmia previa registrada: precisar si existe fibrilación auricular.');
  if(factors.renal==='yes')notes.push('Disfunción renal: puede elevar los péptidos; no invalida el resultado.');
- if(factors.arni==='yes'&&kind==='bnp')notes.push('Sacubitrilo/valsartán: puede modificar BNP; NT-proBNP resulta más apropiado para seguimiento.');
+ if(factors.arni==='yes'&&kind==='bnp')notes.push('Sacubitrilo/valsartán puede elevar BNP; NT-proBNP resulta más apropiado para seguimiento.');
+ const recorded=medicationSummary(ctx).active.map(knownDrug);
+ if(recorded.some(drug=>drug&&MEDICATION_FAMILIES.some(([id,,drugs])=>['arni','ieca','ara','bb','mra','sglt2'].includes(id)&&drugs.includes(drug))))notes.push('Tratamiento de IC registrado: los fármacos modificadores del pronóstico pueden disminuir los péptidos. Revisar si ya estaban prescritos en el momento de la muestra (tabla 9).');
+ if(p.arni==='no'&&recorded.includes('Sacubitrilo/valsartán'))notes.push('Discordancia con medicación registrada: confirmar si tomaba sacubitrilo/valsartán al obtener la muestra.');
  if(Object.values(factors).includes('unknown'))notes.push('Hay factores modificadores sin evaluar.');
  if(known)notes.push('IC previamente conocida: el péptido no confirma ni revoca el diagnóstico previo.');
  const source={doi:SOURCE.doi,sections:'Diagnóstico de IC crónica, péptidos natriuréticos; figura 11 (IC descompensada)',version:'0.1'};
@@ -318,11 +321,15 @@ export const ECHO_NUMERIC=[
  ['ef','FEVI actual','%'],['priorEf','FEVI previa','%'],
  ['ee','E/e′ medio',''],['lavi','Volumen auricular izquierdo indexado','mL/m²'],
  ['lvmi','Masa ventricular izquierda indexada','g/m²'],['tapse','TAPSE','mm'],
- ['trv','Velocidad máxima de regurgitación tricuspídea','m/s']
+ ['trv','Velocidad máxima de regurgitación tricuspídea','m/s'],['rwt','Grosor relativo de pared',''],['pasp','Presión arterial pulmonar sistólica estimada','mmHg']
 ];
 export function setEcho(ctx,key,raw){
  const next={...(ctx.echo||{})};
- if(ECHO_FINDINGS.some(x=>x[0]===key)||key==='priorReduced'){
+ if(['sex','rhythm'].includes(key)){
+  const allowed=key==='sex'?['female','male','unknown']:['sinus','af','unknown'];
+  if(!allowed.includes(raw))return ctx;
+  next[key]=raw;
+ }else if(ECHO_FINDINGS.some(x=>x[0]===key)||key==='priorReduced'){
   if(!['yes','no','unknown'].includes(raw))return ctx;
   next[key]=raw;
  }else if(ECHO_NUMERIC.some(x=>x[0]===key)){
@@ -332,6 +339,27 @@ export function setEcho(ctx,key,raw){
   else next[key]=Number(s);
  }else return ctx;
  return {...ctx,echo:next,updatedAt:new Date().toISOString()};
+}
+// ESC 2026 Table 10, final edition p. 5370. Quantitative supportive criteria,
+// not a diagnostic score. Sex/rhythm refer to the measurement context and are never inferred.
+export function echoSupportCriteria(ctx){
+ const e=ctx.echo||{};
+ const valid=v=>Number.isFinite(v)&&v>0;
+ const metrics=[];
+ const add=(id,label,state,detail)=>metrics.push({id,label,state,detail});
+ if(valid(e.lvmi)){
+  const threshold=e.sex==='female'?95:e.sex==='male'?115:null;
+  add('lvmi','Masa VI indexada',threshold===null?'unknown':e.lvmi>=threshold?'support':'not-reached',threshold===null?'Falta sexo de referencia para interpretar la masa indexada.':'Umbral de tabla 10: ≥'+threshold+' g/m².');
+ }
+ if(valid(e.rwt))add('rwt','Grosor relativo de pared',e.rwt>0.42?'support':'not-reached','Umbral orientativo >0,42.');
+ if(valid(e.lavi)){
+  const threshold=e.rhythm==='sinus'?34:e.rhythm==='af'?40:null;
+  add('lavi','Volumen auricular izquierdo indexado',threshold===null?'unknown':e.lavi>threshold?'support':'not-reached',threshold===null?'Falta ritmo durante la medición.':'Umbral de tabla 10: >'+threshold+' mL/m².');
+ }
+ if(valid(e.ee))add('ee','E/e′ medio en reposo',e.ee>9?'support':'not-reached',e.ee>=15?'≥15: mayor especificidad, menor sensibilidad.':'Umbral orientativo >9; requiere contexto.');
+ if(valid(e.trv))add('trv','Velocidad de regurgitación tricuspídea',e.trv>2.8?'support':'not-reached','Umbral en reposo >2,8 m/s.');
+ if(valid(e.pasp))add('pasp','Presión pulmonar sistólica estimada',e.pasp>35?'support':'not-reached','Umbral >35 mmHg; no determina etiología por sí solo.');
+ return {metrics,source:{doi:SOURCE.doi,sections:'5.2.2, tabla 10, p.5370'},diagnosisEstablished:false};
 }
 export function interpretEcho(ctx){
  const e=ctx.echo||{},s=interpretSuspicion(ctx),np=interpretPeptide(ctx),f=ctx.findings||{};
@@ -357,7 +385,10 @@ export function interpretEcho(ctx){
  if(known&&ef!==null&&prior!==null&&ef>prior&&prior<50&&ef<50)notes.push('FEVI en ascenso, todavía inferior al 50%. Valorar trayectoria, sin asignar automáticamente IC con FEVI mejorada.');
  if(positive.length)notes.push('Los hallazgos ecocardiográficos deben relacionarse con los síntomas y la etiología; no todos demuestran presiones de llenado elevadas.');
  if(unknown.length)notes.push('Hay '+unknown.length+' hallazgos no evaluados o no descritos; no equivalen a normales.');
- if(ECHO_NUMERIC.slice(2).some(([id])=>Number.isFinite(e[id])))notes.push('Parámetros cuantitativos registrados: interpretar con el informe completo; sin umbrales automáticos en esta versión.');
+ const support=echoSupportCriteria(ctx);
+ for(const m of support.metrics)notes.push(m.label+': '+(m.state==='support'?'alcanza criterio de apoyo. ':m.state==='not-reached'?'no alcanza este umbral; no excluye IC. ':'interpretación pendiente. ')+m.detail);
+ if(support.metrics.length)notes.push('Tabla 10 ESC 2026: estos hallazgos son datos de apoyo a valorar conjuntamente, no una puntuación diagnóstica. No sustituyen la atribución clínica ni establecen IC-FEp automáticamente.');
+ if(Number.isFinite(e.tapse))notes.push('TAPSE registrado: interpretar función ventricular derecha con el informe completo; no es criterio de la tabla 10.');
  if(npRecorded&&np.id==='NP-01')notes.push('Péptido por debajo del umbral orientativo: no excluye IC aisladamente.');
  const npLabel=npRecorded?(np.kind==='nt'?'NT-proBNP':'BNP')+' '+np.value+' pg/mL · '+np.title:'Péptidos pendientes de interpretación.';
  let integratedTitle,integrated;
@@ -367,7 +398,7 @@ export function interpretEcho(ctx){
  else if(clinical){integratedTitle='Sospecha clínica pendiente de confirmación';integrated='La FEVI preservada o los datos ecocardiográficos ausentes no excluyen IC. Completar estudio si persiste sospecha.';}
  else {integratedTitle='Información insuficiente para concluir IC';integrated='Revisar antecedentes, síntomas y pruebas disponibles; no asumir normalidad ni excluir IC.';}
  const urgent=np.urgent;
- return {ef,prior,title,phenotype,trajectory,positive,unknown,notes,integratedTitle,integrated,npLabel,clinicalTitle:s.title,safety:s.safety,urgent,next:urgent?'descompensada':'clasificacion',source:{doi:SOURCE.doi,sections:'Clasificación por FEVI y diagnóstico de IC; adaptación educativa',version:'0.1'}};
+ return {ef,prior,title,phenotype,trajectory,positive,unknown,notes,support,integratedTitle,integrated,npLabel,clinicalTitle:s.title,safety:s.safety,urgent,next:urgent?'descompensada':'clasificacion',source:{doi:SOURCE.doi,sections:'Clasificación por FEVI y diagnóstico de IC; adaptación educativa',version:'0.1'}};
 }
 
 /* Staging: Second Universal Definition 2026, Table 1; ESC 2026 §3.3.
@@ -444,7 +475,7 @@ export function interpretPhenotype(ctx){
  const ef=r.ef,prior=r.prior,delta=ef!==null&&prior!==null?Math.round((ef-prior)*1000000)/1000000:null;
  const priorReduced=prior!==null&&prior<50||e.priorReduced==='yes';
  const historicalNo=e.priorReduced==='no'&&!priorReduced;
- const conflict=e.priorReduced==='no'&&priorReduced||st.contradictions.length>0;
+ const conflict=e.priorReduced==='no'&&(priorReduced||a.priorClinical==='yes')||st.contradictions.length>0;
  const clinicalHF=['C','D'].includes(st.stage)&&!conflict;
  const current=ef===null?'pending':ef<50?'reduced':'preserved';
  const titleCurrent=ef===null?'FEVI pendiente':ef<50?'FEVI reducida':'FEVI preservada';
@@ -461,7 +492,7 @@ export function interpretPhenotype(ctx){
  if(ef!==null&&ef>=50&&!priorReduced&&!historicalNo)notes.push('No consta una revisión suficiente de FEVI histórica; no asignar IC-FEp de novo.');
  if(ef!==null&&ef>=50&&diastolic!=='yes')notes.push('Precisar evidencia objetiva de disfunción diastólica o presiones de llenado elevadas y revisar los péptidos. No se diagnostica IC-FEp por FEVI aislada.');
  if(st.contradictions.length)notes.push(...st.contradictions);
- if(e.priorReduced==='no'&&priorReduced)notes.push('Discordancia entre FEVI histórica y respuesta sobre reducción previa.');
+ if(e.priorReduced==='no'&&(priorReduced||priorClinical==='yes'))notes.push('Discordancia entre FEVI histórica, IC previa con FEVI reducida y respuesta sobre reducción previa.');
  let title=titleCurrent,short=titleCurrent,text='Clasificación pendiente de FEVI actual.',code='pending';
  if(conflict){title='Datos discordantes';short='Revisar datos';text='Revisar antecedentes y mediciones antes de asignar el fenotipo.';}
  else if(ef!==null&&!clinicalHF){
