@@ -1134,6 +1134,40 @@ export function raasMaintenanceReference({drug,egfr,potassium,priorEgfr,creatini
  if(egfr<30||potassium>5.5||drop||creatRise)return make('amber','Revisar función renal y potasio: '+drug,'Comprobar volemia, nefrotóxicos y otros fármacos que elevan K. Si persiste deterioro excesivo tras corregir causas, valorar reducción de dosis y analítica en 1–2 semanas; consultar al especialista. No extrapolar automáticamente criterios de retirada de S4 a ARNI.');
  return make('blue','Seguimiento renal: '+drug,'Revisar tendencia de FG/creatinina y K. Control analítico en 1–2 semanas tras inicio y ajuste; el dato aislado no demuestra tolerancia.');
 }
+// Ambulatory reference, not a prescription. Missing conditions are not assumed normal.
+export function raasStepReference(row,ctx){
+ const drug=row?.drug,ref=HF_TITRATION_REFERENCE[drug],d=treatmentSafetyData(ctx);
+ if(!ref||!['Sacubitrilo/valsartán','Enalapril','Ramipril','Candesartán','Valsartán'].includes(drug))return null;
+ const n=mgNumber(row.dose),f=row.frequency,days=mgNumber(row.doseDays),source=ref.source;
+ const result=(status,detail,next=null)=>({status,detail,next,source});
+ if(d.profile.urgent||d.profile.situation!=='compensated'||!d.labsConfirmed||d.pressureDiscordant||d.values.sbp===null||d.values.sbp<100||d.values.egfr<30||d.values.potassium<3.5||d.values.potassium>5.2)return result('review','Revisar estabilidad, PA, función renal y K antes de considerar un aumento.');
+ if(normalizeMedication(row.product)!==normalizeMedication(ref.product)||row.indication!=='hf')return result('missing','Comprobar presentación exacta e indicación de IC.');
+ if(row.tolerance!=='well')return result('missing','Comprobar tolerancia a la pauta actual.');
+ const previous=mgNumber(row.priorEgfr);
+ if(!Number.isFinite(previous)||previous<=0)return result('missing','Comprobar FG previo a la pauta actual.');
+ if(d.values.egfr*100<=previous*70)return result('review','Descenso de FG de al menos 30%: revisar causas y no aumentar antes de reevaluar.');
+ const minDays=drug==='Sacubitrilo/valsartán'?28:14;
+ if(!Number.isFinite(days)||days<minDays)return result('missing','Comprobar intervalo de titulación: referencia conservadora de '+minDays+' días para seguimiento ambulatorio.');
+ let next=null;
+ if(drug==='Sacubitrilo/valsartán'&&f==='12')next={'24/26':'49/51 mg/12 h','49/51':'97/103 mg/12 h'}[n+'/'+mgNumber(row.dose2)]||null;
+ if(drug==='Candesartán'&&f==='24')next={4:'8 mg/24 h',8:'16 mg/24 h',16:'32 mg/24 h'}[n]||null;
+ if(drug==='Valsartán'&&f==='12')next={40:'80 mg/12 h',80:'160 mg/12 h'}[n]||null;
+ if(['Enalapril','Ramipril'].includes(drug))return result('review','Revisar aclaramiento de creatinina, dosis diaria total y reparto según ficha; no calcular escalón sin esos datos.');
+ return next?result('reference','Escalón de referencia: '+next+'. Verificar contraindicaciones, interacciones y demás condiciones de ficha. Control FG/K tras el cambio en 1–2 semanas.',next):result('review','Sin escalón superior aplicable a la pauta registrada; revisar dosis máxima tolerada.');
+}
+export function arniTransitionReference({from,to,elapsedHours,overlap,angioedema}={}){
+ const valid=['IECA','ARA-II','ARNI'];
+ if(!valid.includes(from)||!valid.includes(to)||from===to||!([from,to].includes('ARNI')))return null;
+ const source=HF_TITRATION_REFERENCE['Sacubitrilo/valsartán'].source;
+ if(overlap===true)return {status:'blocked',detail:'No solapar ARNI con IECA ni ARA-II.',source};
+ if(angioedema==='yes')return {status:'blocked',detail:'Antecedente de angioedema: no proponer transición; revisar contraindicación específica y alternativas.',source};
+ if([from,to].includes('IECA')){
+  if(!Number.isFinite(elapsedHours)||elapsedHours<0)return {status:'missing',detail:'Confirmar última dosis; intervalo mínimo de 36 h.',source};
+  if(elapsedHours<36)return {status:'blocked',detail:'No iniciar todavía: intervalo mínimo de 36 h entre IECA y ARNI.',source};
+ }
+ if(overlap!==false||angioedema!=='no')return {status:'missing',detail:'Confirmar ausencia de solapamiento y antecedente de angioedema.',source};
+ return {status:'reference',detail:'Requisito de transición comprobado. Aún se deben verificar indicación, tolerancia, PA, función renal, K y ficha antes del cambio.',source};
+}
 const sglt2Interruption='Ante sospecha/diagnóstico de cetoacidosis, interrumpir y evaluar de inmediato; no reiniciar tras CAD salvo desencadenante identificado y resuelto. En cirugía mayor o enfermedad aguda grave hospitalizada, interrupción temporal, cetonas preferentemente en sangre y reinicio solo cuando sean normales y el paciente esté estable. La duración de la interrupción no basta.';
 
 export function treatmentProposal(ctx){
@@ -1198,11 +1232,11 @@ export function treatmentProposal(ctx){
    if(egfr>=30&&potassium<=5.4&&sbp>=100)push('start','Valorar sacubitrilo/valsartán','24/26 mg cada 12 h como inicio conservador en quien no recibe IECA/ARA-II; objetivo de referencia 97/103 mg cada 12 h.','Comprobar angioedema previo, embarazo, hepatopatía, interacciones, PA y ausencia real de IECA/ARA-II. Doblar cada 3–4 semanas si tolera; controlar FG/K tras inicio y ajustes.',refDrug('Sacubitrilo/valsartán'));
    else push('review','SRAA: revisar elegibilidad','No se ofrece dosis de inicio por los datos de seguridad registrados.','Confirmar PA, potasio, función renal y alternativa según tolerancia.',refDrug('Sacubitrilo/valsartán'));
   }else if(arni?.drug==='Sacubitrilo/valsartán'&&arni.frequency==='12'){
-   const next={'24/26':'49/51','49/51':'97/103'}[arni.dose.replaceAll('.',',')+'/'+arni.dose2.replaceAll('.',',')];
-   if(next&&sbp>=100&&egfr>=30&&potassium<=5.4)push('review','Escalón de referencia: sacubitrilo/valsartán',arni.dose+'/'+arni.dose2+' → '+next+' mg cada 12 h. Elegibilidad aún no comprobada.','Confirmar presentación, tolerancia, estabilidad, PA/FG/K y duración en dosis actual. '+HF_TITRATION_REFERENCE[arni.drug].checks,refDrug(arni.drug));
-   else push('review','Revisar sacubitrilo/valsartán','Confirmar dosis máxima tolerada, pauta y seguridad; no aumentar automáticamente.','Revisar presión arterial, función renal y potasio.',refDrug(arni.drug));
+   const step=raasStepReference(arni,ctx);
+   push('review','Revisar sacubitrilo/valsartán',step.detail,HF_TITRATION_REFERENCE[arni.drug].checks,step.source);
   }else if(arni&&['IECA','ARA-II'].includes(medicationFamilyLabel(arni))){
-   push('review','Revisar tratamiento actual: '+arni.drug,'Valorar dosis máxima tolerada y alternativa según indicación. No se presupone que debe sustituirse siempre.',HF_TITRATION_REFERENCE[arni.drug]?.checks||'Revisar presentación y ficha técnica.',refDrug(arni.drug));
+   const step=raasStepReference(arni,ctx);
+   push('review','Revisar tratamiento actual: '+arni.drug,step?.detail||'Valorar dosis máxima tolerada y alternativa según indicación. No se presupone que debe sustituirse siempre.',HF_TITRATION_REFERENCE[arni.drug]?.checks||'Revisar presentación y ficha técnica.',refDrug(arni.drug));
    push('review','Valorar sustitución por sacubitrilo/valsartán','Si la indicación y tolerancia lo permiten, considerar transición desde '+arni.drug+'. No asociarlos ni ejecutar el cambio sin comprobar elegibilidad.','Si procede desde IECA, respetar ≥36 h; desde ARA-II, evitar solapamiento. Verificar dosis anterior, PA, FG, K, angioedema y ficha técnica para seleccionar dosis de inicio.',refDrug('Sacubitrilo/valsartán'));
   }
   if(betaCaution&&(canStart('bb')||bb))push('review','Betabloqueante: revisar frecuencia cardiaca','FC 50–59 lpm: el prototipo no propone inicio ni aumento de betabloqueante sin valorar síntomas y ECG. No es una contraindicación universal ni impide por sí sola valorar otros tratamientos.','Comprobar ritmo, conducción, cronotropos y tolerancia; no retirar bruscamente.',HF_GUIDE);
@@ -1212,7 +1246,13 @@ export function treatmentProposal(ctx){
    const nebAge=ctx.peptides?.age;
    if(bb.drug==='Nebivolol'&&(!Number.isFinite(nebAge)||nebAge<70))push('review','Nebivolol: comprobar indicación y edad','No se propone titulación de IC sin edad registrada ≥70 años, según ficha de Insucor.','Confirmar indicación real, gravedad y presentación. No suspender por esta regla.',ref.source);
    else if(step){
-    push('review','Escalón de referencia: '+bb.drug,fmtDose(step.from)+' → '+fmtDose(step.to)+' mg cada '+step.frequency+' h, según '+step.product+'. No se ha comprobado elegibilidad para este incremento.','Confirmar tolerancia, duración en el escalón (mínimo '+step.minDays+' días según la ficha'+(bb.doseDays?' · registrados '+bb.doseDays+' días':' · no registrada')+'), ECG, ausencia de congestión y presentación exacta. '+step.checks,step.source);
+    const days=mgNumber(bb.doseDays),minDays=Math.max(14,step.minDays);
+    const missing=[];
+    if(normalizeMedication(bb.product)!==normalizeMedication(step.product)||bb.indication!=='hf')missing.push('presentación e indicación');
+    if(bb.tolerance!=='well')missing.push('tolerancia');
+    if(!Number.isFinite(days)||days<minDays)missing.push('al menos '+minDays+' días en pauta actual');
+    if(ctx.results?.ecg?.value!=='normal'&&ctx.results?.ecg?.value!=='af')missing.push('ECG y conducción');
+    push('review','Revisar '+bb.drug,missing.length?'Antes de valorar un incremento, comprobar '+missing.join(', ')+'.':fmtDose(step.from)+' → '+fmtDose(step.to)+' mg cada '+step.frequency+' h como escalón de referencia, no orden.','Intervalo ambulatorio conservador: '+minDays+' días. '+step.checks,step.source);
    }else push('review','Revisar '+bb.drug,'Sin escalón superior automatizado para la pauta registrada; comprobar dosis máxima tolerada y formulación.','No interpretar dosis objetivo como obligación ni retirar bruscamente. '+(ref?.checks||'Revisar ficha técnica.'),refDrug(bb.drug));
   }
   if(canStart('mra')){
