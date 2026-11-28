@@ -506,7 +506,7 @@ test('ARM: tablas de IC no extrapoladas a ERC-DM2 ni con datos no confirmados',(
  const base={drug:'Finerenona',indication:'hf40',potassium:5.5,dose:'10',frequency:'24',confirmed:true};
  assert.match(armPotassiumReference(base).reference,/interrupción/);
  assert.match(armPotassiumReference({...base,dose:'40'}).reference,/20 mg/);
- assert.equal(armPotassiumReference({...base,indication:'ckd-dm2'}),null);
+ assert.match(armPotassiumReference({...base,indication:'ckd-dm2',potassium:5.6}).reference,/Tabla 2 ERC-DM2/);
  assert.equal(armPotassiumReference({...base,confirmed:false}),null);
  assert.equal(armPotassiumReference({...base,potassium:6}).kind,'interrupt');
  const e={...base,drug:'Eplerenona',indication:'hf',dose:'25',frequency:'48'};
@@ -581,4 +581,21 @@ test('Contexto de ajuste: duración se invalida con cambio de pauta y referencia
  assert.ok(!medicationSafety(c).some(x=>x.id==='ARM-REF-extra-1'));
  c=setMedicationField(c,'extra-1','product','Eplerenona STADA');c=setMedicationField(c,'extra-1','indication','hf');
  assert.ok(medicationSafety(c).some(x=>x.id==='ARM-REF-extra-1'&&x.text.includes('25 mg cada 24 h')));
+});
+
+test('Finerenona: tablas 2 y 4, FG inicial y caída relativa sin redondear',()=>{
+ const base={drug:'Finerenona',indication:'hf40',potassium:4.9,dose:'20',frequency:'24',confirmed:true,egfr:42,initialEgfr:60,priorEgfr:60,doseDays:28};
+ const ref=x=>armPotassiumReference({...base,...x}).reference;
+ assert.match(ref({}),/40 mg\/día/);
+ assert.match(ref({initialEgfr:59}),/no aumentar/);
+ assert.match(ref({egfr:41.99}),/no aumentar/);
+ assert.match(ref({egfr:36}),/≥40%/);
+ assert.match(ref({doseDays:27}),/cuatro semanas/);
+ assert.match(ref({initialEgfr:undefined}),/Falta TFGe inicial/);
+ assert.match(ref({potassium:5}),/mantenimiento/);
+ assert.match(ref({dose:'40',egfr:41}),/reducción a 20/);
+ assert.equal(armPotassiumReference({...base,egfr:14.99}).kind,'interrupt');
+ assert.match(ref({indication:'ckd-dm2',potassium:5.5,dose:'10'}),/mantenimiento/);
+ assert.equal(armPotassiumReference({...base,indication:'ckd-dm2',potassium:5.51}).kind,'interrupt');
+ assert.match(ref({indication:'ckd-dm2',potassium:4.8,dose:'10'}),/20 mg\/día/);
 });
