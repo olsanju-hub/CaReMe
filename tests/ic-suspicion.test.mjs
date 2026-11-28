@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {GROUPS,createClinicalContext,updateFinding,evaluateSuspicion,setGroupReviewed,isGroupReviewed,toggleFinding,setEvaluationReviewed,isEvaluationReviewed,diagnosticNext,diagnosticAction,setStudyResult,investigationPlan,interpretSuspicion,CLINICAL_DIMENSIONS,labPlan,setPeptide,interpretPeptide,peptideFactors,ECHO_FINDINGS,ECHO_NUMERIC,setEcho,interpretEcho,setStageAssessment,interpretStage,setPhenotypeAssessment,interpretPhenotype,NYHA_OPTIONS,setNyha,interpretNyha,SITUATION_QUESTIONS,setSituation,interpretSituation,classificationSummary,TREATMENT_VITALS,setTreatmentValue,confirmTreatmentLabs,treatmentSafetyData,MEDICATION_GROUPS,setMedicationField,addMedication,removeMedication,medicationSummary,confirmMedicationReview,MEDICATION_QUICK_DOSES,medicationEntryComplete,setMedicationQuickDose,MEDICATION_FAMILIES,medicationFamilyLabel,addNamedMedication,deleteRecordedMedication,medicationFrequencyOptions,medicationSafety,HF_MEDICATION_REFERENCE,treatmentProposal,HF_TITRATION_REFERENCE,betaBlockerReferenceStep,armPotassiumReference} from '../src/ic/suspicion.mjs';
+import {GROUPS,createClinicalContext,updateFinding,evaluateSuspicion,setGroupReviewed,isGroupReviewed,toggleFinding,setEvaluationReviewed,isEvaluationReviewed,diagnosticNext,diagnosticAction,setStudyResult,investigationPlan,interpretSuspicion,CLINICAL_DIMENSIONS,labPlan,setPeptide,interpretPeptide,peptideFactors,ECHO_FINDINGS,ECHO_NUMERIC,setEcho,interpretEcho,setStageAssessment,interpretStage,setPhenotypeAssessment,interpretPhenotype,NYHA_OPTIONS,setNyha,interpretNyha,SITUATION_QUESTIONS,setSituation,interpretSituation,classificationSummary,TREATMENT_VITALS,setTreatmentValue,confirmTreatmentLabs,treatmentSafetyData,MEDICATION_GROUPS,setMedicationField,addMedication,removeMedication,medicationSummary,confirmMedicationReview,MEDICATION_QUICK_DOSES,medicationEntryComplete,setMedicationQuickDose,MEDICATION_FAMILIES,medicationFamilyLabel,addNamedMedication,deleteRecordedMedication,medicationFrequencyOptions,medicationSafety,HF_MEDICATION_REFERENCE,treatmentProposal,HF_TITRATION_REFERENCE,betaBlockerReferenceStep,armPotassiumReference,echoSupportCriteria} from '../src/ic/suspicion.mjs';
 const allNo=()=>({findings:{...Object.fromEntries(GROUPS.flatMap(g=>g.fields.map(([id])=>[id,'no']))),vitalsReviewed:'yes'}});
 const result=(c)=>evaluateSuspicion(c).id;
 test('Datos ausentes no son negativos',()=>assert.equal(result(createClinicalContext()),'IC-SUS-03'));
@@ -520,4 +520,24 @@ test('CIMA: interacciones adicionales específicas de ARM y bloqueo SRAA',()=>{
  for(const [a,b,id] of [['Eplerenona','Amilorida','EPL-KSP'],['Eplerenona','Cloruro de potasio','EPL-KSUP'],['Finerenona','Triamtereno','FIN-KSP'],['Finerenona','Rifampicina','FIN-IND']])assert.ok(medicationSafety(pair(a,b)).some(x=>x.id===id&&x.level==='red'),id);
  assert.ok(medicationSafety(pair('Eplerenona','Diltiazem')).some(x=>x.id==='EPL-MOD'&&x.level==='amber'));
  assert.ok(medicationSafety(updateFinding(pair('Enalapril','Aliskireno'),'dm','yes')).some(x=>x.id==='SRAA-ALISK'&&x.level==='red'));
+});
+
+test('ESC tabla 10: límites de apoyo ecocardiográfico, sexo y ritmo explícitos',()=>{
+ let c=createClinicalContext();for(const [k,v] of [['lvmi','95'],['lavi','34'],['ee','9'],['trv','2,8'],['rwt','0,42'],['pasp','35']])c=setEcho(c,k,v);
+ let m=echoSupportCriteria(c);assert.equal(m.metrics.find(x=>x.id==='lvmi').state,'unknown');assert.equal(m.metrics.find(x=>x.id==='lavi').state,'unknown');
+ c=setEcho(c,'sex','female');c=setEcho(c,'rhythm','sinus');m=echoSupportCriteria(c);
+ assert.equal(m.metrics.find(x=>x.id==='lvmi').state,'support');assert.equal(m.metrics.find(x=>x.id==='lavi').state,'not-reached');
+ assert.equal(m.metrics.filter(x=>x.state==='support').length,1);assert.equal(m.diagnosisEstablished,false);
+ c=setEcho(c,'sex','male');c=setEcho(c,'rhythm','af');c=setEcho(c,'lavi','40');c=setEcho(c,'ee','15');c=setEcho(c,'trv','2,81');
+ m=echoSupportCriteria(c);assert.equal(m.metrics.find(x=>x.id==='lvmi').state,'not-reached');assert.equal(m.metrics.find(x=>x.id==='lavi').state,'not-reached');assert.equal(m.metrics.find(x=>x.id==='ee').state,'support');assert.equal(m.metrics.find(x=>x.id==='trv').state,'support');
+ assert.notEqual(interpretEcho(c).integratedTitle,'IC confirmada');
+});
+test('Fenotipo: antecedente de IC-FEr y negación de FEVI histórica reducida son discordantes',()=>{
+ let c=updateFinding(createClinicalContext(),'knownHF','yes');c=setEcho(c,'ef','55');c=setEcho(c,'priorReduced','no');c=setPhenotypeAssessment(c,'priorClinical','yes');c=setPhenotypeAssessment(c,'diastolicEvidence','yes');
+ assert.equal(interpretPhenotype(c).conflict,true);
+});
+test('Péptidos: ARNI registrado orienta interpretación y explicita discordancia',()=>{
+ let c=addNamedMedication(createClinicalContext(),'Sacubitrilo/valsartán');c=setPeptide(c,'kind','bnp');c=setPeptide(c,'context','outpatient');c=setPeptide(c,'bnp','35');
+ assert.equal(peptideFactors(c).arni,'yes');assert.ok(interpretPeptide(c).notes.some(x=>/elevar BNP/.test(x)));
+ c=setPeptide(c,'arni','no');assert.ok(interpretPeptide(c).notes.some(x=>/Discordancia/.test(x)));
 });
