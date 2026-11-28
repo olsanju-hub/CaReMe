@@ -3,7 +3,7 @@ on:
   push:
     branches: [main, feat/prototipo-interfaz, audit/ic-validacion-clinica]
   pull_request:
-    branches: [main]
+    branches: [main, feat/prototipo-interfaz]
 
 jobs:
   checks:
