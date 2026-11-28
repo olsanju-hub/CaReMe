@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {GROUPS,createClinicalContext,updateFinding,evaluateSuspicion,setGroupReviewed,isGroupReviewed,toggleFinding,setEvaluationReviewed,isEvaluationReviewed,diagnosticNext,diagnosticAction,setStudyResult,investigationPlan,interpretSuspicion,CLINICAL_DIMENSIONS,labPlan,setPeptide,interpretPeptide,peptideFactors,ECHO_FINDINGS,ECHO_NUMERIC,setEcho,interpretEcho,setStageAssessment,interpretStage,setPhenotypeAssessment,interpretPhenotype,NYHA_OPTIONS,setNyha,interpretNyha,SITUATION_QUESTIONS,setSituation,interpretSituation,classificationSummary,TREATMENT_VITALS,setTreatmentValue,confirmTreatmentLabs,treatmentSafetyData,MEDICATION_GROUPS,setMedicationField,addMedication,removeMedication,medicationSummary,confirmMedicationReview,MEDICATION_QUICK_DOSES,medicationEntryComplete,setMedicationQuickDose,MEDICATION_FAMILIES,medicationFamilyLabel,addNamedMedication,deleteRecordedMedication,medicationFrequencyOptions,medicationSafety,HF_MEDICATION_REFERENCE,treatmentProposal,HF_TITRATION_REFERENCE,betaBlockerReferenceStep} from '../src/ic/suspicion.mjs';
+import {GROUPS,createClinicalContext,updateFinding,evaluateSuspicion,setGroupReviewed,isGroupReviewed,toggleFinding,setEvaluationReviewed,isEvaluationReviewed,diagnosticNext,diagnosticAction,setStudyResult,investigationPlan,interpretSuspicion,CLINICAL_DIMENSIONS,labPlan,setPeptide,interpretPeptide,peptideFactors,ECHO_FINDINGS,ECHO_NUMERIC,setEcho,interpretEcho,setStageAssessment,interpretStage,setPhenotypeAssessment,interpretPhenotype,NYHA_OPTIONS,setNyha,interpretNyha,SITUATION_QUESTIONS,setSituation,interpretSituation,classificationSummary,TREATMENT_VITALS,setTreatmentValue,confirmTreatmentLabs,treatmentSafetyData,MEDICATION_GROUPS,setMedicationField,addMedication,removeMedication,medicationSummary,confirmMedicationReview,MEDICATION_QUICK_DOSES,medicationEntryComplete,setMedicationQuickDose,MEDICATION_FAMILIES,medicationFamilyLabel,addNamedMedication,deleteRecordedMedication,medicationFrequencyOptions,medicationSafety,HF_MEDICATION_REFERENCE,treatmentProposal,HF_TITRATION_REFERENCE,betaBlockerReferenceStep,armPotassiumReference} from '../src/ic/suspicion.mjs';
 const allNo=()=>({findings:{...Object.fromEntries(GROUPS.flatMap(g=>g.fields.map(([id])=>[id,'no']))),vitalsReviewed:'yes'}});
 const result=(c)=>evaluateSuspicion(c).id;
 test('Datos ausentes no son negativos',()=>assert.equal(result(createClinicalContext()),'IC-SUS-03'));
@@ -496,4 +496,28 @@ test('iSGLT2: frontera de inicio distinta para cada molécula y alternativas no 
 test('ARNI + aliskireno: diabetes registrada activa alerta roja incluso sin FG confirmado',()=>{
  let c=addNamedMedication(createClinicalContext(),'Sacubitrilo/valsartán');c=addNamedMedication(c,'other');c=setMedicationField(c,'extra-2','name','Aliskireno');
  c=updateFinding(c,'dm','yes');assert.ok(medicationSafety(c).some(a=>a.id==='ARNI-ALISK'&&a.level==='red'));
+});
+
+test('Inventario P3: cada molécula del catálogo tiene referencia de presentación',()=>{
+ assert.deepEqual(Object.keys(HF_TITRATION_REFERENCE).sort(),Object.keys(HF_MEDICATION_REFERENCE).sort());
+ for(const [drug,r] of Object.entries(HF_TITRATION_REFERENCE))assert.ok(r.product&&r.checks&&r.source&&r.frequency,drug);
+});
+test('ARM: tablas de IC no extrapoladas a ERC-DM2 ni con datos no confirmados',()=>{
+ const base={drug:'Finerenona',indication:'hf40',potassium:5.5,dose:'10',frequency:'24',confirmed:true};
+ assert.match(armPotassiumReference(base).reference,/interrupción/);
+ assert.match(armPotassiumReference({...base,dose:'40'}).reference,/20 mg/);
+ assert.equal(armPotassiumReference({...base,indication:'ckd-dm2'}),null);
+ assert.equal(armPotassiumReference({...base,confirmed:false}),null);
+ assert.equal(armPotassiumReference({...base,potassium:6}).kind,'interrupt');
+ const e={...base,drug:'Eplerenona',indication:'hf',dose:'25',frequency:'48'};
+ assert.match(armPotassiumReference(e).reference,/interrupción/);
+ assert.match(armPotassiumReference({...e,frequency:'24'}).reference,/días alternos/);
+ assert.equal(armPotassiumReference({...e,potassium:6}).kind,'interrupt');
+ assert.equal(armPotassiumReference({...e,potassium:5.4}).kind,'review');
+});
+test('CIMA: interacciones adicionales específicas de ARM y bloqueo SRAA',()=>{
+ const pair=(a,b)=>{let c=addNamedMedication(createClinicalContext(),a);c=addNamedMedication(c,'other');return setMedicationField(c,'extra-2','name',b);};
+ for(const [a,b,id] of [['Eplerenona','Amilorida','EPL-KSP'],['Eplerenona','Cloruro de potasio','EPL-KSUP'],['Finerenona','Triamtereno','FIN-KSP'],['Finerenona','Rifampicina','FIN-IND']])assert.ok(medicationSafety(pair(a,b)).some(x=>x.id===id&&x.level==='red'),id);
+ assert.ok(medicationSafety(pair('Eplerenona','Diltiazem')).some(x=>x.id==='EPL-MOD'&&x.level==='amber'));
+ assert.ok(medicationSafety(updateFinding(pair('Enalapril','Aliskireno'),'dm','yes')).some(x=>x.id==='SRAA-ALISK'&&x.level==='red'));
 });
