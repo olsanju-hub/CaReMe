@@ -1361,6 +1361,38 @@ export function candidateRiskScreen(ctx,drug){
  const positives=items.filter(x=>x.value==='yes'),pending=items.filter(x=>x.value==='unknown');
  return {items,positives,pending,status:positives.length?'review':pending.length?'pending':'partial-review',complete:false,source:refDrug(drug)};
 }
+// UI requirements are derived from the same registered context as the
+// existing safety gates. They do not relax any blocker or certify eligibility.
+export function proposalMissingData(ctx){
+ const d=treatmentSafetyData(ctx),r=d.profile,m=medicationSummary(ctx);
+ const fields={sbp:['PA sistólica','mmHg'],dbp:['PA diastólica','mmHg'],hr:['Frecuencia cardiaca','lpm'],egfr:['FG estimado','mL/min/1,73 m²'],potassium:['Potasio','mmol/L']};
+ const profileFields=d.missing.map(key=>({key,label:fields[key][0],unit:fields[key][1]}));
+ const classification=r.pending.map(x=>({section:x.section,label:x.label}));
+ if(!Number.isFinite(r.ef)&&!classification.some(x=>x.section==='fenotipo'))classification.push({section:'fenotipo',label:'Registrar FEVI'});
+ if(r.situation!=='compensated'&&!classification.some(x=>x.section==='situacion'))classification.push({section:'situacion',label:'Revisar estabilidad y congestión'});
+ if((r.next.kind!=='treatment'||!r.clinicalHF)&&!classification.length)classification.push({section:'conclusion',label:'Revisar clasificación e IC clínica'});
+ const medRows=[...new Set(m.missing.map(x=>x.id))].map(id=>{
+  const row=[...m.groups,...m.additional].find(x=>x.id===id);
+  if(!row||row.drug==='unknown')return {id,label:'Identificar medicamento',fields:[],navigate:true};
+  const fields=[],valid=x=>Number.isFinite(mgNumber(x))&&mgNumber(x)>0;
+  if(row.drug==='other'&&!row.name.trim())fields.push('name');
+  if(row.drug==='other'?!row.dose.trim():!valid(row.dose))fields.push('dose');
+  if(row.drug==='Sacubitrilo/valsartán'&&!valid(row.dose2))fields.push('dose2');
+  if(!row.frequency)fields.push('frequency');
+  if(row.frequency==='other'&&!row.customFrequency.trim())fields.push('customFrequency');
+  return {id,label:row.drug==='other'?row.name||'Otro medicamento':row.drug,fields,navigate:!fields.length};
+ });
+ return {profileFields,confirmLabs:d.labsAvailable&&!d.labsConfirmed,classification,medRows,confirmMedication:!m.reviewed&&!m.missing.length&&!m.duplicates.length&&!m.unidentified,reviewMedication:!m.reconciled||m.otherRows.length&&!m.externalReviewValid||m.active.some(x=>x.frequency==='other'||x.tolerance==='problem')};
+}
+function adjustmentInputFields(row,ref,days,ecg,ctx){
+ const fields=[];
+ if(normalizeMedication(row.product)!==normalizeMedication(ref.product))fields.push('product');
+ if(row.indication!=='hf')fields.push('indication');
+ if(row.tolerance==='unknown')fields.push('tolerance');
+ if(!Number.isFinite(mgNumber(row.doseDays))||mgNumber(row.doseDays)<days)fields.push('doseDays');
+ if(ecg&&ctx.results?.ecg?.value!=='normal'&&ctx.results?.ecg?.value!=='af')fields.push('ecg');
+ return {id:row.id,fields,referenceProduct:ref.product,minDays:days};
+}
 export function treatmentProposal(ctx){
  const d=treatmentSafetyData(ctx),r=d.profile,m=medicationSummary(ctx),alerts=medicationSafety(ctx);
  const actions=[],blockers=[],urgent=[];
@@ -1405,7 +1437,7 @@ export function treatmentProposal(ctx){
  if(m.active.some(x=>x.frequency==='other'||x.tolerance==='problem'))blockers.push('Revisión individual de pauta libre o intolerancia registrada.');
  if(m.otherRows.length&&!m.externalReviewValid)blockers.push('Conciliar medicamentos fuera del catálogo y confirmar su revisión externa para esta lista y estos datos clínicos. No se presume ausencia de interacciones.');
  if(r.nyha==='IV')blockers.push('NYHA IV: evaluación especializada antes de la intensificación ambulatoria.');
- const result=(status)=>({status,profile:r,values:d.values,actions,blockers,urgent,alerts,source:HF_GUIDE,renal:renalContext(ctx)});
+ const result=(status)=>({status,profile:r,values:d.values,actions,blockers,urgent,alerts,source:HF_GUIDE,renal:renalContext(ctx),missingData:status==='review'?proposalMissingData(ctx):null});
  if(urgent.length||blockers.length)return result(urgent.length?'urgent':'review');
  // The remaining output consists of conditional options, never orders. Each action states checks not automated.
  const member=id=>m.familyStatus.find(x=>x.id===id)?.members||[];
@@ -1440,10 +1472,10 @@ export function treatmentProposal(ctx){
    else push('review','SRAA: revisar elegibilidad','No se ofrece dosis de inicio por los datos de seguridad registrados.','Confirmar PA, potasio, función renal y alternativa según tolerancia.',refDrug('Sacubitrilo/valsartán'),null,{section:'complete',label:'Revisar elegibilidad'});
   }else if(arni?.drug==='Sacubitrilo/valsartán'&&arni.frequency==='12'){
    const step=raasStepReference(arni,ctx);
-   push('review','Revisar sacubitrilo/valsartán',step.detail,HF_TITRATION_REFERENCE[arni.drug].checks,step.source,null,{section:'optimize',medicationId:arni.id,label:step.status==='reference'?'Escalón de referencia':'Revisar antes de titular',showDetail:step.status==='reference'});
+   push('review','Revisar sacubitrilo/valsartán',step.detail,HF_TITRATION_REFERENCE[arni.drug].checks,step.source,null,{section:'optimize',medicationId:arni.id,label:step.status==='reference'?'Escalón de referencia':'Revisar antes de titular',showDetail:step.status==='reference',adjustment:step.status==='missing'?adjustmentInputFields(arni,HF_TITRATION_REFERENCE[arni.drug],28,false,ctx):null});
   }else if(arni&&['IECA','ARA-II'].includes(medicationFamilyLabel(arni))){
    const step=raasStepReference(arni,ctx);
-   push('review','Revisar tratamiento actual: '+arni.drug,step?.detail||'Valorar dosis máxima tolerada y alternativa según indicación. No se presupone que debe sustituirse siempre.',HF_TITRATION_REFERENCE[arni.drug]?.checks||'Revisar presentación y ficha técnica.',refDrug(arni.drug),null,{section:'optimize',medicationId:arni.id,label:step?.status==='reference'?'Escalón de referencia':'Revisar antes de titular',showDetail:step?.status==='reference'});
+   push('review','Revisar tratamiento actual: '+arni.drug,step?.detail||'Valorar dosis máxima tolerada y alternativa según indicación. No se presupone que debe sustituirse siempre.',HF_TITRATION_REFERENCE[arni.drug]?.checks||'Revisar presentación y ficha técnica.',refDrug(arni.drug),null,{section:'optimize',medicationId:arni.id,label:step?.status==='reference'?'Escalón de referencia':'Revisar antes de titular',showDetail:step?.status==='reference',adjustment:step?.status==='missing'?adjustmentInputFields(arni,HF_TITRATION_REFERENCE[arni.drug],14,false,ctx):null});
    const transition=arniTransitionPlanReference(ctx,arni);
    push('review','Valorar sustitución por sacubitrilo/valsartán',transition.detail,'Si procede, seleccionar dosis inicial según tratamiento anterior, PA, función renal y hepática, potasio, volemia, indicación e interacciones. No interrumpir ni iniciar automáticamente; verificar ausencia real de solapamiento y confirmar tiempos antes de actuar.',transition.source,'Sacubitrilo/valsartán',{section:'optimize',medicationId:arni.id,label:'Valorar sustitución por ARNI',showDetail:true,transition});
   }
@@ -1460,7 +1492,7 @@ export function treatmentProposal(ctx){
     if(bb.tolerance!=='well')missing.push('tolerancia');
     if(!Number.isFinite(days)||days<minDays)missing.push('al menos '+minDays+' días en pauta actual');
     if(ctx.results?.ecg?.value!=='normal'&&ctx.results?.ecg?.value!=='af')missing.push('ECG y conducción');
-    push('review','Revisar '+bb.drug,missing.length?'Antes de valorar un incremento, comprobar '+missing.join(', ')+'.':fmtDose(step.from)+' → '+fmtDose(step.to)+' mg cada '+step.frequency+' h como escalón de referencia, no orden.','Intervalo ambulatorio conservador: '+minDays+' días. '+step.checks,step.source,null,{section:'optimize',medicationId:bb.id,label:missing.length?'Revisar antes de titular':'Escalón de referencia',showDetail:!missing.length});
+    push('review','Revisar '+bb.drug,missing.length?'Antes de valorar un incremento, comprobar '+missing.join(', ')+'.':fmtDose(step.from)+' → '+fmtDose(step.to)+' mg cada '+step.frequency+' h como escalón de referencia, no orden.','Intervalo ambulatorio conservador: '+minDays+' días. '+step.checks,step.source,null,{section:'optimize',medicationId:bb.id,label:missing.length?'Revisar antes de titular':'Escalón de referencia',showDetail:!missing.length,adjustment:missing.length?adjustmentInputFields(bb,step,minDays,true,ctx):null});
    }else push('review','Revisar '+bb.drug,'Sin escalón superior automatizado para la pauta registrada; comprobar dosis máxima tolerada y formulación.','No interpretar dosis objetivo como obligación ni retirar bruscamente. '+(ref?.checks||'Revisar ficha técnica.'),refDrug(bb.drug),null,{section:'optimize',medicationId:bb.id,label:'Revisar dosis máxima tolerada'});
   }
   if(canStart('mra')){
