@@ -679,9 +679,10 @@ export const MEDICATION_GROUPS=[
 export const MEDICATION_FREQUENCIES=[['24','Cada 24 h'],['12','Cada 12 h'],['8','Cada 8 h'],['48','Días alternos'],['other','Otra pauta']];
 export const MEDICATION_ABSENCE_REASONS=[['unknown','Sin precisar'],['notStarted','No iniciado'],['intolerance','Intolerancia previa'],['contraindication','Contraindicación referida'],['notIndicated','No indicado según valoración previa'],['other','Otro motivo']];
 export const MEDICATION_TOLERANCE=[['unknown','Sin valorar'],['well','Sin problemas referidos'],['problem','Problemas de tolerancia']];
+export const MEDICATION_INDICATIONS=[['unknown','Sin precisar'],['hf','IC'],['hf40','IC con FEVI ≥40%'],['ckd-dm2','ERC-DM2'],['other','Otra indicación']];
 const medicationState=ctx=>({groups:{},additional:[],reviewed:false,nextId:1,...ctx.medicationAssessment});
 const medicationCatalog=MEDICATION_GROUPS.flatMap(g=>g[2]);
-const newMedication=(drug='unknown')=>({drug,name:'',dose:'',dose2:'',frequency:'',customFrequency:'',reason:'unknown',tolerance:'unknown',note:''});
+const newMedication=(drug='unknown')=>({drug,name:'',dose:'',dose2:'',frequency:'',customFrequency:'',reason:'unknown',tolerance:'unknown',note:'',otherClass:'unknown',product:'',indication:'unknown',doseDays:'',initialEgfr:'',priorEgfr:''});
 const normalizeMedication=s=>String(s??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/\s*\/\s*/g,'/').replace(/\s+/g,' ').trim();
 const namedMedication=m=>m.drug==='other'?m.name:m.drug;
 const medicationGroupFor=m=>MEDICATION_GROUPS.find(g=>g[2].some(x=>normalizeMedication(x)===normalizeMedication(namedMedication(m))))?.[0]??null;
@@ -699,9 +700,17 @@ export function setMedicationField(ctx,id,key,raw){
    if(old.drug!=='none'||!MEDICATION_ABSENCE_REASONS.some(x=>x[0]===raw))return ctx;
   }else if(key==='tolerance'){
    if(['none','unknown'].includes(old.drug)||!MEDICATION_TOLERANCE.some(x=>x[0]===raw))return ctx;
+  }else if(key==='otherClass'){
+   if(old.drug!=='other'||!['unknown','outside'].includes(raw)||raw==='outside'&&interactionFamilies(old).length)return ctx;
+  }else if(key==='indication'){
+   if(['none','unknown'].includes(old.drug)||!MEDICATION_INDICATIONS.some(x=>x[0]===raw))return ctx;
+  }else if(['doseDays','initialEgfr','priorEgfr'].includes(key)){
+   if(['none','unknown','other'].includes(old.drug))return ctx;
+   if(raw&&!/^\d+(?:[.,]\d+)?$/.test(raw.trim()))return ctx;
+   if(raw&&(!Number.isFinite(Number(raw.replace(',','.')))||Number(raw.replace(',','.'))<0||key==='doseDays'&&!Number.isInteger(Number(raw))))return ctx;
   }else if(key==='frequency'){
    if(['none','unknown'].includes(old.drug)||!['',...MEDICATION_FREQUENCIES.map(x=>x[0])].includes(raw))return ctx;
-  }else if(['name','dose','dose2','customFrequency','note'].includes(key)){
+  }else if(['name','dose','dose2','customFrequency','note','product'].includes(key)){
    if(key==='name'&&old.drug!=='other'||['dose','dose2','customFrequency'].includes(key)&&['none','unknown'].includes(old.drug))return ctx;
    if(key==='dose2'&&old.drug!=='Sacubitrilo/valsartán'||key==='customFrequency'&&old.frequency!=='other')return ctx;
    if(raw.length>(key==='note'?240:80))return ctx;
@@ -709,11 +718,13 @@ export function setMedicationField(ctx,id,key,raw){
   if(old[key]===raw)return ctx;
   m[key]=raw;
   if(key==='frequency'&&raw!=='other')m.customFrequency='';
+  if(['dose','dose2','frequency','customFrequency'].includes(key))m.doseDays='';
+  if(key==='name')m.otherClass='unknown';
   if(key==='reason'&&raw==='unknown'||key==='tolerance'&&raw!=='problem')m.note='';
  }
  const groups=group?{...a.groups,[id]:m}:a.groups;
  const additional=group?a.additional:a.additional.map((x,i)=>i===index?m:x);
- return {...ctx,medicationAssessment:{...a,groups,additional,reviewed:false},updatedAt:new Date().toISOString()};
+ return {...ctx,medicationAssessment:{...a,groups,additional,reviewed:false,externalReview:null},updatedAt:new Date().toISOString()};
 }
 export function addMedication(ctx){
  const a=medicationState(ctx);
@@ -748,18 +759,36 @@ export function medicationSummary(ctx){
   const previous=names.get(name);
   if(previous)duplicates.push('Principio activo repetido: '+namedMedication(m)+'. Revisar si es una misma pauta o un registro duplicado.');
   else names.set(name,m);
-  const family=medicationGroupFor(m);
-  if(family&&family!=='diuretic'){const list=classes.get(family)||[];list.push(name);classes.set(family,list);}
+  for(const family of interactionGroupIds(m))if(family!=='diuretic'){const list=classes.get(family)||[];list.push(name);classes.set(family,list);}
  }
  for(const [family,list] of classes)if(new Set(list).size>1)duplicates.push('Posible duplicidad en '+MEDICATION_GROUPS.find(g=>g[0]===family)[1]+'. Revisar la combinación registrada.');
- const unidentified=a.additional.some(m=>m.drug==='unknown')||active.some(m=>!medicationGroupFor(m));
+ const otherRows=active.filter(m=>m.drug==='other');
+ const outsideReviewed=otherRows.filter(m=>m.otherClass==='outside'&&!interactionFamilies(m).length&&!!m.name.trim());
+ const unidentified=a.additional.some(m=>m.drug==='unknown')||active.some(m=>m.drug==='other'?!outsideReviewed.includes(m):!medicationGroupFor(m));
+ const externalReady=otherRows.length>0&&outsideReviewed.length===otherRows.length&&!missing.length&&!duplicates.length;
+ const externalReviewValid=externalReady&&a.externalReview===externalReviewSnapshot(ctx);
  const familyStatus=groups.map(g=>{
-  const members=active.filter(m=>medicationGroupFor(m)===g.id||(m.id===g.id&&m.drug!=='other'));
+  const members=active.filter(m=>interactionGroupIds(m).includes(g.id)||(m.id===g.id&&m.drug!=='other'));
   return {id:g.id,label:g.label,status:members.length?'present':g.drug==='none'?'absent':a.reviewed===true&&!unidentified?'absent':'unknown',members};
  });
  const unknown=familyStatus.filter(g=>g.status==='unknown').map(g=>g.label);
  const complete=unknown.length===0&&missing.length===0;
- return {groups,additional:a.additional,active,unknown,missing,familyStatus,unidentified,duplicates:[...new Set(duplicates)],reviewed:a.reviewed===true,complete,reconciled:complete&&a.reviewed===true&&duplicates.length===0};
+ return {groups,additional:a.additional,active,unknown,missing,familyStatus,unidentified,otherRows,externalReady,externalReviewValid,duplicates:[...new Set(duplicates)],reviewed:a.reviewed===true,complete,reconciled:complete&&a.reviewed===true&&duplicates.length===0};
+}
+// Human attestation only; never describes an automated interaction check.
+function externalReviewSnapshot(ctx){
+ const a=medicationState(ctx);
+ return JSON.stringify([a.groups,a.additional,ctx.treatmentAssessment,labSnapshot(ctx)]);
+}
+export function confirmExternalMedicationReview(ctx,checked){
+ if(typeof checked!=='boolean')return ctx;
+ const a=medicationState(ctx);
+ return {...ctx,medicationAssessment:{...a,externalReview:checked&&medicationSummary(ctx).externalReady?externalReviewSnapshot(ctx):null},updatedAt:new Date().toISOString()};
+}
+export function setAbsenceReason(ctx,id,reason){
+ const s=medicationSummary(ctx);
+ if(!MEDICATION_GROUPS.some(g=>g[0]===id)||s.familyStatus.find(g=>g.id===id)?.status==='present'||!MEDICATION_ABSENCE_REASONS.some(x=>x[0]===reason))return ctx;
+ return setMedicationField(setMedicationField(ctx,id,'drug','none'),id,'reason',reason);
 }
 export function confirmMedicationReview(ctx,checked){
  if(typeof checked!=='boolean')return ctx;
@@ -825,6 +854,9 @@ function interactionFamilies(m){
  if(name==='sacubitrilo/valsartan'||EXTRA_INTERACTION_NAMES.arni.includes(name))return ['arni'];
  for(const n of name.split(/\s*[+/]\s*/))if(n)names.add(n);
  return MEDICATION_FAMILIES.filter(([id,,drugs])=>[...drugs.map(normalizeMedication),...(EXTRA_INTERACTION_NAMES[id]||[])].some(n=>names.has(n))).map(([id])=>id);
+}
+function interactionGroupIds(m){
+ return [...new Set(interactionFamilies(m).map(id=>['arni','ieca','ara'].includes(id)?'raas':id))];
 }
 export function medicationFamilyLabel(m){
  const families=interactionFamilies(m);
@@ -970,6 +1002,14 @@ export function medicationSafety(ctx){
   else if(d.values.potassium>=5.5)add('FIN-K55','amber','Finerenona: potasio elevado','Confirmar indicación: para IC FEVI ≥40, tabla 4 de ficha indica interrumpir si 10 mg/día, reducir a 10 si 20 mg/día o a 20 si 40 mg/día. ERC-DM2 tiene otra tabla. Confirmar pauta y evolución renal; no aplicar automáticamente.',source,ids(mra));
   if(d.values.egfr<15)add('FIN-FG15','red','Finerenona: función renal muy reducida','TFGe <15: la ficha indica interrumpir el tratamiento al progresar a enfermedad renal terminal; confirmar resultado y revisar con el equipo clínico.',source,ids(mra));
  }
+ if(d.labsConfirmed)for(const {row,drug} of entries){
+  if(!['Eplerenona','Finerenona','Espironolactona'].includes(drug)||row.drug==='other')continue;
+  const ref=HF_TITRATION_REFERENCE[drug];
+  if(normalizeMedication(row.product)!==normalizeMedication(ref.product))continue;
+  const indication=drug==='Espironolactona'&&row.indication==='hf'?'aldactone-hf':row.indication;
+  const advice=armPotassiumReference({drug,indication,potassium:d.values.potassium,dose:row.dose,frequency:row.frequency,confirmed:true});
+  if(advice)add('ARM-REF-'+row.id,advice.kind==='interrupt'?'red':d.values.potassium>=5.5?'amber':'blue','Referencia de ajuste: '+drug,advice.reference,advice.source,[row.id]);
+ }
  if(mra.length&&!d.labsConfirmed)add('MRA-LABS','blue','Confirmar función renal y potasio','Datos vigentes necesarios para valorar seguridad de ARM.',eplSource,ids(mra));
  if(mra.length&&(arni.length||ieca.length||ara.length))add('MRA-SRAA','blue','Monitorización renal y de potasio','La combinación de ARM con un inhibidor del SRAA puede ser indicada en IC; requiere seguimiento. No equivale a incompatibilidad.',eplSource,ids([...mra,...arni,...ieca,...ara]));
  return alerts.sort((a,b)=>({red:0,amber:1,blue:2}[a.level]-{red:0,amber:1,blue:2}[b.level]));
@@ -1043,8 +1083,9 @@ export function treatmentProposal(ctx){
  const push=(kind,title,detail,check,source=HF_GUIDE)=>{
   // Low BP in a recorded stable patient is a review context, not a blanket contraindication.
   // No start/up-titration/switch is proposed before symptoms, perfusion and treatment are checked.
-  if(lowPressure&&['start','titrate','switch'].includes(kind)){
-   actions.push({kind:'review',title,detail:'Referencia condicionada: '+detail,check:'PAS 90–99 mmHg: confirmar síntomas y perfusión, y revisar el tratamiento antes de decidir. '+check,source});
+  if((lowPressure||m.externalReviewValid)&&['start','titrate','switch'].includes(kind)){
+   const caveats=[lowPressure?'PAS 90–99 mmHg: confirmar síntomas y perfusión, y revisar el tratamiento antes de decidir.':'',m.externalReviewValid?'La revisión externa corresponde a la lista actual, no al candidato: comprobar sus interacciones antes de plantear un cambio.':''].filter(Boolean).join(' ');
+   actions.push({kind:'review',title,detail:'Referencia condicionada: '+detail,check:caveats+' '+check,source});
   }else actions.push({kind,title,detail,check,source});
  };
  if(r.urgent)urgent.push('La situación clínica registrada requiere valoración urgente.');
@@ -1059,7 +1100,8 @@ export function treatmentProposal(ctx){
  if(hr!==null&&hr<50)blockers.push('FC inferior a 50 lpm: revisar ritmo, síntomas y fármacos cronotropos antes de intensificar. Umbral conservador del prototipo; no implica suspender automáticamente.');
  if(d.labsConfirmed&&(potassium>=5.5||potassium<3.5))blockers.push('Potasio fuera del margen conservador del prototipo: revisar causas y tratamiento.');
  if(!m.reconciled)blockers.push('Confirmar lista completa, pautas y clasificación de los medicamentos; resolver duplicidades.');
- if(m.active.some(x=>x.drug==='other'||x.frequency==='other'||x.tolerance==='problem'))blockers.push('Revisión individual de pauta libre, medicamento fuera del catálogo o intolerancia registrada; la cobertura de interacciones no es completa.');
+ if(m.active.some(x=>x.frequency==='other'||x.tolerance==='problem'))blockers.push('Revisión individual de pauta libre o intolerancia registrada.');
+ if(m.otherRows.length&&!m.externalReviewValid)blockers.push('Conciliar medicamentos fuera del catálogo y confirmar su revisión externa para esta lista y estos datos clínicos. No se presume ausencia de interacciones.');
  if(r.nyha==='IV')blockers.push('NYHA IV: evaluación especializada antes de la intensificación ambulatoria.');
  const result=(status)=>({status,profile:r,values:d.values,actions,blockers,urgent,alerts,source:HF_GUIDE});
  if(urgent.length||blockers.length)return result(urgent.length?'urgent':'review');
@@ -1075,6 +1117,7 @@ export function treatmentProposal(ctx){
  }
  const canStart=id=>absent(id)&&!deferred.has(id);
  const betaCaution=hr<60; // conservative prototype threshold, not an ESC absolute contraindication.
+ if(m.externalReviewValid)push('review','Revisión externa de medicación adicional','Se ha registrado una comprobación profesional de la lista actual; el motor no puede certificar esa revisión ni descartar nuevas interacciones.','Verificar por separado cualquier medicamento candidato y repetir la revisión si cambian los datos.',HF_GUIDE);
  if(lowPressure)push('review','Revisar presión arterial','PAS 90–99 mmHg. No interpretar hipotensión asintomática como indicación automática de retirada.','ESC S4–S6: revisar síntomas, perfusión, vasodilatadores y diuréticos si no hay congestión. ARNI no se inicia por debajo de PAS 100 según la ficha de referencia.',HF_GUIDE);
 
  const existing=id=>member(id)[0];
@@ -1108,7 +1151,7 @@ export function treatmentProposal(ctx){
    const nebAge=ctx.peptides?.age;
    if(bb.drug==='Nebivolol'&&(!Number.isFinite(nebAge)||nebAge<70))push('review','Nebivolol: comprobar indicación y edad','No se propone titulación de IC sin edad registrada ≥70 años, según ficha de Insucor.','Confirmar indicación real, gravedad y presentación. No suspender por esta regla.',ref.source);
    else if(step){
-    push('review','Escalón de referencia: '+bb.drug,fmtDose(step.from)+' → '+fmtDose(step.to)+' mg cada '+step.frequency+' h, según '+step.product+'. No se ha comprobado elegibilidad para este incremento.','Confirmar tolerancia, duración en el escalón (mínimo '+step.minDays+' días según la ficha), ECG, ausencia de congestión y presentación exacta. '+step.checks,step.source);
+    push('review','Escalón de referencia: '+bb.drug,fmtDose(step.from)+' → '+fmtDose(step.to)+' mg cada '+step.frequency+' h, según '+step.product+'. No se ha comprobado elegibilidad para este incremento.','Confirmar tolerancia, duración en el escalón (mínimo '+step.minDays+' días según la ficha'+(bb.doseDays?' · registrados '+bb.doseDays+' días':' · no registrada')+'), ECG, ausencia de congestión y presentación exacta. '+step.checks,step.source);
    }else push('review','Revisar '+bb.drug,'Sin escalón superior automatizado para la pauta registrada; comprobar dosis máxima tolerada y formulación.','No interpretar dosis objetivo como obligación ni retirar bruscamente. '+(ref?.checks||'Revisar ficha técnica.'),refDrug(bb.drug));
   }
   if(canStart('mra')){
