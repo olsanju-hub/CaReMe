@@ -10,7 +10,7 @@ try{
  for(const [name,engine,viewport] of [['chromium',chromium,{width:1280,height:800}],['webkit-mobile',webkit,{width:390,height:844}]]){
   const browser=await engine.launch();try{
    const ctx=await browser.newContext({viewport,serviceWorkers:'allow'});const page=await ctx.newPage();const errors=[];page.on('pageerror',e=>errors.push(String(e)));
-   await page.goto(url);await page.getByRole('heading',{name:'CaHReMe',exact:true}).waitFor();assert.match(await page.locator('footer').innerText(),/v0\.104/);await page.screenshot({path:'qa-results/'+name+'-home.png',fullPage:true});
+   await page.goto(url);await page.getByRole('heading',{name:'CaHReMe',exact:true}).waitFor();assert.match(await page.locator('footer').innerText(),/v0\.105/);await page.screenshot({path:'qa-results/'+name+'-home.png',fullPage:true});
    await page.getByRole('button',{name:'Insuficiencia cardíaca',exact:true}).click();await page.getByRole('heading',{name:'Insuficiencia cardiaca',exact:true}).waitFor();
    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'No horizontal overflow');
    await page.screenshot({path:'qa-results/'+name+'-ic.png',fullPage:true});
@@ -350,11 +350,17 @@ try{
     await nyp.getByRole('heading',{name:'Clase funcional',exact:true}).waitFor();await nyp.locator('[data-nyha="II"]').check();
     await nyp.evaluate(()=>{location.hash='ic/tratamiento/asistente';});
     await nyp.getByRole('heading',{name:'Asistente terapéutico',exact:true}).waitFor();
-    for(const [k,v] of [['sbp','118'],['dbp','72'],['hr','76'],['egfr','65'],['potassium','4,3']]){await nyp.locator('[data-therapy-input="'+k+'"]').fill(v);await nyp.locator('[data-therapy-input="'+k+'"]').press('Tab');}
-    await nyp.locator('[data-therapy-confirm]').check();await nyp.locator('[data-action="therapy-next"]').click();
-    await nyp.getByRole('heading',{name:'Medicación actual',exact:true}).waitFor();
-    await nyp.locator('[data-med-confirm]').check();await nyp.locator('[data-action="therapy-proposal"]').click();
+    // Enter missing values and confirm directly in the proposal, without revisiting steps.
+    await nyp.evaluate(()=>{location.hash='ic/tratamiento/asistente/propuesta';});
     await nyp.getByRole('heading',{name:'Propuesta de tratamiento',exact:true}).waitFor();
+    const direct=nyp.locator('[data-proposal-form="profile"]');
+    for(const [k,v] of [['sbp','118'],['dbp','72'],['hr','76'],['egfr','65'],['potassium','4,3']]){const field=direct.locator('[name="'+k+'"]');if(await field.count())await field.fill(v);}
+    await direct.locator('button[type="submit"]').click();
+    await nyp.locator('[data-proposal-confirm="labs"]').check();
+    await nyp.locator('[data-proposal-confirm="medication"]').check();
+    assert.equal(await nyp.locator('.proposal-missing').count(),0);
+    assert.equal(await nyp.getByRole('heading',{name:'Revisión necesaria antes de proponer cambios'}).count(),0);
+    await nyp.screenshot({path:'qa-results/'+name+'-inline-proposal.png',fullPage:true});
     assert.equal(await nyp.locator('[data-action="therapy-risk"]:visible').count(),0);
     const beta=nyp.locator('[data-panel="proposal-Bisoprolol"]');
     await beta.locator(':scope > summary').click();await beta.locator('[data-risk-key="severeAsthma"][data-risk-value="yes"]').click();
