@@ -664,8 +664,11 @@ export function setRenalContext(ctx,key,raw,today=localClinicalDate()){
 export function confirmRenalContext(ctx,checked){
  if(typeof checked!=='boolean')return ctx;
  const a={...ctx.renalAssessment};
- a.confirmation=checked&&a.stable==='yes'?renalSnapshot(ctx):null;
- return {...ctx,renalAssessment:a,updatedAt:new Date().toISOString()};
+ const complete=checked&&a.stable==='yes'&&treatmentLabs.every(k=>Number.isFinite(ctx.results?.[k]?.value)&&validSampleDate(ctx.results[k].sampleDate,localClinicalDate()));
+ a.confirmation=complete?renalSnapshot(ctx):null;
+ const next={...ctx,renalAssessment:a,updatedAt:new Date().toISOString()};
+ // The same explicit confirmation covers FG/K; no second checkbox needed here.
+ return complete?confirmTreatmentLabs(next,true):next;
 }
 export function renalContext(ctx,today=localClinicalDate()){
  const a=ctx.renalAssessment||{},results=ctx.results||{};
@@ -1231,7 +1234,7 @@ export function creatinineClearanceReference(row,ctx){
  }
  if(cl<30||r.values.egfr<30)return result('blocked','CIMA: insuficiencia renal grave (CrCl <30 o TFGe <30 según apartados 4.2/4.3). Revisar tratamiento, no intensificar.');
  if(cl<50&&daily>25)return result('review','CrCl <50: dosis >25 mg/día no estudiadas. Revisar pauta y alternativas; no reducir automáticamente.',{daily});
- if(cl<50)return result('review','CrCl <50: no proponer 50 mg/día; confirmar indicación y contexto posinfarto, si procede.',{daily});
+ if(cl<50)return result('reference','CrCl <50: no proponer 50 mg/día; confirmar indicación y contexto posinfarto, si procede.',{daily});
  return result('reference',cl<=60?'CrCl 30–60: pauta inicial renal de referencia 25 mg en días alternos; no usarla como orden de reducción del mantenimiento. Verificar K y demás condiciones.':'CrCl >60: aplicar tabla de K y comprobar indicación, intervalo y CYP3A4; no confirma elegibilidad.',{daily});
 }
 // Ambulatory reference, not a prescription. Missing conditions are not assumed normal.
