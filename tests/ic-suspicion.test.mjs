@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {GROUPS,createClinicalContext,updateFinding,evaluateSuspicion,setGroupReviewed,isGroupReviewed,toggleFinding,setEvaluationReviewed,isEvaluationReviewed,diagnosticNext,diagnosticAction,setStudyResult,investigationPlan,interpretSuspicion,CLINICAL_DIMENSIONS,labPlan,setPeptide,interpretPeptide,peptideFactors,ECHO_FINDINGS,ECHO_NUMERIC,setEcho,interpretEcho,setStageAssessment,interpretStage,setPhenotypeAssessment,interpretPhenotype,NYHA_OPTIONS,setNyha,interpretNyha,SITUATION_QUESTIONS,setSituation,interpretSituation,classificationSummary,TREATMENT_VITALS,setTreatmentValue,confirmTreatmentLabs,treatmentSafetyData,MEDICATION_GROUPS,setMedicationField,addMedication,removeMedication,medicationSummary,confirmMedicationReview,MEDICATION_QUICK_DOSES,medicationEntryComplete,setMedicationQuickDose,MEDICATION_FAMILIES,medicationFamilyLabel,addNamedMedication,deleteRecordedMedication,medicationFrequencyOptions,medicationSafety,HF_MEDICATION_REFERENCE,treatmentProposal} from '../src/ic/suspicion.mjs';
+import {GROUPS,createClinicalContext,updateFinding,evaluateSuspicion,setGroupReviewed,isGroupReviewed,toggleFinding,setEvaluationReviewed,isEvaluationReviewed,diagnosticNext,diagnosticAction,setStudyResult,investigationPlan,interpretSuspicion,CLINICAL_DIMENSIONS,labPlan,setPeptide,interpretPeptide,peptideFactors,ECHO_FINDINGS,ECHO_NUMERIC,setEcho,interpretEcho,setStageAssessment,interpretStage,setPhenotypeAssessment,interpretPhenotype,NYHA_OPTIONS,setNyha,interpretNyha,SITUATION_QUESTIONS,setSituation,interpretSituation,classificationSummary,TREATMENT_VITALS,setTreatmentValue,confirmTreatmentLabs,treatmentSafetyData,MEDICATION_GROUPS,setMedicationField,addMedication,removeMedication,medicationSummary,confirmMedicationReview,MEDICATION_QUICK_DOSES,medicationEntryComplete,setMedicationQuickDose,MEDICATION_FAMILIES,medicationFamilyLabel,addNamedMedication,deleteRecordedMedication,medicationFrequencyOptions,medicationSafety,HF_MEDICATION_REFERENCE,treatmentProposal,HF_TITRATION_REFERENCE,betaBlockerReferenceStep} from '../src/ic/suspicion.mjs';
 const allNo=()=>({findings:{...Object.fromEntries(GROUPS.flatMap(g=>g.fields.map(([id])=>[id,'no']))),vitalsReviewed:'yes'}});
 const result=(c)=>evaluateSuspicion(c).id;
 test('Datos ausentes no son negativos',()=>assert.equal(result(createClinicalContext()),'IC-SUS-03'));
@@ -357,7 +357,7 @@ test('Propuesta condicional FEVI 32%: ausencia confirmada, opciones por familia'
 test('Propuesta: bisoprolol titulación y no duplicar iSGLT2',()=>{
  let c=proposalFixture();c=addNamedMedication(c,'Bisoprolol');c=setMedicationQuickDose(c,'extra-1','2,5');c=setMedicationField(c,'extra-1','frequency','24');
  c=addNamedMedication(c,'Dapagliflozina');c=setMedicationQuickDose(c,'extra-2','10');c=setMedicationField(c,'extra-2','frequency','24');c=confirmMedicationReview(c,true);
- const p=treatmentProposal(c);assert.equal(p.status,'conditional');assert.ok(p.actions.some(a=>a.kind==='titrate'&&a.detail.includes('3,75')));assert.ok(!p.actions.some(a=>a.kind==='start'&&a.title.includes('Dapagliflozina')));
+ const p=treatmentProposal(c);assert.equal(p.status,'conditional');assert.ok(p.actions.some(a=>a.kind==='review'&&a.detail.includes('3,75')));assert.ok(!p.actions.some(a=>a.kind==='start'&&a.title.includes('Dapagliflozina')));
 });
 test('Finerenona: no asociar otro ARM y no extrapolar dosis de ERC-DM2',()=>{
  let c=proposalFixture();c=addNamedMedication(c,'Finerenona');c=addNamedMedication(c,'Espironolactona');assert.ok(medicationSafety(c).some(a=>a.id==='FIN-MRA'&&a.level==='red'));assert.equal(treatmentProposal(c).actions.length,0);
@@ -461,4 +461,39 @@ test('Potasio crítico registrado no desaparece por falta de confirmación anal�
  let c=proposalFixture();c=setTreatmentValue(c,'potassium','6');
  assert.equal(treatmentSafetyData(c).labsConfirmed,false);assert.equal(treatmentProposal(c).status,'urgent');
  assert.equal(treatmentProposal(c).actions.length,0);
+});
+
+test('Matriz de betabloqueantes: referencias de producto y escalones sin extrapolar dosis',()=>{
+ for(const [drug,dose,frequency,to,days] of [['Bisoprolol','3,75','24',5,7],['Bisoprolol','5','24',7.5,28],['Carvedilol','12,5','12',25,14],['Metoprolol succinato','11,875','24',23.75,7],['Nebivolol','2,5','24',5,7]]){
+  const step=betaBlockerReferenceStep({drug,dose,frequency});assert.equal(step.to,to);assert.equal(step.minDays,days);assert.ok(step.source&&step.product);
+ }
+ assert.equal(betaBlockerReferenceStep({drug:'Carvedilol',dose:'25',frequency:'12'}),null);
+ assert.equal(betaBlockerReferenceStep({drug:'Bisoprolol',dose:'2,5',frequency:'12'}),null);
+ assert.match(HF_TITRATION_REFERENCE['Metoprolol succinato'].source,/81030/);
+});
+test('FC 55 no bloquea todas las familias; FC 49 exige revisión global',()=>{
+ let c=proposalFixture();c=setTreatmentValue(c,'hr','55');let p=treatmentProposal(c);
+ assert.equal(p.status,'conditional');assert.ok(p.actions.some(a=>a.title.includes('revisar frecuencia cardiaca')));
+ assert.ok(!p.actions.some(a=>a.kind==='start'&&a.title.includes('bisoprolol')));assert.ok(p.actions.some(a=>a.kind==='start'&&a.title.includes('Dapagliflozina')));
+ c=setTreatmentValue(c,'hr','49');assert.equal(treatmentProposal(c).status,'review');
+});
+test('No reiniciar automáticamente una familia con contraindicación o intolerancia registrada',()=>{
+ for(const group of ['bb','raas','mra','sglt2']){
+  let c=proposalFixture();c=setMedicationField(c,group,'drug','none');c=setMedicationField(c,group,'reason','contraindication');c=confirmMedicationReview(c,true);
+  const p=treatmentProposal(c);assert.ok(p.actions.some(a=>a.title.startsWith('Revisar motivo de ausencia')));
+  const needles={bb:/bisoprolol/i,raas:/sacubitrilo/i,mra:/ARM/i,sglt2:/gliflozina/i};
+  assert.ok(!p.actions.some(a=>a.kind==='start'&&needles[group].test(a.title)));
+ }
+});
+test('iSGLT2: frontera de inicio distinta para cada molécula y alternativas no simultáneas',()=>{
+ for(const [fg,dapa,empa] of [[19,false,false],[20,false,true],[24,false,true],[25,true,true]]){
+  let c=proposalFixture();c=setTreatmentValue(c,'egfr',String(fg));c=confirmTreatmentLabs(c,true);
+  const starts=treatmentProposal(c).actions.filter(a=>a.kind==='start');
+  assert.equal(starts.some(a=>a.title.includes('Dapagliflozina')),dapa);assert.equal(starts.some(a=>a.title.includes('Empagliflozina')),empa);
+  for(const a of starts.filter(a=>/gliflozina/.test(a.title)))assert.match(a.detail,/no asociar/);
+ }
+});
+test('ARNI + aliskireno: diabetes registrada activa alerta roja incluso sin FG confirmado',()=>{
+ let c=addNamedMedication(createClinicalContext(),'Sacubitrilo/valsartán');c=addNamedMedication(c,'other');c=setMedicationField(c,'extra-2','name','Aliskireno');
+ c=updateFinding(c,'dm','yes');assert.ok(medicationSafety(c).some(a=>a.id==='ARNI-ALISK'&&a.level==='red'));
 });
