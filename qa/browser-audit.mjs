@@ -10,7 +10,7 @@ try{
  for(const [name,engine,viewport] of [['chromium',chromium,{width:1280,height:800}],['webkit-mobile',webkit,{width:390,height:844}]]){
   const browser=await engine.launch();try{
    const ctx=await browser.newContext({viewport,serviceWorkers:'allow'});const page=await ctx.newPage();const errors=[];page.on('pageerror',e=>errors.push(String(e)));
-   await page.goto(url);await page.getByRole('heading',{name:'CaHReMe',exact:true}).waitFor();assert.match(await page.locator('footer').innerText(),/v0\.101/);await page.screenshot({path:'qa-results/'+name+'-home.png',fullPage:true});
+   await page.goto(url);await page.getByRole('heading',{name:'CaHReMe',exact:true}).waitFor();assert.match(await page.locator('footer').innerText(),/v0\.102/);await page.screenshot({path:'qa-results/'+name+'-home.png',fullPage:true});
    await page.getByRole('button',{name:'Insuficiencia cardíaca',exact:true}).click();await page.getByRole('heading',{name:'Insuficiencia cardiaca',exact:true}).waitFor();
    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'No horizontal overflow');
    await page.screenshot({path:'qa-results/'+name+'-ic.png',fullPage:true});
@@ -362,16 +362,41 @@ try{
     await beta.locator('[data-risk-key="severeAsthma"][data-risk-value="no"]').click();
     assert.match(await beta.locator('xpath=..').innerText(),/1,25 mg cada 24 h/);
     const dapa=nyp.locator('[data-panel="proposal-Dapagliflozina"]');
-    await dapa.locator(':scope > summary').click();await dapa.locator('[data-risk-key="type1"][data-risk-value="yes"]').click();
-    assert.match(await dapa.locator('xpath=..').innerText(),/No proponer inicio.*Diabetes tipo 1/);
     const empa=nyp.locator('[data-panel="proposal-Empagliflozina"]');
+    const alternatives=nyp.locator('[data-proposal-alternative="sglt2"]');
+    assert.equal(await alternatives.count(),1);
+    assert.equal(await alternatives.locator('.proposal-action').count(),2);
+    assert.match(await alternatives.innerText(),/Opciones alternativas, no asociar dos iSGLT2/);
+    assert.equal(await alternatives.locator('[data-risk-key="type1"][data-risk-value="yes"]').count(),1);
+    const shared=nyp.locator('[data-panel="proposal-sglt2-checks"]');
+    assert.equal(await shared.evaluate(e=>e.open),false);
+    await shared.locator(':scope > summary').click();await shared.locator('[data-risk-key="type1"][data-risk-value="yes"]').click();
+    assert.match(await dapa.locator('xpath=..').innerText(),/No proponer inicio.*Diabetes tipo 1/);
     assert.match(await empa.locator('xpath=..').innerText(),/No proponer inicio.*Diabetes tipo 1/);
-    await dapa.locator('[data-risk-key="ketoacidosis"][data-risk-value="yes"]').click();
+    assert.equal(await shared.evaluate(e=>e.open),true);
+    await shared.locator('[data-risk-key="ketoacidosis"][data-risk-value="yes"]').click();
     await nyp.getByRole('heading',{name:'Prioridad urgente',exact:true}).waitFor();assert.equal(await nyp.locator('.proposal-action').count(),0);
     await nyp.getByRole('button',{name:'Corregir registro de sospecha de cetoacidosis ›'}).click();
     assert.equal(await nyp.getByRole('heading',{name:'Prioridad urgente',exact:true}).count(),0);
     assert.ok(await nyp.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'Propuesta contextual sin desbordamiento');
     await nyp.screenshot({path:'qa-results/'+name+'-candidate-safety.png',fullPage:true});
+    // Reuse the existing medication row and context from the proposal.
+    await nyp.locator('.proposal-page .ic-back').click();await nyp.getByRole('heading',{name:'Medicación actual',exact:true}).waitFor();
+    const ncatalog=nyp.locator('[data-panel="med-catalog"]');
+    if(!await ncatalog.evaluate(e=>e.open))await ncatalog.locator(':scope > summary').click();
+    await nyp.locator('[data-action="med-add-named"][data-med-drug="Bisoprolol"]').click();
+    await nyp.locator('[data-med-id="extra-1"][data-med-field="quick-dose"][data-med-value="2,5"]').click();
+    await nyp.locator('[data-med-id="extra-1"][data-med-field="frequency"][data-med-value="24"]').click();
+    await nyp.locator('[data-med-confirm]').check();await nyp.locator('[data-action="therapy-proposal"]').click();
+    await nyp.getByRole('heading',{name:'Propuesta de tratamiento',exact:true}).waitFor();
+    const current=nyp.locator('[data-proposal-medication="extra-1"]');
+    assert.match(await current.innerText(),/Bisoprolol/);assert.match(await current.innerText(),/2,5 mg \/ 24 h/);
+    assert.equal(await current.locator('details[open]').count(),0);
+    await nyp.screenshot({path:'qa-results/'+name+'-therapy-step3.png',fullPage:true});
+    await current.locator('[data-action="proposal-edit-medication"]').click();
+    await nyp.getByRole('heading',{name:'Medicación actual',exact:true}).waitFor();
+    assert.equal(await nyp.locator('[data-med-row="extra-1"]').evaluate(e=>e.open),true);
+    assert.equal(await nyp.locator('[data-panel="med-context-extra-1"]').evaluate(e=>e.open),true);
     await nyp.evaluate(()=>{location.hash='ic/tratamiento';});
     await nyp.getByRole('heading',{name:'Tratamiento',exact:true}).waitFor();
     await nyp.locator('.treatment-profile [data-action="classification-summary"]').click();await nyp.getByRole('heading',{name:'Conclusión clínica',exact:true}).waitFor();
