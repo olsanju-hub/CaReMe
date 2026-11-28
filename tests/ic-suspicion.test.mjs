@@ -675,6 +675,8 @@ test('Presentación de propuesta: alternativas iSGLT2 y acciones de medicación 
  let p=treatmentProposal(c);
  assert.equal(p.status,'conditional');
  assert.equal(p.actions.filter(a=>a.presentation.alternativeGroup==='sglt2').length,2);
+ assert.ok(p.actions.filter(a=>a.presentation.alternativeGroup==='sglt2').every(a=>a.presentation.referenceDose==='10 mg/24 h'));
+ assert.ok(p.actions.find(a=>a.kind==='follow').presentation.monitoring.includes('Potasio'));
  assert.ok(p.actions.some(a=>a.kind==='review'&&a.presentation.section==='optimize'&&a.presentation.medicationId==='extra-1'));
  assert.ok(p.actions.some(a=>a.kind==='review'&&a.presentation.section==='optimize'&&a.presentation.medicationId==='extra-2'));
  c=setTherapyRisk(c,'type1','yes');p=treatmentProposal(c);
