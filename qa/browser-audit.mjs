@@ -10,7 +10,7 @@ try{
  for(const [name,engine,viewport] of [['chromium',chromium,{width:1280,height:800}],['webkit-mobile',webkit,{width:390,height:844}]]){
   const browser=await engine.launch();try{
    const ctx=await browser.newContext({viewport,serviceWorkers:'allow'});const page=await ctx.newPage();const errors=[];page.on('pageerror',e=>errors.push(String(e)));
-   await page.goto(url);await page.getByRole('heading',{name:'CaHReMe',exact:true}).waitFor();assert.match(await page.locator('footer').innerText(),/v0\.103/);await page.screenshot({path:'qa-results/'+name+'-home.png',fullPage:true});
+   await page.goto(url);await page.getByRole('heading',{name:'CaHReMe',exact:true}).waitFor();assert.match(await page.locator('footer').innerText(),/v0\.104/);await page.screenshot({path:'qa-results/'+name+'-home.png',fullPage:true});
    await page.getByRole('button',{name:'Insuficiencia cardíaca',exact:true}).click();await page.getByRole('heading',{name:'Insuficiencia cardiaca',exact:true}).waitFor();
    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'No horizontal overflow');
    await page.screenshot({path:'qa-results/'+name+'-ic.png',fullPage:true});
@@ -404,6 +404,30 @@ try{
     await nyp.locator('[data-med-id="extra-2"][data-med-field="frequency"][data-med-value="12"]').click();
     await nyp.locator('[data-med-confirm]').check();await nyp.locator('[data-action="therapy-proposal"]').click();
     await nyp.getByRole('heading',{name:'Propuesta de tratamiento',exact:true}).waitFor();
+    // Shared current lab data stay reachable while changed sample dates block the proposal.
+    const renal=nyp.locator('[data-panel="proposal-renal-shared"]');
+    assert.equal(await renal.count(),1);assert.equal(await renal.evaluate(e=>e.open),false);
+    await renal.locator(':scope > summary').click();
+    const renalFill=async(key,value)=>{const field=renal.locator('[data-renal-field="'+key+'"]');await field.fill(value);await field.press('Tab');};
+    await renalFill('egfrDate','2026-01-02');
+    await nyp.getByRole('heading',{name:'Revisión necesaria antes de proponer cambios'}).waitFor();
+    assert.equal(await renal.evaluate(e=>e.open),true);
+    await renalFill('potassiumDate','2026-01-02');
+    await renalFill('crcl','48');await renalFill('crclDate','2026-01-02');
+    await renal.locator('[data-renal-value="yes"]').click();await renal.locator('[data-renal-confirm]').check();
+    assert.equal(await nyp.getByRole('heading',{name:'Revisión necesaria antes de proponer cambios'}).count(),0);
+    assert.match(await renal.innerText(),/Vigencia revisada/);
+    await renal.locator(':scope > summary').click();
+    const currentEnalapril=nyp.locator('[data-proposal-medication="extra-2"]');
+    const renalTrend=currentEnalapril.locator('[data-renal-trend="extra-2"]');
+    assert.equal(await renalTrend.isVisible(),false);
+    await renalTrend.locator('xpath=..').locator(':scope > summary').click();
+    const trendFill=async(key,value)=>{const field=renalTrend.locator('[data-trend-key="'+key+'"]');await field.fill(value);await field.press('Tab');};
+    await trendFill('priorEgfr','80');await trendFill('priorEgfrDate','2026-01-01');
+    assert.match(await renalTrend.innerText(),/Descenso relativo del FG: 18,8 %/);
+    assert.equal(await nyp.locator('[data-panel="proposal-renal-shared"]').count(),1);
+    assert.ok(await nyp.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'Contexto renal sin desbordamiento');
+    await nyp.screenshot({path:'qa-results/'+name+'-renal-context.png',fullPage:true});
     const transitionPanel=nyp.locator('[data-panel="proposal-Sacubitrilo%2Fvalsart%C3%A1n"]');
     const planner=transitionPanel.locator('[data-transition-plan="extra-2"]');
     assert.equal(await planner.isVisible(),false);
