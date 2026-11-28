@@ -394,7 +394,7 @@ function medicationCatalogView(m){
 }
 function medicationSafetyView(){
  const alerts=medicationSafety(clinicalContext);
- return alerts.map(a=>'<div class="med-safety-alert '+a.level+'" role="'+(a.level==='red'?'alert':'status')+'"><strong>'+medEscape(a.title)+'</strong><p>'+medEscape(a.text)+'</p><a class="text-link" href="'+a.source+'" target="_blank" rel="noopener noreferrer">Ficha técnica ›</a></div>').join('');
+ return '<p class="stage-hint">Comprobación parcial de interacciones: si no aparece una alerta, no significa que la combinación sea segura.</p>'+alerts.map(a=>'<div class="med-safety-alert '+a.level+'" role="'+(a.level==='red'?'alert':'status')+'"><strong>'+medEscape(a.title)+'</strong><p>'+medEscape(a.text)+'</p><a class="text-link" href="'+a.source+'" target="_blank" rel="noopener noreferrer">Consultar fuente ›</a></div>').join('');
 }
 function medicationStatus(m){
  const pending=[...(!m.reviewed?['Lista pendiente de confirmar']:m.unknown.length?['Familias pendientes de identificar en la medicación registrada']:[]),...m.missing.map(x=>x.label)];
