@@ -1,5 +1,5 @@
-import {GROUPS,SOURCE,createClinicalContext,updateFinding,evaluateSuspicion,setEvaluationReviewed,isEvaluationReviewed,isGroupReviewed,toggleFinding,diagnosticNext,diagnosticAction,LAB_FIELDS,REPORT_FIELDS,setStudyResult,investigationPlan,interpretSuspicion,labPlan,setPeptide,interpretPeptide,peptideFactors,ECHO_FINDINGS,ECHO_NUMERIC,setEcho,interpretEcho,STAGE_QUESTIONS,setStageAssessment,interpretStage,setPhenotypeAssessment,interpretPhenotype,NYHA_OPTIONS,setNyha,interpretNyha,SITUATION_QUESTIONS,setSituation,interpretSituation,classificationSummary,TREATMENT_VITALS,setTreatmentValue,confirmTreatmentLabs,treatmentSafetyData,MEDICATION_GROUPS,MEDICATION_FREQUENCIES,MEDICATION_ABSENCE_REASONS,MEDICATION_TOLERANCE,setMedicationField,addMedication,removeMedication,medicationSummary,confirmMedicationReview,MEDICATION_QUICK_DOSES,medicationEntryComplete,setMedicationQuickDose,MEDICATION_FAMILIES,medicationFamilyLabel,addNamedMedication,deleteRecordedMedication,medicationFrequencyOptions,medicationSafety,treatmentProposal,MEDICATION_INDICATIONS,confirmExternalMedicationReview,setAbsenceReason,setTherapyRisk,medicationProblemOptions} from './ic/suspicion.mjs?v=102';
-const BUILD='0.102';
+import {GROUPS,SOURCE,createClinicalContext,updateFinding,evaluateSuspicion,setEvaluationReviewed,isEvaluationReviewed,isGroupReviewed,toggleFinding,diagnosticNext,diagnosticAction,LAB_FIELDS,REPORT_FIELDS,setStudyResult,investigationPlan,interpretSuspicion,labPlan,setPeptide,interpretPeptide,peptideFactors,ECHO_FINDINGS,ECHO_NUMERIC,setEcho,interpretEcho,STAGE_QUESTIONS,setStageAssessment,interpretStage,setPhenotypeAssessment,interpretPhenotype,NYHA_OPTIONS,setNyha,interpretNyha,SITUATION_QUESTIONS,setSituation,interpretSituation,classificationSummary,TREATMENT_VITALS,setTreatmentValue,confirmTreatmentLabs,treatmentSafetyData,MEDICATION_GROUPS,MEDICATION_FREQUENCIES,MEDICATION_ABSENCE_REASONS,MEDICATION_TOLERANCE,setMedicationField,addMedication,removeMedication,medicationSummary,confirmMedicationReview,MEDICATION_QUICK_DOSES,medicationEntryComplete,setMedicationQuickDose,MEDICATION_FAMILIES,medicationFamilyLabel,addNamedMedication,deleteRecordedMedication,medicationFrequencyOptions,medicationSafety,treatmentProposal,MEDICATION_INDICATIONS,confirmExternalMedicationReview,setAbsenceReason,setTherapyRisk,medicationProblemOptions,setArniTransitionField} from './ic/suspicion.mjs?v=103';
+const BUILD='0.103';
 const app=document.getElementById('app');
 const PATHOLOGIES = [
  ['dm2','Diabetes tipo 2','Incluye insulinización'],['hta','Hipertensión arterial','Confirmación y control'],
@@ -112,6 +112,16 @@ app.addEventListener('input',e=>{
 });
 app.addEventListener('change',e=>{
  const id=e.target.dataset.finding;
+ if(e.target.dataset.transitionField){
+  const field=e.target,value=field.value,iso=transitionIsoValue(value),key=field.dataset.transitionField,rowId=field.dataset.transitionId;
+  clinicalContext=setArniTransitionField(clinicalContext,rowId,key,iso);
+  render();
+  if(value&&!iso){
+   const current=app.querySelector('[data-transition-id="'+rowId+'"][data-transition-field="'+key+'"]');
+   if(current){current.setAttribute('aria-invalid','true');const error=document.createElement('small');error.className='transition-error';error.setAttribute('role','alert');error.textContent='Hora local no válida o ambigua; comprueba fecha, hora y zona horaria.';current.parentElement.append(error);}
+  }
+  return;
+ }
  if(e.target.hasAttribute('data-med-external')){clinicalContext=confirmExternalMedicationReview(clinicalContext,e.target.checked);refreshMedication();return;}
  if(e.target.hasAttribute('data-med-confirm')){clinicalContext=confirmMedicationReview(clinicalContext,e.target.checked);refreshMedication();return;}
  if(e.target.dataset.therapyInput){
@@ -434,13 +444,40 @@ function candidateRiskView(a,scope=a.candidate){
 }
 const proposalLabels={start:'Valorar inicio',titrate:'Valorar titulación',switch:'Valorar sustitución',reduce:'Valorar reducción',stop:'Valorar suspensión',restart:'Valorar reintroducción',maintain:'Continuidad del tratamiento',review:'Revisar antes de decidir',follow:'Seguimiento'};
 function proposalStatus(a){
+ if(a.presentation?.transition)return 'Valorar sustitución por ARNI';
  if(a.screening?.positives.length)return 'Revisar riesgo registrado';
  if(a.kind==='review'&&a.candidate)return 'Revisar antes de decidir';
  return a.presentation?.label||proposalLabels[a.kind]||'Revisar';
 }
+// Store absolute instants in the engine; display in the device's local time.
+// Reject nonexistent local times, invalid dates and ambiguous DST times.
+// No timer, alarm or medication order is created.
+function transitionLocalValue(iso){
+ if(!iso)return '';
+ const d=new Date(iso);if(!Number.isFinite(d.getTime()))return '';
+ const p=n=>String(n).padStart(2,'0');
+ return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+'T'+p(d.getHours())+':'+p(d.getMinutes());
+}
+function transitionIsoValue(value){
+ if(!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(value))return '';
+ const d=new Date(value);
+ if(!Number.isFinite(d.getTime())||transitionLocalValue(d.toISOString())!==value)return '';
+ // Check for a second instant with the same wall time around an offset transition.
+ for(const delta of [-120,-90,-60,-30,30,60,90,120]){
+  if(transitionLocalValue(new Date(d.getTime()+delta*60000).toISOString())===value)return '';
+ }
+ return d.toISOString();
+}
+function proposalTransitionView(plan){
+ if(!plan)return '';
+ const f=(key,label)=>'<label class="proposal-transition-field"><span>'+label+'</span><input type="datetime-local" step="60" data-transition-id="'+medEscape(plan.id)+'" data-transition-field="'+key+'" value="'+medEscape(transitionLocalValue(plan.data[key]))+'"></label>';
+ const limit=plan.limit?'<p class="proposal-transition-limit">Límite horario teórico (36 h): <strong>'+medEscape(new Date(plan.limit).toLocaleString('es-ES',{dateStyle:'short',timeStyle:'short'}))+'</strong></p>':'';
+ const interval=plan.elapsed!==null?'<p>Intervalo planificado: <strong>'+medEscape(String(Math.round(plan.elapsed*100)/100).replace('.',','))+' h</strong></p>':'';
+ return '<div class="proposal-transition" data-transition-plan="'+medEscape(plan.id)+'"><h4>Comprobar transición '+medEscape(plan.from)+' → ARNI</h4><p class="stage-hint">Plan orientativo · hora local del dispositivo. No registra una retirada efectiva.</p>'+f('lastDose','Última dosis, real o prevista')+f('firstDose','Primera dosis prevista de ARNI')+limit+interval+'<p class="med-label">¿Está previsto evitar solapamiento?</p><div class="np-segment" role="group" aria-label="Plan sin solapamiento">'+[['yes','Sí'],['no','No'],['unknown','?']].map(([value,label])=>'<button type="button" data-action="transition-choice" data-transition-id="'+medEscape(plan.id)+'" data-transition-value="'+value+'" aria-label="'+(value==='unknown'?'Sin valorar':label)+'" aria-pressed="'+(plan.data.noOverlap===value)+'">'+label+'</button>').join('')+'</div><p class="proposal-transition-status '+medEscape(plan.status)+'" role="status">'+medEscape(plan.detail)+'</p><p class="stage-hint">Un intervalo correcto no confirma que pueda iniciarse el medicamento.</p></div>';
+}
 function proposalDetails(a,index,{shared=false,summary='Requisitos y fuente',includeDetail=false}={}){
  const panel=a.candidate?encodeURIComponent(a.candidate):'action-'+index;
- return '<details class="stage-context proposal-details" data-panel="proposal-'+panel+'"><summary>'+medEscape(summary)+'</summary>'+(includeDetail?'<p>'+medEscape(a.detail)+'</p>':'')+(shared?'':candidateRiskView(a))+'<p>'+medEscape(a.check)+'</p><a class="text-link" href="'+medEscape(a.source)+'" target="_blank" rel="noopener noreferrer">Consultar fuente ›</a></details>';
+ return '<details class="stage-context proposal-details" data-panel="proposal-'+panel+'"><summary>'+medEscape(summary)+'</summary>'+(includeDetail?'<p>'+medEscape(a.detail)+'</p>':'')+(shared?'':candidateRiskView(a))+proposalTransitionView(a.presentation?.transition)+'<p>'+medEscape(a.check)+'</p><a class="text-link" href="'+medEscape(a.source)+'" target="_blank" rel="noopener noreferrer">Consultar fuente ›</a></details>';
 }
 function proposalAction(a,index,shared=false){
  const name=a.candidate||a.title;
@@ -558,7 +595,7 @@ app.addEventListener('click',event=>{const btn=event.target.closest('button[data
  }case 'phenotype-result':{
  let valid=true;for(const field of document.querySelectorAll('[data-echo-input]')){const before=clinicalContext;clinicalContext=setEcho(clinicalContext,field.dataset.echoInput,field.value);const invalid=before===clinicalContext;field.setAttribute('aria-invalid',String(invalid));const err=field.closest('label').querySelector('.np-error');if(err)err.textContent=invalid?'Valor inválido':'';if(invalid)valid=false;}
  if(valid)go('ic/clasificacion/fenotipo/conclusion');else{const first=document.querySelector('[data-echo-input][aria-invalid="true"]');if(first){const details=first.closest('details');if(details)details.open=true;first.focus();}}break;
- }case 'stage-edit':go('ic/clasificacion/estadio');break;case 'stage-result':go('ic/clasificacion/estadio/conclusion');break;case 'stage-select':{clinicalContext=setStageAssessment(clinicalContext,btn.dataset.stageKey,btn.dataset.stageValue);render();const target=document.querySelector('[data-stage-key="'+btn.dataset.stageKey+'"][data-stage-value="'+btn.dataset.stageValue+'"]');if(target)target.focus({preventScroll:true});break;}case 'proposal-edit-medication':{proposalMedicationId=btn.dataset.medId;go('ic/tratamiento/asistente/medicacion');break;}case 'therapy-risk':{clinicalContext=setTherapyRisk(clinicalContext,btn.dataset.riskKey,btn.dataset.riskValue);render();break;}case 'med-choice':{
+ }case 'stage-edit':go('ic/clasificacion/estadio');break;case 'stage-result':go('ic/clasificacion/estadio/conclusion');break;case 'stage-select':{clinicalContext=setStageAssessment(clinicalContext,btn.dataset.stageKey,btn.dataset.stageValue);render();const target=document.querySelector('[data-stage-key="'+btn.dataset.stageKey+'"][data-stage-value="'+btn.dataset.stageValue+'"]');if(target)target.focus({preventScroll:true});break;}case 'proposal-edit-medication':{proposalMedicationId=btn.dataset.medId;go('ic/tratamiento/asistente/medicacion');break;}case 'transition-choice':{clinicalContext=setArniTransitionField(clinicalContext,btn.dataset.transitionId,'noOverlap',btn.dataset.transitionValue);render();break;}case 'therapy-risk':{clinicalContext=setTherapyRisk(clinicalContext,btn.dataset.riskKey,btn.dataset.riskValue);render();break;}case 'med-choice':{
  const id=btn.dataset.medId,key=btn.dataset.medField,value=btn.dataset.medValue,wasComplete=medicationEntryComplete(medicationSummary(clinicalContext),id);
  clinicalContext=key==='quick-dose'?setMedicationQuickDose(clinicalContext,id,value):key==='absence-reason'?setAbsenceReason(clinicalContext,id,value):setMedicationField(clinicalContext,id,key,value);
  render();
