@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {GROUPS,createClinicalContext,updateFinding,evaluateSuspicion,setGroupReviewed,isGroupReviewed,toggleFinding,setEvaluationReviewed,isEvaluationReviewed,diagnosticNext,diagnosticAction,setStudyResult,investigationPlan,interpretSuspicion,CLINICAL_DIMENSIONS,labPlan,setPeptide,interpretPeptide,peptideFactors,ECHO_FINDINGS,ECHO_NUMERIC,setEcho,interpretEcho,setStageAssessment,interpretStage,setPhenotypeAssessment,interpretPhenotype,NYHA_OPTIONS,setNyha,interpretNyha,SITUATION_QUESTIONS,setSituation,interpretSituation,classificationSummary,TREATMENT_VITALS,setTreatmentValue,confirmTreatmentLabs,treatmentSafetyData,MEDICATION_GROUPS,setMedicationField,addMedication,removeMedication,medicationSummary,confirmMedicationReview,MEDICATION_QUICK_DOSES,medicationEntryComplete,setMedicationQuickDose,MEDICATION_FAMILIES,medicationFamilyLabel,addNamedMedication,deleteRecordedMedication,medicationFrequencyOptions,medicationSafety,HF_MEDICATION_REFERENCE,treatmentProposal,HF_TITRATION_REFERENCE,betaBlockerReferenceStep,armPotassiumReference,echoSupportCriteria} from '../src/ic/suspicion.mjs';
+import {GROUPS,createClinicalContext,updateFinding,evaluateSuspicion,setGroupReviewed,isGroupReviewed,toggleFinding,setEvaluationReviewed,isEvaluationReviewed,diagnosticNext,diagnosticAction,setStudyResult,investigationPlan,interpretSuspicion,CLINICAL_DIMENSIONS,labPlan,setPeptide,interpretPeptide,peptideFactors,ECHO_FINDINGS,ECHO_NUMERIC,setEcho,interpretEcho,setStageAssessment,interpretStage,setPhenotypeAssessment,interpretPhenotype,NYHA_OPTIONS,setNyha,interpretNyha,SITUATION_QUESTIONS,setSituation,interpretSituation,classificationSummary,TREATMENT_VITALS,setTreatmentValue,confirmTreatmentLabs,treatmentSafetyData,MEDICATION_GROUPS,setMedicationField,addMedication,removeMedication,medicationSummary,confirmMedicationReview,MEDICATION_QUICK_DOSES,medicationEntryComplete,setMedicationQuickDose,MEDICATION_FAMILIES,medicationFamilyLabel,addNamedMedication,deleteRecordedMedication,medicationFrequencyOptions,medicationSafety,HF_MEDICATION_REFERENCE,treatmentProposal,HF_TITRATION_REFERENCE,betaBlockerReferenceStep,armPotassiumReference,echoSupportCriteria,confirmExternalMedicationReview,setAbsenceReason} from '../src/ic/suspicion.mjs';
 const allNo=()=>({findings:{...Object.fromEntries(GROUPS.flatMap(g=>g.fields.map(([id])=>[id,'no']))),vitalsReviewed:'yes'}});
 const result=(c)=>evaluateSuspicion(c).id;
 test('Datos ausentes no son negativos',()=>assert.equal(result(createClinicalContext()),'IC-SUS-03'));
@@ -555,4 +555,30 @@ test('PAS 90–99 estable: solo referencias condicionadas; PAS inferior a 90 blo
  assert.equal(p.status,'conditional');assert.ok(p.actions.some(a=>a.title.includes('Revisar presión arterial')));
  assert.ok(!p.actions.some(a=>['start','titrate','switch'].includes(a.kind)));assert.ok(p.actions.some(a=>a.title.includes('Dapagliflozina')&&a.kind==='review'));
  c=setTreatmentValue(c,'sbp','89');assert.equal(treatmentProposal(c).status,'review');
+});
+
+test('Medicación adicional: clasificación profesional y revisión externa sin asumir seguridad de candidatos',()=>{
+ let c=proposalFixture();c=addNamedMedication(c,'other');c=setMedicationField(c,'extra-1','name','Atorvastatina');c=setMedicationField(c,'extra-1','dose','40 mg');c=setMedicationField(c,'extra-1','frequency','24');
+ c=confirmMedicationReview(c,true);assert.equal(treatmentProposal(c).status,'review');
+ c=setMedicationField(c,'extra-1','otherClass','outside');c=confirmMedicationReview(c,true);assert.equal(medicationSummary(c).reconciled,true);
+ assert.equal(treatmentProposal(c).status,'review');
+ c=confirmExternalMedicationReview(c,true);assert.equal(medicationSummary(c).externalReviewValid,true);
+ const p=treatmentProposal(c);assert.equal(p.status,'conditional');assert.ok(p.actions.some(a=>a.title.includes('Dapagliflozina')&&a.kind==='review'));assert.ok(!p.actions.some(a=>['start','titrate','switch'].includes(a.kind)));
+ c=setTreatmentValue(c,'sbp','116');assert.equal(medicationSummary(c).externalReviewValid,false);
+ c=setMedicationField(c,'extra-1','name','Losartán');assert.equal(setMedicationField(c,'extra-1','otherClass','outside'),c);
+ assert.equal(medicationSummary(c).familyStatus.find(g=>g.id==='raas').status,'present');
+});
+test('Motivos de ausencia accesibles sin crear fármacos ni permitir reinicio de familia contraindicada',()=>{
+ let c=proposalFixture();c=setAbsenceReason(c,'bb','intolerance');c=confirmMedicationReview(c,true);
+ assert.ok(treatmentProposal(c).actions.some(a=>a.title.includes('Revisar motivo de ausencia')));
+ assert.ok(!treatmentProposal(c).actions.some(a=>a.kind==='start'&&a.title.includes('bisoprolol')));
+ c=addNamedMedication(c,'Bisoprolol');assert.equal(setAbsenceReason(c,'bb','contraindication'),c);
+});
+test('Contexto de ajuste: duración se invalida con cambio de pauta y referencia ARM exige presentación e indicación',()=>{
+ let c=proposalFixture();c=addNamedMedication(c,'Eplerenona');c=setMedicationField(c,'extra-1','dose','25');c=setMedicationField(c,'extra-1','frequency','24');c=setMedicationField(c,'extra-1','doseDays','30');
+ assert.equal(medicationSummary(c).active[0].doseDays,'30');c=setMedicationField(c,'extra-1','dose','50');assert.equal(medicationSummary(c).active[0].doseDays,'');
+ c=setTreatmentValue(c,'potassium','5,5');c=confirmTreatmentLabs(c,true);
+ assert.ok(!medicationSafety(c).some(x=>x.id==='ARM-REF-extra-1'));
+ c=setMedicationField(c,'extra-1','product','Eplerenona STADA');c=setMedicationField(c,'extra-1','indication','hf');
+ assert.ok(medicationSafety(c).some(x=>x.id==='ARM-REF-extra-1'&&x.text.includes('25 mg cada 24 h')));
 });
