@@ -391,13 +391,22 @@ try{
     const ncatalog=nyp.locator('[data-panel="med-catalog"]');
     if(!await ncatalog.evaluate(e=>e.open))await ncatalog.locator(':scope > summary').click();
     await nyp.locator('[data-action="med-add-named"][data-med-drug="Bisoprolol"]').click();
-    await nyp.locator('[data-med-id="extra-1"][data-med-field="quick-dose"][data-med-value="2,5"]').click();
-    await nyp.locator('[data-med-id="extra-1"][data-med-field="frequency"][data-med-value="24"]').click();
-    await nyp.locator('[data-med-confirm]').check();await nyp.locator('[data-action="therapy-proposal"]').click();
+    // Incomplete regimen: complete the missing dose and frequency from the result.
+    await nyp.locator('[data-action="therapy-proposal"]').click();
     await nyp.getByRole('heading',{name:'Propuesta de tratamiento',exact:true}).waitFor();
+    const inlineMed=nyp.locator('[data-proposal-form="medication"][data-proposal-row="extra-1"]');
+    await inlineMed.locator('[name="dose"]').fill('2,5');await inlineMed.locator('[name="frequency"]').selectOption('24');
+    await inlineMed.locator('button[type="submit"]').click();await nyp.locator('[data-proposal-confirm="medication"]').check();
+    assert.equal(await nyp.locator('[data-proposal-form="medication"]').count(),0);
     const current=nyp.locator('[data-proposal-medication="extra-1"]');
     assert.match(await current.innerText(),/Bisoprolol/);assert.match(await current.innerText(),/2,5 mg \/ 24 h/);
     assert.equal(await current.locator('details[open]').count(),0);
+    const adjustment=current.locator('[data-proposal-form="adjustment"]');
+    assert.equal(await adjustment.isVisible(),true);
+    await adjustment.locator('[name="product"]').fill('Bisoprolol Pensa');await adjustment.locator('[name="indication"]').selectOption('hf');
+    await adjustment.locator('[name="tolerance"]').selectOption('well');await adjustment.locator('[name="doseDays"]').fill('14');await adjustment.locator('[name="ecg"]').selectOption('normal');
+    await adjustment.locator('button[type="submit"]').click();
+    assert.equal(await current.locator('[data-proposal-form="adjustment"]').count(),0);assert.match(await current.innerText(),/3,75 mg/);
     await nyp.screenshot({path:'qa-results/'+name+'-therapy-step3.png',fullPage:true});
     await current.locator('[data-action="proposal-edit-medication"]').click();
     await nyp.getByRole('heading',{name:'Medicación actual',exact:true}).waitFor();
