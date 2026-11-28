@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {GROUPS,createClinicalContext,updateFinding,evaluateSuspicion,setGroupReviewed,isGroupReviewed,toggleFinding,setEvaluationReviewed,isEvaluationReviewed,diagnosticNext,diagnosticAction,setStudyResult,investigationPlan,interpretSuspicion,CLINICAL_DIMENSIONS,labPlan,setPeptide,interpretPeptide,peptideFactors,ECHO_FINDINGS,ECHO_NUMERIC,setEcho,interpretEcho,setStageAssessment,interpretStage,setPhenotypeAssessment,interpretPhenotype,NYHA_OPTIONS,setNyha,interpretNyha,SITUATION_QUESTIONS,setSituation,interpretSituation,classificationSummary,TREATMENT_VITALS,setTreatmentValue,confirmTreatmentLabs,treatmentSafetyData,MEDICATION_GROUPS,setMedicationField,addMedication,removeMedication,medicationSummary,confirmMedicationReview,MEDICATION_QUICK_DOSES,medicationEntryComplete,setMedicationQuickDose,MEDICATION_FAMILIES,medicationFamilyLabel,addNamedMedication,deleteRecordedMedication,medicationFrequencyOptions,medicationSafety,HF_MEDICATION_REFERENCE,treatmentProposal,HF_TITRATION_REFERENCE,betaBlockerReferenceStep,armPotassiumReference,echoSupportCriteria,confirmExternalMedicationReview,setAbsenceReason,raasMaintenanceReference,raasStepReference,arniTransitionReference,setTherapyRisk,candidateRiskScreen} from '../src/ic/suspicion.mjs';
+import {GROUPS,createClinicalContext,updateFinding,evaluateSuspicion,setGroupReviewed,isGroupReviewed,toggleFinding,setEvaluationReviewed,isEvaluationReviewed,diagnosticNext,diagnosticAction,setStudyResult,investigationPlan,interpretSuspicion,CLINICAL_DIMENSIONS,labPlan,setPeptide,interpretPeptide,peptideFactors,ECHO_FINDINGS,ECHO_NUMERIC,setEcho,interpretEcho,setStageAssessment,interpretStage,setPhenotypeAssessment,interpretPhenotype,NYHA_OPTIONS,setNyha,interpretNyha,SITUATION_QUESTIONS,setSituation,interpretSituation,classificationSummary,TREATMENT_VITALS,setTreatmentValue,confirmTreatmentLabs,treatmentSafetyData,MEDICATION_GROUPS,setMedicationField,addMedication,removeMedication,medicationSummary,confirmMedicationReview,MEDICATION_QUICK_DOSES,medicationEntryComplete,setMedicationQuickDose,MEDICATION_FAMILIES,medicationFamilyLabel,addNamedMedication,deleteRecordedMedication,medicationFrequencyOptions,medicationSafety,HF_MEDICATION_REFERENCE,treatmentProposal,HF_TITRATION_REFERENCE,betaBlockerReferenceStep,armPotassiumReference,echoSupportCriteria,confirmExternalMedicationReview,setAbsenceReason,raasMaintenanceReference,raasStepReference,arniTransitionReference,setTherapyRisk,candidateRiskScreen,medicationProblemReference,medicationProblemOptions} from '../src/ic/suspicion.mjs';
 const allNo=()=>({findings:{...Object.fromEntries(GROUPS.flatMap(g=>g.fields.map(([id])=>[id,'no']))),vitalsReviewed:'yes'}});
 const result=(c)=>evaluateSuspicion(c).id;
 test('Datos ausentes no son negativos',()=>assert.equal(result(createClinicalContext()),'IC-SUS-03'));
@@ -656,4 +656,15 @@ test('P4: cribado contextual no confunde datos desconocidos con ausencia ni cert
  c=setTherapyRisk(c,'type1','yes');p=treatmentProposal(c);assert.ok(p.actions.filter(x=>['Empagliflozina','Dapagliflozina'].includes(x.candidate)).every(x=>x.kind==='review'));
  c=setTherapyRisk(c,'ketoacidosis','yes');assert.equal(treatmentProposal(c).status,'urgent');
  c=setTherapyRisk(c,'ketoacidosis','unknown');assert.notEqual(treatmentProposal(c).status,'urgent');
+});
+
+test('P5: orientar intolerancia por problema concreto sin automatizar sustitución o retirada',()=>{
+ let c=proposalFixture();c=addNamedMedication(c,'Espironolactona');c=setMedicationField(c,'extra-1','tolerance','problem');
+ assert.ok(medicationProblemOptions(medicationSummary(c).active[0]).some(x=>x[0]==='gynecomastia'));
+ c=setMedicationField(c,'extra-1','problem','gynecomastia');
+ assert.ok(medicationSafety(c).some(x=>x.id==='TOL-extra-1'&&x.text.includes('No combinar ARM')));
+ c=setMedicationField(c,'extra-1','tolerance','well');assert.ok(!medicationSafety(c).some(x=>x.id==='TOL-extra-1'));
+ let d=proposalFixture();d=addNamedMedication(d,'Empagliflozina');d=setMedicationField(d,'extra-1','tolerance','problem');d=setMedicationField(d,'extra-1','problem','ketoacidosis');
+ assert.equal(treatmentProposal(d).status,'urgent');assert.equal(treatmentProposal(d).actions.length,0);
+ assert.equal(setMedicationField(d,'extra-1','problem','gynecomastia'),d);
 });
