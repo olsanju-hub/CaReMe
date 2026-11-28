@@ -541,3 +541,18 @@ test('Péptidos: ARNI registrado orienta interpretación y explicita discordanci
  assert.equal(peptideFactors(c).arni,'yes');assert.ok(interpretPeptide(c).notes.some(x=>/elevar BNP/.test(x)));
  c=setPeptide(c,'arni','no');assert.ok(interpretPeptide(c).notes.some(x=>/Discordancia/.test(x)));
 });
+
+test('Detección de bloqueo SRAA fuera del catálogo y en combinaciones con principios activos explícitos',()=>{
+ const pair=(a,b)=>{let c=addNamedMedication(createClinicalContext(),a);c=addNamedMedication(c,'other');return setMedicationField(c,'extra-2','name',b);};
+ for(const n of ['Losartán','Losartán/Hidroclorotiazida','Olmesartán medoxomilo','Telmisartán'])assert.ok(medicationSafety(pair('Sacubitrilo/valsartán',n)).some(a=>a.id==='ARNI-ARA'&&a.level==='red'),n);
+ for(const n of ['Perindopril','Perindopril + Amlodipino','Captopril','Lisinopril'])assert.ok(medicationSafety(pair('Sacubitrilo/valsartán',n)).some(a=>a.id==='ARNI-IECA'&&a.level==='red'),n);
+ assert.ok(medicationSafety(pair('Enalapril','Entresto')).some(a=>a.id==='ARNI-IECA'&&a.level==='red'));
+ assert.ok(!medicationSafety(pair('Sacubitrilo/valsartán','Medicamento no identificado')).some(a=>a.id==='ARNI-ARA'));
+ assert.match(medicationFamilyLabel({drug:'other',name:'Losartán'}),/ARA-II/);
+});
+test('PAS 90–99 estable: solo referencias condicionadas; PAS inferior a 90 bloquea propuesta',()=>{
+ let c=proposalFixture();c=setTreatmentValue(c,'sbp','95');let p=treatmentProposal(c);
+ assert.equal(p.status,'conditional');assert.ok(p.actions.some(a=>a.title.includes('Revisar presión arterial')));
+ assert.ok(!p.actions.some(a=>['start','titrate','switch'].includes(a.kind)));assert.ok(p.actions.some(a=>a.title.includes('Dapagliflozina')&&a.kind==='review'));
+ c=setTreatmentValue(c,'sbp','89');assert.equal(treatmentProposal(c).status,'review');
+});
