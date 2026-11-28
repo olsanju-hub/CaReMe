@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {GROUPS,createClinicalContext,updateFinding,evaluateSuspicion,setGroupReviewed,isGroupReviewed,toggleFinding,setEvaluationReviewed,isEvaluationReviewed,diagnosticNext,diagnosticAction,setStudyResult,investigationPlan,interpretSuspicion,CLINICAL_DIMENSIONS,labPlan,setPeptide,interpretPeptide,peptideFactors,ECHO_FINDINGS,ECHO_NUMERIC,setEcho,interpretEcho,setStageAssessment,interpretStage,setPhenotypeAssessment,interpretPhenotype,NYHA_OPTIONS,setNyha,interpretNyha,SITUATION_QUESTIONS,setSituation,interpretSituation,classificationSummary,TREATMENT_VITALS,setTreatmentValue,confirmTreatmentLabs,treatmentSafetyData,MEDICATION_GROUPS,setMedicationField,addMedication,removeMedication,medicationSummary,confirmMedicationReview,MEDICATION_QUICK_DOSES,medicationEntryComplete,setMedicationQuickDose,MEDICATION_FAMILIES,medicationFamilyLabel,addNamedMedication,deleteRecordedMedication,medicationFrequencyOptions,medicationSafety,HF_MEDICATION_REFERENCE,treatmentProposal,HF_TITRATION_REFERENCE,betaBlockerReferenceStep,armPotassiumReference,echoSupportCriteria,confirmExternalMedicationReview,setAbsenceReason,raasMaintenanceReference} from '../src/ic/suspicion.mjs';
+import {GROUPS,createClinicalContext,updateFinding,evaluateSuspicion,setGroupReviewed,isGroupReviewed,toggleFinding,setEvaluationReviewed,isEvaluationReviewed,diagnosticNext,diagnosticAction,setStudyResult,investigationPlan,interpretSuspicion,CLINICAL_DIMENSIONS,labPlan,setPeptide,interpretPeptide,peptideFactors,ECHO_FINDINGS,ECHO_NUMERIC,setEcho,interpretEcho,setStageAssessment,interpretStage,setPhenotypeAssessment,interpretPhenotype,NYHA_OPTIONS,setNyha,interpretNyha,SITUATION_QUESTIONS,setSituation,interpretSituation,classificationSummary,TREATMENT_VITALS,setTreatmentValue,confirmTreatmentLabs,treatmentSafetyData,MEDICATION_GROUPS,setMedicationField,addMedication,removeMedication,medicationSummary,confirmMedicationReview,MEDICATION_QUICK_DOSES,medicationEntryComplete,setMedicationQuickDose,MEDICATION_FAMILIES,medicationFamilyLabel,addNamedMedication,deleteRecordedMedication,medicationFrequencyOptions,medicationSafety,HF_MEDICATION_REFERENCE,treatmentProposal,HF_TITRATION_REFERENCE,betaBlockerReferenceStep,armPotassiumReference,echoSupportCriteria,confirmExternalMedicationReview,setAbsenceReason,raasMaintenanceReference,raasStepReference,arniTransitionReference} from '../src/ic/suspicion.mjs';
 const allNo=()=>({findings:{...Object.fromEntries(GROUPS.flatMap(g=>g.fields.map(([id])=>[id,'no']))),vitalsReviewed:'yes'}});
 const result=(c)=>evaluateSuspicion(c).id;
 test('Datos ausentes no son negativos',()=>assert.equal(result(createClinicalContext()),'IC-SUS-03'));
@@ -357,7 +357,9 @@ test('Propuesta condicional FEVI 32%: ausencia confirmada, opciones por familia'
 test('Propuesta: bisoprolol titulación y no duplicar iSGLT2',()=>{
  let c=proposalFixture();c=addNamedMedication(c,'Bisoprolol');c=setMedicationQuickDose(c,'extra-1','2,5');c=setMedicationField(c,'extra-1','frequency','24');
  c=addNamedMedication(c,'Dapagliflozina');c=setMedicationQuickDose(c,'extra-2','10');c=setMedicationField(c,'extra-2','frequency','24');c=confirmMedicationReview(c,true);
- const p=treatmentProposal(c);assert.equal(p.status,'conditional');assert.ok(p.actions.some(a=>a.kind==='review'&&a.detail.includes('3,75')));assert.ok(!p.actions.some(a=>a.kind==='start'&&a.title.includes('Dapagliflozina')));
+ const p=treatmentProposal(c);assert.equal(p.status,'conditional');assert.ok(p.actions.some(a=>a.kind==='review'&&a.detail.includes('comprobar presentación')));assert.ok(!p.actions.some(a=>a.detail.includes('3,75')));
+ c=setMedicationField(c,'extra-1','product','Bisoprolol Pensa');c=setMedicationField(c,'extra-1','indication','hf');c=setMedicationField(c,'extra-1','tolerance','well');c=setMedicationField(c,'extra-1','doseDays','14');c=setStudyResult(c,'ecg','normal');c=confirmMedicationReview(c,true);
+ assert.ok(treatmentProposal(c).actions.some(a=>a.kind==='review'&&a.detail.includes('3,75')));assert.ok(!p.actions.some(a=>a.kind==='start'&&a.title.includes('Dapagliflozina')));
 });
 test('Finerenona: no asociar otro ARM y no extrapolar dosis de ERC-DM2',()=>{
  let c=proposalFixture();c=addNamedMedication(c,'Finerenona');c=addNamedMedication(c,'Espironolactona');assert.ok(medicationSafety(c).some(a=>a.id==='FIN-MRA'&&a.level==='red'));assert.equal(treatmentProposal(c).actions.length,0);
@@ -622,4 +624,25 @@ test('P4 diuréticos: electrolitos registrados y presión arterial sin inferir v
  assert.ok(medicationSafety(c).some(x=>x.id==='ESC-DIUR-NA'));assert.ok(medicationSafety(c).some(x=>x.id==='ESC-DIUR-K'));
  c=setStudyResult(c,'sodium','135');c=setTreatmentValue(c,'potassium','3,51');
  assert.ok(!medicationSafety(c).some(x=>['ESC-DIUR-NA','ESC-DIUR-K'].includes(x.id)));
+});
+
+test('P5: escalón SRAA exige datos de pauta, presentación y evolución renal',()=>{
+ let ctx=proposalFixture();
+ const row={drug:'Candesartán',dose:'4',frequency:'24',product:'Candesartán STADA',indication:'hf',tolerance:'well',doseDays:'14',priorEgfr:'60'};
+ assert.equal(raasStepReference(row,ctx).status,'reference');
+ assert.equal(raasStepReference(row,ctx).next,'8 mg/24 h');
+ for(const [key,value] of [['product',''],['indication','unknown'],['tolerance','unknown'],['doseDays','13'],['priorEgfr','']])assert.equal(raasStepReference({...row,[key]:value},ctx).next,null,key);
+ assert.equal(raasStepReference({...row,drug:'Ramipril',product:'Ramipril Alter',dose:'2,5'},ctx).next,null);
+ ctx=setTreatmentValue(ctx,'egfr','42');ctx=confirmTreatmentLabs(ctx,true);
+ assert.equal(raasStepReference(row,ctx).status,'review');
+});
+test('P5: transición IECA/ARNI en ambos sentidos, 36 h exactas y ausencia de solapamiento',()=>{
+ const base={from:'IECA',to:'ARNI',elapsedHours:36,overlap:false,angioedema:'no'};
+ assert.equal(arniTransitionReference(base).status,'reference');
+ assert.equal(arniTransitionReference({...base,elapsedHours:35.99}).status,'blocked');
+ assert.equal(arniTransitionReference({...base,from:'ARNI',to:'IECA',elapsedHours:35}).status,'blocked');
+ assert.equal(arniTransitionReference({...base,overlap:true}).status,'blocked');
+ assert.equal(arniTransitionReference({...base,angioedema:'yes'}).status,'blocked');
+ assert.equal(arniTransitionReference({...base,angioedema:'unknown'}).status,'missing');
+ assert.equal(arniTransitionReference({...base,elapsedHours:undefined}).status,'missing');
 });
