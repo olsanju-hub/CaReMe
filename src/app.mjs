@@ -395,7 +395,11 @@ function medicationCatalogView(m){
 }
 function medicationSafetyView(){
  const alerts=medicationSafety(clinicalContext);
- return '<p class="stage-hint">Comprobación parcial de interacciones: si no aparece una alerta, no significa que la combinación sea segura.</p>'+alerts.map(a=>'<div class="med-safety-alert '+a.level+'" role="'+(a.level==='red'?'alert':'status')+'"><strong>'+medEscape(a.title)+'</strong><p>'+medEscape(a.text)+'</p><a class="text-link" href="'+a.source+'" target="_blank" rel="noopener noreferrer">Consultar fuente ›</a></div>').join('');
+ const renderAlert=a=>'<div class="med-safety-alert '+a.level+'" role="'+(a.level==='red'?'alert':'status')+'"><strong>'+medEscape(a.title)+'</strong><p>'+medEscape(a.text)+'</p><a class="text-link" href="'+a.source+'" target="_blank" rel="noopener noreferrer">Consultar fuente ›</a></div>';
+ // Keep actionable red/amber alerts visible; informational monitoring stays in a
+ // collapsed panel, without suppressing any underlying rule or source.
+ const visible=alerts.filter(a=>a.level!=='blue'),monitor=alerts.filter(a=>a.level==='blue');
+ return '<p class="stage-hint">Interacciones: comprobación parcial.</p>'+visible.map(renderAlert).join('')+(monitor.length?'<details class="stage-context med-context" data-panel="med-monitoring"><summary>Controles recomendados · '+monitor.length+'</summary>'+monitor.map(renderAlert).join('')+'</details>':'')+'<details class="stage-context med-context" data-panel="med-safety-scope"><summary>Alcance de la comprobación</summary><p class="stage-hint">No detectar una alerta no descarta interacciones ni contraindicación. Prototipo educativo, no validado para decisiones asistenciales.</p></details>';
 }
 function medicationStatus(m){
  const pending=[...(!m.reviewed?['Lista pendiente de confirmar']:m.unknown.length?['Familias pendientes de identificar en la medicación registrada']:[]),...m.missing.map(x=>x.label)];
