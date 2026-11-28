@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {GROUPS,createClinicalContext,updateFinding,evaluateSuspicion,setGroupReviewed,isGroupReviewed,toggleFinding,setEvaluationReviewed,isEvaluationReviewed,diagnosticNext,diagnosticAction,setStudyResult,investigationPlan,interpretSuspicion,CLINICAL_DIMENSIONS,labPlan,setPeptide,interpretPeptide,peptideFactors,ECHO_FINDINGS,ECHO_NUMERIC,setEcho,interpretEcho,setStageAssessment,interpretStage,setPhenotypeAssessment,interpretPhenotype,NYHA_OPTIONS,setNyha,interpretNyha,SITUATION_QUESTIONS,setSituation,interpretSituation,classificationSummary,TREATMENT_VITALS,setTreatmentValue,confirmTreatmentLabs,treatmentSafetyData,MEDICATION_GROUPS,setMedicationField,addMedication,removeMedication,medicationSummary,confirmMedicationReview,MEDICATION_QUICK_DOSES,medicationEntryComplete,setMedicationQuickDose,MEDICATION_FAMILIES,medicationFamilyLabel,addNamedMedication,deleteRecordedMedication,medicationFrequencyOptions,medicationSafety,HF_MEDICATION_REFERENCE,treatmentProposal,HF_TITRATION_REFERENCE,betaBlockerReferenceStep,armPotassiumReference,echoSupportCriteria,confirmExternalMedicationReview,setAbsenceReason} from '../src/ic/suspicion.mjs';
+import {GROUPS,createClinicalContext,updateFinding,evaluateSuspicion,setGroupReviewed,isGroupReviewed,toggleFinding,setEvaluationReviewed,isEvaluationReviewed,diagnosticNext,diagnosticAction,setStudyResult,investigationPlan,interpretSuspicion,CLINICAL_DIMENSIONS,labPlan,setPeptide,interpretPeptide,peptideFactors,ECHO_FINDINGS,ECHO_NUMERIC,setEcho,interpretEcho,setStageAssessment,interpretStage,setPhenotypeAssessment,interpretPhenotype,NYHA_OPTIONS,setNyha,interpretNyha,SITUATION_QUESTIONS,setSituation,interpretSituation,classificationSummary,TREATMENT_VITALS,setTreatmentValue,confirmTreatmentLabs,treatmentSafetyData,MEDICATION_GROUPS,setMedicationField,addMedication,removeMedication,medicationSummary,confirmMedicationReview,MEDICATION_QUICK_DOSES,medicationEntryComplete,setMedicationQuickDose,MEDICATION_FAMILIES,medicationFamilyLabel,addNamedMedication,deleteRecordedMedication,medicationFrequencyOptions,medicationSafety,HF_MEDICATION_REFERENCE,treatmentProposal,HF_TITRATION_REFERENCE,betaBlockerReferenceStep,armPotassiumReference,echoSupportCriteria,confirmExternalMedicationReview,setAbsenceReason,raasMaintenanceReference} from '../src/ic/suspicion.mjs';
 const allNo=()=>({findings:{...Object.fromEntries(GROUPS.flatMap(g=>g.fields.map(([id])=>[id,'no']))),vitalsReviewed:'yes'}});
 const result=(c)=>evaluateSuspicion(c).id;
 test('Datos ausentes no son negativos',()=>assert.equal(result(createClinicalContext()),'IC-SUS-03'));
@@ -598,4 +598,28 @@ test('Finerenona: tablas 2 y 4, FG inicial y caída relativa sin redondear',()=>
  assert.match(ref({indication:'ckd-dm2',potassium:5.5,dose:'10'}),/mantenimiento/);
  assert.equal(armPotassiumReference({...base,indication:'ckd-dm2',potassium:5.51}).kind,'interrupt');
  assert.match(ref({indication:'ckd-dm2',potassium:4.8,dose:'10'}),/20 mg\/día/);
+});
+
+test('P4 CIMA: heparinas, litio, otros ARM y CYP3A4 finerenona',()=>{
+ const pair=(a,b)=>{let c=addNamedMedication(createClinicalContext(),a);c=addNamedMedication(c,'other');return setMedicationField(c,'extra-2','name',b);};
+ for(const [a,b,id] of [['Espironolactona','Enoxaparina','SPI-HEP'],['Sacubitrilo/valsartán','Carbonato de litio','SRAA-LI'],['Finerenona','Canrenona','FIN-OTHER-MRA'],['Finerenona','Eritromicina','FIN-MOD'],['Finerenona','Efavirenz','FIN-IND']])assert.ok(medicationSafety(pair(a,b)).some(x=>x.id===id),id);
+ let c=pair('Finerenona','Repaglinida');c=setMedicationField(c,'extra-1','frequency','24');c=setMedicationField(c,'extra-1','dose','20');
+ assert.ok(!medicationSafety(c).some(x=>x.id==='FIN40-SUBSTRATE'));c=setMedicationField(c,'extra-1','dose','40');assert.ok(medicationSafety(c).some(x=>x.id==='FIN40-SUBSTRATE'));
+});
+test('P5 S4 y S5: mantenimiento diferenciado por FG, K y tendencia',()=>{
+ const base={drug:'Ramipril',egfr:42,priorEgfr:60,potassium:5.5,confirmed:true};
+ assert.equal(raasMaintenanceReference(base).level,'amber');
+ assert.equal(raasMaintenanceReference({...base,egfr:42.01}).level,'blue');
+ assert.match(raasMaintenanceReference({...base,potassium:5.51}).title,/interrupción/);
+ assert.match(raasMaintenanceReference({...base,egfr:19.99}).title,/interrupción/);
+ assert.match(raasMaintenanceReference({...base,creatinine:2.01,priorCreatinine:1}).title,/interrupción/);
+ assert.ok(!raasMaintenanceReference({...base,drug:'Sacubitrilo/valsartán',potassium:5.51}).title.includes('interrupción'));
+ assert.equal(raasMaintenanceReference({...base,confirmed:false}),null);
+ assert.equal(raasMaintenanceReference({...base,potassium:6}).level,'red');
+});
+test('P4 diuréticos: electrolitos registrados y presión arterial sin inferir volemia',()=>{
+ let c=proposalFixture();c=addNamedMedication(c,'Furosemida');c=setStudyResult(c,'sodium','134');c=setTreatmentValue(c,'potassium','3,5');
+ assert.ok(medicationSafety(c).some(x=>x.id==='ESC-DIUR-NA'));assert.ok(medicationSafety(c).some(x=>x.id==='ESC-DIUR-K'));
+ c=setStudyResult(c,'sodium','135');c=setTreatmentValue(c,'potassium','3,51');
+ assert.ok(!medicationSafety(c).some(x=>['ESC-DIUR-NA','ESC-DIUR-K'].includes(x.id)));
 });
