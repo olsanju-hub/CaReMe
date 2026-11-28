@@ -34,3 +34,24 @@ Páginas de la edición aportada:
 - §6.1.6 p.35: no suspender FMT por hipotensión asintomática/tolerable sin evaluación, ni por cambios renales aislados; considerar situaciones de AKI, hiperpotasemia e inestabilidad y reintroducción posterior. Pendiente algoritmo específico.
 Pruebas: añadidas/actualizadas pruebas unitarias de umbrales, clasificación y recomendaciones. No afirmar que han pasado hasta obtener resultado de ejecución.
 Estado: P0 documento principal disponible, suplementos/versionado pendientes; P1/P2 contraste inicial y correcciones parciales; P3 pendiente; P4/P5 parcial; P6 pendiente. Mantener rama de producción sin cambios.
+
+## Recepción de suplementos oficiales — 28/11/2026
+- Documento principal definitivo: ehag100.pdf, EHJ 47(38), 5346–5457; DOI 10.1093/eurheartj/ehag100. Sustituye la edición anticipada como referencia editorial. Pendiente cotejo sistemático de versiones.
+- ehag100_supplementary_data.pdf: 49 páginas, DOI coincidente, SHA-256 96ecc055086054a103b548d664fc0a80daf5e9702c7eace7c639f01fc97d7d2f.
+- ehag100_evidence_tables.pdf: 1051 páginas, 111 tablas, SHA-256 59296c46ca40fc810e442b5d5b42fd8c2d0734df3bba7cf4fb4562ebdcc093ff.
+- No se publican los PDF en GitHub. La disponibilidad de las fuentes ESC queda resuelta; no equivale a auditoría completada ni a comprobar posibles correcciones editoriales o todas las fichas CIMA.
+### Índice operativo
+- S2 p.9: etiología y pruebas adicionales. S3 p.10: comparativa ARM.
+- S4 pp.10–12: IECA/ARA-II; S5 pp.12–14: ARNI; S6 pp.14–15: betabloqueantes; S7 pp.16–17: diuréticos; S8 pp.18–19: ARM; S9 pp.19–20: iSGLT2.
+- S11–S16 pp.23–27: IC descompensada.
+- Evidence Tables 17–19 pp.117–130: diagnóstico; 20–28 pp.131–190: etiología; 29–41 pp.191–325: tratamiento crónico.
+### Hallazgos prioritarios para matriz P3–P5 (no implementados en este registro)
+- S4/S5/S6: hipotensión asintomática no justifica automáticamente reducción o retirada. Evaluar congestión y otros fármacos antes de modificar FMT.
+- S4/S5: diferenciar inicio y mantenimiento, cambios relativos de FG/creatinina, potasio, monitorización y reintroducción. S4 y S5 no son idénticas en criterios de interrupción; no extrapolar automáticamente.
+- S6: pauta de bisoprolol para IC una vez al día; evaluar bradicardia sintomática, bloqueo AV, congestión y fármacos cronotropos; evitar retirada brusca salvo necesidad clínica.
+- S7: precisar volemia, sodio, potasio, respuesta y contexto ambulatorio/hospitalario; no aplicar escalada fija de diurético.
+- S3/S8: separar ARM esteroideos y finerenona, verificar ficha por indicación, potasio, función renal y dosis. La frontera de FG 60 en S8 requiere reconciliación con CIMA; no automatizar la discrepancia. Las pautas generales de S8 no sustituyen ajustes específicos de cada molécula.
+- S9: separar inicio y continuación de iSGLT2 con deterioro renal; verificar límites de cada molécula en CIMA. Incorporar riesgo de cetoacidosis, depleción de volumen y medicación hipoglucemiante; no reiniciar solo por tiempo transcurrido.
+- S4–S9: las recomendaciones prácticas se presentan como opinión experta sustentada en ensayos y experiencia; no atribuir a cada pauta una clase/nivel de evidencia de la recomendación de eficacia.
+- Seguridad: ampliar normalización de principios activos y combinaciones; datos faltantes no equivalen a resultado negativo. Las alertas anteriores no cubren la totalidad de la medicación.
+Estado: adquisición de fuentes ESC completada; revisión documental y clínica, reconciliación regulatoria, implementación y ejecución de pruebas siguen pendientes. No fusionar ni publicar.
