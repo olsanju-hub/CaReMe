@@ -1170,20 +1170,62 @@ export function arniTransitionReference({from,to,elapsedHours,overlap,angioedema
 }
 const sglt2Interruption='Ante sospecha/diagnóstico de cetoacidosis, interrumpir y evaluar de inmediato; no reiniciar tras CAD salvo desencadenante identificado y resuelto. En cirugía mayor o enfermedad aguda grave hospitalizada, interrupción temporal, cetonas preferentemente en sangre y reinicio solo cuando sean normales y el paciente esté estable. La duración de la interrupción no basta.';
 
+const THERAPY_RISK_DEFINITIONS={
+ pregnancy:'Embarazo, posibilidad de embarazo o lactancia',
+ angioedema:'Antecedente de angioedema',
+ bilateralRas:'Estenosis bilateral de arterias renales conocida',
+ severeLiver:'Hepatopatía grave, cirrosis biliar o colestasis',
+ avBlock:'Bloqueo AV de 2.º/3.er grado, enfermedad del nodo sinusal o bloqueo sinoauricular',
+ severeAsthma:'Asma grave',
+ limbIschemia:'Isquemia crítica o enfermedad arterial periférica grave',
+ symptomaticBrady:'Bradicardia o hipotensión sintomática',
+ type1:'Diabetes tipo 1',
+ ketoacidosis:'Sospecha de cetoacidosis actual',
+ acuteIllness:'Cirugía mayor o enfermedad aguda grave',
+ addison:'Enfermedad de Addison',
+ acidosis:'Acidosis metabólica',
+ pheochromocytoma:'Feocromocitoma no tratado'
+};
+const THERAPY_RISK_KEYS={
+ 'Sacubitrilo/valsartán':['pregnancy','angioedema','bilateralRas','severeLiver'],
+ 'Bisoprolol':['avBlock','severeAsthma','limbIschemia','symptomaticBrady','acidosis','pheochromocytoma'],
+ 'Finerenona':['pregnancy','addison','severeLiver'],
+ 'Dapagliflozina':['pregnancy','type1','ketoacidosis','acuteIllness'],
+ 'Empagliflozina':['pregnancy','type1','ketoacidosis','acuteIllness']
+};
+export function setTherapyRisk(ctx,key,value){
+ if(!Object.hasOwn(THERAPY_RISK_DEFINITIONS,key)||!['yes','no','unknown'].includes(value))return ctx;
+ const a={...ctx.treatmentAssessment},risks={...a.risks};
+ if(value==='unknown')delete risks[key];else risks[key]=value;
+ return {...ctx,treatmentAssessment:{...a,risks},updatedAt:new Date().toISOString()};
+}
+export function candidateRiskScreen(ctx,drug){
+ const keys=THERAPY_RISK_KEYS[drug]||[],risks=ctx.treatmentAssessment?.risks||{};
+ const items=keys.map(key=>({key,label:THERAPY_RISK_DEFINITIONS[key],value:['yes','no'].includes(risks[key])?risks[key]:key==='type1'&&ctx.findings?.dm==='no'?'no':'unknown'}));
+ const positives=items.filter(x=>x.value==='yes'),pending=items.filter(x=>x.value==='unknown');
+ return {items,positives,pending,status:positives.length?'review':pending.length?'pending':'partial-review',complete:false,source:refDrug(drug)};
+}
 export function treatmentProposal(ctx){
  const d=treatmentSafetyData(ctx),r=d.profile,m=medicationSummary(ctx),alerts=medicationSafety(ctx);
  const actions=[],blockers=[],urgent=[];
  const {sbp,hr,egfr,potassium}=d.values;
  const lowPressure=sbp!==null&&sbp>=90&&sbp<100;
- const push=(kind,title,detail,check,source=HF_GUIDE)=>{
+ const push=(kind,title,detail,check,source=HF_GUIDE,candidate=null)=>{
+  const screening=candidate?candidateRiskScreen(ctx,candidate):null;
+  if(screening?.positives.length){
+   actions.push({kind:'review',title,detail:'No proponer inicio con los datos registrados: '+screening.positives.map(x=>x.label).join('; ')+'. Requiere revisión de la ficha y del contexto.',check,source,candidate,screening});
+   return;
+  }
+  const metadata=screening?{candidate,screening}:{};
   // Low BP in a recorded stable patient is a review context, not a blanket contraindication.
   // No start/up-titration/switch is proposed before symptoms, perfusion and treatment are checked.
   if((lowPressure||m.externalReviewValid)&&['start','titrate','switch'].includes(kind)){
    const caveats=[lowPressure?'PAS 90–99 mmHg: confirmar síntomas y perfusión, y revisar el tratamiento antes de decidir.':'',m.externalReviewValid?'La revisión externa corresponde a la lista actual, no al candidato: comprobar sus interacciones antes de plantear un cambio.':''].filter(Boolean).join(' ');
-   actions.push({kind:'review',title,detail:'Referencia condicionada: '+detail,check:caveats+' '+check,source});
-  }else actions.push({kind,title,detail,check,source});
+   actions.push({kind:'review',title,detail:'Referencia condicionada: '+detail,check:caveats+' '+check,source,...metadata});
+  }else actions.push({kind,title,detail,check,source,...metadata});
  };
  if(r.urgent)urgent.push('La situación clínica registrada requiere valoración urgente.');
+ if(ctx.treatmentAssessment?.risks?.ketoacidosis==='yes')urgent.push('Sospecha de cetoacidosis registrada: valoración urgente, no esperar a optimizar tratamiento.');
  if(Number.isFinite(potassium)&&potassium>=6)urgent.push('Potasio registrado ≥6 mmol/L: valoración clínica urgente, ECG y confirmación según contexto, aunque falte marcar la confirmación analítica; no esperar a optimizar tratamiento.');
  if(alerts.some(a=>a.level==='red'))blockers.push('Resolver las alertas rojas y comprobar la medicación real.');
  if(alerts.some(a=>a.level==='amber'))blockers.push('Revisar las alertas de dosis, frecuencia o interacción antes de plantear cambios.');
@@ -1229,7 +1271,7 @@ export function treatmentProposal(ctx){
  }
  if(reduced&&symptomatic){
   if(canStart('raas')){
-   if(egfr>=30&&potassium<=5.4&&sbp>=100)push('start','Valorar sacubitrilo/valsartán','24/26 mg cada 12 h como inicio conservador en quien no recibe IECA/ARA-II; objetivo de referencia 97/103 mg cada 12 h.','Comprobar angioedema previo, embarazo, hepatopatía, interacciones, PA y ausencia real de IECA/ARA-II. Doblar cada 3–4 semanas si tolera; controlar FG/K tras inicio y ajustes.',refDrug('Sacubitrilo/valsartán'));
+   if(egfr>=30&&potassium<=5.4&&sbp>=100)push('start','Valorar sacubitrilo/valsartán','24/26 mg cada 12 h como inicio conservador en quien no recibe IECA/ARA-II; objetivo de referencia 97/103 mg cada 12 h.','Comprobar angioedema previo, embarazo, hepatopatía, interacciones, PA y ausencia real de IECA/ARA-II. Doblar cada 3–4 semanas si tolera; controlar FG/K tras inicio y ajustes.',refDrug('Sacubitrilo/valsartán'),'Sacubitrilo/valsartán');
    else push('review','SRAA: revisar elegibilidad','No se ofrece dosis de inicio por los datos de seguridad registrados.','Confirmar PA, potasio, función renal y alternativa según tolerancia.',refDrug('Sacubitrilo/valsartán'));
   }else if(arni?.drug==='Sacubitrilo/valsartán'&&arni.frequency==='12'){
    const step=raasStepReference(arni,ctx);
@@ -1240,7 +1282,7 @@ export function treatmentProposal(ctx){
    push('review','Valorar sustitución por sacubitrilo/valsartán','Si la indicación y tolerancia lo permiten, considerar transición desde '+arni.drug+'. No asociarlos ni ejecutar el cambio sin comprobar elegibilidad.','Si procede desde IECA, respetar ≥36 h; desde ARA-II, evitar solapamiento. Verificar dosis anterior, PA, FG, K, angioedema y ficha técnica para seleccionar dosis de inicio.',refDrug('Sacubitrilo/valsartán'));
   }
   if(betaCaution&&(canStart('bb')||bb))push('review','Betabloqueante: revisar frecuencia cardiaca','FC 50–59 lpm: el prototipo no propone inicio ni aumento de betabloqueante sin valorar síntomas y ECG. No es una contraindicación universal ni impide por sí sola valorar otros tratamientos.','Comprobar ritmo, conducción, cronotropos y tolerancia; no retirar bruscamente.',HF_GUIDE);
-  else if(canStart('bb'))push('start','Valorar bisoprolol','Inicio de referencia 1,25 mg cada 24 h; objetivo máximo 10 mg/día si tolera.',HF_TITRATION_REFERENCE.Bisoprolol.checks+' Verificar contraindicaciones de ficha técnica.',refDrug('Bisoprolol'));
+  else if(canStart('bb'))push('start','Valorar bisoprolol','Inicio de referencia 1,25 mg cada 24 h; objetivo máximo 10 mg/día si tolera.',HF_TITRATION_REFERENCE.Bisoprolol.checks+' Verificar contraindicaciones de ficha técnica.',refDrug('Bisoprolol'),'Bisoprolol');
   else if(bb){
    const ref=HF_TITRATION_REFERENCE[bb.drug],step=betaBlockerReferenceStep(bb);
    const nebAge=ctx.peptides?.age;
@@ -1267,7 +1309,7 @@ export function treatmentProposal(ctx){
  }
  if(preserved&&symptomatic&&canStart('mra')){
   push('review','IC-FEp: revisar elección de ARM','ESC 2026 recomienda ARM esteroideo o no esteroideo en IC-FEp sintomática, clase I A.','Individualizar según evidencia por molécula, indicación regulatoria, función renal y potasio; no asociar dos ARM.',HF_GUIDE);
-  if(egfr>=25&&potassium<=5)push('start','Valorar finerenona',(egfr>=60?'20':'10')+' mg cada 24 h como dosis inicial de referencia; objetivo según FG inicial: '+(egfr>=60?'40':'20')+' mg/día.','Comprobar ausencia de otro ARM, ahorradores de K, inhibidores/inductores CYP3A4, Addison, hepatopatía grave, embarazo y demás contraindicaciones. FG/K a las 4 semanas; titular solo según tabla y cambio de FG.',refDrug('Finerenona'));
+  if(egfr>=25&&potassium<=5)push('start','Valorar finerenona',(egfr>=60?'20':'10')+' mg cada 24 h como dosis inicial de referencia; objetivo según FG inicial: '+(egfr>=60?'40':'20')+' mg/día.','Comprobar ausencia de otro ARM, ahorradores de K, inhibidores/inductores CYP3A4, Addison, hepatopatía grave, embarazo y demás contraindicaciones. FG/K a las 4 semanas; titular solo según tabla y cambio de FG.',refDrug('Finerenona'),'Finerenona');
   else push('review','Finerenona: revisar elegibilidad','No se propone inicio con FG <25 o K >5.','Revisar evolución renal y potasio.',refDrug('Finerenona'));
  }
  if(preserved&&symptomatic&&canStart('raas'))push('review','IC-FEp: valorar IECA, ARA-II o ARNI','ESC 2026 permite considerar inhibición SRAA en IC-FEp sintomática para reducir ingresos por IC (IIb C).','No equiparar a recomendación clase I; revisar comorbilidades, indicación autorizada y tolerancia. Selección de dosis pendiente de auditoría.',HF_GUIDE);
@@ -1276,7 +1318,7 @@ export function treatmentProposal(ctx){
   const eligible=['Dapagliflozina','Empagliflozina'].filter(drug=>egfr>=HF_TITRATION_REFERENCE[drug].minInitiationEgfr);
   for(const drug of eligible){
    const ref=HF_TITRATION_REFERENCE[drug];
-   push('start','Valorar '+drug,'10 mg cada 24 h como dosis habitual de IC; opciones alternativas, no asociar dos iSGLT2.','Antes de iniciar: '+ref.checks+' '+sglt2Interruption,ref.source);
+   push('start','Valorar '+drug,'10 mg cada 24 h como dosis habitual de IC; opciones alternativas, no asociar dos iSGLT2.','Antes de iniciar: '+ref.checks+' '+sglt2Interruption,ref.source,drug);
   }
   if(!eligible.length)push('review','iSGLT2: revisar FG','No se ofrece inicio con FG <20; no implica retirar tratamiento previamente establecido.','Revisar indicación y evolución renal.',refDrug('Empagliflozina'));
  }else if(sg){
