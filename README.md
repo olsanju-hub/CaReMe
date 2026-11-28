@@ -16,7 +16,7 @@ PWA de apoyo a la decisión clínica para Atención Primaria, centrada en el abo
 | Rama de trabajo vigente | `audit/ic-validacion-clinica` |
 | Integración | [PR #12 en borrador](https://github.com/olsanju-hub/CaReMe/pull/12), hacia la rama del prototipo |
 | Último corte de código verificado íntegramente (CI) | `74b16e4870e0afbabccd83c6f3ae765e2ed1b685` (v0.102) |
-| Corte v0.103 implementado | `a7bf051b75d8d527d54c151b12b3d9e285e90f43` (nuevo CI pendiente de confirmar) |
+| Corte v0.103 implementado | `a7bf051b75d8d527d54c151b12b3d9e285e90f43` (check nativo 121/121 superado; navegador en ejecución) |
 | Aplicación publicada | [CaReMe](https://olsanju-hub.github.io/CaReMe/), sin modificar durante este trabajo |
 | Alcance actual | Prototipo educativo con casos ficticios; no validado para decisiones asistenciales |
 
@@ -140,8 +140,8 @@ Antes de modificar, comprobar rama y estado actual. Si existen cambios posterior
 | P4, seguridad | Alertas y cribado contextual ampliados; cobertura de interacciones y contraindicaciones incompleta |
 | P5, optimización | Reglas y referencias diferenciadas; faltan algoritmos y datos longitudinales específicos |
 | Pruebas del motor | v0.103: 105/105 en adaptador aislado. v0.102: 103/103; comparación de 576 escenarios ficticios con v0.101: 576/576 iguales en decisiones, bloqueadores, alertas y valores, excluidos metadatos de presentación. No equivale a validación clínica |
-| Node.js / sintaxis | v0.102 [success](https://github.com/olsanju-hub/CaReMe/actions/runs/46154762030), 119/119 pruebas nativas y sintaxis (expectativa fija de caché corregida). v0.103 pendiente de verificar CI nativo |
-| Chromium + WebKit | v0.102 [success](https://github.com/olsanju-hub/CaReMe/actions/runs/46154762015), alternativas, respuesta compartida, pauta actual y navegación contextual. v0.103: nuevos escenarios de transición, pendiente de verificar CI |
+| Node.js / sintaxis | v0.102 [success](https://github.com/olsanju-hub/CaReMe/actions/runs/46154762030), 119/119 pruebas nativas y sintaxis (expectativa fija de caché corregida). v0.103 [success](https://github.com/olsanju-hub/CaReMe/actions/runs/46158129963), 121/121 pruebas nativas y sintaxis |
+| Chromium + WebKit | v0.102 [success](https://github.com/olsanju-hub/CaReMe/actions/runs/46154762015), alternativas, respuesta compartida, pauta actual y navegación contextual. v0.103: [nuevos escenarios de transición](https://github.com/olsanju-hub/CaReMe/actions/runs/46158129964), navegador en ejecución al consultar |
 | Validación clínica independiente | Pendiente |
 | Publicación / integración | No autorizada en este corte; PR borrador |
 
@@ -173,7 +173,7 @@ Las entradas del 28/11/2026 reconstruyen el orden de las intervenciones document
 | 28/11/2026 · 09 | P6: confirmación de check nativo y Chromium/WebKit, incluidos casos nuevos | b9a2cb03807bafc0389c1a8dfc2dd44824a2f99b; runs 46124984535 y 46124984617 success |
 | 28/11/2026 · 10 | Decisión de continuidad: retomar Tratamiento y terminar el asistente terapéutico. Crear README maestro con hoja de ruta, reglas y pendientes | Este documento; sin alterar la interfaz ni publicar cambios |
 | 28/11/2026 · 11 | Maqueta de propuesta terapéutica aprobada por el titular. Implementación v0.102: metadatos de agrupación desde motor, alternativas iSGLT2 y cribado común, tarjetas por pauta actual, acceso contextual, seguimiento y estilo perlado; actualización de caché PWA. No se modifican las decisiones clínicas | Motor 9131d809 / 8dd79daf; UI bdbc9fca / 47ad107e; CSS 046a24e3 / 664c8c0d; QA 9a1df533; tests 0dacd978 / a27febed. 103/103 pruebas aisladas y 576/576 escenarios de equivalencia; CI nativo 119/119 y sintaxis superados tras corregir comprobación de caché; Chromium/WebKit confirmados success en 74b16e48 (runs 46154762030 y 46154762015) |
-| 28/11/2026 · 12 | v0.103: integrar planificación temporal IECA/ARA-II a ARNI dentro de la actuación existente; intervalo, límite de 36 h, plan sin solapamiento y riesgos compartidos; sin alterar la lista de medicación. Fichas 90716/90717 contrastadas | Motor a21377bc, tests 4cb81c1b (105/105 aisladas), UI d85c29cd, QA 063ec060, shell a7bf051b; registro clínico 17185445. CI nuevo pendiente de confirmar |
+| 28/11/2026 · 12 | v0.103: integrar planificación temporal IECA/ARA-II a ARNI dentro de la actuación existente; intervalo, límite de 36 h, plan sin solapamiento y riesgos compartidos; sin alterar la lista de medicación. Fichas 90716/90717 contrastadas | Motor a21377bc, tests 4cb81c1b (105/105 aisladas), UI d85c29cd, QA 063ec060, shell a7bf051b; registro clínico 17185445. CI nativo 121/121 y sintaxis superados, navegador en ejecución al consultar |
 
 ## 9. Protocolo de actualización y relevo de chat
 
