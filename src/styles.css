@@ -1196,3 +1196,16 @@ body:has(.pearl-home) #app {
 .proposal-page .proposal-follow ul{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px 10px;padding:0;list-style:none;margin:6px 0;}
 .proposal-page .proposal-follow li{font-size:.78rem;color:#365768;padding-left:9px;position:relative;overflow-wrap:anywhere;}
 .proposal-page .proposal-follow li:before{content:'';position:absolute;left:0;top:.5em;width:4px;height:4px;border-radius:50%;background:#007e87;}
+
+/* v0.103: transition planning only inside the candidate's existing details. */
+.proposal-page .proposal-transition{border-top:1px solid #dce8ed;margin:8px 0;padding-top:8px;}
+.proposal-page .proposal-transition h4{font-size:.82rem;color:#176c86;margin:0 0 4px;}
+.proposal-page .proposal-transition-field{display:flex;flex-direction:column;gap:4px;margin:9px 0;min-width:0;}
+.proposal-page .proposal-transition-field span{font-size:.78rem;color:#365768;}
+.proposal-page .proposal-transition-field input{box-sizing:border-box;min-width:0;width:100%;max-width:100%;min-height:44px;font:inherit;font-size:.85rem;color:#173347;background:#fff;border:1px solid #b9d1da;border-radius:8px;padding:8px;}
+.proposal-page .proposal-transition-field input[aria-invalid="true"]{border-color:#a93c43;}
+.proposal-page .transition-error{font-size:.75rem;color:#a93c43;}
+.proposal-page .proposal-transition-status{border-left:3px solid #a8751d;padding:7px 8px;background:#fff9ed;color:#79581d;border-radius:6px;line-height:1.4;}
+.proposal-page .proposal-transition-status.blocked{border-left-color:#a93c43;background:#fff2f2;color:#8a2632;}
+.proposal-page .proposal-transition-status.reference{border-left-color:#176c86;background:#f0f7f8;color:#365768;}
+.proposal-page .proposal-transition-limit{font-variant-numeric:tabular-nums;}
