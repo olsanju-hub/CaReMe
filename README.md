@@ -16,7 +16,7 @@ PWA de apoyo a la decisión clínica para Atención Primaria, centrada en el abo
 | Rama de trabajo vigente | `audit/ic-validacion-clinica` |
 | Integración | [PR #12 en borrador](https://github.com/olsanju-hub/CaReMe/pull/12), hacia la rama del prototipo |
 | Último corte de código y auditoría verificado íntegramente (CI) | `b9a2cb03807bafc0389c1a8dfc2dd44824a2f99b` |
-| Corte v0.102 implementado | `a27febed91df2a023afaa2eaa43ef960beaa1408` (CI posterior a corrección de versión pendiente de confirmar) |
+| Corte v0.102 implementado | `a27febed91df2a023afaa2eaa43ef960beaa1408` (check nativo success; navegador pendiente de confirmar) |
 | Aplicación publicada | [CaReMe](https://olsanju-hub.github.io/CaReMe/), sin modificar durante este trabajo |
 | Alcance actual | Prototipo educativo con casos ficticios; no validado para decisiones asistenciales |
 
@@ -140,7 +140,7 @@ Antes de modificar, comprobar rama y estado actual. Si existen cambios posterior
 | P4, seguridad | Alertas y cribado contextual ampliados; cobertura de interacciones y contraindicaciones incompleta |
 | P5, optimización | Reglas y referencias diferenciadas; faltan algoritmos y datos longitudinales específicos |
 | Pruebas del motor | v0.102: 103/103 en adaptador aislado. Comparación de 576 escenarios ficticios con v0.101: 576/576 iguales en decisiones, bloqueadores, alertas y valores, excluidos metadatos de presentación. No equivale a validación clínica |
-| Node.js / sintaxis | v0.101 [success](https://github.com/olsanju-hub/CaReMe/actions/runs/46124984535). v0.102 [118/119; fallo por expectativa fija v0.101](https://github.com/olsanju-hub/CaReMe/actions/runs/46154612992); corregida prueba de coherencia dinámica de BUILD/caché en a27febed; [repetición](https://github.com/olsanju-hub/CaReMe/actions/runs/46154675210) pendiente de confirmar |
+| Node.js / sintaxis | v0.101 [success](https://github.com/olsanju-hub/CaReMe/actions/runs/46124984535). v0.102 [118/119; fallo por expectativa fija v0.101](https://github.com/olsanju-hub/CaReMe/actions/runs/46154612992); corregida prueba de coherencia dinámica de BUILD/caché en a27febed; [repetición success](https://github.com/olsanju-hub/CaReMe/actions/runs/46154675210), 119/119 pruebas nativas y sintaxis |
 | Chromium + WebKit | v0.101 [success](https://github.com/olsanju-hub/CaReMe/actions/runs/46124984617). v0.102 [ejecución 46154612984](https://github.com/olsanju-hub/CaReMe/actions/runs/46154612984), pendiente de confirmar; se añadieron pruebas de alternativas, respuesta compartida, pauta actual y navegación a contexto |
 | Validación clínica independiente | Pendiente |
 | Publicación / integración | No autorizada en este corte; PR borrador |
@@ -172,7 +172,7 @@ Las entradas del 28/11/2026 reconstruyen el orden de las intervenciones document
 | 28/11/2026 · 08 | P4/P5 ampliados: interacciones CIMA, mantenimiento SRAA S4/S5, escalones condicionados, transición ARNI, riesgos contextuales e intolerancia | 102 pruebas aisladas; últimos cambios de motor y UI documentados en auditoría |
 | 28/11/2026 · 09 | P6: confirmación de check nativo y Chromium/WebKit, incluidos casos nuevos | b9a2cb03807bafc0389c1a8dfc2dd44824a2f99b; runs 46124984535 y 46124984617 success |
 | 28/11/2026 · 10 | Decisión de continuidad: retomar Tratamiento y terminar el asistente terapéutico. Crear README maestro con hoja de ruta, reglas y pendientes | Este documento; sin alterar la interfaz ni publicar cambios |
-| 28/11/2026 · 11 | Maqueta de propuesta terapéutica aprobada por el titular. Implementación v0.102: metadatos de agrupación desde motor, alternativas iSGLT2 y cribado común, tarjetas por pauta actual, acceso contextual, seguimiento y estilo perlado; actualización de caché PWA. No se modifican las decisiones clínicas | Motor 9131d809 / 8dd79daf; UI bdbc9fca / 47ad107e; CSS 046a24e3 / 664c8c0d; QA 9a1df533; tests 0dacd978 / a27febed. 103/103 pruebas aisladas y 576/576 escenarios de equivalencia; CI final pendiente de confirmar |
+| 28/11/2026 · 11 | Maqueta de propuesta terapéutica aprobada por el titular. Implementación v0.102: metadatos de agrupación desde motor, alternativas iSGLT2 y cribado común, tarjetas por pauta actual, acceso contextual, seguimiento y estilo perlado; actualización de caché PWA. No se modifican las decisiones clínicas | Motor 9131d809 / 8dd79daf; UI bdbc9fca / 47ad107e; CSS 046a24e3 / 664c8c0d; QA 9a1df533; tests 0dacd978 / a27febed. 103/103 pruebas aisladas y 576/576 escenarios de equivalencia; CI nativo 119/119 y sintaxis superados tras corregir comprobación de caché; Chromium/WebKit pendientes de confirmar |
 
 ## 9. Protocolo de actualización y relevo de chat
 
