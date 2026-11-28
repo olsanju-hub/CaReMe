@@ -434,3 +434,31 @@ test('ESC 2026 tabla de recomendaciones 5: IC-FEp y SRAA como opción IIb C',()=
  assert.ok(p.actions.some(a=>a.title.includes('valorar IECA, ARA-II o ARNI')&&a.detail.includes('IIb C')));
  assert.ok(p.actions.some(a=>a.title.includes('revisar elección de ARM')&&a.detail.includes('clase I A')));
 });
+
+test('ESC S4–S8: alertas de AINE, potasio y trimetoprim con tratamiento SRAA/ARM',()=>{
+ const pair=(a,b)=>{let c=addNamedMedication(createClinicalContext(),a);c=addNamedMedication(c,'other');return setMedicationField(c,'extra-2','name',b);};
+ for(const [a,b,id] of [['Enalapril','Ibuprofeno','ESC-NSAID'],['Candesartán','Cotrimoxazol','ESC-SRAA-TMP'],['Sacubitrilo/valsartán','Amilorida','ESC-SRAA-K'],['Espironolactona','Cloruro de potasio','ESC-MRA-K'],['Furosemida','Hidroclorotiazida','ESC-DIUR-COMB'],['Bisoprolol','Diltiazem','ESC-BB-NDHP']]){
+  assert.ok(medicationSafety(pair(a,b)).some(x=>x.id===id&&x.level==='amber'),id);
+  assert.ok(!medicationSafety(pair(a,'Fármaco desconocido')).some(x=>x.id===id),id);
+ }
+ assert.ok(!medicationSafety(pair('Enalapril','Ácido acetilsalicílico')).some(x=>x.id==='ESC-NSAID'));
+});
+test('ESC S6/S9: combinaciones de monitorización no equivalen a contraindicación',()=>{
+ let c=addNamedMedication(createClinicalContext(),'Dapagliflozina');c=addNamedMedication(c,'Furosemida');
+ assert.ok(medicationSafety(c).some(x=>x.id==='ESC-SGLT2-DIUR'&&x.level==='blue'));
+ c=addNamedMedication(c,'other');c=setMedicationField(c,'extra-3','name','Insulina glargina');
+ assert.ok(medicationSafety(c).some(x=>x.id==='ESC-SGLT2-HYPO'&&x.level==='blue'));
+ c=addNamedMedication(createClinicalContext(),'Bisoprolol');c=addNamedMedication(c,'other');c=setMedicationField(c,'extra-2','name','Digoxina');
+ assert.ok(medicationSafety(c).some(x=>x.id==='ESC-BB-RATE'&&x.level==='blue'));
+ c=setTreatmentValue(c,'hr','49');assert.ok(medicationSafety(c).some(x=>x.id==='ESC-BB-RATE'&&x.level==='amber'));assert.ok(medicationSafety(c).some(x=>x.id==='ESC-BB-HR'));
+ c=setTreatmentValue(c,'hr','50');assert.ok(!medicationSafety(c).some(x=>x.id==='ESC-BB-HR'));
+});
+test('ESC S8: triple bloqueo con espironolactona no pasa inadvertido',()=>{
+ let c=createClinicalContext();for(const d of ['Enalapril','Candesartán','Espironolactona'])c=addNamedMedication(c,d);
+ assert.ok(medicationSafety(c).some(x=>x.id==='ESC-TRIPLE-SRAA'&&x.level==='amber'));
+});
+test('Potasio crítico registrado no desaparece por falta de confirmación analítica',()=>{
+ let c=proposalFixture();c=setTreatmentValue(c,'potassium','6');
+ assert.equal(treatmentSafetyData(c).labsConfirmed,false);assert.equal(treatmentProposal(c).status,'urgent');
+ assert.equal(treatmentProposal(c).actions.length,0);
+});
