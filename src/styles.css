@@ -1209,3 +1209,12 @@ body:has(.pearl-home) #app {
 .proposal-page .proposal-transition-status.blocked{border-left-color:#a93c43;background:#fff2f2;color:#8a2632;}
 .proposal-page .proposal-transition-status.reference{border-left-color:#176c86;background:#f0f7f8;color:#365768;}
 .proposal-page .proposal-transition-limit{font-variant-numeric:tabular-nums;}
+
+/* v0.104: shared, dated renal assessment and regimen-specific trends. */
+.proposal-page .proposal-renal-shared{margin:9px 0;padding:10px 12px;}
+.proposal-page .proposal-renal-shared>summary{font-size:.83rem;color:#176c86;min-height:44px;font-weight:650;cursor:pointer;line-height:1.35;}
+.proposal-page .proposal-renal-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px 8px;align-items:end;}
+.proposal-page .proposal-renal-grid .proposal-transition-field{margin:4px 0;min-width:0;}
+.proposal-page .proposal-renal-grid input{min-width:0;max-width:100%;width:100%;font-size:.8rem;}
+.proposal-page .proposal-renal-grid .proposal-transition-field span{overflow-wrap:anywhere;line-height:1.3;}
+@media(max-width:350px){.proposal-page .proposal-renal-grid{grid-template-columns:minmax(0,1fr);}}
