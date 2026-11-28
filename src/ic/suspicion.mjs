@@ -859,6 +859,27 @@ export function medicationSafety(ctx){
  // Audit P0/P4: limited exact-name matching, not a medication dictionary.
  const namedAs=(aliases)=>entries.filter(x=>aliases.includes(normalizeMedication(namedMedication(x.row))));
  const tmp=namedAs(['trimetoprim','trimetoprima','cotrimoxazol','co-trimoxazol','trimetoprim/sulfametoxazol','trimetoprima/sulfametoxazol','sulfametoxazol/trimetoprim','sulfametoxazol/trimetoprima','septrin','septrin forte','soltrim']);
+ const escSupplement='https://doi.org/10.1093/eurheartj/ehag100';
+ const bb=family('bb'),sglt2=family('sglt2'),loop=family('diuretic'),raas=[...arni,...ieca,...ara];
+ const nsaid=namedAs(['ibuprofeno','naproxeno','diclofenaco','dexketoprofeno','ketoprofeno','indometacina','celecoxib','etoricoxib','meloxicam','piroxicam','aceclofenaco','ketorolaco']);
+ const kSparing=namedAs(['amilorida','triamtereno','hidroclorotiazida/amilorida','amilorida/hidroclorotiazida','furosemida/amilorida','amilorida/furosemida']);
+ const kSupp=namedAs(['cloruro de potasio','citrato de potasio','bicarbonato de potasio','suplemento de potasio','sal rica en potasio']);
+ const rateBlock=namedAs(['verapamilo','diltiazem']);
+ const otherRate=namedAs(['digoxina','amiodarona','ivabradina']);
+ const thiazide=namedAs(['hidroclorotiazida','clortalidona','indapamida','metolazona','bendroflumetiazida']);
+ const hypoglycemic=namedAs(['insulina','insulina glargina','insulina degludec','insulina detemir','insulina lispro','insulina aspart','insulina humana','gliclazida','glimepirida','glibenclamida','glipizida']);
+ const kidneyRisk=[...raas,...mra,...loop];
+ if(kidneyRisk.length&&nsaid.length)add('ESC-NSAID','amber','AINE y tratamiento de IC','ESC 2026, tablas S4, S5, S7 y S8: revisar necesidad del AINE; riesgo de deterioro renal, hiperpotasemia o menor respuesta diurética según el tratamiento. No se incluye AAS a dosis antiagregante en esta regla.',escSupplement,ids([...kidneyRisk,...nsaid]));
+ if(raas.length&&tmp.length)add('ESC-SRAA-TMP','amber','Inhibición SRAA + trimetoprim/cotrimoxazol','ESC 2026, S4–S5: riesgo de hiperpotasemia; revisar asociación, función renal y K.',escSupplement,ids([...raas,...tmp]));
+ if(raas.length&&(kSparing.length||kSupp.length))add('ESC-SRAA-K','amber','Inhibición SRAA + agente que eleva potasio','ESC 2026, S4–S5: comprobar necesidad, potasio y función renal; no suspender automáticamente.',escSupplement,ids([...raas,...kSparing,...kSupp]));
+ if(mra.length&&(kSparing.length||kSupp.length))add('ESC-MRA-K','amber','ARM + otro agente que eleva potasio','ESC 2026, S8: evitar otros ahorradores de potasio y revisar suplementos; comprobar contraindicaciones de la ficha específica y K/FG.',escSupplement,ids([...mra,...kSparing,...kSupp]));
+ if(ieca.length&&ara.length&&mra.length)add('ESC-TRIPLE-SRAA','amber','Triple bloqueo del SRAA','ESC 2026, S8: no se recomienda asociar IECA, ARA-II y ARM; revisar la combinación. La alerta específica de eplerenona prevalece si procede.',escSupplement,ids([...ieca,...ara,...mra]));
+ if(bb.length&&rateBlock.length)add('ESC-BB-NDHP','amber','Betabloqueante + verapamilo/diltiazem','ESC 2026, S6: riesgo de bradicardia o bloqueo AV; los calcioantagonistas no dihidropiridínicos pueden ser perjudiciales en IC-FEr. Revisar ECG, indicación y tratamiento.',escSupplement,ids([...bb,...rateBlock]));
+ if(bb.length&&otherRate.length)add('ESC-BB-RATE',d.values.hr!==null&&d.values.hr<50?'amber':'blue','Betabloqueante + otro cronotropo negativo','ESC 2026, S6: comprobar indicación, síntomas, frecuencia y conducción AV. La combinación puede ser pertinente en casos seleccionados; no implica incompatibilidad automática.',escSupplement,ids([...bb,...otherRate]));
+ if(sglt2.length&&(loop.length||thiazide.length))add('ESC-SGLT2-DIUR','blue','iSGLT2 + diurético: vigilar volemia','ESC 2026, S9: monitorizar congestión, depleción de volumen, PA y función renal; valorar dosis diurética según volemia. Combinación habitual, no contraindicación automática.',escSupplement,ids([...sglt2,...loop,...thiazide]));
+ if(sglt2.length&&hypoglycemic.length)add('ESC-SGLT2-HYPO','blue','iSGLT2 + tratamiento con riesgo de hipoglucemia','ESC 2026, S9: vigilar glucemia y revisar tratamiento antidiabético si procede; no reducir automáticamente insulina por riesgo de cetoacidosis.',escSupplement,ids([...sglt2,...hypoglycemic]));
+ if(loop.length&&thiazide.length)add('ESC-DIUR-COMB','amber','Diurético de asa + tiazida o afín','ESC 2026, S7: comprobar indicación, duración y monitorización de volemia, sodio, potasio y función renal. Puede ser apropiado ante resistencia diurética.',escSupplement,ids([...loop,...thiazide]));
+ if(bb.length&&d.values.hr!==null&&d.values.hr<50)add('ESC-BB-HR','amber','Betabloqueante: FC inferior a 50 lpm','ESC 2026, S6: valorar síntomas, ECG, conducción y otros cronotropos; no retirar bruscamente salvo necesidad clínica.',escSupplement,ids(bb));
  const spiro=entries.filter(x=>x.drug==='Espironolactona'),fin=entries.filter(x=>x.drug==='Finerenona'),epl=entries.filter(x=>x.drug==='Eplerenona');
  if(tmp.length&&spiro.length)add('SPI-TMP','amber','Espironolactona + trimetoprim/cotrimoxazol','Riesgo de hiperpotasemia clínicamente relevante. Revisar la asociación y comprobar potasio y función renal. No implica suspensión automática.','https://cima.aemps.es/cima/dochtml/ft/81033/FichaTecnica_81033.html',ids([...spiro,...tmp]));
  if(tmp.length&&fin.length)add('FIN-TMP','amber','Finerenona + trimetoprim/cotrimoxazol','Revisar potasio y necesidad de interrupción temporal según ficha técnica; no modificar automáticamente.',HF_MEDICATION_REFERENCE.Finerenona.source,ids([...fin,...tmp]));
@@ -907,7 +928,7 @@ export function treatmentProposal(ctx){
  const {sbp,hr,egfr,potassium}=d.values;
  const push=(kind,title,detail,check,source=HF_GUIDE)=>actions.push({kind,title,detail,check,source});
  if(r.urgent)urgent.push('La situación clínica registrada requiere valoración urgente.');
- if(d.labsConfirmed&&potassium>=6)urgent.push('Potasio ≥6 mmol/L: valoración clínica urgente, ECG y confirmación según contexto; no esperar a optimizar tratamiento.');
+ if(Number.isFinite(potassium)&&potassium>=6)urgent.push('Potasio registrado ≥6 mmol/L: valoración clínica urgente, ECG y confirmación según contexto, aunque falte marcar la confirmación analítica; no esperar a optimizar tratamiento.');
  if(alerts.some(a=>a.level==='red'))blockers.push('Resolver las alertas rojas y comprobar la medicación real.');
  if(alerts.some(a=>a.level==='amber'))blockers.push('Revisar las alertas de dosis, frecuencia o interacción antes de plantear cambios.');
  if(r.next.kind==='advanced')blockers.push('Valorar IC avanzada con el equipo especializado.');
@@ -918,7 +939,7 @@ export function treatmentProposal(ctx){
  if(hr!==null&&hr<60)blockers.push('FC inferior a 60 lpm: revisar ritmo, síntomas y fármacos cronotropos antes de intensificar.');
  if(d.labsConfirmed&&(potassium>=5.5||potassium<3.5))blockers.push('Potasio fuera del margen conservador del prototipo: revisar causas y tratamiento.');
  if(!m.reconciled)blockers.push('Confirmar lista completa, pautas y clasificación de los medicamentos; resolver duplicidades.');
- if(m.active.some(x=>x.drug==='other'||x.frequency==='other'||x.tolerance==='problem'))blockers.push('Revisión individual de pauta libre, medicamento no identificado o intolerancia registrada.');
+ if(m.active.some(x=>x.drug==='other'||x.frequency==='other'||x.tolerance==='problem'))blockers.push('Revisión individual de pauta libre, medicamento fuera del catálogo o intolerancia registrada; la cobertura de interacciones no es completa.');
  if(r.nyha==='IV')blockers.push('NYHA IV: evaluación especializada antes de la intensificación ambulatoria.');
  const result=(status)=>({status,profile:r,values:d.values,actions,blockers,urgent,alerts,source:HF_GUIDE});
  if(urgent.length||blockers.length)return result(urgent.length?'urgent':'review');
