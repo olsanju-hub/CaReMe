@@ -1353,7 +1353,7 @@ export function treatmentProposal(ctx){
   const eligible=['Dapagliflozina','Empagliflozina'].filter(drug=>egfr>=HF_TITRATION_REFERENCE[drug].minInitiationEgfr);
   for(const drug of eligible){
    const ref=HF_TITRATION_REFERENCE[drug];
-   push('start','Valorar '+drug,'10 mg cada 24 h como dosis habitual de IC; opciones alternativas, no asociar dos iSGLT2.','Antes de iniciar: '+ref.checks+' '+sglt2Interruption,ref.source,drug,{section:'complete',alternativeGroup:'sglt2',label:'Valorar inicio'});
+   push('start','Valorar '+drug,'10 mg cada 24 h como dosis habitual de IC; opciones alternativas, no asociar dos iSGLT2.','Antes de iniciar: '+ref.checks+' '+sglt2Interruption,ref.source,drug,{section:'complete',alternativeGroup:'sglt2',label:'Valorar inicio',referenceDose:'10 mg/24 h'});
   }
   if(!eligible.length)push('review','iSGLT2: revisar FG','No se ofrece inicio con FG <20; no implica retirar tratamiento previamente establecido.','Revisar indicación y evolución renal.',refDrug('Empagliflozina'),null,{section:'complete',label:'Revisar elegibilidad'});
  }else if(sg){
@@ -1361,6 +1361,6 @@ export function treatmentProposal(ctx){
   push('review','iSGLT2 registrado: '+sg.drug,'No precisa titulación habitual para IC. Diferenciar continuidad de inicio; el descenso aislado de FG no justifica por sí solo la retirada.','Confirmar indicación, dosis, función renal, volemia, tolerancia y causa de deterioro. '+sglt2Interruption,ref?.source||refDrug(sg.drug),null,{section:'optimize',medicationId:sg.id,label:'Revisar continuidad'});
  }
  if(loop)push('review','Revisar necesidad de diurético de asa','Paciente sin congestión según datos registrados. Valorar la menor dosis eficaz, sin reducción automática.','Comprobar peso, síntomas, PA, función renal, electrolitos y evolución de la congestión.',refDrug(loop.drug),null,{section:'optimize',medicationId:loop.id,label:'Revisar necesidad y dosis'});
- push('follow','Seguimiento tras cambios','ESC 2026 recomienda reevaluar titulación de FMT al menos cada 1–2 semanas según clínica, constantes y analítica (I C); el intervalo de incremento efectivo depende de la ficha y tolerancia.','Registrar dosis máxima tolerada, motivo de no iniciar o titular, adherencia y fecha de reevaluación; vigilar descompensación. No acelerar un escalón por encima de la pauta verificada.',HF_GUIDE);
+ push('follow','Seguimiento tras cambios','ESC 2026 recomienda reevaluar titulación de FMT al menos cada 1–2 semanas según clínica, constantes y analítica (I C); el intervalo de incremento efectivo depende de la ficha y tolerancia.','Registrar dosis máxima tolerada, motivo de no iniciar o titular, adherencia y fecha de reevaluación; vigilar descompensación. No acelerar un escalón por encima de la pauta verificada.',HF_GUIDE,null,{section:'follow',monitoring:['Presión arterial','Frecuencia cardiaca','Función renal','Potasio','Síntomas','Congestión']});
  return result('conditional');
 }
