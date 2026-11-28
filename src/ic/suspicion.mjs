@@ -734,18 +734,18 @@ export function setMedicationField(ctx,id,key,raw){
  }
  const groups=group?{...a.groups,[id]:m}:a.groups;
  const additional=group?a.additional:a.additional.map((x,i)=>i===index?m:x);
- return {...ctx,medicationAssessment:{...a,groups,additional,reviewed:false,externalReview:null},updatedAt:new Date().toISOString()};
+ return {...ctx,arniTransitionPlan:null,medicationAssessment:{...a,groups,additional,reviewed:false,externalReview:null},updatedAt:new Date().toISOString()};
 }
 export function addMedication(ctx){
  const a=medicationState(ctx);
  if(a.additional.length>=30)return ctx;
  const id='extra-'+a.nextId;
- return {...ctx,medicationAssessment:{...a,additional:[...a.additional,{...newMedication(),id}],nextId:a.nextId+1,reviewed:false,externalReview:null},updatedAt:new Date().toISOString()};
+ return {...ctx,arniTransitionPlan:null,medicationAssessment:{...a,additional:[...a.additional,{...newMedication(),id}],nextId:a.nextId+1,reviewed:false,externalReview:null},updatedAt:new Date().toISOString()};
 }
 export function removeMedication(ctx,id){
  const a=medicationState(ctx);
  if(!a.additional.some(m=>m.id===id))return ctx;
- return {...ctx,medicationAssessment:{...a,additional:a.additional.filter(m=>m.id!==id),reviewed:false,externalReview:null},updatedAt:new Date().toISOString()};
+ return {...ctx,arniTransitionPlan:null,medicationAssessment:{...a,additional:a.additional.filter(m=>m.id!==id),reviewed:false,externalReview:null},updatedAt:new Date().toISOString()};
 }
 export function medicationSummary(ctx){
  const a=medicationState(ctx);
@@ -1182,6 +1182,40 @@ export function arniTransitionReference({from,to,elapsedHours,overlap,angioedema
  if(overlap!==false||angioedema!=='no')return {status:'missing',detail:'Confirmar ausencia de solapamiento y antecedente de angioedema.',source};
  return {status:'reference',detail:'Requisito de transición comprobado. Aún se deben verificar indicación, tolerancia, PA, función renal, K y ficha antes del cambio.',source};
 }
+// CIMA Kern Pharma 90716/90717, sections 4.2–4.5: time between
+// actual or planned last dose and planned first dose, not elapsed time since
+// this screen was opened. A plan does not establish that a drug was withdrawn.
+function transitionInstant(value){
+ if(typeof value!=='string'||!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(value))return null;
+ const n=Date.parse(value);return Number.isFinite(n)&&new Date(n).toISOString()===value?n:null;
+}
+export function setArniTransitionField(ctx,id,key,value){
+ const row=medicationSummary(ctx).active.find(x=>x.id===id);
+ if(!row||!['IECA','ARA-II'].includes(medicationFamilyLabel(row)))return ctx;
+ if(!['lastDose','firstDose','noOverlap'].includes(key))return ctx;
+ const old=ctx.arniTransitionPlan?.id===id?ctx.arniTransitionPlan:{id,lastDose:'',firstDose:'',noOverlap:'unknown'};
+ const next={...old,[key]:key==='noOverlap'?(['yes','no'].includes(value)?value:'unknown'):(transitionInstant(value)!==null?value:'')};
+ return {...ctx,arniTransitionPlan:next,updatedAt:new Date().toISOString()};
+}
+export function arniTransitionPlanReference(ctx,row){
+ const from=medicationFamilyLabel(row);
+ if(!['IECA','ARA-II'].includes(from))return null;
+ const data=ctx.arniTransitionPlan?.id===row.id?ctx.arniTransitionPlan:{id:row.id,lastDose:'',firstDose:'',noOverlap:'unknown'};
+ const last=transitionInstant(data.lastDose),first=transitionInstant(data.firstDose);
+ const elapsed=last!==null&&first!==null?(first-last)/3600000:null;
+ const limit=from==='IECA'&&last!==null?new Date(last+36*3600000).toISOString():null;
+ const source=refDrug('Sacubitrilo/valsartán'),d=treatmentSafetyData(ctx),screen=candidateRiskScreen(ctx,'Sacubitrilo/valsartán');
+ const make=(status,detail)=>({id:row.id,from,data,elapsed,limit,status,detail,source});
+ if(d.values.sbp!==null&&d.values.sbp<100||Number.isFinite(d.values.potassium)&&d.values.potassium>5.4)return make('blocked','No plantear inicio de ARNI con PAS <100 mmHg o K >5,4 mmol/L; reevaluar los datos.');
+ if(screen.positives.length)return make('blocked','Revisar el riesgo registrado antes de plantear la sustitución.');
+ if(data.noOverlap==='no'||elapsed!==null&&elapsed<=0)return make('blocked','No planificar solapamiento ni una primera dosis anterior o simultánea a la última del tratamiento previo.');
+ if(from==='IECA'&&elapsed!==null&&elapsed<36)return make('blocked','El intervalo planificado es inferior a 36 horas; no cumple el requisito de separación IECA/ARNI.');
+ if(last===null||first===null)return make('missing',from==='IECA'?'Registrar la última dosis y la primera prevista para comprobar las 36 horas.':'Registrar ambas dosis para comprobar el orden temporal sin solapamiento.');
+ const ref=arniTransitionReference({from,to:'ARNI',elapsedHours:elapsed,overlap:data.noOverlap==='yes'?false:undefined,angioedema:ctx.treatmentAssessment?.risks?.angioedema});
+ if(ref.status!=='reference')return make(ref.status,ref.detail);
+ if(screen.pending.length)return make('missing','El intervalo y el plan sin solapamiento están comprobados; quedan riesgos del candidato por revisar.');
+ return make('reference','El intervalo planificado cumple el requisito temporal registrado. No confirma retirada efectiva, indicación, dosis inicial ni elegibilidad clínica; verificar la ficha y las demás condiciones antes del cambio.');
+}
 const sglt2Interruption='Ante sospecha/diagnóstico de cetoacidosis, interrumpir y evaluar de inmediato; no reiniciar tras CAD salvo desencadenante identificado y resuelto. En cirugía mayor o enfermedad aguda grave hospitalizada, interrupción temporal, cetonas preferentemente en sangre y reinicio solo cuando sean normales y el paciente esté estable. La duración de la interrupción no basta.';
 
 // Targeted problem solving; source ESC S4–S9 or referenced CIMA. Does not
@@ -1314,7 +1348,8 @@ export function treatmentProposal(ctx){
   }else if(arni&&['IECA','ARA-II'].includes(medicationFamilyLabel(arni))){
    const step=raasStepReference(arni,ctx);
    push('review','Revisar tratamiento actual: '+arni.drug,step?.detail||'Valorar dosis máxima tolerada y alternativa según indicación. No se presupone que debe sustituirse siempre.',HF_TITRATION_REFERENCE[arni.drug]?.checks||'Revisar presentación y ficha técnica.',refDrug(arni.drug),null,{section:'optimize',medicationId:arni.id,label:step?.status==='reference'?'Escalón de referencia':'Revisar antes de titular',showDetail:step?.status==='reference'});
-   push('review','Valorar sustitución por sacubitrilo/valsartán','Si la indicación y tolerancia lo permiten, considerar transición desde '+arni.drug+'. No asociarlos ni ejecutar el cambio sin comprobar elegibilidad.','Si procede desde IECA, respetar ≥36 h; desde ARA-II, evitar solapamiento. Verificar dosis anterior, PA, FG, K, angioedema y ficha técnica para seleccionar dosis de inicio.',refDrug('Sacubitrilo/valsartán'),null,{section:'optimize',medicationId:arni.id,label:'Valorar sustitución'});
+   const transition=arniTransitionPlanReference(ctx,arni);
+   push('review','Valorar sustitución por sacubitrilo/valsartán',transition.detail,'Si procede, seleccionar dosis inicial según tratamiento anterior, PA, función renal y hepática, potasio, volemia, indicación e interacciones. No interrumpir ni iniciar automáticamente; verificar ausencia real de solapamiento y confirmar tiempos antes de actuar.',transition.source,'Sacubitrilo/valsartán',{section:'optimize',medicationId:arni.id,label:'Valorar sustitución por ARNI',showDetail:true,transition});
   }
   if(betaCaution&&(canStart('bb')||bb))push('review','Betabloqueante: revisar frecuencia cardiaca','FC 50–59 lpm: el prototipo no propone inicio ni aumento de betabloqueante sin valorar síntomas y ECG. No es una contraindicación universal ni impide por sí sola valorar otros tratamientos.','Comprobar ritmo, conducción, cronotropos y tolerancia; no retirar bruscamente.',HF_GUIDE,null,{section:bb?'optimize':'complete',medicationId:bb?.id,label:'Revisar frecuencia cardiaca'});
   else if(canStart('bb'))push('start','Valorar bisoprolol','Inicio de referencia 1,25 mg cada 24 h; objetivo máximo 10 mg/día si tolera.',HF_TITRATION_REFERENCE.Bisoprolol.checks+' Verificar contraindicaciones de ficha técnica.',refDrug('Bisoprolol'),'Bisoprolol');
