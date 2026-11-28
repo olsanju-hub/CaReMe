@@ -2,7 +2,7 @@
 
 PWA de apoyo a la decisión clínica para Atención Primaria, centrada en el abordaje cardiorrenal-hepatometabólico. Se conserva la portada aprobada y se reconstruyen los módulos clínicos por patologías. La primera patología es insuficiencia cardiaca (IC).
 
-**Actualizado: 28/11/2026. Punto de reanudación: IC → Tratamiento → Asistente terapéutico → paso 3, Propuesta de tratamiento.**
+**Actualizado: 28/11/2026. Punto de reanudación: IC → Tratamiento → Asistente terapéutico → paso 3, Propuesta de tratamiento (v0.102 implementada; verificar CI y revisar funcionamiento antes de cierre).**
 
 > Este README es el documento operativo vivo del proyecto. No es una guía clínica ni una certificación. Ante un nuevo chat, leerlo antes de modificar código. El historial y las pruebas permiten continuar sin repetir una auditoría general. Solo reabrir comprobaciones concretas cuando exista una nueva fuente, una modificación de reglas, un fallo o una discrepancia relevante.
 
@@ -11,11 +11,12 @@ PWA de apoyo a la decisión clínica para Atención Primaria, centrada en el abo
 | Elemento | Estado |
 | --- | --- |
 | Repositorio | [olsanju-hub/CaReMe](https://github.com/olsanju-hub/CaReMe) |
-| Versión de referencia de interfaz | v0.101 |
+| Versión de interfaz en rama de trabajo | v0.102 (base v0.101) |
 | Rama del prototipo | `feat/prototipo-interfaz` |
 | Rama de trabajo vigente | `audit/ic-validacion-clinica` |
 | Integración | [PR #12 en borrador](https://github.com/olsanju-hub/CaReMe/pull/12), hacia la rama del prototipo |
-| Último corte de código y auditoría verificado | `b9a2cb03807bafc0389c1a8dfc2dd44824a2f99b` |
+| Último corte de código y auditoría verificado íntegramente (CI) | `b9a2cb03807bafc0389c1a8dfc2dd44824a2f99b` |
+| Corte v0.102 implementado | `a27febed91df2a023afaa2eaa43ef960beaa1408` (CI posterior a corrección de versión pendiente de confirmar) |
 | Aplicación publicada | [CaReMe](https://olsanju-hub.github.io/CaReMe/), sin modificar durante este trabajo |
 | Alcance actual | Prototipo educativo con casos ficticios; no validado para decisiones asistenciales |
 
@@ -59,7 +60,7 @@ La decisión operativa actual es **continuar el desarrollo del asistente terapé
 | IC: Tratamiento, portada | Perfil recuperado y accesos directos implementados |
 | IC: Tratamiento, asistente, paso 1 | Perfil clínico y seguridad: PA, FC, FG y K; reutilización de datos y comprobación de vigencia |
 | IC: Tratamiento, asistente, paso 2 | Medicación actual por familias, dosis/frecuencia, conciliación y alertas; pantalla de registro aprobada en su estructura, preservar |
-| IC: Tratamiento, asistente, paso 3 | Propuesta condicionada implementada; **pantalla y flujo por terminar** |
+| IC: Tratamiento, asistente, paso 3 | Maqueta aprobada implementada en v0.102; propuesta condicionada por actuaciones, alternativas iSGLT2 agrupadas, pauta actual recuperada, requisitos contextuales y seguimiento. Verificar nueva interfaz y completar integración clínica pendiente antes de cierre funcional |
 | IC: accesos directos de Tratamiento | IC-FEr, IC-FEp, FEVI mejorada, diuréticos, titulación y ajustes, seguridad farmacológica: todavía pendientes como apartados de consulta independientes |
 | IC: Optimización | Pendiente como módulo independiente; parte de la lógica ya reside en el motor terapéutico |
 | IC: Seguimiento / Comorbilidades / Derivación / IC avanzada | Pendientes |
@@ -71,16 +72,16 @@ La decisión operativa actual es **continuar el desarrollo del asistente terapé
 
 Ruta: `#ic/tratamiento/asistente/propuesta`. Función de interfaz: `therapyStepThree()` en `src/app.mjs`. Motor: `treatmentProposal(ctx)` en `src/ic/suspicion.mjs`.
 
-El asistente tiene tres pasos: (1) perfil y seguridad; (2) medicación actual; (3) propuesta de tratamiento. Los dos primeros existen. No volver a diseñarlos desde cero. El tercer paso ya presenta acciones agrupadas, bloqueadores, alertas, requisitos y fuentes. La tarea inmediata es terminar y simplificar **la propuesta**, no crear un cuarto formulario general.
+El asistente tiene tres pasos: (1) perfil y seguridad; (2) medicación actual; (3) propuesta de tratamiento. Los dos primeros existen. No volver a diseñarlos desde cero. El titular aprobó la maqueta de paso 3 y se implementó en v0.102: perfil compacto con constantes y unidades; tratamiento por completar (opciones iSGLT2 mutuamente excluyentes, comprobaciones compartidas); optimización agrupada por pauta actual; seguimiento y evidencia desplegable. Las alertas accionables permanecen visibles y el caso urgente tiene prioridad. Las secciones vacías se omiten. Desde la propuesta se puede abrir directamente la pauta y su contexto existente en el paso 2, sin nuevo formulario. No interpretar ausencia de actuación como recomendación de mantenimiento.
+
+La tarea inmediata pasa de diseñar la pantalla a **verificar v0.102 y terminar su funcionamiento**.
 
 ### Siguiente intervención, en orden
 
-1. Abrir la propuesta con casos ficticios representativos (IC-FEr, FEVI 41–49 %, IC-FEp, FEVI mejorada, medicación incompleta y situación de alarma).
-2. Revisar la distribución visual de la salida: perfil recuperado compacto, prioridad de seguridad, actuaciones concretas por fármaco, seguimiento. Evitar duplicidades entre los avisos del motor y los de la interfaz. Mostrar el motivo clínico de una acción solo cuando sea útil.
-3. Proponer un diseño de la pantalla de resultado y validarlo con el titular antes de alterar su estructura definitiva. Mantener la estética y navegación aprobadas.
-4. Vincular cada acción con los requisitos que realmente faltan, reutilizando lo registrado. Mostrar esos datos de manera progresiva y únicamente en el contexto de la acción. Mantener advertencia de alcance parcial, sin ocultar alertas relevantes.
-5. Completar en el motor los casos que todavía devuelven referencias condicionadas por falta de algoritmo o de datos. En especial, enlazar transición IECA/ARNI y el registro longitudinal necesario, ajustes que dependen de aclaramiento y contraindicaciones de la presentación. No ampliar catálogo sin verificar fuentes.
-6. Verificar los escenarios positivos, negativos, límites, privacidad y regresiones. Actualizar este README y el registro clínico técnico. Cerrar el asistente funcional solo cuando se hayan satisfecho sus criterios de aceptación; no confundirlo con autorización de uso clínico.
+1. Confirmar CI nativo y Chromium/WebKit del corte v0.102; si falla, corregir únicamente el motivo concreto y documentar el resultado. Revisar la interfaz implementada con casos ficticios representativos (IC-FEr, FEVI 41–49 %, IC-FEp, FEVI mejorada, medicación incompleta y situación de alarma).
+2. Valorar con el titular la pantalla implementada, preservando la distribución aprobada. Comprobar especialmente lectura móvil, alternativas de iSGLT2 excluyentes, pauta actual, acceso directo al contexto de un medicamento y ausencia de actuaciones en urgencia. No volver a plantear la maqueta desde cero.
+3. Completar en el motor los casos que todavía devuelven referencias condicionadas por falta de algoritmo o de datos, vinculando cada actuación a sus requisitos pertinentes. En especial, enlazar transición IECA/ARNI y el registro longitudinal necesario, ajustes que dependen de aclaramiento y contraindicaciones de la presentación. No ampliar catálogo sin verificar fuentes.
+4. Verificar escenarios positivos, negativos, límites, privacidad y regresiones. Actualizar README y registro clínico técnico. Cerrar el asistente funcional solo al satisfacer criterios de aceptación; no confundirlo con autorización de uso clínico.
 
 Después, desarrollar los apartados de consulta directa de Tratamiento, reutilizando el mismo motor. El orden de esas pantallas y de los módulos posteriores es una propuesta de continuidad, no una aprobación anticipada del diseño: mantener desarrollo secuencial y acordar cada nuevo apartado con el titular.
 
@@ -129,7 +130,7 @@ Antes de modificar, comprobar rama y estado actual. Si existen cambios posterior
 
 ## 7. Validación y pendientes técnicos/clínicos
 
-Último corte de código comprobado: `b9a2cb03807bafc0389c1a8dfc2dd44824a2f99b`.
+Último corte con CI integral confirmado: `b9a2cb03807bafc0389c1a8dfc2dd44824a2f99b` (v0.101). La revisión v0.102 está implementada, con pruebas actualizadas. No atribuirle el CI de v0.101.
 
 | Control | Resultado al 28/11/2026 |
 | --- | --- |
@@ -138,9 +139,9 @@ Antes de modificar, comprobar rama y estado actual. Si existen cambios posterior
 | P3, farmacología | 16/16 principios activos del catálogo con presentación de referencia; cobertura no exhaustiva |
 | P4, seguridad | Alertas y cribado contextual ampliados; cobertura de interacciones y contraindicaciones incompleta |
 | P5, optimización | Reglas y referencias diferenciadas; faltan algoritmos y datos longitudinales específicos |
-| Pruebas del motor | 102/102 en adaptador aislado; ejecución nativa de check de CI superada |
-| Node.js / sintaxis | [Success, run 46124984535](https://github.com/olsanju-hub/CaReMe/actions/runs/46124984535) |
-| Chromium + WebKit | [Success, run 46124984617](https://github.com/olsanju-hub/CaReMe/actions/runs/46124984617), incluidos escenarios nuevos de riesgos contextuales |
+| Pruebas del motor | v0.102: 103/103 en adaptador aislado. Comparación de 576 escenarios ficticios con v0.101: 576/576 iguales en decisiones, bloqueadores, alertas y valores, excluidos metadatos de presentación. No equivale a validación clínica |
+| Node.js / sintaxis | v0.101 [success](https://github.com/olsanju-hub/CaReMe/actions/runs/46124984535). v0.102 [118/119; fallo por expectativa fija v0.101](https://github.com/olsanju-hub/CaReMe/actions/runs/46154612992); corregida prueba de coherencia dinámica de BUILD/caché en a27febed; [repetición](https://github.com/olsanju-hub/CaReMe/actions/runs/46154675210) pendiente de confirmar |
+| Chromium + WebKit | v0.101 [success](https://github.com/olsanju-hub/CaReMe/actions/runs/46124984617). v0.102 [ejecución 46154612984](https://github.com/olsanju-hub/CaReMe/actions/runs/46154612984), pendiente de confirmar; se añadieron pruebas de alternativas, respuesta compartida, pauta actual y navegación a contexto |
 | Validación clínica independiente | Pendiente |
 | Publicación / integración | No autorizada en este corte; PR borrador |
 
@@ -171,6 +172,7 @@ Las entradas del 28/11/2026 reconstruyen el orden de las intervenciones document
 | 28/11/2026 · 08 | P4/P5 ampliados: interacciones CIMA, mantenimiento SRAA S4/S5, escalones condicionados, transición ARNI, riesgos contextuales e intolerancia | 102 pruebas aisladas; últimos cambios de motor y UI documentados en auditoría |
 | 28/11/2026 · 09 | P6: confirmación de check nativo y Chromium/WebKit, incluidos casos nuevos | b9a2cb03807bafc0389c1a8dfc2dd44824a2f99b; runs 46124984535 y 46124984617 success |
 | 28/11/2026 · 10 | Decisión de continuidad: retomar Tratamiento y terminar el asistente terapéutico. Crear README maestro con hoja de ruta, reglas y pendientes | Este documento; sin alterar la interfaz ni publicar cambios |
+| 28/11/2026 · 11 | Maqueta de propuesta terapéutica aprobada por el titular. Implementación v0.102: metadatos de agrupación desde motor, alternativas iSGLT2 y cribado común, tarjetas por pauta actual, acceso contextual, seguimiento y estilo perlado; actualización de caché PWA. No se modifican las decisiones clínicas | Motor 9131d809 / 8dd79daf; UI bdbc9fca / 47ad107e; CSS 046a24e3 / 664c8c0d; QA 9a1df533; tests 0dacd978 / a27febed. 103/103 pruebas aisladas y 576/576 escenarios de equivalencia; CI final pendiente de confirmar |
 
 ## 9. Protocolo de actualización y relevo de chat
 
@@ -183,4 +185,4 @@ Al terminar cada intervención que cambie el proyecto:
 5. Si surge un impedimento, consignar el dato o acción necesarios para resolverlo. No prometer ejecución de fondo sin una tarea activa verificable.
 6. Dejar una instrucción concreta de continuidad que no dependa de la memoria del chat. Una nueva conversación debe seguir ese punto, no reiniciar auditorías ni volver a pedir decisiones ya registradas.
 
-**Instrucción de continuidad vigente:** continuar en la rama `audit/ic-validacion-clinica`, abrir IC → Tratamiento → Asistente terapéutico → Propuesta de tratamiento, revisar su interfaz y terminar ese paso sin trasladar la complejidad del motor al médico. No tocar otras pantallas aprobadas, no fusionar ni publicar. Actualizar README al finalizar cada bloque.
+**Instrucción de continuidad vigente:** continuar en `audit/ic-validacion-clinica` sobre v0.102. La distribución del paso 3 está aprobada e implementada. Confirmar los checks de la revisión actual y revisar la pantalla con el titular; terminar los requisitos funcionales pendientes del asistente terapéutico. No repetir el diseño ni trasladar la complejidad del motor al médico. No tocar otras pantallas aprobadas, no fusionar ni publicar. Actualizar README al finalizar cada bloque.
