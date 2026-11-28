@@ -345,6 +345,35 @@ try{
     await nyp.screenshot({path:'qa-results/'+name+'-classification-summary.png',fullPage:true});
     await nyp.locator('.classification-summary-page .sus-result-button[data-section="tratamiento"]').click();await nyp.getByRole('heading',{name:'Tratamiento',exact:true}).waitFor();
     assert.match(await nyp.locator('.treatment-profile').innerText(),/37 %/);assert.match(await nyp.locator('.treatment-profile').innerText(),/Compensada/);
+    // Same fictional case; verify progressive disclosure and candidate-specific safety.
+    await nyp.evaluate(()=>{location.hash='ic/clasificacion/nyha';});
+    await nyp.getByRole('heading',{name:'Clase funcional',exact:true}).waitFor();await nyp.locator('[data-nyha="II"]').check();
+    await nyp.evaluate(()=>{location.hash='ic/tratamiento/asistente';});
+    await nyp.getByRole('heading',{name:'Asistente terapéutico',exact:true}).waitFor();
+    for(const [k,v] of [['sbp','118'],['dbp','72'],['hr','76'],['egfr','65'],['potassium','4,3']]){await nyp.locator('[data-therapy-input="'+k+'"]').fill(v);await nyp.locator('[data-therapy-input="'+k+'"]').press('Tab');}
+    await nyp.locator('[data-therapy-confirm]').check();await nyp.locator('[data-action="therapy-next"]').click();
+    await nyp.getByRole('heading',{name:'Medicación actual',exact:true}).waitFor();
+    await nyp.locator('[data-med-confirm]').check();await nyp.locator('[data-action="therapy-proposal"]').click();
+    await nyp.getByRole('heading',{name:'Propuesta de tratamiento',exact:true}).waitFor();
+    assert.equal(await nyp.locator('[data-action="therapy-risk"]:visible').count(),0);
+    const beta=nyp.locator('[data-panel="proposal-Bisoprolol"]');
+    await beta.locator(':scope > summary').click();await beta.locator('[data-risk-key="severeAsthma"][data-risk-value="yes"]').click();
+    assert.match(await beta.locator('xpath=..').innerText(),/No proponer inicio.*Asma grave/);
+    await beta.locator('[data-risk-key="severeAsthma"][data-risk-value="no"]').click();
+    assert.match(await beta.locator('xpath=..').innerText(),/1,25 mg cada 24 h/);
+    const dapa=nyp.locator('[data-panel="proposal-Dapagliflozina"]');
+    await dapa.locator(':scope > summary').click();await dapa.locator('[data-risk-key="type1"][data-risk-value="yes"]').click();
+    assert.match(await dapa.locator('xpath=..').innerText(),/No proponer inicio.*Diabetes tipo 1/);
+    const empa=nyp.locator('[data-panel="proposal-Empagliflozina"]');
+    assert.match(await empa.locator('xpath=..').innerText(),/No proponer inicio.*Diabetes tipo 1/);
+    await dapa.locator('[data-risk-key="ketoacidosis"][data-risk-value="yes"]').click();
+    await nyp.getByRole('heading',{name:'Prioridad urgente',exact:true}).waitFor();assert.equal(await nyp.locator('.proposal-action').count(),0);
+    await nyp.getByRole('button',{name:'Corregir registro de sospecha de cetoacidosis ›'}).click();
+    assert.equal(await nyp.getByRole('heading',{name:'Prioridad urgente',exact:true}).count(),0);
+    assert.ok(await nyp.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'Propuesta contextual sin desbordamiento');
+    await nyp.screenshot({path:'qa-results/'+name+'-candidate-safety.png',fullPage:true});
+    await nyp.evaluate(()=>{location.hash='ic/tratamiento';});
+    await nyp.getByRole('heading',{name:'Tratamiento',exact:true}).waitFor();
     await nyp.locator('.treatment-profile [data-action="classification-summary"]').click();await nyp.getByRole('heading',{name:'Conclusión clínica',exact:true}).waitFor();
     await nyp.locator('.classification-summary-page .ic-back').click();await nyp.getByRole('heading',{name:'Clasificación',exact:true}).waitFor();
     await nyp.locator('[data-action="classification-section"][data-section="situacion"]').click();await nyp.getByRole('heading',{name:'Situación clínica',exact:true}).waitFor();
