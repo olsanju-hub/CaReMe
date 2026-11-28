@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {GROUPS,createClinicalContext,updateFinding,evaluateSuspicion,setGroupReviewed,isGroupReviewed,toggleFinding,setEvaluationReviewed,isEvaluationReviewed,diagnosticNext,diagnosticAction,setStudyResult,investigationPlan,interpretSuspicion,CLINICAL_DIMENSIONS,labPlan,setPeptide,interpretPeptide,peptideFactors,ECHO_FINDINGS,ECHO_NUMERIC,setEcho,interpretEcho,setStageAssessment,interpretStage,setPhenotypeAssessment,interpretPhenotype,NYHA_OPTIONS,setNyha,interpretNyha,SITUATION_QUESTIONS,setSituation,interpretSituation,classificationSummary,TREATMENT_VITALS,setTreatmentValue,confirmTreatmentLabs,treatmentSafetyData,MEDICATION_GROUPS,setMedicationField,addMedication,removeMedication,medicationSummary,confirmMedicationReview,MEDICATION_QUICK_DOSES,medicationEntryComplete,setMedicationQuickDose,MEDICATION_FAMILIES,medicationFamilyLabel,addNamedMedication,deleteRecordedMedication,medicationFrequencyOptions,medicationSafety,HF_MEDICATION_REFERENCE,treatmentProposal,HF_TITRATION_REFERENCE,betaBlockerReferenceStep,armPotassiumReference,echoSupportCriteria,confirmExternalMedicationReview,setAbsenceReason,raasMaintenanceReference,raasStepReference,arniTransitionReference,setTherapyRisk,candidateRiskScreen,medicationProblemReference,medicationProblemOptions,setArniTransitionField,arniTransitionPlanReference} from '../src/ic/suspicion.mjs';
+import {GROUPS,createClinicalContext,updateFinding,evaluateSuspicion,setGroupReviewed,isGroupReviewed,toggleFinding,setEvaluationReviewed,isEvaluationReviewed,diagnosticNext,diagnosticAction,setStudyResult,investigationPlan,interpretSuspicion,CLINICAL_DIMENSIONS,labPlan,setPeptide,interpretPeptide,peptideFactors,ECHO_FINDINGS,ECHO_NUMERIC,setEcho,interpretEcho,setStageAssessment,interpretStage,setPhenotypeAssessment,interpretPhenotype,NYHA_OPTIONS,setNyha,interpretNyha,SITUATION_QUESTIONS,setSituation,interpretSituation,classificationSummary,TREATMENT_VITALS,setTreatmentValue,confirmTreatmentLabs,treatmentSafetyData,MEDICATION_GROUPS,setMedicationField,addMedication,removeMedication,medicationSummary,confirmMedicationReview,MEDICATION_QUICK_DOSES,medicationEntryComplete,setMedicationQuickDose,MEDICATION_FAMILIES,medicationFamilyLabel,addNamedMedication,deleteRecordedMedication,medicationFrequencyOptions,medicationSafety,HF_MEDICATION_REFERENCE,treatmentProposal,HF_TITRATION_REFERENCE,betaBlockerReferenceStep,armPotassiumReference,echoSupportCriteria,confirmExternalMedicationReview,setAbsenceReason,raasMaintenanceReference,raasStepReference,arniTransitionReference,setTherapyRisk,candidateRiskScreen,medicationProblemReference,medicationProblemOptions,setArniTransitionField,arniTransitionPlanReference,setRenalContext,confirmRenalContext,renalContext,renalTrendReference,creatinineClearanceReference} from '../src/ic/suspicion.mjs';
 const allNo=()=>({findings:{...Object.fromEntries(GROUPS.flatMap(g=>g.fields.map(([id])=>[id,'no']))),vitalsReviewed:'yes'}});
 const result=(c)=>evaluateSuspicion(c).id;
 test('Datos ausentes no son negativos',()=>assert.equal(result(createClinicalContext()),'IC-SUS-03'));
@@ -628,13 +628,14 @@ test('P4 diuréticos: electrolitos registrados y presión arterial sin inferir v
 
 test('P5: escalón SRAA exige datos de pauta, presentación y evolución renal',()=>{
  let ctx=proposalFixture();
- const row={drug:'Candesartán',dose:'4',frequency:'24',product:'Candesartán STADA',indication:'hf',tolerance:'well',doseDays:'14',priorEgfr:'60'};
+ ctx=setRenalContext(ctx,'egfrDate','2026-01-02');ctx=setRenalContext(ctx,'potassiumDate','2026-01-02');ctx=setRenalContext(ctx,'stable','yes');ctx=confirmRenalContext(ctx,true);ctx=confirmTreatmentLabs(ctx,true);
+ const row={drug:'Candesartán',dose:'4',frequency:'24',product:'Candesartán STADA',indication:'hf',tolerance:'well',doseDays:'14',priorEgfr:'60',priorEgfrDate:'2026-01-01'};
  assert.equal(raasStepReference(row,ctx).status,'reference');
  assert.equal(raasStepReference(row,ctx).next,'8 mg/24 h');
  for(const [key,value] of [['product',''],['indication','unknown'],['tolerance','unknown'],['doseDays','13'],['priorEgfr','']])assert.equal(raasStepReference({...row,[key]:value},ctx).next,null,key);
  assert.equal(raasStepReference({...row,drug:'Ramipril',product:'Ramipril Alter',dose:'2,5'},ctx).next,null);
  ctx=setTreatmentValue(ctx,'egfr','42');ctx=confirmTreatmentLabs(ctx,true);
- assert.equal(raasStepReference(row,ctx).status,'review');
+ assert.equal(raasStepReference(row,ctx).status,'missing');ctx=setRenalContext(ctx,'egfrDate','2026-01-03');ctx=confirmRenalContext(ctx,true);ctx=confirmTreatmentLabs(ctx,true);assert.equal(raasStepReference(row,ctx).status,'review');
 });
 test('P5: transición IECA/ARNI en ambos sentidos, 36 h exactas y ausencia de solapamiento',()=>{
  const base={from:'IECA',to:'ARNI',elapsedHours:36,overlap:false,angioedema:'no'};
@@ -713,4 +714,27 @@ test('Plan ARA-II/ARNI: no imponer 36 h, verificar orden y evitar solapamiento',
  assert.equal(fields(c).limit,null);assert.equal(fields(c).elapsed,12);assert.equal(fields(c).status,'reference');
  c=setArniTransitionField(c,'extra-1','firstDose','2026-11-28T07:00:00.000Z');assert.equal(fields(c).status,'blocked');
  c=setTreatmentValue(c,'sbp','99');assert.equal(fields(c).status,'blocked');
+});
+
+test('Contexto renal: fecha de extracción distinta de registro, datos reutilizados e invalidación',()=>{
+ let c=proposalFixture();c=setRenalContext(c,'egfrDate','2026-01-02');c=setRenalContext(c,'potassiumDate','2026-01-02');
+ c=setRenalContext(c,'crcl','48');c=setRenalContext(c,'crclDate','2026-01-02');c=setRenalContext(c,'stable','yes');c=confirmRenalContext(c,true);c=confirmTreatmentLabs(c,true);
+ let r=renalContext(c);assert.equal(r.crcl,48);assert.equal(r.values.egfr,65);assert.equal(r.crclReady,true);
+ assert.equal(renalTrendReference({priorEgfr:'80',priorEgfrDate:'2026-01-01'},c).fgDrop,18.75);
+ assert.equal(renalTrendReference({priorEgfr:'80',priorEgfrDate:'2026-01-02'},c).comparableFg,false);
+ c=setTreatmentValue(c,'egfr','55');assert.equal(renalContext(c).coreReady,false);assert.equal(renalContext(c).dates.egfr,'');
+ c=setRenalContext(c,'egfrDate','2026-02-31');assert.equal(renalContext(c).dates.egfr,'');
+ c=setRenalContext(c,'crcl','bad');assert.equal(renalContext(c).crcl,null);
+});
+test('CIMA por presentación: aclaramiento independiente y límites de referencia',()=>{
+ let c=proposalFixture();c=setRenalContext(c,'egfrDate','2026-01-02');c=setRenalContext(c,'potassiumDate','2026-01-02');c=setRenalContext(c,'stable','yes');
+ const row={drug:'Ramipril',product:'Ramipril Alter',indication:'hf',dose:'5',frequency:'12'};
+ assert.equal(creatinineClearanceReference(row,c).status,'missing');
+ const crcl=x=>{c=setRenalContext(c,'crcl',String(x));c=setRenalContext(c,'crclDate','2026-01-02');c=confirmRenalContext(c,true);return c;};
+ assert.equal(creatinineClearanceReference(row,crcl(48)).cap,5);
+ assert.equal(creatinineClearanceReference(row,crcl(60)).status,'review');
+ assert.equal(creatinineClearanceReference(row,crcl(61)).cap,10);
+ assert.equal(creatinineClearanceReference({...row,drug:'Eplerenona',product:'Eplerenona STADA',dose:'25',frequency:'24'},crcl(29.9)).status,'blocked');
+ assert.equal(creatinineClearanceReference({...row,drug:'Eplerenona',product:'Eplerenona STADA',dose:'50',frequency:'24'},crcl(49.9)).status,'review');
+ assert.equal(creatinineClearanceReference({...row,drug:'Enalapril',product:'Enalapril Aurovitas'},crcl(45)).status,'review');
 });
