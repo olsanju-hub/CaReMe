@@ -10,7 +10,7 @@ try{
  for(const [name,engine,viewport] of [['chromium',chromium,{width:1280,height:800}],['webkit-mobile',webkit,{width:390,height:844}]]){
   const browser=await engine.launch();try{
    const ctx=await browser.newContext({viewport,serviceWorkers:'allow'});const page=await ctx.newPage();const errors=[];page.on('pageerror',e=>errors.push(String(e)));
-   await page.goto(url);await page.getByRole('heading',{name:'CaHReMe',exact:true}).waitFor();assert.match(await page.locator('footer').innerText(),/v0\.102/);await page.screenshot({path:'qa-results/'+name+'-home.png',fullPage:true});
+   await page.goto(url);await page.getByRole('heading',{name:'CaHReMe',exact:true}).waitFor();assert.match(await page.locator('footer').innerText(),/v0\.103/);await page.screenshot({path:'qa-results/'+name+'-home.png',fullPage:true});
    await page.getByRole('button',{name:'Insuficiencia cardíaca',exact:true}).click();await page.getByRole('heading',{name:'Insuficiencia cardiaca',exact:true}).waitFor();
    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'No horizontal overflow');
    await page.screenshot({path:'qa-results/'+name+'-ic.png',fullPage:true});
@@ -397,6 +397,33 @@ try{
     await nyp.getByRole('heading',{name:'Medicación actual',exact:true}).waitFor();
     assert.equal(await nyp.locator('[data-med-row="extra-1"]').evaluate(e=>e.open),true);
     assert.equal(await nyp.locator('[data-panel="med-context-extra-1"]').evaluate(e=>e.open),true);
+    // Plan a transition on a fictional IECA regimen without altering its medication entry.
+    if(!await ncatalog.evaluate(e=>e.open))await ncatalog.locator(':scope > summary').click();
+    await nyp.locator('[data-action="med-add-named"][data-med-drug="Enalapril"]').click();
+    await nyp.locator('[data-med-id="extra-2"][data-med-field="quick-dose"][data-med-value="5"]').click();
+    await nyp.locator('[data-med-id="extra-2"][data-med-field="frequency"][data-med-value="12"]').click();
+    await nyp.locator('[data-med-confirm]').check();await nyp.locator('[data-action="therapy-proposal"]').click();
+    await nyp.getByRole('heading',{name:'Propuesta de tratamiento',exact:true}).waitFor();
+    const transitionPanel=nyp.locator('[data-panel="proposal-Sacubitrilo%2Fvalsart%C3%A1n"]');
+    const planner=transitionPanel.locator('[data-transition-plan="extra-2"]');
+    assert.equal(await planner.isVisible(),false);
+    await transitionPanel.locator(':scope > summary').click();
+    const fillTransition=async(key,value)=>{const field=planner.locator('[data-transition-field="'+key+'"]');await field.fill(value);await field.press('Tab');};
+    await fillTransition('lastDose','2026-11-28T08:00');
+    await fillTransition('firstDose','2026-11-29T19:59');
+    assert.match(await planner.locator('.proposal-transition-status').innerText(),/inferior a 36 horas/);
+    await fillTransition('firstDose','2026-11-29T20:00');
+    await planner.locator('[data-transition-value="yes"]').click();
+    for(const key of ['pregnancy','angioedema','bilateralRas','severeLiver'])await transitionPanel.locator('[data-risk-key="'+key+'"][data-risk-value="no"]').click();
+    assert.match(await planner.locator('.proposal-transition-status').innerText(),/cumple el requisito temporal/);
+    await transitionPanel.locator('[data-risk-key="angioedema"][data-risk-value="yes"]').click();
+    assert.match(await planner.locator('.proposal-transition-status').innerText(),/Revisar el riesgo registrado/);
+    await transitionPanel.locator('[data-risk-key="angioedema"][data-risk-value="no"]').click();
+    assert.ok(await nyp.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'Plan de transición sin desbordamiento');
+    await nyp.screenshot({path:'qa-results/'+name+'-arni-transition.png',fullPage:true});
+    await nyp.locator('.proposal-page .ic-back').click();await nyp.getByRole('heading',{name:'Medicación actual',exact:true}).waitFor();
+    const enalapril=nyp.locator('[data-med-row="extra-2"]');
+    assert.match(await enalapril.innerText(),/Enalapril/);assert.match(await enalapril.innerText(),/5 mg \/ 12 h/);
     await nyp.evaluate(()=>{location.hash='ic/tratamiento';});
     await nyp.getByRole('heading',{name:'Tratamiento',exact:true}).waitFor();
     await nyp.locator('.treatment-profile [data-action="classification-summary"]').click();await nyp.getByRole('heading',{name:'Conclusión clínica',exact:true}).waitFor();
